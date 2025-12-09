@@ -13,6 +13,7 @@ export const translations = {
     header: {
       dashboardTitle: "Dashboard Overview",
       ordersTitle: "Order Management",
+      inventoryTitle: "Product Inventory",
       systemOp: "System Operational"
     },
     dashboard: {
@@ -53,6 +54,24 @@ export const translations = {
       delete: "Delete Order",
       confirmDelete: "Are you sure you want to delete this order? This action cannot be undone."
     },
+    inventory: {
+      title: "Products",
+      addProduct: "Add Product",
+      searchPlaceholder: "Search products...",
+      noProducts: "No products found.",
+      createFirst: "Add your first product",
+      formTitleAdd: "Add New Product",
+      formTitleEdit: "Edit Product",
+      name: "Product Name",
+      price: "Price (VND)",
+      category: "Category",
+      image: "Image URL",
+      description: "Description",
+      status: "Status",
+      active: "Active",
+      inactive: "Inactive",
+      deleteConfirm: "Are you sure you want to delete this product?"
+    },
     form: {
       createTitle: "Create New Order",
       editTitle: "Edit Order",
@@ -72,7 +91,8 @@ export const translations = {
       notes: "Notes",
       cancel: "Cancel",
       save: "Save Order",
-      saving: "Saving..."
+      saving: "Saving...",
+      saveProduct: "Save Product"
     },
     detail: {
       orderId: "Order #",
@@ -113,6 +133,7 @@ export const translations = {
     header: {
       dashboardTitle: "Tổng quan hệ thống",
       ordersTitle: "Quản lý đơn hàng",
+      inventoryTitle: "Kho sản phẩm",
       systemOp: "Hệ thống ổn định"
     },
     dashboard: {
@@ -153,6 +174,24 @@ export const translations = {
       delete: "Xóa đơn hàng",
       confirmDelete: "Bạn có chắc chắn muốn xóa đơn hàng này không? Hành động này không thể hoàn tác."
     },
+    inventory: {
+      title: "Sản phẩm",
+      addProduct: "Thêm sản phẩm",
+      searchPlaceholder: "Tìm kiếm sản phẩm...",
+      noProducts: "Chưa có sản phẩm nào.",
+      createFirst: "Thêm sản phẩm đầu tiên",
+      formTitleAdd: "Thêm sản phẩm mới",
+      formTitleEdit: "Sửa sản phẩm",
+      name: "Tên sản phẩm",
+      price: "Giá (VND)",
+      category: "Danh mục",
+      image: "Link ảnh",
+      description: "Mô tả",
+      status: "Trạng thái",
+      active: "Hoạt động",
+      inactive: "Ngừng bán",
+      deleteConfirm: "Bạn có chắc chắn muốn xóa sản phẩm này không?"
+    },
     form: {
       createTitle: "Tạo đơn hàng mới",
       editTitle: "Chỉnh sửa đơn hàng",
@@ -172,7 +211,8 @@ export const translations = {
       notes: "Ghi chú",
       cancel: "Hủy bỏ",
       save: "Lưu đơn hàng",
-      saving: "Đang lưu..."
+      saving: "Đang lưu...",
+      saveProduct: "Lưu sản phẩm"
     },
     detail: {
       orderId: "Đơn hàng #",

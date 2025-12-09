@@ -41,7 +41,7 @@ const Layout: React.FC = () => {
   const navItems = [
     { id: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
     { id: '/orders', label: t('nav.orders'), icon: ShoppingCart },
-    { id: '/inventory', label: t('nav.inventory'), icon: Package, disabled: true },
+    { id: '/inventory', label: t('nav.inventory'), icon: Package },
     { id: '/customers', label: t('nav.customers'), icon: Users, disabled: true },
     { id: '/settings', label: t('nav.settings'), icon: Settings, disabled: true },
   ];
@@ -49,6 +49,7 @@ const Layout: React.FC = () => {
   const getPageTitle = () => {
     if (location.pathname === '/') return t('header.dashboardTitle');
     if (location.pathname === '/orders') return t('header.ordersTitle');
+    if (location.pathname === '/inventory') return t('header.inventoryTitle');
     return 'CucQuyBakery';
   };
 
@@ -112,7 +113,6 @@ const Layout: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Quick Action for Mobile - hidden for now to keep header clean or can be repurposed */}
             
             <button
               onClick={toggleLanguage}

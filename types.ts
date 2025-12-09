@@ -50,6 +50,17 @@ export interface Order {
   notes?: string;
 }
 
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
+  description?: string;
+  status: 'active' | 'inactive';
+  createdAt?: string;
+}
+
 export interface StatMetric {
   label: string;
   value: string | number;
