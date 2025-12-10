@@ -202,8 +202,8 @@ export interface ExportColumn {
   field: (order: Order) => any;
 }
 
-// Helper to apply header and cell styling including borders
-const applySheetStyles = (ws: any, headerColor: string) => {
+// Helper to apply header and cell styling including borders and formats
+const applySheetStyles = (ws: any, headerColor: string, currencyCols: number[] = [], hasFooter: boolean = false) => {
   if (!ws['!ref']) return;
   const range = XLSX.utils.decode_range(ws['!ref']);
   
@@ -224,29 +224,29 @@ const applySheetStyles = (ws: any, headerColor: string) => {
       if (R === 0) {
         // Header Styles
         ws[address].s = {
-          font: {
-            bold: true,
-            color: { rgb: "FFFFFF" }
-          },
-          fill: {
-            fgColor: { rgb: headerColor.replace('#', '') }
-          },
-          alignment: {
-            horizontal: "center",
-            vertical: "center",
-            wrapText: true
-          },
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: headerColor.replace('#', '') } },
+          alignment: { horizontal: "center", vertical: "center", wrapText: true },
           border: border
         };
       } else {
         // Data Cell Styles
         ws[address].s = {
-          alignment: {
-             vertical: "center",
-             wrapText: true
-          },
+          alignment: { vertical: "center", wrapText: true },
           border: border
         };
+
+        // Apply Currency Format to numeric cells in specific columns
+        if (currencyCols.includes(C) && typeof ws[address].v === 'number') {
+            ws[address].z = '#,##0 "₫"';
+        }
+
+        // Footer Row Style (Last Row)
+        if (hasFooter && R === range.e.r) {
+             ws[address].s.font = { bold: true, color: { rgb: "EA580C" } }; // Orange text
+             ws[address].s.fill = { fgColor: { rgb: "FFF7ED" } }; // Light orange bg
+             if (C === 0) ws[address].s.alignment = { horizontal: "center", vertical: "center" };
+        }
       }
     }
   }
@@ -258,6 +258,12 @@ export const exportOrdersToExcel = (
   headerColor: string = '#ea580c'
 ) => {
   const wb = XLSX.utils.book_new();
+
+  // Identify Currency Columns by ID to apply VND format
+  const currencyIds = ['total', 'subtotal', 'shipping', 'price', 'unitPrice', 'cost', 'revenue'];
+  const currencyColIndices = columns
+    .map((col, idx) => currencyIds.some(id => col.id.toLowerCase().includes(id)) ? idx : -1)
+    .filter(idx => idx !== -1);
 
   // Group orders by Month (YYYY-MM)
   const groupedOrders: Record<string, Order[]> = {};
@@ -292,12 +298,14 @@ export const exportOrdersToExcel = (
     wsOverall['!cols'] = [
         { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 20 }
     ];
-    applySheetStyles(wsOverall, headerColor);
+    // Apply currency format to 'Total Revenue' (col 2) and 'Avg Order Value' (col 4)
+    applySheetStyles(wsOverall, headerColor, [2, 4], false);
     XLSX.utils.book_append_sheet(wb, wsOverall, "Overall");
 
     // 2. Individual Month Sheets
     monthKeys.forEach(month => {
-      const sheetData = groupedOrders[month].map(order => {
+      const monthOrders = groupedOrders[month];
+      const sheetData = monthOrders.map(order => {
         const row: any = {};
         columns.forEach(col => {
           row[col.label] = col.field(order);
@@ -305,15 +313,27 @@ export const exportOrdersToExcel = (
         return row;
       });
 
+      // Calculate Total Revenue for this sheet
+      const totalRevenue = monthOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+      
+      // Create Footer Row
+      const footerRow: any = {};
+      columns.forEach((col, idx) => {
+          if (idx === 0) footerRow[col.label] = "TOTAL REVENUE";
+          else if (col.id === 'total') footerRow[col.label] = totalRevenue;
+          else footerRow[col.label] = ""; // Empty string for other columns to maintain borders
+      });
+      sheetData.push(footerRow);
+
       const ws = XLSX.utils.json_to_sheet(sheetData);
       ws['!cols'] = columns.map(() => ({ wch: 20 }));
-      applySheetStyles(ws, headerColor);
+      applySheetStyles(ws, headerColor, currencyColIndices, true);
       XLSX.utils.book_append_sheet(wb, ws, month);
     });
 
   } else {
     // --- SINGLE SHEET MODE (Standard) ---
-    const data = orders.map(order => {
+    const sheetData = orders.map(order => {
       const row: any = {};
       columns.forEach(col => {
         row[col.label] = col.field(order);
@@ -321,9 +341,21 @@ export const exportOrdersToExcel = (
       return row;
     });
 
-    const ws = XLSX.utils.json_to_sheet(data);
+    // Calculate Total Revenue
+    const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+      
+    // Create Footer Row
+    const footerRow: any = {};
+    columns.forEach((col, idx) => {
+        if (idx === 0) footerRow[col.label] = "TOTAL REVENUE";
+        else if (col.id === 'total') footerRow[col.label] = totalRevenue;
+        else footerRow[col.label] = "";
+    });
+    sheetData.push(footerRow);
+
+    const ws = XLSX.utils.json_to_sheet(sheetData);
     ws['!cols'] = columns.map(() => ({ wch: 20 }));
-    applySheetStyles(ws, headerColor);
+    applySheetStyles(ws, headerColor, currencyColIndices, true);
     XLSX.utils.book_append_sheet(wb, ws, "Orders");
   }
 
