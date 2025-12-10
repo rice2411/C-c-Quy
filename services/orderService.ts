@@ -187,6 +187,16 @@ export const deleteOrder = async (orderId: string): Promise<void> => {
 export const exportOrdersToCSV = (orders: Order[]) => {
   if (!orders || orders.length === 0) return;
 
+  // Helper to escape characters for CSV validity
+  const escape = (val: any) => {
+    if (val === null || val === undefined) return '';
+    const str = String(val);
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
   const headers = [
     'Order ID',
     'Date',
@@ -194,11 +204,11 @@ export const exportOrdersToCSV = (orders: Order[]) => {
     'Phone',
     'Address',
     'Products',
-    'Subtotal',
-    'Shipping Cost',
-    'Total',
+    'Subtotal (VND)',
+    'Shipping (VND)',
+    'Total (VND)',
     'Status',
-    'Payment Status',
+    'Payment',
     'Notes'
   ];
 
@@ -208,26 +218,46 @@ export const exportOrdersToCSV = (orders: Order[]) => {
     
     // Calculate subtotal for clarity
     const subtotal = order.total - (order.shippingCost || 0);
+    const dateStr = new Date(order.date).toLocaleDateString('vi-VN');
 
     return [
-      order.id,
-      new Date(order.date).toLocaleDateString(),
-      `"${(order.customer.name || '').replace(/"/g, '""')}"`,
-      `"${(order.customer.phone || '').replace(/"/g, '""')}"`,
-      `"${(order.customer.address || '').replace(/"/g, '""')}"`,
-      `"${itemsSummary.replace(/"/g, '""')}"`,
+      escape(order.id),
+      escape(dateStr),
+      escape(order.customer.name),
+      escape(`'${order.customer.phone}`), // Add single quote to prevent Excel dropping leading zeros
+      escape(order.customer.address),
+      escape(itemsSummary),
       subtotal,
       order.shippingCost || 0,
       order.total,
-      order.status,
-      order.paymentStatus,
-      `"${(order.notes || '').replace(/"/g, '""')}"`
-    ];
+      escape(order.status),
+      escape(order.paymentStatus),
+      escape(order.notes)
+    ].join(',');
   });
+
+  // Calculate Totals for the footer
+  const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+  const totalShipping = orders.reduce((sum, o) => sum + (o.shippingCost || 0), 0);
+  const totalOrders = orders.length;
+
+  const footer = [
+    '', // Empty row separator
+    [
+      '', '', '', '', '', // Empty cells for first 5 columns
+      'TOTAL REVENUE:', // Header aligned with Products column
+      '', // Empty (Subtotal)
+      '', // Empty (Shipping)
+      totalRevenue, // Total Revenue Value
+      `(${totalOrders} Orders)`, // Order count under Status
+      '', ''
+    ].join(',')
+  ];
 
   const csvContent = [
     headers.join(','),
-    ...rows.map(row => row.join(','))
+    ...rows,
+    ...footer
   ].join('\n');
 
   // Add BOM for UTF-8 compatibility (especially for Excel reading Vietnamese)
@@ -235,7 +265,7 @@ export const exportOrdersToCSV = (orders: Order[]) => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
+  link.setAttribute('download', `CucQuy_Orders_Export_${new Date().toISOString().split('T')[0]}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
