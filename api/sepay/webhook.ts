@@ -27,8 +27,31 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     }
 
     // Lưu vào Firebase
-    const { collection, addDoc, Timestamp } = await import('firebase/firestore');
-    const { db } = await import('../../config/firebase');
+    // Import trực tiếp để tránh lỗi đường dẫn trên Vercel
+    const firebaseApp = await import('firebase/app');
+    const firebaseFirestore = await import('firebase/firestore');
+    
+    // Khởi tạo Firebase trực tiếp trong webhook (vì import tương đối không hoạt động trên Vercel)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAQtMPqZE0A2XMM7bwikMW1EMlmDOdNip8",
+      authDomain: "tiembanhcucquy-75fe1.firebaseapp.com",
+      projectId: "tiembanhcucquy-75fe1",
+      storageBucket: "tiembanhcucquy-75fe1.firebasestorage.app",
+      messagingSenderId: "744823161157",
+      appId: "1:744823161157:web:695e5dbe4cca0de719fe2c",
+      measurementId: "G-6202LFPC63"
+    };
+    
+    // Khởi tạo Firebase app (chỉ khởi tạo nếu chưa có)
+    let app;
+    try {
+      app = firebaseApp.getApp();
+    } catch {
+      app = firebaseApp.initializeApp(firebaseConfig);
+    }
+    
+    const db = firebaseFirestore.getFirestore(app);
+    const { collection, addDoc, Timestamp } = firebaseFirestore;
 
     const transactionData = {
       sepayId: webhookData.id,
