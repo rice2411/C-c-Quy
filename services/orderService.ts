@@ -1,4 +1,4 @@
-import { collection, getDocs, query, orderBy, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, addDoc, updateDoc, deleteDoc, doc, Timestamp, limit } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Order, OrderStatus, PaymentStatus, ProductType, OrderItem, Customer } from '../types/index';
 import { DEFAULT_PRICES } from '../constants/index';
@@ -129,6 +129,7 @@ export const fetchOrders = async (): Promise<Order[]> => {
 
       return {
         id: doc.id,
+        orderNumber: data.orderNumber, // Map new field
         customer: customer,
         items: items,
         total: finalTotal, // Use calculated total
@@ -146,11 +147,46 @@ export const fetchOrders = async (): Promise<Order[]> => {
   }
 };
 
+// Helper to find the next order number (ORD-XXXXXX)
+export const getNextOrderNumber = async (): Promise<string> => {
+  try {
+    const ordersRef = collection(db, 'orders');
+    // Sort by orderNumber string desc to get the highest one.
+    const q = query(ordersRef, orderBy('orderNumber', 'desc'), limit(1));
+    const snapshot = await getDocs(q);
+
+    if (!snapshot.empty) {
+      const lastOrder = snapshot.docs[0].data();
+      const lastNumberStr = lastOrder.orderNumber;
+      
+      if (lastNumberStr && lastNumberStr.startsWith('ORD-')) {
+        const numPart = parseInt(lastNumberStr.split('-')[1], 10);
+        if (!isNaN(numPart)) {
+           return `ORD-${String(numPart + 1).padStart(6, '0')}`;
+        }
+      }
+    }
+    
+    // Default start
+    return 'ORD-000001';
+  } catch (e) {
+    console.warn("Failed to generate order number from DB, falling back to basic.", e);
+    return `ORD-${Date.now().toString().slice(-6)}`;
+  }
+};
+
 export const addOrder = async (orderData: any): Promise<void> => {
   try {
     const ordersRef = collection(db, 'orders');
+    
+    // Use provided order number or generate new one
+    const orderNumber = orderData.orderNumber || await getNextOrderNumber();
+
     // Map internal form data to specific Firestore flat structure + structured customer
     const payload = {
+      // New Field
+      orderNumber: orderNumber,
+
       // Legacy flat fields
       customerName: orderData.customer?.name || '',
       phone: orderData.customer?.phone || '',

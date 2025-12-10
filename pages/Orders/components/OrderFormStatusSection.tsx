@@ -1,5 +1,5 @@
 import React from 'react';
-import { StickyNote, CreditCard } from 'lucide-react';
+import { StickyNote, CreditCard, QrCode, Copy } from 'lucide-react';
 import { OrderStatus, PaymentStatus } from '../../../types';
 import { useLanguage } from '../../../contexts/LanguageContext';
 
@@ -10,17 +10,32 @@ interface OrderStatusSectionProps {
   setPaymentStatus: (val: PaymentStatus) => void;
   note: string;
   setNote: (val: string) => void;
+  total: number;
+  customerName: string;
 }
 
 const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
   status, setStatus,
   paymentStatus, setPaymentStatus,
-  note, setNote
+  note, setNote,
+  total,
+  customerName
 }) => {
   const { t } = useLanguage();
 
+  // Construct SePay URL
+  // Description limited to 50 chars, simplified
+  const cleanName = customerName.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+  const description = cleanName ? `PAY ${cleanName}`.substring(0, 20) : 'PAY ORDER';
+  const qrUrl = `https://qr.sepay.vn/img?acc=96247HTTH1308&bank=BIDV&amount=${Math.round(total)}&des=${encodeURIComponent(description)}&template=compact`;
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    // Could add a toast here, but simple copy is fine for now
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
          <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('form.status')}</label>
@@ -61,6 +76,53 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             />
          </div>
       </div>
+
+      {/* Payment QR Section */}
+      {total > 0 && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+           <div className="shrink-0 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+              <img 
+                src={qrUrl} 
+                alt="Payment QR" 
+                className="w-32 h-32 object-contain"
+              />
+           </div>
+           
+           <div className="flex-1 space-y-2 w-full text-center sm:text-left">
+              <div className="flex items-center justify-center sm:justify-start gap-2 text-blue-800 dark:text-blue-300 font-semibold">
+                 <QrCode className="w-4 h-4" />
+                 <span>Bank Transfer (VietQR)</span>
+              </div>
+              
+              <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                 <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
+                    <span className="text-xs text-slate-500 uppercase font-medium">Bank</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">BIDV</span>
+                 </div>
+                 <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 group cursor-pointer" onClick={() => copyToClipboard('96247HTTH1308')}>
+                    <span className="text-xs text-slate-500 uppercase font-medium">Account</span>
+                    <div className="flex items-center gap-2">
+                       <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">96247HTTH1308</span>
+                       <Copy className="w-3 h-3 text-slate-400 group-hover:text-blue-500" />
+                    </div>
+                 </div>
+                 <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
+                    <span className="text-xs text-slate-500 uppercase font-medium">Name</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 uppercase">TON THAT ANH MINH</span>
+                 </div>
+                 <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
+                    <span className="text-xs text-slate-500 uppercase font-medium">Amount</span>
+                    <span className="font-bold text-orange-600 dark:text-orange-400">
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}
+                    </span>
+                 </div>
+              </div>
+              <p className="text-[10px] text-slate-400 mt-2">
+                 Scan with any banking app to pay.
+              </p>
+           </div>
+        </div>
+      )}
     </div>
   );
 };

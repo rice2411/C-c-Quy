@@ -11,7 +11,7 @@ import ConfirmModal from '../../components/ConfirmModal';
 import ExportModal from './components/ExportModal';
 
 const OrdersPage: React.FC = () => {
-  const { orders, createNewOrder, modifyOrder, removeOrder } = useOrders();
+  const { orders, createNewOrder, modifyOrder, removeOrder, refreshOrders } = useOrders();
   const { t } = useLanguage();
   
   // Modal States
@@ -25,7 +25,7 @@ const OrdersPage: React.FC = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
+  
   const handleOrderSelect = (order: Order) => {
     setSelectedOrder(order);
   };

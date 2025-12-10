@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, AlertCircle } from 'lucide-react';
+import { X, Save, AlertCircle, Hash, Loader2 } from 'lucide-react';
 import { Order, OrderStatus, PaymentStatus, ProductType } from '../../../types/index';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { getNextOrderNumber } from '../../../services/orderService';
 import OrderFormCustomerSection from './OrderFormCustomerSection';
 import OrderFormItemsSection from './OrderFormItemsSection';
 import OrderFormStatusSection from './OrderFormStatusSection';
@@ -28,6 +29,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [orderNumber, setOrderNumber] = useState('');
+  const [loadingOrderNumber, setLoadingOrderNumber] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -43,6 +46,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
   // Initialize Data
   useEffect(() => {
     if (initialData) {
+      setOrderNumber(initialData.orderNumber || 'N/A');
       setCustomerName(initialData.customer.name);
       setPhone(initialData.customer.phone);
       setAddress(initialData.customer.address);
@@ -86,7 +90,21 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
         }]);
       }
     } else {
-      // Create New Order Defaults
+      // Create New Order
+      const fetchNextId = async () => {
+        setLoadingOrderNumber(true);
+        try {
+          const nextId = await getNextOrderNumber();
+          setOrderNumber(nextId);
+        } catch (e) {
+          console.error("Failed to fetch next ID");
+        } finally {
+          setLoadingOrderNumber(false);
+        }
+      };
+      
+      fetchNextId();
+      
       setCustomerName('');
       setPhone('');
       setAddress('');
@@ -182,6 +200,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
 
       const formData = {
         id: initialData?.id,
+        orderNumber: orderNumber, // Pass the calculated order number
         customer: {
           name: customerName,
           phone: phone,
@@ -222,6 +241,27 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
                 {error}
               </div>
             )}
+            
+            {/* Order Number Read-Only Field */}
+            <div>
+               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('detail.orderId')}</label>
+               <div className="relative">
+                  <Hash className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                  <input 
+                    type="text" 
+                    value={loadingOrderNumber ? 'Generating...' : orderNumber}
+                    disabled
+                    readOnly
+                    className="w-full pl-9 pr-3 py-2 bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-500 dark:text-slate-400 font-mono cursor-not-allowed"
+                  />
+                  {loadingOrderNumber && (
+                    <div className="absolute right-3 top-2.5">
+                      <Loader2 className="w-4 h-4 text-orange-500 animate-spin" />
+                    </div>
+                  )}
+               </div>
+            </div>
+
             <OrderFormCustomerSection 
               customerName={customerName} setCustomerName={setCustomerName}
               phone={phone} setPhone={setPhone}
@@ -246,6 +286,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
               status={status} setStatus={setStatus}
               paymentStatus={paymentStatus} setPaymentStatus={setPaymentStatus}
               note={note} setNote={setNote}
+              total={total}
+              customerName={customerName}
             />
           </form>
           <div className="p-4 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-end gap-3">
@@ -259,7 +301,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
             </button>
             <button 
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || loadingOrderNumber}
               className="px-6 py-2 bg-orange-600 dark:bg-orange-500 rounded-lg text-sm font-medium text-white hover:bg-orange-700 dark:hover:bg-orange-600 shadow-sm flex items-center gap-2 disabled:opacity-70 transition-colors"
             >
               {isSubmitting ? t('form.saving') : (
