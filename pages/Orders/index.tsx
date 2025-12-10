@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Package, Download } from 'lucide-react';
+import { Plus, Package, Download, RefreshCcw } from 'lucide-react';
 import { useOrders } from '../../contexts/OrderContext';
 import { useCustomers } from '../../contexts/CustomerContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -9,9 +9,10 @@ import OrderDetail from './components/OrderDetail';
 import OrderForm from './components/OrderForm';
 import ConfirmModal from '../../components/ConfirmModal';
 import ExportModal from './components/ExportModal';
+import { migrateOrderNumbers } from '../../services/orderService';
 
 const OrdersPage: React.FC = () => {
-  const { orders, createNewOrder, modifyOrder, removeOrder } = useOrders();
+  const { orders, createNewOrder, modifyOrder, removeOrder, refreshOrders } = useOrders();
   const { t } = useLanguage();
   
   // Modal States
@@ -25,6 +26,9 @@ const OrdersPage: React.FC = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Migration State
+  const [isMigrating, setIsMigrating] = useState(false);
 
   const handleOrderSelect = (order: Order) => {
     setSelectedOrder(order);
@@ -69,11 +73,34 @@ const OrdersPage: React.FC = () => {
     }
     setIsOrderFormOpen(false);
   };
+
+  const handleMigrate = async () => {
+      if (confirm("This will generate order numbers (ORD-XXXXXX) for all orders that are missing them. Continue?")) {
+          setIsMigrating(true);
+          try {
+              await migrateOrderNumbers();
+              await refreshOrders();
+          } catch (e) {
+              alert("Migration failed. Check console.");
+          } finally {
+              setIsMigrating(false);
+          }
+      }
+  };
   
   return (
     <div className="h-full relative">
       <div className="mb-4 flex flex-col sm:flex-row justify-end items-center gap-3">
         <div className="flex gap-2 w-full sm:w-auto">
+          <button 
+             onClick={handleMigrate}
+             disabled={isMigrating}
+             className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+             title="Generate Order Numbers for old data"
+           >
+             <RefreshCcw className={`w-4 h-4 ${isMigrating ? 'animate-spin' : ''}`} />
+             <span>{isMigrating ? 'Setting IDs...' : 'Set IDs'}</span>
+           </button>
           <button 
              onClick={() => setIsExportModalOpen(true)}
              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium transition-colors"

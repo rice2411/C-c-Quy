@@ -60,9 +60,10 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
 
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
-      // Basic Search (ID or Customer Name)
+      // Basic Search (ID or Customer Name or Order Number)
       const matchesSearch = 
         order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.orderNumber && order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
         order.customer.name.toLowerCase().includes(searchTerm.toLowerCase());
       
       // Status Filter
@@ -250,9 +251,9 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
              >
                 <div className="flex justify-between items-start mb-3">
                    <div>
-                      {/* ID truncated */}
+                      {/* Order Number or ID */}
                       <span className="text-orange-600 dark:text-orange-400 font-bold text-sm" title={order.id}>
-                        {order.id.substring(0, 6)}..
+                        {order.orderNumber || order.id.substring(0, 6)}
                       </span>
                       <div className="flex items-center text-slate-400 dark:text-slate-500 text-xs mt-1">
                          <Calendar className="w-3 h-3 mr-1" />
@@ -335,8 +336,8 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
         <table className="w-full text-left border-collapse">
           <thead className="sticky top-0 z-10 bg-slate-100 dark:bg-slate-700 shadow-sm">
             <tr className="text-slate-600 dark:text-slate-300 text-xs font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-600">
-              <th className="px-6 py-4 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 group w-32 transition-colors" onClick={() => handleSort('id')}>
-                <div className="flex items-center">{t('orders.tableId')} <SortIcon field="id" /></div>
+              <th className="px-6 py-4 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 group w-36 transition-colors" onClick={() => handleSort('orderNumber')}>
+                <div className="flex items-center">Order Number <SortIcon field="orderNumber" /></div>
               </th>
               <th className="px-6 py-4 w-1/4">{t('orders.tableCustomer')}</th>
               <th className="px-6 py-4 w-1/5">{t('orders.tableProduct')}</th>
@@ -360,9 +361,9 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
               currentOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors group">
                   <td className="px-6 py-4">
-                    {/* Truncated ID */}
+                    {/* Order Number / ID */}
                     <span className="font-medium text-orange-600 dark:text-orange-400 font-mono" title={order.id}>
-                       {order.id.substring(0, 6)}..
+                       {order.orderNumber || order.id.substring(0, 6)}
                     </span>
                   </td>
                   {/* Customer Info */}

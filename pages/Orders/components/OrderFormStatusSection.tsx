@@ -107,6 +107,10 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
                     </div>
                  </div>
                  <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
+                    <span className="text-xs text-slate-500 uppercase font-medium">Name</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 uppercase">TON THAT ANH MINH</span>
+                 </div>
+                 <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
                     <span className="text-xs text-slate-500 uppercase font-medium">Amount</span>
                     <span className="font-bold text-orange-600 dark:text-orange-400">
                       {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}

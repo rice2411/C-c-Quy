@@ -20,6 +20,7 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
+  orderNumber?: string; // New human-readable ID (ORD-XXXXXX)
   customer: Customer;
   items: OrderItem[];
   total: number;

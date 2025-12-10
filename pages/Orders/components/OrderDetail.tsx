@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, MapPin, Phone, Mail, Truck, CreditCard, Sparkles, AlertTriangle, FileText } from 'lucide-react';
+import { X, MapPin, Phone, Mail, Truck, CreditCard, Sparkles, AlertTriangle, FileText, QrCode, Copy } from 'lucide-react';
 import { Order, OrderItem } from '../../../types';
 import { STATUS_COLORS } from '../../../constants';
 import { generateOrderAnalysis } from '../../../services/geminiService';
@@ -52,6 +52,15 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onEdit }) => 
   // Ensure the displayed total is the sum of calculated subtotal + shipping
   const finalTotal = subtotal + shippingCost;
 
+  // QR Code Logic
+  const cleanName = order.customer.name.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+  const description = cleanName ? `PAY ${cleanName}`.substring(0, 20) : 'PAY ORDER';
+  const qrUrl = `https://qr.sepay.vn/img?acc=96247HTTH1308&bank=BIDV&amount=${Math.round(finalTotal)}&des=${encodeURIComponent(description)}&template=compact`;
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
       <div 
@@ -66,7 +75,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onEdit }) => 
           <div className="px-6 py-6 border-b border-slate-100 dark:border-slate-700 flex items-start justify-between bg-white dark:bg-slate-800 transition-colors">
             <div>
               <div className="flex items-center gap-3 mb-1">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{t('detail.orderId')} {order.id}</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">{order.orderNumber || `Order #${order.id}`}</h2>
                 <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[order.status]}`}>
                   {order.status}
                 </span>
@@ -190,9 +199,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onEdit }) => 
                       <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-3">
                           <Truck className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                          <span className="text-sm text-slate-600 dark:text-slate-300">{t('detail.tracking')}</span>
+                          <span className="text-sm text-slate-600 dark:text-slate-300">Order Number</span>
                         </div>
-                        <span className="text-sm font-mono font-medium text-slate-900 dark:text-white">{order.trackingNumber || t('detail.notAssigned')}</span>
+                        <span className="text-sm font-mono font-medium text-slate-900 dark:text-white">{order.orderNumber || t('detail.notAssigned')}</span>
                       </div>
                        <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-3">
@@ -205,6 +214,52 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onEdit }) => 
                       </div>
                    </div>
                 </div>
+
+                {/* Payment QR Section */}
+                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
+                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">Payment QR</h3>
+                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+                      <div className="shrink-0 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+                          <img 
+                            src={qrUrl} 
+                            alt="Payment QR" 
+                            className="w-32 h-32 object-contain"
+                          />
+                      </div>
+                      
+                      <div className="flex-1 space-y-2 w-full text-center sm:text-left">
+                          <div className="flex items-center justify-center sm:justify-start gap-2 text-blue-800 dark:text-blue-300 font-semibold">
+                            <QrCode className="w-4 h-4" />
+                            <span>Bank Transfer (VietQR)</span>
+                          </div>
+                          
+                          <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                            <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
+                                <span className="text-xs text-slate-500 uppercase font-medium">Bank</span>
+                                <span className="font-bold text-slate-800 dark:text-slate-200">BIDV</span>
+                            </div>
+                            <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 group cursor-pointer" onClick={() => copyToClipboard('96247HTTH1308')}>
+                                <span className="text-xs text-slate-500 uppercase font-medium">Account</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">96247HTTH1308</span>
+                                  <Copy className="w-3 h-3 text-slate-400 group-hover:text-blue-500" />
+                                </div>
+                            </div>
+                            <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
+                                <span className="text-xs text-slate-500 uppercase font-medium">Name</span>
+                                <span className="font-bold text-slate-800 dark:text-slate-200 uppercase">TON THAT ANH MINH</span>
+                            </div>
+                            <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
+                                <span className="text-xs text-slate-500 uppercase font-medium">Amount</span>
+                                <span className="font-bold text-orange-600 dark:text-orange-400">
+                                  {formatVND(finalTotal)}
+                                </span>
+                            </div>
+                          </div>
+                      </div>
+                   </div>
+                </div>
+
               </div>
             ) : (
               <div className="h-full flex flex-col">
