@@ -42,7 +42,7 @@ const Layout: React.FC = () => {
     { id: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
     { id: '/orders', label: t('nav.orders'), icon: ShoppingCart },
     { id: '/inventory', label: t('nav.inventory'), icon: Package },
-    { id: '/customers', label: t('nav.customers'), icon: Users, disabled: true },
+    { id: '/customers', label: t('nav.customers'), icon: Users },
     { id: '/settings', label: t('nav.settings'), icon: Settings, disabled: true },
   ];
 
@@ -50,6 +50,7 @@ const Layout: React.FC = () => {
     if (location.pathname === '/') return t('header.dashboardTitle');
     if (location.pathname === '/orders') return t('header.ordersTitle');
     if (location.pathname === '/inventory') return t('header.inventoryTitle');
+    if (location.pathname === '/customers') return t('header.customersTitle');
     return 'CucQuyBakery';
   };
 

@@ -15,6 +15,7 @@ export const translations = {
       dashboardTitle: "Dashboard Overview",
       ordersTitle: "Order Management",
       inventoryTitle: "Product Inventory",
+      customersTitle: "Customer Management",
       systemOp: "System Operational"
     },
     dashboard: {
@@ -88,6 +89,34 @@ export const translations = {
       inactive: "Inactive",
       deleteConfirm: "Are you sure you want to delete this product?"
     },
+    customers: {
+      title: "Customers",
+      add: "Add Customer",
+      search: "Search customers...",
+      noData: "No customers found.",
+      createFirst: "Add your first customer",
+      table: {
+        name: "Customer",
+        contact: "Contact Info",
+        location: "Location",
+        actions: "Actions"
+      },
+      form: {
+        addTitle: "Add New Customer",
+        editTitle: "Edit Customer",
+        name: "Full Name",
+        email: "Email",
+        phone: "Phone Number",
+        address: "Address",
+        city: "City",
+        country: "Country",
+        save: "Save Customer"
+      },
+      delete: {
+        title: "Delete Customer",
+        confirm: "Are you sure you want to delete this customer? This action cannot be undone."
+      }
+    },
     form: {
       createTitle: "Create New Order",
       editTitle: "Edit Order",
@@ -150,6 +179,7 @@ export const translations = {
       dashboardTitle: "Tổng quan hệ thống",
       ordersTitle: "Quản lý đơn hàng",
       inventoryTitle: "Kho sản phẩm",
+      customersTitle: "Quản lý khách hàng",
       systemOp: "Hệ thống ổn định"
     },
     dashboard: {
@@ -222,6 +252,34 @@ export const translations = {
       active: "Hoạt động",
       inactive: "Ngừng bán",
       deleteConfirm: "Bạn có chắc chắn muốn xóa sản phẩm này không?"
+    },
+    customers: {
+      title: "Khách hàng",
+      add: "Thêm khách hàng",
+      search: "Tìm kiếm khách hàng...",
+      noData: "Không tìm thấy khách hàng.",
+      createFirst: "Thêm khách hàng đầu tiên",
+      table: {
+        name: "Khách hàng",
+        contact: "Liên hệ",
+        location: "Địa chỉ",
+        actions: "Thao tác"
+      },
+      form: {
+        addTitle: "Thêm khách hàng mới",
+        editTitle: "Sửa thông tin khách hàng",
+        name: "Họ và tên",
+        email: "Email",
+        phone: "Số điện thoại",
+        address: "Địa chỉ",
+        city: "Thành phố",
+        country: "Quốc gia",
+        save: "Lưu khách hàng"
+      },
+      delete: {
+        title: "Xóa khách hàng",
+        confirm: "Bạn có chắc chắn muốn xóa khách hàng này không? Hành động này không thể hoàn tác."
+      }
     },
     form: {
       createTitle: "Tạo đơn hàng mới",
