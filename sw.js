@@ -2,11 +2,14 @@ const CACHE_NAME = 'cucquy-offline-v1';
 const OFFLINE_URL = './offline.html';
 
 self.addEventListener('install', (event) => {
-  // Perform install steps: Cache the offline page
+  // Perform install steps: Cache the offline page and the icon
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // We explicitly fetch and cache the offline page
-      return cache.add(new Request(OFFLINE_URL, { cache: 'reload' }));
+      // We explicitly fetch and cache the offline page and the icon needed for the PWA install
+      return cache.addAll([
+        OFFLINE_URL,
+        './icon.svg'
+      ]);
     })
   );
   // Force the waiting service worker to become the active service worker
