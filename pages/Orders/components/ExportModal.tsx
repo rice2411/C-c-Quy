@@ -13,7 +13,7 @@ interface ExportModalProps {
 
 // Define available columns configuration
 const AVAILABLE_COLUMNS: ExportColumn[] = [
-  { id: 'id', label: 'Order ID', field: (o) => o.id },
+  { id: 'orderNumber', label: 'Order #', field: (o) => o.orderNumber || o.id },
   { id: 'date', label: 'Date', field: (o) => new Date(o.date).toLocaleDateString('vi-VN') },
   { id: 'customer', label: 'Customer Name', field: (o) => o.customer.name },
   { id: 'phone', label: 'Phone', field: (o) => `'${o.customer.phone}` }, // Add quote to force string in Excel
@@ -24,6 +24,8 @@ const AVAILABLE_COLUMNS: ExportColumn[] = [
   { id: 'total', label: 'Total', field: (o) => o.total },
   { id: 'status', label: 'Status', field: (o) => o.status },
   { id: 'payment', label: 'Payment Status', field: (o) => o.paymentStatus },
+  { id: 'paymentMethod', label: 'Payment Method', field: (o) => o.paymentMethod || '' },
+  { id: 'sepayId', label: 'Transaction ID', field: (o) => o.sepayId || '' },
   { id: 'notes', label: 'Notes', field: (o) => o.notes },
 ];
 
