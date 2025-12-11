@@ -6,6 +6,7 @@ import { CustomerProvider } from './contexts/CustomerContext';
 import Layout from './components/Layout';
 import DashboardPage from './pages/Dashboard/index';
 import OrdersPage from './pages/Orders/index';
+import TransactionsPage from './pages/Transactions/index';
 import InventoryPage from './pages/Inventory/index';
 import CustomersPage from './pages/Customers/index';
 import SettingsPage from './pages/Settings/index';
@@ -21,6 +22,7 @@ const App: React.FC = () => {
               <Route path="/" element={<Layout />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="orders" element={<OrdersPage />} />
+                <Route path="transactions" element={<TransactionsPage />} />
                 <Route path="inventory" element={<InventoryPage />} />
                 <Route path="customers" element={<CustomersPage />} />
                 <Route path="settings" element={<SettingsPage />} />

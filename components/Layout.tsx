@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Menu, Moon, Sun, Plus } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, Menu, Moon, Sun, ArrowRightLeft } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const Layout: React.FC = () => {
@@ -41,6 +41,7 @@ const Layout: React.FC = () => {
   const navItems = [
     { id: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
     { id: '/orders', label: t('nav.orders'), icon: ShoppingCart },
+    { id: '/transactions', label: t('nav.transactions'), icon: ArrowRightLeft },
     { id: '/inventory', label: t('nav.inventory'), icon: Package },
     { id: '/customers', label: t('nav.customers'), icon: Users },
     { id: '/settings', label: t('nav.settings'), icon: Settings, disabled: true },
@@ -49,6 +50,7 @@ const Layout: React.FC = () => {
   const getPageTitle = () => {
     if (location.pathname === '/') return t('header.dashboardTitle');
     if (location.pathname === '/orders') return t('header.ordersTitle');
+    if (location.pathname === '/transactions') return t('header.transactionsTitle');
     if (location.pathname === '/inventory') return t('header.inventoryTitle');
     if (location.pathname === '/customers') return t('header.customersTitle');
     return 'CucQuyBakery';

@@ -5,6 +5,7 @@ export const translations = {
       orders: "Orders",
       inventory: "Inventory",
       customers: "Customers",
+      transactions: "Transactions",
       settings: "Settings",
       signOut: "Sign Out",
       newOrder: "New Order",
@@ -15,6 +16,7 @@ export const translations = {
       ordersTitle: "Order Management",
       inventoryTitle: "Product Inventory",
       customersTitle: "Customer Management",
+      transactionsTitle: "Payment Transactions",
       systemOp: "System Operational"
     },
     dashboard: {
@@ -117,6 +119,19 @@ export const translations = {
         confirm: "Are you sure you want to delete this customer? This action cannot be undone."
       }
     },
+    transactions: {
+      title: "Transactions",
+      searchPlaceholder: "Search order #, content...",
+      noData: "No transactions found.",
+      table: {
+        date: "Date",
+        amount: "Amount",
+        orderNumber: "Order Ref",
+        content: "Content",
+        gateway: "Gateway",
+        account: "Account"
+      }
+    },
     form: {
       createTitle: "Create New Order",
       editTitle: "Edit Order",
@@ -170,6 +185,7 @@ export const translations = {
       orders: "Đơn hàng",
       inventory: "Kho hàng",
       customers: "Khách hàng",
+      transactions: "Giao dịch",
       settings: "Cài đặt",
       signOut: "Đăng xuất",
       newOrder: "Tạo đơn",
@@ -180,6 +196,7 @@ export const translations = {
       ordersTitle: "Quản lý đơn hàng",
       inventoryTitle: "Kho sản phẩm",
       customersTitle: "Quản lý khách hàng",
+      transactionsTitle: "Lịch sử giao dịch",
       systemOp: "Hệ thống ổn định"
     },
     dashboard: {
@@ -282,6 +299,19 @@ export const translations = {
         confirm: "Bạn có chắc chắn muốn xóa khách hàng này không? Hành động này không thể hoàn tác."
       }
     },
+    transactions: {
+      title: "Giao dịch",
+      searchPlaceholder: "Tìm mã đơn, nội dung...",
+      noData: "Chưa có giao dịch nào.",
+      table: {
+        date: "Ngày",
+        amount: "Số tiền",
+        orderNumber: "Mã đơn",
+        content: "Nội dung",
+        gateway: "Cổng TT",
+        account: "Tài khoản"
+      }
+    },
     form: {
       createTitle: "Tạo đơn hàng mới",
       editTitle: "Chỉnh sửa đơn hàng",
@@ -305,28 +335,28 @@ export const translations = {
       saveProduct: "Lưu sản phẩm"
     },
     detail: {
-      orderId: "Order #",
-      placedOn: "Placed on",
-      tabDetails: "Order Details",
-      tabAi: "AI Assistant",
-      customer: "Customer",
-      shippingAddress: "Shipping Address",
-      items: "Items",
-      subtotal: "Subtotal",
-      shipping: "Shipping",
-      total: "Total",
-      fulfillment: "Fulfillment",
-      tracking: "Tracking Number",
-      payment: "Payment Status",
-      notAssigned: "Not assigned",
-      close: "Close",
-      edit: "Edit Order",
-      aiIntro: "Use advanced AI to analyze this order, draft communications, or assess risk factors instantly.",
-      draftEmail: "Draft Email",
-      riskCheck: "Risk Check",
-      summarize: "Summarize",
-      copyClipboard: "Copy to Clipboard",
-      consulting: "Consulting Gemini..."
+      orderId: "Đơn hàng #",
+      placedOn: "Đặt lúc",
+      tabDetails: "Chi tiết đơn",
+      tabAi: "Trợ lý AI",
+      customer: "Khách hàng",
+      shippingAddress: "Địa chỉ nhận hàng",
+      items: "Sản phẩm",
+      subtotal: "Tiền hàng",
+      shipping: "Phí ship",
+      total: "Tổng cộng",
+      fulfillment: "Vận đơn",
+      tracking: "Mã vận đơn",
+      payment: "Thanh toán",
+      notAssigned: "Chưa có",
+      close: "Đóng",
+      edit: "Sửa đơn",
+      aiIntro: "Sử dụng AI nâng cao để phân tích đơn hàng, soạn email hoặc đánh giá rủi ro ngay lập tức.",
+      draftEmail: "Soạn Email",
+      riskCheck: "Kiểm tra rủi ro",
+      summarize: "Tóm tắt đơn",
+      copyClipboard: "Sao chép",
+      consulting: "Đang hỏi Gemini..."
     }
   }
 };

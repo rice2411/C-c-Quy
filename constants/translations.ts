@@ -6,6 +6,7 @@ export const translations = {
       orders: "Orders",
       inventory: "Inventory",
       customers: "Customers",
+      transactions: "Transactions",
       settings: "Settings",
       signOut: "Sign Out",
       newOrder: "New Order",
@@ -16,6 +17,7 @@ export const translations = {
       ordersTitle: "Order Management",
       inventoryTitle: "Product Inventory",
       customersTitle: "Customer Management",
+      transactionsTitle: "Payment Transactions",
       systemOp: "System Operational"
     },
     dashboard: {
@@ -118,6 +120,19 @@ export const translations = {
         confirm: "Are you sure you want to delete this customer? This action cannot be undone."
       }
     },
+    transactions: {
+      title: "Transactions",
+      searchPlaceholder: "Search order #, content...",
+      noData: "No transactions found.",
+      table: {
+        date: "Date",
+        amount: "Amount",
+        orderNumber: "Order Ref",
+        content: "Content",
+        gateway: "Gateway",
+        account: "Account"
+      }
+    },
     form: {
       createTitle: "Create New Order",
       editTitle: "Edit Order",
@@ -171,6 +186,7 @@ export const translations = {
       orders: "Đơn hàng",
       inventory: "Kho hàng",
       customers: "Khách hàng",
+      transactions: "Giao dịch",
       settings: "Cài đặt",
       signOut: "Đăng xuất",
       newOrder: "Tạo đơn",
@@ -181,6 +197,7 @@ export const translations = {
       ordersTitle: "Quản lý đơn hàng",
       inventoryTitle: "Kho sản phẩm",
       customersTitle: "Quản lý khách hàng",
+      transactionsTitle: "Lịch sử giao dịch",
       systemOp: "Hệ thống ổn định"
     },
     dashboard: {
@@ -281,6 +298,19 @@ export const translations = {
       delete: {
         title: "Xóa khách hàng",
         confirm: "Bạn có chắc chắn muốn xóa khách hàng này không? Hành động này không thể hoàn tác."
+      }
+    },
+    transactions: {
+      title: "Giao dịch",
+      searchPlaceholder: "Tìm mã đơn, nội dung...",
+      noData: "Chưa có giao dịch nào.",
+      table: {
+        date: "Ngày",
+        amount: "Số tiền",
+        orderNumber: "Mã đơn",
+        content: "Nội dung",
+        gateway: "Cổng TT",
+        account: "Tài khoản"
       }
     },
     form: {
