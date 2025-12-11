@@ -5,9 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build:api": "tsc -p tsconfig.api.json",
-    "build": "vite build && npm run build:api",
-    "start": "node dist-api/api/sepay/webhook.js",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
