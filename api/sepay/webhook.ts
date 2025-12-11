@@ -33,13 +33,13 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     
     // Khởi tạo Firebase trực tiếp trong webhook (vì import tương đối không hoạt động trên Vercel)
     const firebaseConfig = {
-      apiKey: "AIzaSyAQtMPqZE0A2XMM7bwikMW1EMlmDOdNip8",
-      authDomain: "tiembanhcucquy-75fe1.firebaseapp.com",
-      projectId: "tiembanhcucquy-75fe1",
-      storageBucket: "tiembanhcucquy-75fe1.firebasestorage.app",
-      messagingSenderId: "744823161157",
-      appId: "1:744823161157:web:695e5dbe4cca0de719fe2c",
-      measurementId: "G-6202LFPC63"
+      apiKey: process.env.FIREBASE_API_KEY,
+      authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.FIREBASE_APP_ID,
+      measurementId: process.env.FIREBASE_MEASUREMENT_ID
     };
     
     // Khởi tạo Firebase app (chỉ khởi tạo nếu chưa có)
@@ -52,6 +52,11 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     
     const db = firebaseFirestore.getFirestore(app);
     const { collection, addDoc, Timestamp } = firebaseFirestore;
+
+    const extractFormattedOrderCode = (str: string) => {
+      const match = str.match(/ORD\d+/);
+      return match ? match[0].replace(/ORD(\d+)/, "ORD-$1") : null;
+    }
 
     const transactionData = {
       sepayId: webhookData.id,
@@ -68,8 +73,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       description: webhookData.description || '',
       receivedAt: Timestamp.now(),
       createdAt: Timestamp.now(),
-    };
+      orderNumber: extractFormattedOrderCode(webhookData.description)
 
+    };
     const transactionsRef = collection(db, 'transaction');
     await addDoc(transactionsRef, transactionData);
 
