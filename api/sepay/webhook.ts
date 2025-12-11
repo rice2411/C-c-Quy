@@ -30,7 +30,14 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     // Import trực tiếp để tránh lỗi đường dẫn trên Vercel
     const firebaseApp = await import("firebase/app");
     const firebaseFirestore = await import("firebase/firestore");
-    const { PaymentStatus } = await import("../../types/enums");
+    
+    // Import enum từ thư mục gốc sử dụng đường dẫn tuyệt đối
+    // Cách này hoạt động trên cả local và Vercel
+    const path = await import("path");
+    const { pathToFileURL } = await import("url");
+    const enumsPath = path.join(process.cwd(), "types", "enums.ts");
+    const enumsUrl = pathToFileURL(enumsPath).href;
+    const { PaymentStatus } = await import(enumsUrl);
 
     // Khởi tạo Firebase trực tiếp trong webhook (vì import tương đối không hoạt động trên Vercel)
     const firebaseConfig = {
@@ -84,7 +91,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       createdAt: Timestamp.now(),
       orderNumber: extractFormattedOrderCode(webhookData.description),
     };
-    const transactionsRef = collection(db, "transaction");
+    const transactionsRef = collection(db, "transactions");
     await addDoc(transactionsRef, transactionData);
 
     const orderNumber = extractFormattedOrderCode(webhookData.description);
