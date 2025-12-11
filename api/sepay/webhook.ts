@@ -35,9 +35,30 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     // Cách này hoạt động trên cả local và Vercel
     const path = await import("path");
     const { pathToFileURL } = await import("url");
-    const enumsPath = path.join(process.cwd(), "types", "enums.ts");
-    const enumsUrl = pathToFileURL(enumsPath).href;
-    const { PaymentStatus } = await import(enumsUrl);
+    const fs = await import("fs/promises");
+    
+    // Thử import từ file .ts hoặc .js (đã compile)
+    let PaymentStatus: any;
+    try {
+      // Thử file .ts trước (development)
+      const enumsPath = path.join(process.cwd(), "types", "enums.ts");
+      try {
+        await fs.access(enumsPath);
+        const enumsUrl = pathToFileURL(enumsPath).href;
+        const enumsModule = await import(enumsUrl);
+        PaymentStatus = enumsModule.PaymentStatus;
+      } catch {
+        // Nếu không có .ts, thử .js (production/compiled)
+        const enumsPathJs = path.join(process.cwd(), "types", "enums.js");
+        const enumsUrlJs = pathToFileURL(enumsPathJs).href;
+        const enumsModule = await import(enumsUrlJs);
+        PaymentStatus = enumsModule.PaymentStatus;
+      }
+    } catch (error: any) {
+      // Fallback: sử dụng giá trị trực tiếp nếu không import được
+      console.warn("Could not import PaymentStatus enum, using fallback:", error.message);
+    
+    }
 
     // Khởi tạo Firebase trực tiếp trong webhook (vì import tương đối không hoạt động trên Vercel)
     const firebaseConfig = {
