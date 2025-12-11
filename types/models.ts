@@ -1,4 +1,4 @@
-import { OrderStatus, PaymentStatus } from './enums';
+import { OrderStatus, PaymentStatus, PaymentMethod } from './enums';
 
 export interface Customer {
   id: string;
@@ -21,12 +21,14 @@ export interface OrderItem {
 export interface Order {
   id: string;
   orderNumber?: string; // New human-readable ID (ORD-XXXXXX)
+  sepayId?: number; // Transaction ID from SePay
   customer: Customer;
   items: OrderItem[];
   total: number;
   shippingCost?: number;
   status: OrderStatus;
   paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod;
   date: string;
   trackingNumber?: string;
   notes?: string;

@@ -168,6 +168,8 @@ export const translations = {
       fulfillment: "Fulfillment",
       tracking: "Tracking Number",
       payment: "Payment Status",
+      paymentMethod: "Payment Method",
+      transactionNumber: "Transaction Number",
       notAssigned: "Not assigned",
       close: "Close",
       edit: "Edit Order",
@@ -177,6 +179,21 @@ export const translations = {
       summarize: "Summarize",
       copyClipboard: "Copy to Clipboard",
       consulting: "Consulting Gemini..."
+    },
+    paymentMethod: {
+      label: "Payment Method",
+      cash: "Cash",
+      banking: "Banking"
+    },
+    qr: {
+      sectionTitle: "Payment QR",
+      title: "Bank Transfer (VietQR)",
+      bank: "Bank",
+      account: "Account",
+      accountName: "Name",
+      amount: "Amount",
+      content: "Content",
+      instruction: "Scan with any banking app to pay."
     }
   },
   vi: {
@@ -348,6 +365,8 @@ export const translations = {
       fulfillment: "Vận đơn",
       tracking: "Mã vận đơn",
       payment: "Thanh toán",
+      paymentMethod: "Phương thức",
+      transactionNumber: "Mã giao dịch",
       notAssigned: "Chưa có",
       close: "Đóng",
       edit: "Sửa đơn",
@@ -357,6 +376,21 @@ export const translations = {
       summarize: "Tóm tắt đơn",
       copyClipboard: "Sao chép",
       consulting: "Đang hỏi Gemini..."
+    },
+    paymentMethod: {
+      label: "Phương thức",
+      cash: "Tiền mặt",
+      banking: "Chuyển khoản"
+    },
+    qr: {
+      sectionTitle: "Mã thanh toán",
+      title: "Chuyển khoản (VietQR)",
+      bank: "Ngân hàng",
+      account: "Số TK",
+      accountName: "Tên TK",
+      amount: "Số tiền",
+      content: "Nội dung",
+      instruction: "Quét mã bằng ứng dụng ngân hàng để thanh toán."
     }
   }
 };

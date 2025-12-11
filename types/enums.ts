@@ -13,6 +13,11 @@ export enum PaymentStatus {
   REFUNDED = 'Refunded'
 }
 
+export enum PaymentMethod {
+  CASH = 'Cash',
+  BANKING = 'Banking'
+}
+
 export enum ProductType {
   FAMILY = 'Family',
   FRIENDSHIP = 'Friendship',

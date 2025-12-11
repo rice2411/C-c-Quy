@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, AlertCircle, Hash, Loader2 } from 'lucide-react';
-import { Order, OrderStatus, PaymentStatus, ProductType } from '../../../types/index';
+import { Order, OrderStatus, PaymentStatus, PaymentMethod, ProductType } from '../../../types/index';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { getNextOrderNumber } from '../../../services/orderService';
 import OrderFormCustomerSection from './OrderFormCustomerSection';
@@ -42,6 +42,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
   const [note, setNote] = useState('');
   const [status, setStatus] = useState<OrderStatus>(OrderStatus.PENDING);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(PaymentStatus.UNPAID);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
 
   // Initialize Data
   useEffect(() => {
@@ -53,6 +54,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
       setNote(initialData.notes || '');
       setStatus(initialData.status);
       setPaymentStatus(initialData.paymentStatus || PaymentStatus.UNPAID);
+      setPaymentMethod(initialData.paymentMethod || PaymentMethod.CASH);
       setShippingCost(initialData.shippingCost || 0);
       
       if (initialData.items && initialData.items.length > 0) {
@@ -112,6 +114,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
       setShippingCost(0);
       setStatus(OrderStatus.PENDING);
       setPaymentStatus(PaymentStatus.UNPAID);
+      setPaymentMethod(PaymentMethod.CASH);
       
       setItems([{
          internalId: `new-${Date.now()}`,
@@ -211,7 +214,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
         total: total,
         notes: note,
         status: status,
-        paymentStatus: paymentStatus
+        paymentStatus: paymentStatus,
+        paymentMethod: paymentMethod
       };
 
       await onSave(formData);
@@ -285,6 +289,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
             <OrderFormStatusSection 
               status={status} setStatus={setStatus}
               paymentStatus={paymentStatus} setPaymentStatus={setPaymentStatus}
+              paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod}
               note={note} setNote={setNote}
               total={total}
               customerName={customerName}

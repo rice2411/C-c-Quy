@@ -1,6 +1,6 @@
 import { collection, getDocs, query, orderBy, addDoc, updateDoc, deleteDoc, doc, Timestamp, limit } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { Order, OrderStatus, PaymentStatus, ProductType, OrderItem, Customer } from '../types/index';
+import { Order, OrderStatus, PaymentStatus, PaymentMethod, ProductType, OrderItem, Customer } from '../types/index';
 import { DEFAULT_PRICES } from '../constants/index';
 
 export const fetchOrders = async (): Promise<Order[]> => {
@@ -50,6 +50,13 @@ export const fetchOrders = async (): Promise<Order[]> => {
          if (s === 'paid') return PaymentStatus.PAID;
          if (s === 'refunded') return PaymentStatus.REFUNDED;
          return PaymentStatus.UNPAID;
+      };
+
+      // Helper for Payment Method normalization
+      const getPaymentMethod = (val: any): PaymentMethod => {
+         const s = String(val || '').toLowerCase();
+         if (s === 'banking' || s === 'transfer' || s === 'chuyển khoản') return PaymentMethod.BANKING;
+         return PaymentMethod.CASH;
       };
 
       // Helper to generate a consistent image based on product type
@@ -129,13 +136,15 @@ export const fetchOrders = async (): Promise<Order[]> => {
 
       return {
         id: doc.id,
-        orderNumber: data.orderNumber, // Map new field
+        orderNumber: data.orderNumber,
+        sepayId: data.sepayId, 
         customer: customer,
         items: items,
         total: finalTotal, // Use calculated total
         shippingCost: shippingCost,
         status: mapStatus(data.status),
         paymentStatus: getPaymentStatus(data.paymentStatus),
+        paymentMethod: getPaymentMethod(data.paymentMethod),
         date: getDate(data.orderDate || data.createdAt),
         trackingNumber: data.trackingNumber,
         notes: data.note || data.notes || ''
@@ -186,6 +195,8 @@ export const addOrder = async (orderData: any): Promise<void> => {
     const payload = {
       // New Field
       orderNumber: orderNumber,
+      // sepayId is usually set by backend, but if provided (e.g. manual link), save it
+      sepayId: orderData.sepayId || null,
 
       // Legacy flat fields
       customerName: orderData.customer?.name || '',
@@ -211,7 +222,8 @@ export const addOrder = async (orderData: any): Promise<void> => {
       status: (orderData.status || 'pending').toLowerCase(),
       orderDate: Timestamp.now(),
       createdAt: Timestamp.now(),
-      paymentStatus: orderData.paymentStatus || 'Unpaid' 
+      paymentStatus: orderData.paymentStatus || 'Unpaid',
+      paymentMethod: orderData.paymentMethod || 'Cash'
     };
     await addDoc(ordersRef, payload);
   } catch (error) {
@@ -250,7 +262,10 @@ export const updateOrder = async (orderId: string, orderData: any): Promise<void
       total: orderData.total || 0,
       note: orderData.notes || '',
       status: (orderData.status || 'pending').toLowerCase(),
-      paymentStatus: orderData.paymentStatus || 'Unpaid'
+      paymentStatus: orderData.paymentStatus || 'Unpaid',
+      paymentMethod: orderData.paymentMethod || 'Cash',
+      // Preserve sepayId if it exists in update data, typically it might be updated by backend
+      ...(orderData.sepayId !== undefined && { sepayId: orderData.sepayId })
     };
     await updateDoc(orderRef, payload);
   } catch (error) {

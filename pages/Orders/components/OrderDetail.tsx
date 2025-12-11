@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, MapPin, Phone, Mail, Truck, CreditCard, Sparkles, AlertTriangle, FileText, QrCode, Copy } from 'lucide-react';
-import { Order, OrderItem } from '../../../types';
+import { X, MapPin, Phone, Mail, Truck, CreditCard, Sparkles, AlertTriangle, FileText, QrCode, Copy, Receipt, Wallet } from 'lucide-react';
+import { Order, OrderItem, PaymentMethod } from '../../../types';
 import { STATUS_COLORS } from '../../../constants';
 import { generateOrderAnalysis } from '../../../services/geminiService';
 import { useLanguage } from '../../../contexts/LanguageContext';
@@ -211,59 +211,82 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onEdit }) => 
                           {order.paymentStatus}
                         </span>
                       </div>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center gap-3">
+                          <Wallet className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                          <span className="text-sm text-slate-600 dark:text-slate-300">{t('detail.paymentMethod')}</span>
+                        </div>
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">
+                            {order.paymentMethod === PaymentMethod.BANKING ? t('paymentMethod.banking') : t('paymentMethod.cash')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center gap-3">
+                          <Receipt className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                          <span className="text-sm text-slate-600 dark:text-slate-300">{t('detail.transactionNumber')}</span>
+                        </div>
+                        <span className="text-sm font-mono font-medium text-slate-900 dark:text-white">
+                            {order.sepayId ? `#${order.sepayId}` : t('detail.notAssigned')}
+                        </span>
+                      </div>
                    </div>
                 </div>
 
-                {/* Payment QR Section */}
-                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
-                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">Payment QR</h3>
-                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
-                      <div className="shrink-0 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                          <img 
-                            src={qrUrl} 
-                            alt="Payment QR" 
-                            className="w-32 h-32 object-contain"
-                          />
-                      </div>
-                      
-                      <div className="flex-1 space-y-2 w-full text-center sm:text-left">
-                          <div className="flex items-center justify-center sm:justify-start gap-2 text-blue-800 dark:text-blue-300 font-semibold">
-                            <QrCode className="w-4 h-4" />
-                            <span>Bank Transfer (VietQR)</span>
-                          </div>
-                          
-                          <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
-                            <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
-                                <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">Bank</span>
-                                <span className="font-bold text-slate-800 dark:text-slate-200">BIDV</span>
+                {/* Payment QR Section - Show ONLY if Banking is selected */}
+                {order.paymentMethod === PaymentMethod.BANKING && (
+                  <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors animate-fade-in">
+                     <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('qr.sectionTitle')}</h3>
+                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+                        <div className="shrink-0 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
+                            <img 
+                              src={qrUrl} 
+                              alt="Payment QR" 
+                              className="w-32 h-32 object-contain"
+                            />
+                        </div>
+                        
+                        <div className="flex-1 space-y-2 w-full text-center sm:text-left">
+                            <div className="flex items-center justify-center sm:justify-start gap-2 text-blue-800 dark:text-blue-300 font-semibold">
+                              <QrCode className="w-4 h-4" />
+                              <span>{t('qr.title')}</span>
                             </div>
-                            <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 group cursor-pointer" onClick={() => copyToClipboard('96247HTTH1308')}>
-                                <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">Account</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">96247HTTH1308</span>
-                                  <Copy className="w-3 h-3 text-slate-400 group-hover:text-blue-500" />
-                                </div>
+                            
+                            <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                              <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
+                                  <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.bank')}</span>
+                                  <span className="font-bold text-slate-800 dark:text-slate-200">BIDV</span>
+                              </div>
+                              <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 group cursor-pointer" onClick={() => copyToClipboard('96247HTTH1308')}>
+                                  <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.account')}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">96247HTTH1308</span>
+                                    <Copy className="w-3 h-3 text-slate-400 group-hover:text-blue-500" />
+                                  </div>
+                              </div>
+                              <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
+                                  <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.accountName')}</span>
+                                  <span className="font-bold text-slate-800 dark:text-slate-200 uppercase">TON THAT ANH MINH</span>
+                              </div>
+                              <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
+                                  <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.amount')}</span>
+                                  <span className="font-bold text-orange-600 dark:text-orange-400">
+                                    {formatVND(finalTotal)}
+                                  </span>
+                              </div>
+                              <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
+                                  <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.content')}</span>
+                                  <span className="font-bold text-slate-800 dark:text-slate-200 break-all">
+                                    {description}
+                                  </span>
+                              </div>
                             </div>
-                            <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
-                                <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">Name</span>
-                                <span className="font-bold text-slate-800 dark:text-slate-200 uppercase">TON THAT ANH MINH</span>
-                            </div>
-                            <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
-                                <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">Amount</span>
-                                <span className="font-bold text-orange-600 dark:text-orange-400">
-                                  {formatVND(finalTotal)}
-                                </span>
-                            </div>
-                            <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
-                                <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">Content</span>
-                                <span className="font-bold text-slate-800 dark:text-slate-200 break-all">
-                                  {description}
-                                </span>
-                            </div>
-                          </div>
-                      </div>
-                   </div>
-                </div>
+                            <p className="text-[10px] text-slate-400 mt-2">
+                               {t('qr.instruction')}
+                            </p>
+                        </div>
+                     </div>
+                  </div>
+                )}
 
               </div>
             ) : (

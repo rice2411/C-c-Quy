@@ -1,6 +1,6 @@
 import React from 'react';
-import { StickyNote, CreditCard, QrCode, Copy } from 'lucide-react';
-import { OrderStatus, PaymentStatus } from '../../../types';
+import { StickyNote, CreditCard, QrCode, Copy, Wallet } from 'lucide-react';
+import { OrderStatus, PaymentStatus, PaymentMethod } from '../../../types';
 import { useLanguage } from '../../../contexts/LanguageContext';
 
 interface OrderStatusSectionProps {
@@ -8,6 +8,8 @@ interface OrderStatusSectionProps {
   setStatus: (val: OrderStatus) => void;
   paymentStatus: PaymentStatus;
   setPaymentStatus: (val: PaymentStatus) => void;
+  paymentMethod: PaymentMethod;
+  setPaymentMethod: (val: PaymentMethod) => void;
   note: string;
   setNote: (val: string) => void;
   total: number;
@@ -18,6 +20,7 @@ interface OrderStatusSectionProps {
 const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
   status, setStatus,
   paymentStatus, setPaymentStatus,
+  paymentMethod, setPaymentMethod,
   note, setNote,
   total,
   customerName,
@@ -63,6 +66,21 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             </div>
          </div>
       </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('paymentMethod.label')}</label>
+        <div className="relative">
+            <Wallet className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+            <select 
+              value={paymentMethod}
+              onChange={e => setPaymentMethod(e.target.value as PaymentMethod)}
+              className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+            >
+              <option value={PaymentMethod.CASH}>{t('paymentMethod.cash')}</option>
+              <option value={PaymentMethod.BANKING}>{t('paymentMethod.banking')}</option>
+            </select>
+        </div>
+      </div>
       
       <div>
          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('form.notes')}</label>
@@ -78,9 +96,9 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
          </div>
       </div>
 
-      {/* Payment QR Section */}
-      {total > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
+      {/* Payment QR Section - Only if Banking selected and Amount > 0 */}
+      {total > 0 && paymentMethod === PaymentMethod.BANKING && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start animate-fade-in">
            <div className="shrink-0 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
               <img 
                 src={qrUrl} 
@@ -92,40 +110,40 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
            <div className="flex-1 space-y-2 w-full text-center sm:text-left">
               <div className="flex items-center justify-center sm:justify-start gap-2 text-blue-800 dark:text-blue-300 font-semibold">
                  <QrCode className="w-4 h-4" />
-                 <span>Bank Transfer (VietQR)</span>
+                 <span>{t('qr.title')}</span>
               </div>
               
               <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
                  <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
-                    <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">Bank</span>
+                    <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.bank')}</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">BIDV</span>
                  </div>
                  <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 group cursor-pointer" onClick={() => copyToClipboard('96247HTTH1308')}>
-                    <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">Account</span>
+                    <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.account')}</span>
                     <div className="flex items-center gap-2">
                        <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">96247HTTH1308</span>
                        <Copy className="w-3 h-3 text-slate-400 group-hover:text-blue-500" />
                     </div>
                  </div>
                  <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
-                    <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">Name</span>
+                    <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.accountName')}</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200 uppercase">TON THAT ANH MINH</span>
                  </div>
                  <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
-                    <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">Amount</span>
+                    <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.amount')}</span>
                     <span className="font-bold text-orange-600 dark:text-orange-400">
                       {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}
                     </span>
                  </div>
                  <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
-                    <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">Content</span>
+                    <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.content')}</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200 break-all">
                       {description}
                     </span>
                  </div>
               </div>
               <p className="text-[10px] text-slate-400 mt-2">
-                 Scan with any banking app to pay.
+                 {t('qr.instruction')}
               </p>
            </div>
         </div>
