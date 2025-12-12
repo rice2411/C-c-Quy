@@ -21,7 +21,7 @@ export const sendMessageToGroup = async (order: any) => {
 
   // Tạo message hoàn chỉnh
   const message = `
-📦 *ĐƠN HÀNG MỚI* Tháng ${currentMonth} năm ${currentYear}
+📦 == ĐƠN HÀNG MỚI ${currentMonth}/${currentYear} == \n
 🆔 Mã đơn: ${order.orderNumber}
 🕒 Ngày đặt: ${orderDate}
 👤 Khách hàng: ${order.customer.name || '(không có)'}
@@ -30,14 +30,12 @@ export const sendMessageToGroup = async (order: any) => {
 
 💵 Phương thức thanh toán: ${order.paymentMethod}
 💰 Phí ship: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.shippingCost || 0)}
-💰 Tổng thanh toán: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.total)}
 💬 Ghi chú: ${order.notes || '(không có)'}
 
 💰 Tổng tiền: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.total)}
 💳 Trạng thái thanh toán: ${order.paymentStatus}
 📦 Trạng thái đơn hàng: ${order.status}
 
-✅ Vui lòng xử lý đơn hàng kịp thời!
 `;
 
   try {

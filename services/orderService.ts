@@ -226,7 +226,7 @@ export const addOrder = async (orderData: any): Promise<void> => {
       paymentStatus: orderData.paymentStatus || 'Unpaid',
       paymentMethod: orderData.paymentMethod || 'Cash'
     };
-    //  await addDoc(ordersRef, payload);
+     await addDoc(ordersRef, payload);
     await sendMessageToGroup(payload as any);
   } catch (error) {
     console.error("Error adding order:", error);
