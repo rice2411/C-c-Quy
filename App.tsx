@@ -11,8 +11,11 @@ import TransactionsPage from './pages/Transactions/index';
 import InventoryPage from './pages/Inventory/index';
 import CustomersPage from './pages/Customers/index';
 import SettingsPage from './pages/Settings/index';
+import { requestPermission } from './notification/requestNotification';
+
 
 const App: React.FC = () => {
+  requestPermission();
   return (
     <OfflineDetector>
       <HashRouter>

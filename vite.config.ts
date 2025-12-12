@@ -67,6 +67,7 @@ export default defineConfig(({ mode }) => {
       "process.env.FIREBASE_MEASUREMENT_ID": JSON.stringify(
         env.FIREBASE_MEASUREMENT_ID
       ),
+      "process.env.FIREBASE_VAPID_KEY": JSON.stringify(env.FIREBASE_VAPID_KEY),
     },
     resolve: {
       alias: {
