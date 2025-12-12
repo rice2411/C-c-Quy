@@ -1,18 +1,18 @@
-import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { LanguageProvider } from './contexts/LanguageContext';
-import { OrderProvider } from './contexts/OrderContext';
-import { CustomerProvider } from './contexts/CustomerContext';
-import OfflineDetector from './components/OfflineDetector';
-import Layout from './components/Layout';
-import DashboardPage from './pages/Dashboard/index';
-import OrdersPage from './pages/Orders/index';
-import TransactionsPage from './pages/Transactions/index';
-import InventoryPage from './pages/Inventory/index';
-import CustomersPage from './pages/Customers/index';
-import SettingsPage from './pages/Settings/index';
-import { requestPermission } from './notification/requestNotification';
-
+import React from "react";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import { LanguageProvider } from "./contexts/LanguageContext";
+import { OrderProvider } from "./contexts/OrderContext";
+import { CustomerProvider } from "./contexts/CustomerContext";
+import OfflineDetector from "./components/OfflineDetector";
+import Layout from "./components/Layout";
+import DashboardPage from "./pages/Dashboard/index";
+import OrdersPage from "./pages/Orders/index";
+import TransactionsPage from "./pages/Transactions/index";
+import InventoryPage from "./pages/Inventory/index";
+import CustomersPage from "./pages/Customers/index";
+import SettingsPage from "./pages/Settings/index";
+import { requestPermission } from "./notification/requestNotification";
+import { Toaster } from "react-hot-toast";
 
 const App: React.FC = () => {
   requestPermission();
@@ -37,6 +37,7 @@ const App: React.FC = () => {
           </OrderProvider>
         </LanguageProvider>
       </HashRouter>
+      <Toaster position="top-center" reverseOrder={false} />
     </OfflineDetector>
   );
 };
