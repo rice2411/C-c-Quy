@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings, Menu, ArrowRightLeft, Archive, LogOut, UserCog } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { getAccessibleRoutes } from '../config/routes';
+import { getUserFromLocalStorage } from '../utils/userStorage';
 import ThemeToggle from './ThemeToggle';
 import toast from 'react-hot-toast';
 
 const Layout: React.FC = () => {
   const { t, language, setLanguage } = useLanguage();
-  const { currentUser, logout } = useAuth();
+  const { currentUser, userData, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -28,16 +30,21 @@ const Layout: React.FC = () => {
     }
   };
 
-  const navItems = [
-    { id: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
-    { id: '/orders', label: t('nav.orders'), icon: ShoppingCart },
-    { id: '/transactions', label: t('nav.transactions'), icon: ArrowRightLeft },
-    { id: '/inventory', label: t('nav.inventory'), icon: Package },
-    { id: '/storage', label: t('nav.storage'), icon: Archive },
-    { id: '/customers', label: t('nav.customers'), icon: Users },
-    { id: '/users', label: t('nav.users'), icon: UserCog },
-    { id: '/settings', label: t('nav.settings'), icon: Settings, disabled: true },
-  ];
+  // Lấy danh sách routes mà user có quyền truy cập dựa trên role
+  // Fallback: Nếu chưa có userData, load từ localStorage
+  const storedUser = React.useMemo(() => getUserFromLocalStorage(), []);
+  const userRole = userData?.role || storedUser?.role;
+  
+  
+  const accessibleRoutes = getAccessibleRoutes(userRole);
+  
+  // Map routes config thành navItems với translation
+  const navItems = accessibleRoutes.map(route => ({
+    id: route.path,
+    label: t(route.labelKey),
+    icon: route.icon,
+    disabled: route.disabled
+  }));
 
   const getPageTitle = () => {
     if (location.pathname === '/') return t('header.dashboardTitle');

@@ -256,7 +256,7 @@ const UsersPage: React.FC = () => {
                       <div className="flex items-center justify-end gap-2">
                         {user.status === 'pending' && (
                           <button
-                            onClick={() => handleStatusChange(user.uid, 'active')}
+                            onClick={() => handleStatusChange(user.uid, UserStatus.ACTIVE)}
                             className="px-3 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"
                           >
                             {t('users.actions.approve')}
@@ -264,7 +264,7 @@ const UsersPage: React.FC = () => {
                         )}
                         {user.status === 'active' && (
                           <button
-                            onClick={() => handleStatusChange(user.uid, 'inactive')}
+                            onClick={() => handleStatusChange(user.uid, UserStatus.INACTIVE)}
                             className="px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                           >
                             {t('users.actions.deactivate')}
@@ -272,7 +272,7 @@ const UsersPage: React.FC = () => {
                         )}
                         {user.status === 'inactive' && (
                           <button
-                            onClick={() => handleStatusChange(user.uid, 'active')}
+                            onClick={() => handleStatusChange(user.uid, UserStatus.ACTIVE)}
                             className="px-3 py-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"
                           >
                             {t('users.actions.activate')}

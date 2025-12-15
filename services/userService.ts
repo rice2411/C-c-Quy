@@ -1,7 +1,7 @@
 import { doc, setDoc, getDoc, Timestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { db } from '../config/firebase';
-import { UserData, UserStatus } from '../types/user';
+import { UserData, UserRole, UserStatus } from '../types/user';
 
 /**
  * Kiểm tra xem user với email đã tồn tại trong Firestore chưa
@@ -87,9 +87,10 @@ export const saveUserToFirestore = async (user: User): Promise<UserData> => {
       email: user.email,
       displayName: user.displayName,
       photoURL: user.photoURL,
-      status: 'pending', // Mặc định là pending, cần admin phê duyệt
+      status: UserStatus.PENDING, // Mặc định là pending, cần admin phê duyệt
       createdAt: now,
-      lastLoginAt: now
+      lastLoginAt: now,
+      role: UserRole.COLABORATOR,
     };
 
     await setDoc(userRef, userData);

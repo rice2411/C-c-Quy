@@ -4,9 +4,11 @@ import { auth } from '../config/firebase';
 import { saveUserToFirestore, getUserByUid } from '../services/userService';
 import { saveUserToLocalStorage, getUserFromLocalStorage, addAccountToHistory, removeUserFromLocalStorage } from '../utils/userStorage';
 import toast from 'react-hot-toast';
+import { UserStatus, UserData, UserRole } from '@/types/user';
 
 interface AuthContextType {
   currentUser: User | null;
+  userData: UserData | null; // User data từ Firestore (có role)
   loading: boolean;
   logout: () => Promise<void>;
 }
@@ -23,15 +25,18 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Đọc user từ localStorage khi khởi động (để tránh flash của login page)
-    const cachedUser = getUserFromLocalStorage();
-    if (cachedUser) {
+    const cachedUserData = getUserFromLocalStorage();
+    if (cachedUserData) {
+      // Set userData ngay từ localStorage
+      setUserData(cachedUserData as UserData);
       // Tạo một object tạm thời giống User để set vào state
       // Firebase Auth sẽ sync lại sau
-      setCurrentUser(cachedUser as any);
+      setCurrentUser(cachedUserData as any);
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -42,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // Kiểm tra status của user sau khi lưu
           const currentUserData = await getUserByUid(user.uid);
-          if (currentUserData && currentUserData.status !== 'active') {
+          if (currentUserData && currentUserData.status !== UserStatus.ACTIVE) {
             // Nếu user chưa được phê duyệt, logout và hiển thị thông báo
             await firebaseSignOut(auth);
             removeUserFromLocalStorage();
@@ -54,8 +59,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // Chỉ lưu vào localStorage và history nếu status là active
           if (currentUserData?.status === 'active') {
-            saveUserToLocalStorage(user);
-            addAccountToHistory(user);
+            saveUserToLocalStorage(currentUserData);
+            addAccountToHistory(currentUserData);
+            setUserData(currentUserData);
           }
         } catch (error) {
           console.error('Failed to save user to Firestore:', error);
@@ -64,6 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         // Xóa khỏi localStorage khi logout
         saveUserToLocalStorage(null);
+        setUserData(null);
       }
       setCurrentUser(user);
       setLoading(false);
@@ -77,8 +84,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return firebaseSignOut(auth);
   };
 
+  // Load userData từ localStorage khi component mount
+  useEffect(() => {
+    const cachedUserData = getUserFromLocalStorage();
+    if (cachedUserData) {
+      setUserData(cachedUserData);
+    }
+  }, []);
+
   const value = {
     currentUser,
+    userData,
     loading,
     logout
   };
