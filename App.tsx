@@ -20,18 +20,6 @@ import LoginPage from "./pages/Login/index";
 import { routes } from "./config/routes";
 import { Toaster } from "react-hot-toast";
 
-// Map routes to components
-const routeComponents: Record<string, React.ComponentType> = {
-  '/': DashboardPage,
-  '/orders': OrdersPage,
-  '/transactions': TransactionsPage,
-  '/inventory': InventoryPage,
-  '/storage': StoragePage,
-  '/customers': CustomersPage,
-  '/users': UsersPage,
-  '/settings': SettingsPage,
-};
-
 const App: React.FC = () => {
   return (
     <OfflineDetector>
@@ -95,7 +83,33 @@ const App: React.FC = () => {
           </LanguageProvider>
         </AuthProvider>
       </HashRouter>
-      <Toaster position="top-center" reverseOrder={false} />
+      {/* Global toast configuration - match project color palette & support dark/light mode */}
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 3000,
+          className:
+            "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 shadow-lg rounded-xl text-sm px-4 py-3",
+          // Default icon color (info)
+          iconTheme: {
+            primary: "#ea580c", // orange-600
+            secondary: "#ffffff",
+          },
+          success: {
+            iconTheme: {
+              primary: "#16a34a", // emerald-600
+              secondary: "#ffffff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#dc2626", // red-600
+              secondary: "#ffffff",
+            },
+          },
+        }}
+      />
     </OfflineDetector>
   );
 };
