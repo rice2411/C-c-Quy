@@ -34,6 +34,7 @@ export const getUserByEmail = async (email: string | null): Promise<UserData | n
  * @returns UserData nếu tồn tại, null nếu không
  */
 export const getUserByUid = async (uid: string): Promise<UserData | null> => {
+  if (!uid) return null;
   try {
     const userRef = doc(db, 'users', uid);
     const userSnap = await getDoc(userRef);

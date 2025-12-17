@@ -1,5 +1,9 @@
 export const translations = {
   en: {
+    common: {
+      apply: "Apply",
+      cancel: "Cancel"
+    },
     nav: {
       dashboard: "Dashboard",
       orders: "Orders",
@@ -46,6 +50,9 @@ export const translations = {
       recent: "Recent Orders",
       searchPlaceholder: "Search ID or Customer...",
       filterProductPlaceholder: "Filter product...",
+      filters: "Filters",
+      fromDate: "From date",
+      toDate: "To date",
       startDate: "Start Month",
       endDate: "End Month",
       allMonths: "All Months",
@@ -375,6 +382,10 @@ export const translations = {
     }
   },
   vi: {
+    common: {
+      apply: "Áp dụng",
+      cancel: "Hủy"
+    },
     nav: {
       dashboard: "Tổng quan",
       orders: "Đơn hàng",
@@ -421,6 +432,9 @@ export const translations = {
       recent: "Đơn hàng gần đây",
       searchPlaceholder: "Tìm ID hoặc Khách hàng...",
       filterProductPlaceholder: "Lọc theo sản phẩm...",
+      filters: "Bộ lọc",
+      fromDate: "Từ ngày",
+      toDate: "Đến ngày",
       startDate: "Tháng bắt đầu",
       endDate: "Tháng kết thúc",
       allMonths: "Tất cả các tháng",

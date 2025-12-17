@@ -16,19 +16,6 @@ const OfflineDetector: React.FC<{ children: React.ReactNode }> = ({
         window.location.href = "/offline.html";
         return;
       }
-
-      // Kiểm tra kết nối thực sự bằng cách fetch một file nhỏ
-      try {
-        await fetch("/metadata.json", {
-          method: "HEAD",
-          cache: "no-cache",
-          mode: "no-cors",
-        });
-        setIsOffline(false);
-      } catch (error) {
-        setIsOffline(true);
-        window.location.href = "/offline.html";
-      }
     };
 
     checkOnlineStatus();
@@ -38,8 +25,7 @@ const OfflineDetector: React.FC<{ children: React.ReactNode }> = ({
       setIsOffline(false);
       // Nếu đang ở offline page, reload về trang chính với cache busting
       if (window.location.pathname.includes("offline.html")) {
-        const timestamp = Date.now();
-        window.location.replace('/?t=' + timestamp + '&_sw-bypass=true');
+        window.location.replace('/');
       }
     };
 
@@ -58,11 +44,7 @@ const OfflineDetector: React.FC<{ children: React.ReactNode }> = ({
     const checkInterval = setInterval(async () => {
       if (navigator.onLine) {
         try {
-          await fetch("/manifest.json", {
-            method: "HEAD",
-            cache: "no-cache",
-            mode: "no-cors",
-          });
+     
           if (isOffline) {
             setIsOffline(false);
           }
