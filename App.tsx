@@ -12,7 +12,6 @@ import DashboardPage from "./pages/Dashboard/index";
 import OrdersPage from "./pages/Orders/index";
 import TransactionsPage from "./pages/Transactions/index";
 import InventoryPage from "./pages/Inventory/index";
-import StoragePage from "./pages/Storage/index";
 import CustomersPage from "./pages/Customers/index";
 import UsersPage from "./pages/Users/index";
 import SettingsPage from "./pages/Settings/index";
@@ -53,11 +52,6 @@ const App: React.FC = () => {
                     <Route path="inventory" element={
                       <RoleBasedRoute requiredRole={routes.find(r => r.path === '/inventory')?.roles}>
                         <InventoryPage />
-                      </RoleBasedRoute>
-                    } />
-                    <Route path="storage" element={
-                      <RoleBasedRoute requiredRole={routes.find(r => r.path === '/storage')?.roles}>
-                        <StoragePage />
                       </RoleBasedRoute>
                     } />
                     <Route path="customers" element={

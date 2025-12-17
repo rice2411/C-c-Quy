@@ -1,5 +1,5 @@
 import { UserRole } from '@/types/user';
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings, ArrowRightLeft, Archive, UserCog } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, Users, Settings, ArrowRightLeft, UserCog } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 
 export interface RouteConfig {
@@ -36,12 +36,6 @@ export const routes: RouteConfig[] = [
     path: '/inventory',
     labelKey: 'nav.inventory',
     icon: Package,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN]
-  },
-  {
-    path: '/storage',
-    labelKey: 'nav.storage',
-    icon: Archive,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN]
   },
   {

@@ -16,7 +16,7 @@ const DashboardPage: React.FC = () => {
   const [loadingInsight, setLoadingInsight] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>('week');
   const [referenceDate, setReferenceDate] = useState<Date>(new Date());
-  
+
   const isDarkMode = document.documentElement.classList.contains('dark');
 
   useEffect(() => {
@@ -77,12 +77,12 @@ const DashboardPage: React.FC = () => {
 
   const metrics = useMemo(() => {
     const currentOrders = orders.filter(o => {
-      const d = new Date(o.date);
+      const d = new Date(o.createdAt.toDate());
       return d >= startDate && d <= endDate;
     });
 
     const prevOrders = orders.filter(o => {
-      const d = new Date(o.date);
+      const d = new Date(o.createdAt.toDate());
       return d >= prevStartDate && d <= prevEndDate;
     });
 
@@ -93,7 +93,6 @@ const DashboardPage: React.FC = () => {
     const currentAvg = currentOrders.length > 0 ? currentRevenue / currentOrders.length : 0;
     const prevAvg = prevOrders.length > 0 ? prevRevenue / prevOrders.length : 0;
     const avgChange = prevAvg === 0 ? (currentAvg > 0 ? 100 : 0) : ((currentAvg - prevAvg) / prevAvg) * 100;
-
     return {
       revenue: currentRevenue,
       revenueChange,
@@ -152,7 +151,7 @@ const DashboardPage: React.FC = () => {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todayOrders = orders.filter(o => {
-      const d = new Date(o.date);
+      const d = new Date(o.createdAt.toDate());
       return d >= startOfDay;
     });
     return { newOrdersToday: todayOrders.length };
@@ -177,12 +176,12 @@ const DashboardPage: React.FC = () => {
     }
 
     const filtered = orders.filter(order => {
-      const d = new Date(order.date);
+      const d = new Date(order.createdAt.toDate());
       return d >= startDate && d <= endDate;
     });
 
     filtered.forEach(order => {
-      const date = new Date(order.date);
+      const date = new Date(order.createdAt.toDate());
       let key = '';
       if (timeRange === 'year') {
         key = date.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', year: 'numeric' });

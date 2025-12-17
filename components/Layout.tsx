@@ -51,7 +51,6 @@ const Layout: React.FC = () => {
     if (location.pathname === '/orders') return t('header.ordersTitle');
     if (location.pathname === '/transactions') return t('header.transactionsTitle');
     if (location.pathname === '/inventory') return t('header.inventoryTitle');
-    if (location.pathname === '/storage') return t('header.storageTitle');
     if (location.pathname === '/customers') return t('header.customersTitle');
     if (location.pathname === '/users') return t('header.usersTitle');
     return 'CucQuyBakery';
