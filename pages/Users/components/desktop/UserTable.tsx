@@ -1,8 +1,8 @@
 import React from 'react';
 import { CheckCircle, XCircle, Edit2 } from 'lucide-react';
-import { useLanguage } from '../../../../contexts/LanguageContext';
-import { UserData, UserStatus, UserRole } from '../../../../types/user';
-import { StatusBadge, RoleBadge } from '../UserBadges';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { UserData, UserStatus, UserRole } from '@/types/user';
+import { StatusBadge, RoleBadge } from '@/pages/Users/components/UserBadges';
 
 interface UserTableProps {
   users: UserData[];

@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx-js-style';
-import { Order } from '../types';
+import { Order } from '@types';
 
 export interface ExportColumn {
   id: string;

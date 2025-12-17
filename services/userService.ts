@@ -1,7 +1,7 @@
 import { doc, setDoc, getDoc, Timestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { User } from 'firebase/auth';
-import { db } from '../config/firebase';
-import { UserData, UserRole, UserStatus } from '../types/user';
+import { db } from '@/config/firebase';
+import { UserData, UserRole, UserStatus } from '@/types/user';
 
 /**
  * Kiểm tra xem user với email đã tồn tại trong Firestore chưa

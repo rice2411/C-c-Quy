@@ -1,4 +1,4 @@
-import { UserRole } from '../types/user';
+import { UserRole } from '@/types/user';
 import { LayoutDashboard, ShoppingCart, Package, Users, Settings, ArrowRightLeft, Archive, UserCog } from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
 

@@ -11,8 +11,8 @@ import {
   orderBy, 
   where
 } from 'firebase/firestore';
-import { db } from '../config/firebase';
-import { Ingredient, ImportRecord, InventoryRecord, IngredientWithStats } from '../types';
+import { db } from '@/config/firebase';
+import { Ingredient, ImportRecord, InventoryRecord, IngredientWithStats } from '@/types/ingredient';
 
 /**
  * Fetch all ingredients with calculated stats from history

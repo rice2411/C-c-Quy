@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Loader2 } from 'lucide-react';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { UserData, UserStatus, UserRole } from '../../types/user';
-import { getAllUsers, updateUserStatus, updateUserCustomName, updateUserRole } from '../../services/userService';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { UserData, UserStatus, UserRole } from '@/types/user';
+import { getAllUsers, updateUserStatus, updateUserCustomName, updateUserRole } from '@/services/userService';
 import toast from 'react-hot-toast';
 import UserStats from './components/UserStats';
 import UserFilters from './components/UserFilters';

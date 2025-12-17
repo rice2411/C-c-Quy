@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Package, Plus, Search, Edit2, Trash2, Loader2, AlertTriangle, Archive, Import, ClipboardCheck, History } from 'lucide-react';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { IngredientWithStats } from '../../types';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { IngredientWithStats } from '@/types';
 import { 
   fetchIngredients, 
   addIngredient, 
@@ -9,13 +9,13 @@ import {
   deleteIngredient,
   addImportRecord,
   addInventoryRecord
-} from '../../services/ingredientService';
+} from '@/services/ingredientService';
 import IngredientForm from './components/IngredientForm';
 import ImportForm from './components/ImportForm';
 import InventoryForm from './components/InventoryForm';
 import HistoryModal from './components/HistoryModal';
 import LowStockModal from './components/LowStockModal';
-import ConfirmModal from '../../components/ConfirmModal';
+import ConfirmModal from '@/components/ConfirmModal';  
 
 const StoragePage: React.FC = () => {
   const { t } = useLanguage();

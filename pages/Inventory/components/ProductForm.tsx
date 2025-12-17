@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Image, Tag, DollarSign, AlignLeft, AlertCircle } from 'lucide-react';
-import { Product } from '../../../types';
-import { useLanguage } from '../../../contexts/LanguageContext';
+import { Product } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ProductFormProps {
   initialData?: Product | null;

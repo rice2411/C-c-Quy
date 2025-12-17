@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Package, Plus, Search, Edit2, Trash2, Tag, Loader2 } from 'lucide-react';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { Product } from '../../types';
-import { fetchProducts, addProduct, updateProduct, deleteProduct } from '../../services/productService';
-import ProductForm from './components/ProductForm';
-import ConfirmModal from '../../components/ConfirmModal';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Product } from '@/types';
+import { fetchProducts, addProduct, updateProduct, deleteProduct } from '@/services/productService';
+import ProductForm from '@/pages/Inventory/components/ProductForm';
+import ConfirmModal from '@/components/ConfirmModal';
 
 const InventoryPage: React.FC = () => {
   const { t } = useLanguage();

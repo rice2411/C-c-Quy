@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, AlertCircle, Hash, Loader2 } from 'lucide-react';
-import { Order, OrderStatus, PaymentStatus, PaymentMethod, Product } from '../../../types/index';
-import { useLanguage } from '../../../contexts/LanguageContext';
-import { useAuth } from '../../../contexts/AuthContext';
-import { getUserByUid } from '../../../services/userService';
-import { getNextOrderNumber } from '../../../services/orderService';
-import { fetchProducts } from '../../../services/productService';
+import { X, Save, AlertCircle, Hash, Loader2, Calendar, Clock } from 'lucide-react';
+import { Order, OrderStatus, PaymentStatus, PaymentMethod, Product } from '@/types/index';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { getUserByUid } from '@/services/userService';
+import { getNextOrderNumber } from '@/services/orderService';
+import { fetchProducts } from '@/services/productService';
 import OrderFormCustomerSection from './OrderFormCustomerSection';
 import OrderFormItemsSection from './OrderFormItemsSection';
 import OrderFormStatusSection from './OrderFormStatusSection';
@@ -45,6 +45,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
   const [status, setStatus] = useState<OrderStatus>(OrderStatus.PENDING);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(PaymentStatus.UNPAID);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
+  const [deliveryDate, setDeliveryDate] = useState<string>('');
+  const [deliveryTime, setDeliveryTime] = useState<string>('');
+  const [isDeliveryTimeEnabled, setIsDeliveryTimeEnabled] = useState<boolean>(false);
 
   // Load products from inventory
   useEffect(() => {
@@ -66,6 +69,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
       setCustomerName(initialData.customer.name);
       setPhone(initialData.customer.phone);
       setAddress(initialData.customer.address);
+      setDeliveryDate(initialData.deliveryDate || '');
+      setDeliveryTime(initialData.deliveryTime || '');
+      setIsDeliveryTimeEnabled(!!initialData.deliveryTime);
       setNote(initialData.note || '');
       setStatus(initialData.status);
       setPaymentStatus(initialData.paymentStatus || PaymentStatus.UNPAID);
@@ -112,6 +118,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
       setPhone('');
       setAddress('');
       setNote('');
+      setDeliveryDate('');
+      setDeliveryTime('');
+      setIsDeliveryTimeEnabled(false);
       setShippingCost(0);
       setStatus(OrderStatus.PENDING);
       setPaymentStatus(PaymentStatus.UNPAID);
@@ -217,20 +226,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
          };
       });
 
-      // Lấy thông tin người tạo đơn
-      let creatorName = '';
-      if (currentUser) {
-        try {
-          const userData = await getUserByUid(currentUser.uid);
-          // Ưu tiên customName, nếu không có thì dùng email
-          creatorName = userData?.customName || currentUser.email || '';
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          // Fallback về email nếu không lấy được userData
-          creatorName = currentUser.email || '';
-        }
-      }
-
       const formData = {
         id: initialData?.id,
         orderNumber: orderNumber, // Pass the calculated order number
@@ -243,10 +238,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
         shippingCost: Number(shippingCost),
         total: total,
         note: note,
+        deliveryDate: deliveryDate || undefined,
+        deliveryTime: isDeliveryTimeEnabled && deliveryTime ? deliveryTime : undefined,
         status: status,
         paymentStatus: paymentStatus,
         paymentMethod: paymentMethod,
-        createdBy: creatorName // Thêm thông tin người tạo
+        createdBy: currentUser.uid // Thêm thông tin người tạo
       };
 
       await onSave(formData);
@@ -305,6 +302,46 @@ const OrderForm: React.FC<OrderFormProps> = ({ initialData, onSave, onCancel }) 
               phone={phone} setPhone={setPhone}
               address={address} setAddress={setAddress}
             />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Ngày nhận hàng</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                  <input
+                    type="date"
+                    value={deliveryDate}
+                    onChange={(e) => setDeliveryDate(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Giờ nhận (tùy chọn)</label>
+                  <label className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                    <input
+                      type="checkbox"
+                      checked={isDeliveryTimeEnabled}
+                      onChange={(e) => setIsDeliveryTimeEnabled(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                    />
+                    Thêm
+                  </label>
+                </div>
+                <div className={`transition-all ${isDeliveryTimeEnabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                    <input
+                      type="time"
+                      value={deliveryTime}
+                      onChange={(e) => setDeliveryTime(e.target.value)}
+                      disabled={!isDeliveryTimeEnabled}
+                      className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
             <hr className="border-slate-100 dark:border-slate-700" />
             
             {/* Items Section Handling Multiple Products */}

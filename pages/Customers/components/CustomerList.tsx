@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Customer } from '../../../types';
+import { Customer } from '@/types';
 import CustomerFilters from './CustomerFilters';
 import CustomerTable from './desktop/CustomerTable';
 import CustomerCardList from './mobile/CustomerCardList';

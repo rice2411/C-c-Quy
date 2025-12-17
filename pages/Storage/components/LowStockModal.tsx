@@ -1,8 +1,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { X, AlertTriangle, Package } from 'lucide-react';
-import { IngredientWithStats } from '../../../types';
-import { useLanguage } from '../../../contexts/LanguageContext';
+import { IngredientWithStats } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface LowStockModalProps {
   items: IngredientWithStats[];

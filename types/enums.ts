@@ -1,21 +1,20 @@
 export enum OrderStatus {
-  PENDING = 'Pending',
-  PROCESSING = 'Processing',
-  SHIPPED = 'Shipped',
-  DELIVERED = 'Delivered',
-  CANCELLED = 'Cancelled',
-  RETURNED = 'Returned'
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  DELIVERED = 'DELIVERED',
+  CANCELLED = 'CANCELLED',
+  RETURNED = 'RETURNED'
 }
 
 export enum PaymentStatus {
-  PAID = 'Paid',
-  UNPAID = 'Unpaid',
-  REFUNDED = 'Refunded'
+  PAID = 'PAID',
+  UNPAID = 'UNPAID',
+  REFUNDED = 'REFUNDED'
 }
 
 export enum PaymentMethod {
-  CASH = 'Cash',
-  BANKING = 'Banking'
+  CASH = 'CASH',
+  BANKING = 'BANKING'
 }
 
 

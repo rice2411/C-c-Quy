@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserData, UserStatus, UserRole } from '../../../../types/user';
+import { UserData, UserStatus, UserRole } from '@/@/types/user';
 import UserCard from './UserCard';
 
 interface UserCardListProps {

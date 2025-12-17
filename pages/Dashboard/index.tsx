@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { OrderStatus } from '../../types';
-import { generateDashboardInsights } from '../../services/geminiService';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { useOrders } from '../../contexts/OrderContext';
-import DashboardMetrics from './components/DashboardMetrics';
-import DashboardChart from './components/DashboardChart';
-import DashboardInsights from './components/DashboardInsights';
+import { OrderStatus } from '@/types';
+import { generateDashboardInsights } from '@/services/geminiService';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useOrders } from '@/contexts/OrderContext';
+import DashboardMetrics from '@/pages/Dashboard/components/DashboardMetrics';
+import DashboardChart from '@/pages/Dashboard/components/DashboardChart';
+import DashboardInsights from '@/pages/Dashboard/components/DashboardInsights';
 
 type TimeRange = 'week' | 'month' | 'year';
 

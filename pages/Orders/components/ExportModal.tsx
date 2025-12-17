@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Download, Calendar, Eye, Settings, Check, ChevronDown, ArrowRight, Table as TableIcon, FileSpreadsheet } from 'lucide-react';
-import { useLanguage } from '../../../contexts/LanguageContext';
-import BaseModal from '../../../components/BaseModal';
-import { Order } from '../../../types';
-import { exportOrdersToExcel, ExportColumn } from '../../../utils/xlsx';
+import { useLanguage } from '@/contexts/LanguageContext';
+import BaseModal from '@/components/BaseModal';
+import { Order } from '@/types';
+import { exportOrdersToExcel, ExportColumn } from '@/utils/xlsx';
 
 interface ExportModalProps {
   isOpen: boolean;

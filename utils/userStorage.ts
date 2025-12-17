@@ -1,4 +1,4 @@
-import { UserData, UserRole } from '../types/user';
+import { UserData, UserRole } from '@/types/user';
 const USER_STORAGE_KEY = 'cucquybakery_user';
 
 export interface StoredUser {

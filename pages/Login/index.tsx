@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../../config/firebase';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { auth } from '@/config/firebase';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { ChefHat, UserPlus, LogIn, X } from 'lucide-react';
-import ThemeToggle from '../../components/ThemeToggle';
-import { getAccountsHistory, removeAccountFromHistory } from '../../utils/userStorage';
+import ThemeToggle from '@/components/ThemeToggle';
+import { getAccountsHistory, removeAccountFromHistory } from '@/utils/userStorage';
 import toast from 'react-hot-toast';
 
 const LoginPage: React.FC = () => {

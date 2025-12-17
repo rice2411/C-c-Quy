@@ -1,6 +1,6 @@
 import React from 'react';
-import { Customer } from '../../../../types';
-import { useLanguage } from '../../../../contexts/LanguageContext';
+import { Customer } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 import CustomerCard from './CustomerCard';
 
 interface CustomerCardListProps {

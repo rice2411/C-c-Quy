@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth } from '../config/firebase';
-import { saveUserToFirestore, getUserByUid } from '../services/userService';
-import { saveUserToLocalStorage, getUserFromLocalStorage, addAccountToHistory, removeUserFromLocalStorage } from '../utils/userStorage';
+import { auth } from '@/config/firebase';
+import { saveUserToFirestore, getUserByUid } from '@/services/userService';
+import { saveUserToLocalStorage, getUserFromLocalStorage, addAccountToHistory, removeUserFromLocalStorage } from '@/utils/userStorage';
 import toast from 'react-hot-toast';
 import { UserStatus, UserData, UserRole } from '@/types/user';
 

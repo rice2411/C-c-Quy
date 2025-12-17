@@ -1,7 +1,7 @@
 import React from 'react';
 import { StickyNote, CreditCard, QrCode, Copy, Wallet } from 'lucide-react';
-import { OrderStatus, PaymentStatus, PaymentMethod } from '../../../types';
-import { useLanguage } from '../../../contexts/LanguageContext';
+import { OrderStatus, PaymentStatus, PaymentMethod } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface OrderStatusSectionProps {
   status: OrderStatus;

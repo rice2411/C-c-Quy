@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircle, XCircle, Clock, Shield } from 'lucide-react';
-import { useLanguage } from '../../../contexts/LanguageContext';
-import { UserStatus, UserRole } from '../../../types/user';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { UserStatus, UserRole } from '@/types/user';
 
 export const StatusBadge: React.FC<{ status: UserStatus }> = ({ status }) => {
   const { t } = useLanguage();

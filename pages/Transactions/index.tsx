@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Loader2, ArrowRightLeft, Calendar } from 'lucide-react';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { fetchTransactions } from '../../services/transactionService';
-import { Transaction } from '../../types';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { fetchTransactions } from '@/services/transactionService';
+import { Transaction } from '@/types';
 
 const TransactionsPage: React.FC = () => {
   const { t } = useLanguage();

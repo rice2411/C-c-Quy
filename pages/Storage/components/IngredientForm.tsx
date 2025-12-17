@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Save, AlertCircle, Scale, Search, Check } from 'lucide-react';
-import { Ingredient } from '../../../types';
-import { useLanguage } from '../../../contexts/LanguageContext';
-import { checkIngredientExists, fetchIngredients } from '../../../services/ingredientService';
+import { Ingredient } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { checkIngredientExists, fetchIngredients } from '@/services/ingredientService';
 
 interface IngredientFormProps {
   initialData?: Ingredient | null;

@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { User, MapPin, Phone, Search, Check } from 'lucide-react';
-import { useLanguage } from '../../../contexts/LanguageContext';
-import { useCustomers } from '../../../contexts/CustomerContext';
-import { Customer } from '../../../types';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useCustomers } from '@/contexts/CustomerContext';
+import { Customer } from '@/types';
 
 interface CustomerSectionProps {
   customerName: string;

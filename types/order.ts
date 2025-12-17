@@ -21,7 +21,14 @@ export interface Order {
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   date: string;
+  // Firestore timestamps are stored as Timestamp but may be serialized as string; keep union loose for compatibility
+  orderDate?: any;
+  deliveryDate?: string; // Expected delivery/receiving date
+  deliveryTime?: string; // Optional receiving time (HH:mm)
   trackingNumber?: string;
   note?: string;
   createdBy?: string; // Tên người tạo đơn (customName hoặc email)
+  updatedBy?: string; // Người chỉnh sửa gần nhất
+  createdAt?: any;
+  updatedAt?: any;
 }

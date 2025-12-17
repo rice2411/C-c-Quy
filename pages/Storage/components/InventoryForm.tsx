@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Save, AlertCircle, Calendar } from 'lucide-react';
-import { IngredientWithStats } from '../../../types';
-import { useLanguage } from '../../../contexts/LanguageContext';
+import { IngredientWithStats } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface InventoryFormProps {
   ingredient: IngredientWithStats;

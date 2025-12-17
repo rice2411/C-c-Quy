@@ -1,7 +1,7 @@
 import React from 'react';
 import { Edit2, Trash2, Phone, ShoppingBag } from 'lucide-react';
-import { Customer } from '../../../../types';
-import { useLanguage } from '../../../../contexts/LanguageContext';
+import { Customer } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CustomerCardProps {
   customer: Customer;

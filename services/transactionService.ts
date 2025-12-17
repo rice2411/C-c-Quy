@@ -1,6 +1,6 @@
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '../config/firebase';
-import { Transaction } from '../types';
+import { db } from '@/config/firebase';
+import { Transaction } from '@types';
 
 export const fetchTransactions = async (): Promise<Transaction[]> => {
   try {

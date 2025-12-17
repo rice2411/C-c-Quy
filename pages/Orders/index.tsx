@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Plus, Package, Download } from 'lucide-react';
-import { useOrders } from '../../contexts/OrderContext';
-import { useCustomers } from '../../contexts/CustomerContext';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { Order } from '../../types';
+import { useOrders } from '@/contexts/OrderContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Order } from '@/types';
 import OrderList from './components/OrderList';
-import OrderDetail from './components/OrderDetail';
-import OrderForm from './components/OrderForm';
-import ConfirmModal from '../../components/ConfirmModal';
-import ExportModal from './components/ExportModal';
+import OrderDetail from '@/pages/Orders/components/OrderDetail';
+import OrderForm from '@/pages/Orders/components/OrderForm';
+import ConfirmModal from '@/components/ConfirmModal';
+import ExportModal from '@/pages/Orders/components/ExportModal';
 
 const OrdersPage: React.FC = () => {
   const { orders, createNewOrder, modifyOrder, removeOrder, refreshOrders } = useOrders();
@@ -116,6 +115,7 @@ const OrdersPage: React.FC = () => {
           order={selectedOrder} 
           onClose={() => setSelectedOrder(null)}
           onEdit={() => handleEditOrder(selectedOrder)}
+          onUpdateOrder={modifyOrder}
         />
       )}
 

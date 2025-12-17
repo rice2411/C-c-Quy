@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Import, ClipboardCheck, Calendar, DollarSign, Scale } from 'lucide-react';
-import { IngredientWithStats } from '../../../types';
-import { useLanguage } from '../../../contexts/LanguageContext';
+import { IngredientWithStats } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface HistoryModalProps {
   ingredient: IngredientWithStats;

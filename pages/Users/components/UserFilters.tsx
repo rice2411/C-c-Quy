@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search } from 'lucide-react';
-import { useLanguage } from '../../../contexts/LanguageContext';
-import { UserStatus } from '../../../types/user';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { UserStatus } from '@/types/user';
 
 interface UserFiltersProps {
   searchTerm: string;
