@@ -33,7 +33,7 @@ export const routes: RouteConfig[] = [
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN]
   },
   {
-    path: '/inventory',
+    path: '/storage',
     labelKey: 'nav.inventory',
     icon: Package,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN]

@@ -12,7 +12,7 @@ import RoleBasedRoute from "./components/RoleBasedRoute";
 import DashboardPage from "./pages/Dashboard/index";
 import OrdersPage from "./pages/Orders/index";
 import TransactionsPage from "./pages/Transactions/index";
-import InventoryPage from "./pages/Inventory/index";
+import InventoryPage from "./pages/Storage/index";
 import CustomersPage from "./pages/Customers/index";
 import SuppliersPage from "./pages/Suppliers/index";
 import UsersPage from "./pages/Users/index";
@@ -52,8 +52,8 @@ const App: React.FC = () => {
                         <TransactionsPage />
                       </RoleBasedRoute>
                     } />
-                    <Route path="inventory" element={
-                      <RoleBasedRoute requiredRole={routes.find(r => r.path === '/inventory')?.roles}>
+                    <Route path="storage" element={
+                      <RoleBasedRoute requiredRole={routes.find(r => r.path === '/storage')?.roles}>
                         <InventoryPage />
                       </RoleBasedRoute>
                     } />
