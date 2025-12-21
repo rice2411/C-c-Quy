@@ -140,6 +140,10 @@ export const translations = {
       loading: "Loading...",
       items: "item",
       itemsPlural: "items",
+      currentQuantity: "Current Quantity",
+      initialQuantity: "Initial",
+      totalImport: "Import",
+      totalUsage: "Usage",
       form: {
         addTitle: "Add Ingredient",
         editTitle: "Edit Ingredient",
@@ -161,6 +165,12 @@ export const translations = {
         },
         quantity: "Quantity",
         quantityPlaceholder: "e.g. 500",
+        initialQuantity: "Initial quantity",
+        initialQuantityPlaceholder: "e.g. 0",
+        fromQuantity: "From quantity",
+        fromQuantityPlaceholder: "e.g. 0",
+        importQuantity: "Import quantity",
+        importQuantityPlaceholder: "e.g. 500",
         unit: "Unit",
         unitPiece: "piece",
         supplier: "Supplier",
@@ -183,6 +193,7 @@ export const translations = {
           nameRequired: "Ingredient name is required",
           typeRequired: "Ingredient type is required",
           quantityRequired: "Quantity must be greater than 0",
+          toQuantityMustBeGreater: "To quantity must be greater than from quantity",
           supplierRequired: "Supplier is required for stock in",
           saveFailed: "Unable to save ingredient"
         }
@@ -543,6 +554,10 @@ export const translations = {
       loading: "Đang tải...",
       items: "mục",
       itemsPlural: "mục",
+      currentQuantity: "Số lượng hiện tại",
+      initialQuantity: "Ban đầu",
+      totalImport: "Nhập",
+      totalUsage: "Sử dụng",
       form: {
         addTitle: "Thêm nguyên liệu",
         editTitle: "Sửa nguyên liệu",
@@ -564,6 +579,12 @@ export const translations = {
         },
         quantity: "Khối lượng/Số lượng",
         quantityPlaceholder: "VD: 500",
+        initialQuantity: "Số lượng ban đầu",
+        initialQuantityPlaceholder: "VD: 0",
+        fromQuantity: "Số lượng từ",
+        fromQuantityPlaceholder: "VD: 0",
+        importQuantity: "Số lượng nhập",
+        importQuantityPlaceholder: "VD: 500",
         unit: "Đơn vị",
         unitPiece: "cái",
         supplier: "Nhà cung cấp",
@@ -586,6 +607,7 @@ export const translations = {
           nameRequired: "Tên nguyên liệu là bắt buộc",
           typeRequired: "Cần chọn loại nguyên liệu",
           quantityRequired: "Khối lượng/Số lượng phải lớn hơn 0",
+          toQuantityMustBeGreater: "Số lượng đến phải lớn hơn số lượng từ",
           supplierRequired: "Cần chọn nhà cung cấp khi nhập hàng",
           saveFailed: "Không thể lưu nguyên liệu"
         }

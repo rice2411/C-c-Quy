@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { Box, FlaskConical, Sparkles, Package, Loader2, Warehouse } from 'lucide-react';
-import { Ingredient, IngredientType } from '@/types';
+import { Box, FlaskConical, Sparkles, Package, Loader2, Warehouse, ArrowDownCircle, ArrowUpCircle, TrendingUp } from 'lucide-react';
+import { Ingredient, IngredientHistoryType, IngredientType } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface IngredientGridProps {
@@ -90,16 +90,49 @@ const getTypeColors = (type: IngredientType) => {
   }
 };
 
+// Calculate total import quantity from history
+const calculateTotalImportQuantity = (ingredient: Ingredient): number => {
+  if (!ingredient.history || ingredient.history.length === 0) {
+    return 0;
+  }
+  return ingredient.history.reduce((acc, item) => {
+    if (item.type === IngredientHistoryType.IMPORT) {
+      return acc + item.importQuantity;
+    }
+    return acc;
+  }, 0);
+};
+
+// Calculate total usage quantity from history
+const calculateTotalUsageQuantity = (ingredient: Ingredient): number => {
+  if (!ingredient.history || ingredient.history.length === 0) {
+    return 0;
+  }
+  return ingredient.history.reduce((acc, item) => {
+    if (item.type === IngredientHistoryType.USAGE) {
+      return acc + item.importQuantity;
+    }
+    return acc;
+  }, 0);
+};
+
+// Calculate current quantity from initialQuantity and history
+const calculateCurrentQuantity = (ingredient: Ingredient): number => {
+  const initialQty = ingredient.initialQuantity ?? 0;
+  const totalImport = calculateTotalImportQuantity(ingredient);
+  const totalUsage = calculateTotalUsageQuantity(ingredient);
+  return initialQty + totalImport - totalUsage;
+};
+
 // Check if stock is low (less than 10% or less than 100g/pieces)
 const isLowStock = (ingredient: Ingredient): boolean => {
-  const quantity = ingredient.quantity ?? 0;
-  // Consider low stock if quantity is very low
+  const quantity = calculateCurrentQuantity(ingredient);
   return quantity < 100 && quantity > 0;
 };
 
 // Check if out of stock
 const isOutOfStock = (ingredient: Ingredient): boolean => {
-  return (ingredient.quantity ?? 0) <= 0;
+  return calculateCurrentQuantity(ingredient) <= 0;
 };
 
 const IngredientGrid: React.FC<IngredientGridProps> = ({ ingredients, loading, onEdit, onCreate }) => {
@@ -195,43 +228,83 @@ const IngredientGrid: React.FC<IngredientGridProps> = ({ ingredients, loading, o
                       </div>
                     )}
 
-                    <div className="p-5 space-y-4">
-                      {/* Header with Icon and Name */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className={`flex-shrink-0 w-12 h-12 rounded-xl ${itemColors.bg} flex items-center justify-center border-2 ${itemColors.border}`}>
-                            <ItemIcon className={`w-6 h-6 ${itemColors.icon}`} />
+                    <div className="p-4">
+                      {/* Header Row */}
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <div className={`flex-shrink-0 w-10 h-10 rounded-lg ${itemColors.bg} flex items-center justify-center border ${itemColors.border}`}>
+                            <ItemIcon className={`w-5 h-5 ${itemColors.icon}`} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-slate-900 dark:text-white line-clamp-2 text-sm leading-tight">
+                            <h4 className="font-bold text-slate-900 dark:text-white line-clamp-1 text-sm">
                               {ing.name}
                             </h4>
+                            <span className={`inline-block mt-0.5 px-2 py-0.5 rounded text-[10px] font-semibold ${itemColors.badge}`}>
+                              {t(`ingredients.form.types.${ing.type.toString().toLowerCase()}`)}
+                            </span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Type Badge */}
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2.5 py-1 rounded-md text-xs font-semibold ${itemColors.badge}`}>
-                          {t(`ingredients.form.types.${ing.type.toString().toLowerCase()}`)}
-                        </span>
+                      {/* Current Quantity - Compact */}
+                      <div className={`mb-2.5 rounded-lg p-2.5 border ${outOfStock ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : lowStock ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' : 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <TrendingUp className={`w-3.5 h-3.5 ${outOfStock ? 'text-red-600 dark:text-red-400' : lowStock ? 'text-yellow-600 dark:text-yellow-400' : 'text-orange-600 dark:text-orange-400'}`} />
+                            <span className={`text-[10px] font-semibold uppercase tracking-wide ${outOfStock ? 'text-red-700 dark:text-red-300' : lowStock ? 'text-yellow-700 dark:text-yellow-300' : 'text-orange-700 dark:text-orange-300'}`}>
+                              {t('ingredients.currentQuantity')}
+                            </span>
+                          </div>
+                          <div className="flex items-baseline gap-1">
+                            <span className={`text-lg font-bold ${outOfStock ? 'text-red-600 dark:text-red-400' : lowStock ? 'text-yellow-600 dark:text-yellow-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                              {calculateCurrentQuantity(ing)}
+                            </span>
+                            <span className={`text-xs font-medium ${outOfStock ? 'text-red-600/70 dark:text-red-400/70' : lowStock ? 'text-yellow-600/70 dark:text-yellow-400/70' : 'text-orange-600/70 dark:text-orange-400/70'}`}>
+                              {ing.unit === 'piece' ? t('ingredients.form.unitPiece') : 'g'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Stock Quantity Display */}
-                      <div className="pt-3 border-t border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Warehouse className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
-                            {t('ingredients.stockLabel')}
-                          </span>
+                      {/* Statistics Row - Compact */}
+                      <div className="flex items-center gap-1.5">
+                        {/* Initial */}
+                        <div className="flex-1 bg-slate-50 dark:bg-slate-700/50 rounded-md p-1.5 border border-slate-200 dark:border-slate-600">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <Warehouse className="w-2.5 h-2.5 text-slate-500 dark:text-slate-400" />
+                            <span className="text-[9px] font-semibold text-slate-600 dark:text-slate-400 uppercase">
+                              {t('ingredients.initialQuantity')}
+                            </span>
+                          </div>
+                          <p className="text-xs font-bold text-slate-900 dark:text-white leading-none">
+                            {ing.initialQuantity ?? 0}
+                          </p>
                         </div>
-                        <div className="flex items-baseline gap-2">
-                          <span className={`text-2xl font-bold ${outOfStock ? 'text-red-500 dark:text-red-400' : lowStock ? 'text-yellow-600 dark:text-yellow-400' : 'text-slate-900 dark:text-white'}`}>
-                            {ing.quantity ?? 0}
-                          </span>
-                          <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
-                            {ing.unit === 'piece' ? t('ingredients.form.unitPiece') : 'g'}
-                          </span>
+
+                        {/* Import */}
+                        <div className="flex-1 bg-green-50 dark:bg-green-900/20 rounded-md p-1.5 border border-green-200 dark:border-green-800">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <ArrowDownCircle className="w-2.5 h-2.5 text-green-600 dark:text-green-400" />
+                            <span className="text-[9px] font-semibold text-green-700 dark:text-green-300 uppercase">
+                              {t('ingredients.totalImport')}
+                            </span>
+                          </div>
+                          <p className="text-xs font-bold text-green-700 dark:text-green-300 leading-none">
+                            {calculateTotalImportQuantity(ing)}
+                          </p>
+                        </div>
+
+                        {/* Usage */}
+                        <div className="flex-1 bg-red-50 dark:bg-red-900/20 rounded-md p-1.5 border border-red-200 dark:border-red-800">
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <ArrowUpCircle className="w-2.5 h-2.5 text-red-600 dark:text-red-400" />
+                            <span className="text-[9px] font-semibold text-red-700 dark:text-red-300 uppercase">
+                              {t('ingredients.totalUsage')}
+                            </span>
+                          </div>
+                          <p className="text-xs font-bold text-red-700 dark:text-red-300 leading-none">
+                            {calculateTotalUsageQuantity(ing)}
+                          </p>
                         </div>
                       </div>
                     </div>

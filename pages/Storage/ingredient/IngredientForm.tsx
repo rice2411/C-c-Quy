@@ -25,9 +25,10 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
   const [name, setName] = useState('');
   const [type, setType] = useState<IngredientType>(IngredientType.BASE);
   const [unit, setUnit] = useState<'g' | 'piece'>('g');
+  const [initialQuantity, setInitialQuantity] = useState(0);
   const [history, setHistory] = useState<IngredientHistory[]>([]);
   const [historyType, setHistoryType] = useState<IngredientHistoryType>(IngredientHistoryType.IMPORT);
-  const [historyQuantity, setHistoryQuantity] = useState(0);
+  const [historyImportQuantity, setHistoryImportQuantity] = useState(0);
   const [historyPrice, setHistoryPrice] = useState(0);
   const [historyNote, setHistoryNote] = useState('');
   const [historySupplierId, setHistorySupplierId] = useState('');
@@ -42,9 +43,10 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
       setName(initialData.name);
       setType(initialData.type || IngredientType.BASE);
       setUnit(initialData.unit || 'g');
+      setInitialQuantity(initialData.initialQuantity || 0);
       setHistory(initialData.history || []);
       setHistoryType(IngredientHistoryType.IMPORT);
-      setHistoryQuantity(0);
+      setHistoryImportQuantity(0);
       setHistoryPrice(0);
       setHistoryNote('');
       setHistorySupplierId('');
@@ -56,9 +58,10 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
       setName('');
       setType(IngredientType.BASE);
       setUnit('g');
+      setInitialQuantity(0);
       setHistory([]);
       setHistoryType(IngredientHistoryType.IMPORT);
-      setHistoryQuantity(0);
+      setHistoryImportQuantity(0);
       setHistoryPrice(0);
       setHistoryNote('');
       setHistorySupplierId('');
@@ -98,28 +101,39 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
   );
 
   const computedQuantity = useMemo(() => {
-    return history.reduce((acc, item) => {
-      const isImport = item.type === IngredientHistoryType.IMPORT || item.type === 'IMPORT' || item.type === 'import';
-      return acc + (isImport ? 1 : -1) * (item.quantity || 0);
+    const initialQty = initialQuantity;
+    return initialQty + history.reduce((acc, item) => {
+      return acc + item.importQuantity;
     }, 0);
-  }, [history]);
+  }, [history, initialQuantity]);
 
-  const historyTotals = useMemo(() => {
-    // compute before/after based on chronological order (oldest -> newest)
+  const calculateFromQuantity = useMemo(() => {
     const chronological = [...history].sort(
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
-    let current = 0;
+    let current = initialQuantity;
+    const map = new Map<string, number>();
+    chronological.forEach((item) => {
+      map.set(item.id, current);
+      current = current + item.importQuantity;
+    });
+    return map;
+  }, [history, initialQuantity]);
+
+  const historyTotals = useMemo(() => {
+    const chronological = [...history].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    let current = initialQuantity;
     const map = new Map<string, { before: number; after: number }>();
     chronological.forEach((item) => {
-      const isImport = item.type === IngredientHistoryType.IMPORT || item.type === 'IMPORT' || item.type === 'import';
       const before = current;
-      const after = current + (isImport ? 1 : -1) * (item.quantity || 0);
+      const after = current + item.importQuantity;
       map.set(item.id, { before, after });
       current = after;
     });
     return map;
-  }, [history]);
+  }, [history, initialQuantity]);
 
   const handleSelectSupplier = (id: string, name: string) => {
     setHistorySupplierId(id);
@@ -131,7 +145,7 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
   const handleEditHistory = (item: IngredientHistory) => {
     setEditingHistoryId(item.id);
     setHistoryType(item.type);
-    setHistoryQuantity(item.quantity);
+    setHistoryImportQuantity(item.importQuantity);
     setHistoryPrice(item.price || 0);
     setHistoryNote(item.note || '');
     setHistorySupplierId(item.supplierId || '');
@@ -148,7 +162,7 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
   // Cancel edit mode
   const handleCancelEdit = () => {
     setEditingHistoryId(null);
-    setHistoryQuantity(0);
+    setHistoryImportQuantity(0);
     setHistoryPrice(0);
     setHistoryNote('');
     setHistorySupplierId('');
@@ -161,17 +175,12 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
     try {
       setIsSubmitting(true);
       const newHistory = history.filter((h) => h.id !== id);
-      const newQuantity = newHistory.reduce((acc, item) => {
-        const isImport =
-          item.type === IngredientHistoryType.IMPORT || item.type === 'IMPORT' || item.type === 'import';
-        return acc + (isImport ? 1 : -1) * (item.quantity || 0);
-      }, 0);
       setHistory(newHistory);
       await onSave({
         id: initialData?.id,
         name: name.trim(),
         type,
-        quantity: newQuantity,
+        initialQuantity: initialData?.initialQuantity || 0,
         unit,
         history: newHistory,
       });
@@ -195,7 +204,7 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
         id: initialData?.id,
         name: name.trim(),
         type,
-        quantity: computedQuantity,
+        initialQuantity,
         unit,
         history,
       };
@@ -210,7 +219,7 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
   };
 
   const handleAddHistory = async () => {
-    if (historyQuantity <= 0) {
+    if (historyImportQuantity <= 0) {
       setError(t('ingredients.form.errors.quantityRequired'));
       return;
     }
@@ -222,30 +231,49 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
       setIsSubmitting(true);
       const supplier = suppliers.find((s) => s.id === historySupplierId);
       
+      let fromQty: number;
+      if (editingHistoryId) {
+        fromQty = calculateFromQuantity.get(editingHistoryId) || initialQuantity;
+      } else {
+        fromQty = computedQuantity;
+      }
+      
       let newHistory: IngredientHistory[];
       
       if (editingHistoryId) {
-        // Update existing history item
-        newHistory = history.map((item) => 
-          item.id === editingHistoryId
-            ? {
-                ...item,
-                type: historyType,
-                quantity: historyQuantity,
-                price: historyPrice,
-                note: historyNote.trim(),
-                supplierId: historyType === IngredientHistoryType.IMPORT ? historySupplierId : undefined,
-                supplierName: historyType === IngredientHistoryType.IMPORT ? supplier?.name || '' : undefined,
-                createdAt: new Date(historyDate || Date.now()).toISOString(),
-              }
-            : item
+        const chronological = [...history].sort(
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
+        let current = initialQuantity;
+        newHistory = chronological.map((item) => {
+          if (item.id === editingHistoryId) {
+            const updatedItem = {
+              ...item,
+              type: historyType,
+              fromQuantity: current,
+              importQuantity: historyImportQuantity,
+              price: historyPrice,
+              note: historyNote.trim(),
+              supplierId: historyType === IngredientHistoryType.IMPORT ? historySupplierId : undefined,
+              supplierName: historyType === IngredientHistoryType.IMPORT ? supplier?.name || '' : undefined,
+              createdAt: new Date(historyDate || Date.now()).toISOString(),
+            };
+            current = current + historyImportQuantity;
+            return updatedItem;
+          }
+          const updatedItem = {
+            ...item,
+            fromQuantity: current,
+          };
+          current = current + item.importQuantity;
+          return updatedItem;
+        });
       } else {
-        // Add new history item
         const newEntry: IngredientHistory = {
           id: crypto.randomUUID(),
           type: historyType,
-          quantity: historyQuantity,
+          fromQuantity: fromQty,
+          importQuantity: historyImportQuantity,
           unit,
           price: historyPrice,
           note: historyNote.trim(),
@@ -255,16 +283,10 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
         };
         newHistory = [newEntry, ...history];
       }
-      
-      const newQuantity = newHistory.reduce((acc, item) => {
-        const isImport =
-          item.type === IngredientHistoryType.IMPORT || item.type === 'IMPORT' || item.type === 'import';
-        return acc + (isImport ? 1 : -1) * (item.quantity || 0);
-      }, 0);
 
       setHistory(newHistory);
       setEditingHistoryId(null);
-      setHistoryQuantity(0);
+      setHistoryImportQuantity(0);
       setHistoryPrice(0);
       setHistoryNote('');
       setHistorySupplierId('');
@@ -272,11 +294,8 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
       setHistoryDate(new Date().toISOString().slice(0, 10));
 
       await onSave({
-        id: initialData?.id,
-        name: name.trim(),
-        type,
-        quantity: newQuantity,
-        unit,
+        ...initialData,
+        initialQuantity,
         history: newHistory,
       });
     } catch (err: any) {
@@ -427,6 +446,25 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
                     </select>
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1 uppercase tracking-wide">
+                    {t('ingredients.form.initialQuantity')} *
+                  </label>
+                  <div className="relative">
+                    <Scale className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10 pointer-events-none" />
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      required
+                      value={initialQuantity}
+                      onChange={(e) => setInitialQuantity(Number(e.target.value))}
+                      className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                      placeholder={t('ingredients.form.initialQuantityPlaceholder')}
+                    />
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -467,18 +505,36 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1 uppercase tracking-wide">
-                        {t('ingredients.form.quantity')}
-                    </label>
-                    <div className="relative">
+                        {t('ingredients.form.fromQuantity')}
+                      </label>
+                      <div className="relative">
                         <Scale className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10 pointer-events-none" />
                         <input
                           type="number"
                           min="0"
                           step="0.01"
-                          value={historyQuantity}
-                          onChange={(e) => setHistoryQuantity(Number(e.target.value))}
+                          readOnly
+                          value={editingHistoryId ? (calculateFromQuantity.get(editingHistoryId) ?? initialQuantity) : computedQuantity}
+                          className="w-full pl-9 pr-3 py-2 bg-slate-100 dark:bg-slate-600 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-600 dark:text-slate-300 cursor-not-allowed"
+                          placeholder={t('ingredients.form.fromQuantityPlaceholder')}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1 uppercase tracking-wide">
+                        {t('ingredients.form.importQuantity')} *
+                      </label>
+                      <div className="relative">
+                        <Scale className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10 pointer-events-none" />
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          required
+                          value={historyImportQuantity}
+                          onChange={(e) => setHistoryImportQuantity(Number(e.target.value))}
                           className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                          placeholder={t('ingredients.form.quantityPlaceholder')}
+                          placeholder={t('ingredients.form.importQuantityPlaceholder')}
                         />
                       </div>
                     </div>
@@ -626,14 +682,24 @@ const IngredientForm: React.FC<IngredientFormProps> = ({ isOpen, initialData, on
                                 </span>
                               </div>
 
-                              {/* Quantity - Highlighted */}
+                              {/* Quantity Change - Highlighted */}
                               <div className="flex items-baseline gap-2">
                                 <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                                   {t('ingredients.form.quantity')}:
                                 </span>
-                                <p className={`text-lg font-bold ${textColor}`}>
-                                  {item.quantity} {item.unit === 'piece' ? t('ingredients.form.unitPiece') : 'g'}
-                                </p>
+                                <div className="flex items-center gap-2">
+                                  <p className={`text-sm font-semibold text-slate-700 dark:text-slate-300`}>
+                                    {item.fromQuantity} {item.unit === 'piece' ? t('ingredients.form.unitPiece') : 'g'}
+                                  </p>
+                                  <span className="text-slate-400 dark:text-slate-500">+</span>
+                                  <p className={`text-lg font-bold ${textColor}`}>
+                                    {item.importQuantity} {item.unit === 'piece' ? t('ingredients.form.unitPiece') : 'g'}
+                                  </p>
+                                  <span className="text-slate-400 dark:text-slate-500">=</span>
+                                  <p className={`text-lg font-bold text-green-600 dark:text-green-400`}>
+                                    {item.fromQuantity + item.importQuantity} {item.unit === 'piece' ? t('ingredients.form.unitPiece') : 'g'}
+                                  </p>
+                                </div>
                               </div>
 
                               {/* Price - Highlighted */}

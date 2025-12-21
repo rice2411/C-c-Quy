@@ -13,7 +13,8 @@ export enum IngredientHistoryType {
 export interface IngredientHistory {
   id: string;
   type: IngredientHistoryType;
-  quantity: number;
+  fromQuantity: number;
+  importQuantity: number;
   unit: 'g' | 'piece';
   note?: string;
   supplierId?: string;
@@ -26,7 +27,7 @@ export interface Ingredient {
   id: string;
   name: string;
   type: IngredientType;
-  quantity: number;
+  initialQuantity: number;
   unit: 'g' | 'piece';
   history?: IngredientHistory[];
   createdAt?: any;
