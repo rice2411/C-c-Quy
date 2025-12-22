@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { Box, FlaskConical, Sparkles, Package, Loader2, Warehouse, ArrowDownCircle, ArrowUpCircle, TrendingUp } from 'lucide-react';
-import { Ingredient, IngredientHistoryType, IngredientType } from '@/types';
+import { Ingredient, IngredientType } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { calculateTotalImportQuantity, calculateTotalUsageQuantity, calculateCurrentQuantity, isLowStock, isOutOfStock } from '@/utils/ingredientUtil';
 
 interface IngredientGridProps {
   ingredients: Ingredient[];
@@ -88,51 +89,6 @@ const getTypeColors = (type: IngredientType) => {
         badge: 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300',
       };
   }
-};
-
-// Calculate total import quantity from history
-const calculateTotalImportQuantity = (ingredient: Ingredient): number => {
-  if (!ingredient.history || ingredient.history.length === 0) {
-    return 0;
-  }
-  return ingredient.history.reduce((acc, item) => {
-    if (item.type === IngredientHistoryType.IMPORT) {
-      return acc + item.importQuantity;
-    }
-    return acc;
-  }, 0);
-};
-
-// Calculate total usage quantity from history
-const calculateTotalUsageQuantity = (ingredient: Ingredient): number => {
-  if (!ingredient.history || ingredient.history.length === 0) {
-    return 0;
-  }
-  return ingredient.history.reduce((acc, item) => {
-    if (item.type === IngredientHistoryType.USAGE) {
-      return acc + item.importQuantity;
-    }
-    return acc;
-  }, 0);
-};
-
-// Calculate current quantity from initialQuantity and history
-const calculateCurrentQuantity = (ingredient: Ingredient): number => {
-  const initialQty = ingredient.initialQuantity ?? 0;
-  const totalImport = calculateTotalImportQuantity(ingredient);
-  const totalUsage = calculateTotalUsageQuantity(ingredient);
-  return initialQty + totalImport - totalUsage;
-};
-
-// Check if stock is low (less than 10% or less than 100g/pieces)
-const isLowStock = (ingredient: Ingredient): boolean => {
-  const quantity = calculateCurrentQuantity(ingredient);
-  return quantity < 100 && quantity > 0;
-};
-
-// Check if out of stock
-const isOutOfStock = (ingredient: Ingredient): boolean => {
-  return calculateCurrentQuantity(ingredient) <= 0;
 };
 
 const IngredientGrid: React.FC<IngredientGridProps> = ({ ingredients, loading, onEdit, onCreate }) => {

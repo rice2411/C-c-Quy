@@ -8,8 +8,10 @@ import TabsHeader from '@/pages/Storage/TabsHeader';
 import { ProductForm, ProductToolbar, ProductGrid } from '@/pages/Storage/product';
 import { IngredientForm, IngredientToolbar, IngredientGrid } from '@/pages/Storage/ingredient';
 import { RecipeForm, RecipeToolbar, RecipeGrid } from '@/pages/Storage/recipe';
-import { fetchRecipes, addRecipe, updateRecipe } from '@/services/recipeService';
+import { fetchRecipes, addRecipe, updateRecipe, deleteRecipe } from '@/services/recipeService';
 import { Recipe } from '@/types';
+import ConfirmModal from '@/components/ConfirmModal';
+import toast from 'react-hot-toast';
 
 type InventoryTab = 'products' | 'ingredients' | 'recipes';
 
@@ -33,6 +35,8 @@ const InventoryPage: React.FC = () => {
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | undefined>(undefined);
   const [isRecipeFormOpen, setIsRecipeFormOpen] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | undefined>(undefined);
+  const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null);
+  const [isDeletingRecipe, setIsDeletingRecipe] = useState(false);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -157,6 +161,27 @@ const InventoryPage: React.FC = () => {
     setIsRecipeFormOpen(false);
   };
 
+  const handleDeleteRecipe = (recipe: Recipe) => {
+    setRecipeToDelete(recipe);
+  };
+
+  const confirmDeleteRecipe = async () => {
+    if (!recipeToDelete?.id) return;
+
+    try {
+      setIsDeletingRecipe(true);
+      await deleteRecipe(recipeToDelete.id);
+      toast.success(t('recipes.deleteSuccess'));
+      await loadRecipes();
+      setRecipeToDelete(null);
+    } catch (error) {
+      console.error('Error deleting recipe:', error);
+      toast.error(t('recipes.deleteError'));
+    } finally {
+      setIsDeletingRecipe(false);
+    }
+  };
+
 
   const renderTabContent = () => {
     if (activeTab === 'products') {
@@ -209,6 +234,7 @@ const InventoryPage: React.FC = () => {
             loading={loadingRecipes}
             onEdit={handleEditRecipe}
             onCreate={handleCreateRecipe}
+            onDelete={handleDeleteRecipe}
           />
         </>
       );
@@ -249,6 +275,15 @@ const InventoryPage: React.FC = () => {
           onClose={() => setIsRecipeFormOpen(false)}
         />
       )}
+
+      <ConfirmModal
+        isOpen={!!recipeToDelete}
+        title={t('recipes.deleteConfirmTitle')}
+        message={t('recipes.deleteConfirmMessage').replace('{name}', recipeToDelete?.name || '')}
+        onConfirm={confirmDeleteRecipe}
+        onCancel={() => setRecipeToDelete(null)}
+        isLoading={isDeletingRecipe}
+      />
     </div>
   );
 };

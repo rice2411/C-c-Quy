@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, ChefHat, Save, X, Plus, Trash2, Search, AlignLeft, Calculator, Package, ArrowRight, Box, FlaskConical, Sparkles } from 'lucide-react';
+import { AlertCircle, ChefHat, Save, X, Plus, Trash2, Search, AlignLeft, Package, ArrowRight, Box, FlaskConical, Sparkles } from 'lucide-react';
 import { Recipe, RecipeIngredient, Ingredient, IngredientType } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { calculateCurrentQuantity, isLowStock, isOutOfStock } from '@/utils/ingredientUtil';
 
 const getTypeIcon = (type: IngredientType) => {
   switch (type) {
@@ -91,8 +92,8 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ isOpen, initialData, ingredient
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [instructions, setInstructions] = useState('');
-  const [recipeYield, setRecipeYield] = useState(0);
-  const [yieldUnit, setYieldUnit] = useState('');
+  const [outputQuantity, setOutputQuantity] = useState(0);
+  const [wasteRate, setWasteRate] = useState(0);
   const [recipeIngredients, setRecipeIngredients] = useState<RecipeIngredient[]>([]);
 
   const [ingredientSearch, setIngredientSearch] = useState('');
@@ -116,15 +117,15 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ isOpen, initialData, ingredient
       setName(initialData.name);
       setDescription(initialData.description || '');
       setInstructions(initialData.instructions || '');
-      setRecipeYield(initialData.yield || 0);
-      setYieldUnit(initialData.yieldUnit || '');
+      setOutputQuantity(initialData.outputQuantity || 0);
+      setWasteRate(initialData.wasteRate || 0);
       setRecipeIngredients(initialData.ingredients || []);
     } else {
       setName('');
       setDescription('');
       setInstructions('');
-      setRecipeYield(0);
-      setYieldUnit('');
+      setOutputQuantity(0);
+      setWasteRate(0);
       setRecipeIngredients([]);
     }
     setError(null);
@@ -198,11 +199,6 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ isOpen, initialData, ingredient
     return groups;
   }, [recipeIngredients, ingredients]);
 
-  const calculatedYield = useMemo(() => {
-    if (recipeIngredients.length === 0) return 0;
-    const totalQuantity = recipeIngredients.reduce((sum, ri) => sum + ri.quantity, 0);
-    return Math.round(totalQuantity / recipeIngredients.length);
-  }, [recipeIngredients]);
 
   const handleSelectIngredient = (ingredient: Ingredient, event: React.MouseEvent) => {
     const sourceElement = event.currentTarget as HTMLElement;
@@ -285,8 +281,8 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ isOpen, initialData, ingredient
         description: description.trim(),
         ingredients: recipeIngredients,
         instructions: instructions.trim(),
-        yield: recipeYield || 0,
-        yieldUnit: yieldUnit.trim(),
+        outputQuantity: outputQuantity || 0,
+        wasteRate: wasteRate || 0,
       };
 
       await onSave(payload);
@@ -314,9 +310,9 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ isOpen, initialData, ingredient
         className={`absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${isClosing ? 'opacity-0' : 'opacity-100'}`}
         onClick={handleClose}
       ></div>
-      <div className="absolute inset-0 flex pointer-events-none">
+      <div className="absolute inset-y-0 right-0 w-full sm:w-3/4 flex pointer-events-none">
         <div
-          className={`w-full h-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col pointer-events-auto transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
+          className={`w-full h-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col pointer-events-auto transition-colors duration-200 ${isClosing ? 'animate-slide-out-right' : 'animate-slide-in-right'}`}
         >
           {flyingIngredient && (
             <>
@@ -413,41 +409,41 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ isOpen, initialData, ingredient
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1 uppercase tracking-wide">
-                      {t('recipes.form.yield')}
+                      {t('recipes.form.outputQuantity')}
                     </label>
-                    <div className="relative">
-                      <Calculator className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10 pointer-events-none" />
-                      <input
-                        type="number"
-                        min="0"
-                        value={recipeYield}
-                        onChange={(e) => setRecipeYield(Number(e.target.value))}
-                        className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                        placeholder="0"
-                      />
-                    </div>
-                    {calculatedYield > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setRecipeYield(calculatedYield)}
-                        className="mt-1 text-xs text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 flex items-center gap-1"
-                      >
-                        <Calculator className="w-3 h-3" />
-                        {t('recipes.form.useCalculatedYield')}: {calculatedYield}
-                      </button>
-                    )}
+                    <input
+                      type="number"
+                      min="0"
+                      value={outputQuantity === 0 ? '' : outputQuantity}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setOutputQuantity(value === '' ? 0 : Number(value));
+                      }}
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                      placeholder="0"
+                    />
                   </div>
                   <div>
                     <label className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1 uppercase tracking-wide">
-                      {t('recipes.form.yieldUnit')}
+                      {t('recipes.form.wasteRate')}
                     </label>
-                    <input
-                      type="text"
-                      value={yieldUnit}
-                      onChange={(e) => setYieldUnit(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                      placeholder={t('recipes.form.yieldUnitPlaceholder')}
-                    />
+                    <div className="relative">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={wasteRate === 0 ? '' : wasteRate}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const numValue = value === '' ? 0 : Number(value);
+                          setWasteRate(Math.min(100, Math.max(0, numValue)));
+                        }}
+                        className="w-full px-3 py-2 pr-8 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                        placeholder="0"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -535,25 +531,40 @@ const RecipeForm: React.FC<RecipeFormProps> = ({ isOpen, initialData, ingredient
                                 {t('recipes.form.allAdded')}
                               </p>
                             ) : (
-                              available.map((ing) => (
-                                <div
-                                  key={ing.id}
-                                  ref={(el) => {
-                                    if (el) ingredientRefs.current.set(ing.id, el);
-                                  }}
-                                  onClick={(e) => handleSelectIngredient(ing, e)}
-                                  className={`p-1 sm:p-1.5 bg-white dark:bg-slate-800 rounded border ${colors.border} hover:border-orange-400 dark:hover:border-orange-500 hover:shadow-md cursor-pointer transition-all group active:scale-95 ${
-                                    flyingIngredient?.id === ing.id ? 'opacity-0 scale-0' : 'opacity-100 scale-100'
-                                  }`}
-                                  style={{
-                                    transition: flyingIngredient?.id === ing.id ? 'all 0.3s ease-out' : 'all 0.2s',
-                                  }}
-                                >
-                                  <p className="text-[9px] sm:text-[10px] font-medium text-slate-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400">
-                                    {ing.name}
-                                  </p>
-                                </div>
-                              ))
+                              available.map((ing) => {
+                                const currentQuantity = calculateCurrentQuantity(ing);
+                                const lowStock = isLowStock(ing);
+                                const outOfStock = isOutOfStock(ing);
+                                return (
+                                  <div
+                                    key={ing.id}
+                                    ref={(el) => {
+                                      if (el) ingredientRefs.current.set(ing.id, el);
+                                    }}
+                                    onClick={(e) => handleSelectIngredient(ing, e)}
+                                    className={`p-2 sm:p-2.5 bg-white dark:bg-slate-800 rounded border ${colors.border} hover:border-orange-400 dark:hover:border-orange-500 hover:shadow-md cursor-pointer transition-all group active:scale-95 ${
+                                      flyingIngredient?.id === ing.id ? 'opacity-0 scale-0' : 'opacity-100 scale-100'
+                                    } ${outOfStock ? 'opacity-50' : ''}`}
+                                    style={{
+                                      transition: flyingIngredient?.id === ing.id ? 'all 0.3s ease-out' : 'all 0.2s',
+                                    }}
+                                  >
+                                    <p className="text-[10px] sm:text-[11px] font-medium text-slate-900 dark:text-white truncate group-hover:text-orange-600 dark:group-hover:text-orange-400 mb-1">
+                                      {ing.name}
+                                    </p>
+                                    <div className="flex items-center justify-between gap-1">
+                                      <span className={`text-[8px] sm:text-[9px] font-semibold ${
+                                        outOfStock ? 'text-red-500 dark:text-red-400' : 
+                                        lowStock ? 'text-orange-500 dark:text-orange-400' : 
+                                        'text-slate-500 dark:text-slate-400'
+                                      }`}>
+                                        {outOfStock ? t('recipes.form.outOfStock') : 
+                                         `${currentQuantity.toLocaleString()} ${ing.unit === 'piece' ? t('ingredients.form.unitPiece') : 'g'}`}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })
                             )}
                           </div>
 

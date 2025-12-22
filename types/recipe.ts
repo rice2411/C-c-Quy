@@ -13,6 +13,8 @@ export interface Recipe {
   instructions?: string;
   yield?: number;
   yieldUnit?: string;
+  outputQuantity?: number;
+  wasteRate?: number;
   createdAt?: any;
   updatedAt?: any;
 }
