@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, MapPin, Phone, Mail, Truck, CreditCard, Sparkles, AlertTriangle, FileText, QrCode, Copy, Receipt, Wallet, StickyNote } from 'lucide-react';
+import { X, MapPin, Phone, Mail, Truck, CreditCard, Sparkles, AlertTriangle, FileText, QrCode, Copy, Receipt, Wallet, StickyNote, User } from 'lucide-react';
 import { Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus } from '@/types';
 import { STATUS_COLORS } from '@/constant/order'; 
 import { generateOrderAnalysis } from '@/services/geminiService';
@@ -97,7 +97,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onEdit, onUpd
                 </span>
               </div>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {t('detail.placedOn')} {new Date(currentOrder.date).toLocaleString()}
+                {t('detail.placedOn')} {new Date(currentOrder.createdAt.toDate()).toLocaleString()}
               </p>
               {currentOrder.deliveryDate && (
                 <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -144,6 +144,41 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onEdit, onUpd
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('detail.customer')}</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      {currentOrder.customer.name && (
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-300">
+                            <User className="w-4 h-4" />
+                          </div>
+                          <div className="text-sm">
+                            <p className="font-medium text-slate-900 dark:text-white">{t('detail.customerName')}</p>
+                            <p className="text-slate-600 dark:text-slate-300">{currentOrder.customer.name}</p>
+                          </div>
+                        </div>
+                      )}
+                      {currentOrder.customer.email && (
+                        <div className="flex items-center gap-3">
+                           <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-300">
+                             <Mail className="w-4 h-4" />
+                           </div>
+                           <div className="text-sm">
+                             <p className="font-medium text-slate-900 dark:text-white">{t('detail.email')}</p>
+                             <span className="text-slate-600 dark:text-slate-300">{currentOrder.customer.email}</span>
+                           </div>
+                        </div>
+                      )}
+                      {currentOrder.customer.phone && (
+                        <div className="flex items-center gap-3">
+                           <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-300">
+                             <Phone className="w-4 h-4" />
+                           </div>
+                           <div className="text-sm">
+                             <p className="font-medium text-slate-900 dark:text-white">{t('detail.phone')}</p>
+                             <span className="text-slate-600 dark:text-slate-300">{currentOrder.customer.phone}</span>
+                           </div>
+                        </div>
+                      )}
+                    </div>
                     <div className="flex items-start gap-3">
                       <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-300">
                         <MapPin className="w-4 h-4" />
@@ -153,24 +188,6 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ order, onClose, onEdit, onUpd
                         <p className="text-slate-500 dark:text-slate-400">{currentOrder.customer.address || 'No address provided'}</p>
                         {currentOrder.customer.city && <p className="text-slate-500 dark:text-slate-400">{currentOrder.customer.city}, {currentOrder.customer.country}</p>}
                       </div>
-                    </div>
-                    <div className="space-y-3">
-                      {currentOrder.customer.email && (
-                        <div className="flex items-center gap-3">
-                           <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-300">
-                             <Mail className="w-4 h-4" />
-                           </div>
-                           <span className="text-sm text-slate-600 dark:text-slate-300">{currentOrder.customer.email}</span>
-                        </div>
-                      )}
-                      {currentOrder.customer.phone && (
-                        <div className="flex items-center gap-3">
-                           <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-300">
-                             <Phone className="w-4 h-4" />
-                           </div>
-                           <span className="text-sm text-slate-600 dark:text-slate-300">{currentOrder.customer.phone}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
