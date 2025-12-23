@@ -319,6 +319,7 @@ const InventoryPage: React.FC = () => {
       {isFormOpen && (
         <ProductForm 
            initialData={editingProduct}
+           ingredients={ingredients}
            onSave={handleSave}
            onCancel={() => setIsFormOpen(false)}
         />
