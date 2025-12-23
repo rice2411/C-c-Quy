@@ -30,7 +30,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
 
   // Construct SePay URL
   // Use order number for description
-  const description = `Thanh toan don hang ${orderNumber}`;
+  const description = `${orderNumber}`;
   const qrUrl = `https://qr.sepay.vn/img?acc=96247HTTH1308&bank=BIDV&amount=${Math.round(total)}&des=${encodeURIComponent(description)}&template=compact`;
 
   const copyToClipboard = (text: string) => {
