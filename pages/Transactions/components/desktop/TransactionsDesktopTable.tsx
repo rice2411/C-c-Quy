@@ -26,6 +26,7 @@ const TransactionsDesktopTable: React.FC<TransactionsDesktopTableProps> = ({
               <th className="px-4 sm:px-6 py-3">Amount</th>
               <th className="px-4 sm:px-6 py-3">Content</th>
               <th className="px-4 sm:px-6 py-3">Order Ref</th>
+              <th className="px-4 sm:px-6 py-3">SePay ID</th>
               <th className="px-4 sm:px-6 py-3">Gateway</th>
               <th className="px-4 sm:px-6 py-3">Account</th>
             </tr>
@@ -85,6 +86,15 @@ const TransactionsDesktopTable: React.FC<TransactionsDesktopTableProps> = ({
                   {tr.orderNumber ? (
                     <span className="inline-flex items-center gap-1 bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300 px-2 py-1 rounded-md text-xs font-medium font-mono">
                       {tr.orderNumber}
+                    </span>
+                  ) : (
+                    <span className="text-slate-400 text-xs">-</span>
+                  )}
+                </td>
+                <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                  {tr.sepayId ? (
+                    <span className="inline-flex items-center gap-1 bg-slate-50 text-slate-700 dark:bg-slate-800/60 dark:text-slate-200 px-2 py-1 rounded-md text-[11px] font-mono">
+                      #{tr.sepayId}
                     </span>
                   ) : (
                     <span className="text-slate-400 text-xs">-</span>
