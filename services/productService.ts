@@ -1,6 +1,6 @@
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp, query, orderBy } from 'firebase/firestore';
-import { db } from '../config/firebase';
-import { Product } from '../types';
+import { db } from '@/config/firebase';
+import { Product } from '@/types';
 
 export const fetchProducts = async (): Promise<Product[]> => {
   try {
@@ -10,6 +10,18 @@ export const fetchProducts = async (): Promise<Product[]> => {
     
     return snapshot.docs.map(doc => {
       const data = doc.data();
+      // Backward compatibility: convert old format to new format
+      let recipes = data.recipes || [];
+      let materials = data.materials || [];
+      
+      if (data.recipeId && recipes.length === 0) {
+        recipes = [{ recipeId: data.recipeId, quantity: 1 }];
+      }
+      
+      if (data.materialIds && materials.length === 0) {
+        materials = (data.materialIds as string[]).map(id => ({ materialId: id, quantity: 1 }));
+      }
+      
       return {
         id: doc.id,
         name: data.name,
@@ -18,6 +30,8 @@ export const fetchProducts = async (): Promise<Product[]> => {
         category: data.category || 'General',
         description: data.description || '',
         status: data.status || 'active',
+        recipes,
+        materials,
         createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString()
       } as Product;
     });

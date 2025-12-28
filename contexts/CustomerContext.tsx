@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Customer } from '../types';
-import { fetchCustomers, addCustomer, updateCustomer, deleteCustomer } from '../services/customerService';
+import { Customer } from '@/types';
+import { fetchCustomers, addCustomer, updateCustomer, deleteCustomer } from '@/services/customerService';
 
 interface CustomerContextType {
   customers: Customer[];

@@ -3,7 +3,8 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 import { ChevronLeft, ChevronRight, BarChart } from 'lucide-react';
-import { useLanguage } from '../../../contexts/LanguageContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { formatVND } from '@/utils/currencyUtil';
 
 type TimeRange = 'week' | 'month' | 'year';
 
@@ -29,10 +30,6 @@ const DashboardChart: React.FC<DashboardChartProps> = ({
   isDarkMode
 }) => {
   const { t } = useLanguage();
-
-  const formatVND = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
 
   return (
     <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors">

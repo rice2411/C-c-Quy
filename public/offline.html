@@ -66,70 +66,8 @@
         </svg>
         <h1>No Internet Connection</h1>
         <p>It seems you are offline. Please check your internet connection and try again to access CucQuy Bakery.</p>
-        <button class="btn" onclick="checkConnectionAndReload()">Try Again</button>
-    <script>
-        async function checkConnectionAndReload() {
-            // Unregister service worker để bypass cache
-            if ('serviceWorker' in navigator) {
-                try {
-                    const registration = await navigator.serviceWorker.getRegistration();
-                    if (registration) {
-                        await registration.unregister();
-                    }
-                } catch (error) {
-                    console.error('Error unregistering service worker:', error);
-                }
-            }
-
-            // Clear all caches
-            if ('caches' in window) {
-                try {
-                    const cacheNames = await caches.keys();
-                    await Promise.all(
-                        cacheNames.map(cacheName => caches.delete(cacheName))
-                    );
-                } catch (error) {
-                    console.error('Error clearing cache:', error);
-                }
-            }
-            
-            // Reload về root path với cache busting và bypass service worker
-            const timestamp = Date.now();
-            window.location.replace('/?t=' + timestamp + '&_sw-bypass=true');
-        }
-
-        // Listen cho online event
-        window.addEventListener('online', () => {
-            console.log('Network is back online');
-            checkConnectionAndReload();
-        });
-
-        // Auto-check connection mỗi 2 giây (nhanh hơn)
-        const checkInterval = setInterval(async () => {
-            if (navigator.onLine) {
-                try {
-                    // Fetch với cache busting và bypass service worker
-                    const timestamp = Date.now();
-                    const response = await fetch('/?t=' + timestamp + '&_sw-bypass=true', {
-                        method: 'HEAD',
-                        cache: 'no-store',
-                        headers: {
-                            'Cache-Control': 'no-cache, no-store, must-revalidate',
-                            'Pragma': 'no-cache',
-                            'Expires': '0'
-                        }
-                    });
-                    if (response.ok) {
-                        clearInterval(checkInterval);
-                        checkConnectionAndReload();
-                    }
-                } catch (error) {
-                    // Still offline hoặc có lỗi
-                    console.log('Still offline or error:', error);
-                }
-            }
-        }, 2000); // Check mỗi 2 giây
-    </script>
+        <button class="btn" onclick="window.location.href = '/';">Try Again</button>
+  
     </div>
 </body>
 </html>

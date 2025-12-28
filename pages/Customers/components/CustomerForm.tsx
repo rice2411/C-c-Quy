@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, User, Phone, AlertCircle } from 'lucide-react';
-import { Customer } from '../../../types';
-import { useLanguage } from '../../../contexts/LanguageContext';
-import BaseModal from '../../../components/BaseModal';
+import { Customer } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
+import BaseModal from '@/components/BaseModal';
 
 interface CustomerFormProps {
   isOpen: boolean;

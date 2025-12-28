@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { Order } from '../types';
+import { Order } from '@types';
 
 const getClient = () => {
   const apiKey = process.env.GEMINI_API_KEY;

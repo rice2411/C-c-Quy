@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { X } from 'lucide-react';
+import { useFadeAnimation } from '@/hooks/useFadeAnimation';
 
 interface BaseModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface BaseModalProps {
   children: React.ReactNode;
   footer?: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  isFadeAnimation?: boolean;
 }
 
 const BaseModal: React.FC<BaseModalProps> = ({ 
@@ -16,21 +18,10 @@ const BaseModal: React.FC<BaseModalProps> = ({
   title, 
   children, 
   footer,
-  size = 'md' 
+  size = 'md',
+  isFadeAnimation = false
 }) => {
-  const [show, setShow] = useState(false);
-
-  // Handle animation state
-  useEffect(() => {
-    if (isOpen) {
-      setShow(true);
-      document.body.style.overflow = 'hidden';
-    } else {
-      const timer = setTimeout(() => setShow(false), 300);
-      document.body.style.overflow = 'unset';
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
+  const { show, isAnimating } = useFadeAnimation(isOpen, isFadeAnimation);
 
   if (!show && !isOpen) return null;
 
@@ -47,14 +38,22 @@ const BaseModal: React.FC<BaseModalProps> = ({
         
         {/* Backdrop */}
         <div 
-          className={`fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out ${isOpen ? 'opacity-100' : 'opacity-0'}`}
+          className={`fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out ${
+            isFadeAnimation 
+              ? (isAnimating ? 'opacity-100' : 'opacity-0')
+              : (isOpen ? 'opacity-100' : 'opacity-0')
+          }`}
           onClick={onClose}
           aria-hidden="true"
         ></div>
 
         {/* Modal Panel */}
         <div 
-          className={`relative transform overflow-hidden rounded-xl bg-white dark:bg-slate-800 text-left shadow-2xl transition-all duration-300 ease-out sm:my-8 w-full ${sizeClasses[size]} ${isOpen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'}`}
+          className={`relative transform overflow-hidden rounded-xl bg-white dark:bg-slate-800 text-left shadow-2xl transition-all duration-300 ease-out sm:my-8 w-full ${sizeClasses[size]} ${
+            isFadeAnimation
+              ? (isAnimating ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95')
+              : (isOpen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95')
+          }`}
         >
           {/* Header */}
           <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-800">

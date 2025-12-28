@@ -1,13 +1,13 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Package, AlertCircle } from 'lucide-react';
-import { useLanguage } from '../../../contexts/LanguageContext';
-
+import { TrendingUp, TrendingDown, DollarSign, Package, AlertCircle, ShoppingBag } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { formatVND } from '@/utils/currencyUtil';
 interface DashboardMetricsProps {
   metrics: {
     revenue: number;
     revenueChange: number;
-    avgOrderValue: number;
-    avgChange: number;
+    ingredientCost: number;
+    ingredientCostChange: number;
   };
   totalOrders: number;
   newOrdersToday: number;
@@ -30,9 +30,6 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
 }) => {
   const { t } = useLanguage();
 
-  const formatVND = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
 
   // Helper to generate trend text and bottom note
   const getTrendInfo = (change: number) => {
@@ -59,7 +56,7 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
   };
 
   const revenueInfo = getTrendInfo(metrics.revenueChange);
-  const avgInfo = getTrendInfo(metrics.avgChange);
+  const ingredientCostInfo = getTrendInfo(metrics.ingredientCostChange);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -116,23 +113,23 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
         </div>
       </div>
 
-      {/* Avg Order Value */}
+      {/* Ingredient Cost */}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between transition-colors">
         <div className="flex justify-between items-start">
           <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('dashboard.avgOrderValue')}</p>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{formatVND(metrics.avgOrderValue)}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('dashboard.ingredientCost')}</p>
+            <h3 className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{formatVND(metrics.ingredientCost)}</h3>
           </div>
-          <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg text-orange-600 dark:text-orange-400">
-            <TrendingDown size={20} />
+          <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">
+            <ShoppingBag size={20} />
           </div>
         </div>
-         <div className={`flex items-center mt-4 text-sm ${avgInfo.colorClass}`}>
-          <avgInfo.Icon size={16} className="mr-1" />
-          <span>{avgInfo.isPositive ? '+' : ''}{metrics.avgChange.toFixed(1)}% {avgInfo.trendText}</span>
+         <div className={`flex items-center mt-4 text-sm ${ingredientCostInfo.colorClass}`}>
+          <ingredientCostInfo.Icon size={16} className="mr-1" />
+          <span>{ingredientCostInfo.isPositive ? '+' : ''}{metrics.ingredientCostChange.toFixed(1)}% {ingredientCostInfo.trendText}</span>
         </div>
          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-medium tracking-wide">
-          {avgInfo.bottomNote}
+          {ingredientCostInfo.bottomNote}
         </p>
       </div>
     </div>

@@ -34,73 +34,7 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
-          // Tăng giới hạn file size để precache (mặc định 2 MB)
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
-          // Precache offline.html
-          additionalManifestEntries: [{ url: "/offline.html", revision: null }],
-          // Fallback về offline.html chỉ khi không có trong precache và network fail
-          navigateFallback: "/offline.html",
-          navigateFallbackDenylist: [/^\/api/, /^\/offline\.html$/, /\.(js|css|png|jpg|jpeg|svg|ico|woff|woff2|ttf|eot)$/],
-          // Runtime caching strategies
-          runtimeCaching: [
-            {
-              // Root path và index.html - NetworkFirst với fallback về offline.html
-              urlPattern: ({ url }) => {
-                return url.pathname === '/' || url.pathname === '/index.html';
-              },
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'root-cache',
-                networkTimeoutSeconds: 10, // Đợi network 10 giây
-                cacheableResponse: {
-                  statuses: [0, 200]
-                },
-                expiration: {
-                  maxEntries: 1,
-                  maxAgeSeconds: 60 // 1 phút
-                },
-                matchOptions: {
-                  ignoreSearch: false
-                }
-              }
-            },
-            {
-              // Navigation requests - NetworkFirst với fallback
-              urlPattern: ({ request }) => {
-                return request.mode === 'navigate';
-              },
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'navigation-cache',
-                networkTimeoutSeconds: 10, // Đợi network 10 giây
-                cacheableResponse: {
-                  statuses: [0, 200]
-                },
-                expiration: {
-                  maxEntries: 10,
-                  maxAgeSeconds: 60 * 5 // 5 phút
-                }
-              }
-            },
-            {
-              // HTML files (trừ offline.html) - NetworkFirst
-              urlPattern: ({ url }) => {
-                return /\.html$/.test(url.pathname) && url.pathname !== '/offline.html';
-              },
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'html-cache',
-                networkTimeoutSeconds: 10,
-                cacheableResponse: {
-                  statuses: [0, 200]
-                },
-                expiration: {
-                  maxEntries: 10,
-                  maxAgeSeconds: 60 * 60 // 1 giờ
-                }
-              }
-            }
-          ]
         },
         devOptions: {
           enabled: true,

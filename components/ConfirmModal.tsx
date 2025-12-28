@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ConfirmModalProps {
   isOpen: boolean;

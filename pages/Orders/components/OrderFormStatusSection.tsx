@@ -1,7 +1,7 @@
 import React from 'react';
 import { StickyNote, CreditCard, QrCode, Copy, Wallet } from 'lucide-react';
-import { OrderStatus, PaymentStatus, PaymentMethod } from '../../../types';
-import { useLanguage } from '../../../contexts/LanguageContext';
+import { OrderStatus, PaymentStatus, PaymentMethod } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface OrderStatusSectionProps {
   status: OrderStatus;
@@ -30,7 +30,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
 
   // Construct SePay URL
   // Use order number for description
-  const description = `Thanh toan don hang ${orderNumber}`;
+  const description = `${orderNumber}`;
   const qrUrl = `https://qr.sepay.vn/img?acc=96247HTTH1308&bank=BIDV&amount=${Math.round(total)}&des=${encodeURIComponent(description)}&template=compact`;
 
   const copyToClipboard = (text: string) => {
@@ -83,7 +83,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
       </div>
       
       <div>
-         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('form.notes')}</label>
+         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('form.note')}</label>
          <div className="relative">
             <StickyNote className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
             <textarea 

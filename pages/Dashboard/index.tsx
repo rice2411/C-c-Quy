@@ -1,11 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { OrderStatus } from '../../types';
-import { generateDashboardInsights } from '../../services/geminiService';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { useOrders } from '../../contexts/OrderContext';
-import DashboardMetrics from './components/DashboardMetrics';
-import DashboardChart from './components/DashboardChart';
-import DashboardInsights from './components/DashboardInsights';
+import { Order, OrderStatus, PaymentStatus, Ingredient, IngredientHistoryType } from '@/types';
+import { generateDashboardInsights } from '@/services/geminiService';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useOrders } from '@/contexts/OrderContext';
+import { fetchIngredients } from '@/services/ingredientService';
+import { getOrderTotal } from '@/utils/orderUtils';
+import DashboardMetrics from '@/pages/Dashboard/components/DashboardMetrics';
+import DashboardChart from '@/pages/Dashboard/components/DashboardChart';
+import DashboardInsights from '@/pages/Dashboard/components/DashboardInsights';
+import DashboardRecentOrders from '@/pages/Dashboard/components/DashboardRecentOrders';
+import DashboardRecentTransactions from '@/pages/Dashboard/components/DashboardRecentTransactions';
+import DashboardRecentUsers from '@/pages/Dashboard/components/DashboardRecentUsers';
 
 type TimeRange = 'week' | 'month' | 'year';
 
@@ -16,8 +21,21 @@ const DashboardPage: React.FC = () => {
   const [loadingInsight, setLoadingInsight] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>('week');
   const [referenceDate, setReferenceDate] = useState<Date>(new Date());
-  
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+
   const isDarkMode = document.documentElement.classList.contains('dark');
+
+  useEffect(() => {
+    const loadIngredients = async () => {
+      try {
+        const data = await fetchIngredients();
+        setIngredients(data);
+      } catch (error) {
+        console.error('Failed to load ingredients:', error);
+      }
+    };
+    loadIngredients();
+  }, []);
 
   useEffect(() => {
     setReferenceDate(new Date());
@@ -77,30 +95,46 @@ const DashboardPage: React.FC = () => {
 
   const metrics = useMemo(() => {
     const currentOrders = orders.filter(o => {
-      const d = new Date(o.date);
+      const d = new Date(o.createdAt.toDate());
       return d >= startDate && d <= endDate;
-    });
+    }).filter(o => o.paymentStatus === PaymentStatus.PAID && o.status === OrderStatus.DELIVERED);
 
     const prevOrders = orders.filter(o => {
-      const d = new Date(o.date);
+      const d = new Date(o.createdAt.toDate());
       return d >= prevStartDate && d <= prevEndDate;
-    });
+    }).filter(o => o.paymentStatus === PaymentStatus.PAID && o.status === OrderStatus.DELIVERED);
 
-    const currentRevenue = currentOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
-    const prevRevenue = prevOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+    const currentRevenue = currentOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
+    const prevRevenue = prevOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
     const revenueChange = prevRevenue === 0 ? (currentRevenue > 0 ? 100 : 0) : ((currentRevenue - prevRevenue) / prevRevenue) * 100;
 
-    const currentAvg = currentOrders.length > 0 ? currentRevenue / currentOrders.length : 0;
-    const prevAvg = prevOrders.length > 0 ? prevRevenue / prevOrders.length : 0;
-    const avgChange = prevAvg === 0 ? (currentAvg > 0 ? 100 : 0) : ((currentAvg - prevAvg) / prevAvg) * 100;
+    const calculateIngredientCost = (ingredients: Ingredient[], start: Date, end: Date): number => {
+      return ingredients.reduce((total, ingredient) => {
+        if (!ingredient.history) return total;
+        const cost = ingredient.history.reduce((sum, item) => {
+          if (item.type === IngredientHistoryType.IMPORT && item.price && item.importQuantity) {
+            const itemDate = new Date(item.createdAt);
+            if (itemDate >= start && itemDate <= end) {
+              return sum + (item.price * item.importQuantity);
+            }
+          }
+          return sum;
+        }, 0);
+        return total + cost;
+      }, 0);
+    };
+
+    const currentIngredientCost = calculateIngredientCost(ingredients, startDate, endDate);
+    const prevIngredientCost = calculateIngredientCost(ingredients, prevStartDate, prevEndDate);
+    const ingredientCostChange = prevIngredientCost === 0 ? (currentIngredientCost > 0 ? 100 : 0) : ((currentIngredientCost - prevIngredientCost) / prevIngredientCost) * 100;
 
     return {
       revenue: currentRevenue,
       revenueChange,
-      avgOrderValue: currentAvg,
-      avgChange
+      ingredientCost: currentIngredientCost,
+      ingredientCostChange
     };
-  }, [orders, startDate, endDate, prevStartDate, prevEndDate]);
+  }, [orders, ingredients, startDate, endDate, prevStartDate, prevEndDate]);
 
   const { currentRangeLabel, prevRangeLabel } = useMemo(() => {
     const locale = language === 'vi' ? 'vi-VN' : 'en-US';
@@ -152,7 +186,7 @@ const DashboardPage: React.FC = () => {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todayOrders = orders.filter(o => {
-      const d = new Date(o.date);
+      const d = new Date(o.createdAt.toDate());
       return d >= startOfDay;
     });
     return { newOrdersToday: todayOrders.length };
@@ -177,20 +211,22 @@ const DashboardPage: React.FC = () => {
     }
 
     const filtered = orders.filter(order => {
-      const d = new Date(order.date);
+      const d = new Date(order.createdAt.toDate());
       return d >= startDate && d <= endDate;
     });
 
     filtered.forEach(order => {
-      const date = new Date(order.date);
-      let key = '';
-      if (timeRange === 'year') {
-        key = date.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', year: 'numeric' });
-      } else {
-        key = date.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', day: 'numeric' });
-      }
-      if (dataMap.has(key)) {
-        dataMap.set(key, (dataMap.get(key) || 0) + (Number(order.total) || 0));
+      if (order.paymentStatus === PaymentStatus.PAID && order.status === OrderStatus.DELIVERED) {
+        const date = new Date(order.createdAt.toDate());
+        let key = '';
+        if (timeRange === 'year') {
+          key = date.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', year: 'numeric' });
+        } else {
+          key = date.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', day: 'numeric' });
+        }
+        if (dataMap.has(key)) {
+          dataMap.set(key, (dataMap.get(key) || 0) + getOrderTotal(order));
+        }
       }
     });
 
@@ -203,6 +239,11 @@ const DashboardPage: React.FC = () => {
     setInsight(result);
     setLoadingInsight(false);
   };
+
+  const recentOrdersForDashboard: Order[] = useMemo(
+    () => [...orders].sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime()),
+    [orders]
+  );
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -232,6 +273,11 @@ const DashboardPage: React.FC = () => {
           loading={loadingInsight}
           onGenerate={handleGenerateInsight}
         />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <DashboardRecentOrders orders={recentOrdersForDashboard} />
+        <DashboardRecentTransactions />
+        <DashboardRecentUsers />
       </div>
     </div>
   );

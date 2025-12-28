@@ -77,3 +77,15 @@ body {
 .animate-fade-out {
   animation: fadeOut 0.3s ease-in forwards;
 }
+<<<<<<< HEAD
+=======
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+>>>>>>> 3e1c9f2dc67962886595d8f5260c0572dd08a343

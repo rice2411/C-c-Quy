@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Order, PaymentStatus } from '../types';
-import { fetchOrders, addOrder, updateOrder, deleteOrder } from '../services/orderService';
+import { Order, PaymentStatus } from '@/types';
+import { fetchOrders, addOrder, updateOrder, deleteOrder } from '@/services/orderService';
 
 interface OrderContextType {
   orders: Order[];

@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, Users, Loader2 } from 'lucide-react';
-import { useCustomers } from '../../contexts/CustomerContext';
-import { useOrders } from '../../contexts/OrderContext';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { Customer } from '../../types';
-import CustomerList from './components/CustomerList';
-import CustomerForm from './components/CustomerForm';
-import ConfirmModal from '../../components/ConfirmModal';
+import { useCustomers } from '@/contexts/CustomerContext';
+import { useOrders } from '@/contexts/OrderContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Customer } from '@/types';
+import CustomerList from '@/pages/Customers/components/CustomerList';
+import CustomerForm from '@/pages/Customers/components/CustomerForm';
+import ConfirmModal from '@/components/ConfirmModal';
 
 const CustomersPage: React.FC = () => {
   const { customers, loading, createNewCustomer, modifyCustomer, removeCustomer } = useCustomers();

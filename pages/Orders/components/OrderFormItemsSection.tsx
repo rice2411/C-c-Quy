@@ -1,39 +1,31 @@
 import React from 'react';
 import { Package, DollarSign, Plus, Trash2 } from 'lucide-react';
-import { useLanguage } from '../../../contexts/LanguageContext';
-import { ProductType } from '../../../types';
-import { FormItem } from './OrderForm';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Product } from '@/types';
+import { FormItem } from './modals/OrderForm';
 
 interface OrderItemsSectionProps {
   items: FormItem[];
   onAddItem: () => void;
-  onRemoveItem: (id: string) => void;
-  onUpdateItem: (id: string, field: keyof FormItem, value: any) => void;
+  onRemoveItem: (itemId: string) => void;
+  onUpdateItem: (itemId: string, field: keyof FormItem, value: any) => void;
   shippingCost: number;
   setShippingCost: (val: number) => void;
   total: number;
-  productTypes: ProductType[];
+  products: Product[];
 }
 
 const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
   items, onAddItem, onRemoveItem, onUpdateItem,
   shippingCost, setShippingCost,
-  total, productTypes
+  total, products
 }) => {
   const { t } = useLanguage();
 
-  const getProductImage = (type: ProductType, customName: string) => {
-    const t = (type === ProductType.CUSTOM ? customName : type).toLowerCase();
-    
-    if (t.includes('family') || t.includes('gia đình')) return 'https://images.unsplash.com/photo-1556910103-1c02745a30bf?auto=format&fit=crop&q=80&w=200';
-    if (t.includes('friend') || t.includes('tình bạn')) return 'https://images.unsplash.com/photo-1621236378699-8597f840b45a?auto=format&fit=crop&q=80&w=200';
-    if (t.includes('cookie') || t.includes('bánh')) return 'https://images.unsplash.com/photo-1499636138143-bd649025ebeb?auto=format&fit=crop&q=80&w=200';
-    if (t.includes('cake') || t.includes('kem')) return 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&q=80&w=200';
-    if (t.includes('set') || t.includes('quà') || t.includes('gif')) return 'https://images.unsplash.com/photo-1549488352-22668e9e6c1c?auto=format&fit=crop&q=80&w=200';
-
-    // Default/Fallback
-    const displayText = (type === ProductType.CUSTOM && customName) ? customName : type;
-    return `https://placehold.co/200x200?text=${encodeURIComponent(displayText || 'Product')}`;
+  const getProductImage = (item: FormItem) => {
+    if (item.image) return item.image;
+    const displayText = item.productName || 'Product';
+    return `https://placehold.co/200x200?text=${encodeURIComponent(displayText)}`;
   };
 
   return (
@@ -53,13 +45,13 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
 
       <div className="space-y-6">
         {items.map((item, index) => {
-             const currentImage = getProductImage(item.productType, item.customProduct);
+             const currentImage = getProductImage(item);
              return (
-                 <div key={item.internalId} className="relative p-4 bg-slate-50 dark:bg-slate-700/30 rounded-xl border border-slate-100 dark:border-slate-700">
+                 <div key={item.id} className="relative p-4 bg-slate-50 dark:bg-slate-700/30 rounded-xl border border-slate-100 dark:border-slate-700">
                     {items.length > 1 && (
                         <button 
                            type="button"
-                           onClick={() => onRemoveItem(item.internalId)}
+                           onClick={() => onRemoveItem(item.id)}
                            className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                            title="Remove item"
                         >
@@ -85,27 +77,18 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                 <div>
                                     <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('form.productType')} {items.length > 1 && `#${index + 1}`}</label>
                                     <select 
-                                        value={item.productType}
-                                        onChange={(e) => onUpdateItem(item.internalId, 'productType', e.target.value)}
+                                        value={item.productId || ''}
+                                        onChange={(e) => onUpdateItem(item.id, 'productId', e.target.value || '')}
                                         className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
                                     >
-                                        {productTypes.map(type => <option key={type} value={type}>{type}</option>)}
-                                        <option value={ProductType.CUSTOM}>✨ Custom Product...</option>
+                                        {products.map(p => (
+                                          <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                        {!item.productId && item.productName && (
+                                          <option value="" disabled>{item.productName}</option>
+                                        )}
                                     </select>
                                 </div>
-                                
-                                {item.productType === ProductType.CUSTOM && (
-                                    <div className="animate-fade-in">
-                                        <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('form.customName')}</label>
-                                        <input 
-                                            type="text" 
-                                            value={item.customProduct}
-                                            onChange={(e) => onUpdateItem(item.internalId, 'customProduct', e.target.value)}
-                                            className="w-full px-3 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg text-sm text-orange-700 dark:text-orange-300 focus:ring-2 focus:ring-orange-500 outline-none placeholder-orange-300"
-                                            placeholder={t('form.customPlaceholder')}
-                                        />
-                                    </div>
-                                )}
                             </div>
 
                             <div className="grid grid-cols-3 gap-3">
@@ -115,7 +98,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                         type="number" 
                                         min="1"
                                         value={item.quantity}
-                                        onChange={(e) => onUpdateItem(item.internalId, 'quantity', Math.max(1, Number(e.target.value)))}
+                                        onChange={(e) => onUpdateItem(item.id, 'quantity', Math.max(1, Number(e.target.value)))}
                                         className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
                                     />
                                 </div>
@@ -128,7 +111,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                             min="0"
                                             step="1000"
                                             value={item.unitPrice}
-                                            onChange={(e) => onUpdateItem(item.internalId, 'unitPrice', Math.max(0, Number(e.target.value)))}
+                                            onChange={(e) => onUpdateItem(item.id, 'unitPrice', Math.max(0, Number(e.target.value)))}
                                             className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
                                         />
                                     </div>

@@ -1,4 +1,8 @@
-export type UserStatus = 'pending' | 'active' | 'inactive';
+export enum UserStatus {
+  PENDING = 'pending',
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+}
 
 export interface UserData {
   uid: string;
@@ -9,4 +13,12 @@ export interface UserData {
   status: UserStatus; // pending, active, inactive
   createdAt: string;
   lastLoginAt: string;
+  role: UserRole;
 }
+
+export enum UserRole {
+  SUPER_ADMIN = 'super_admin',
+  ADMIN = 'admin',
+  COLABORATOR = 'colaborator',
+}
+

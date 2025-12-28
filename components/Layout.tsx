@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings, Menu, ArrowRightLeft, Archive, LogOut, UserCog } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
-import { useAuth } from '../contexts/AuthContext';
+import { LogOut } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { getAccessibleRoutes } from '@/config/routes';
+import { getUserFromLocalStorage } from '@/utils/userUtil';
 import ThemeToggle from './ThemeToggle';
 import toast from 'react-hot-toast';
+import MobileFooterNav from './MobileFooterNav';
 
 const Layout: React.FC = () => {
   const { t, language, setLanguage } = useLanguage();
-  const { currentUser, logout } = useAuth();
+  const { currentUser, userData, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'vi' : 'en');
@@ -28,24 +30,29 @@ const Layout: React.FC = () => {
     }
   };
 
-  const navItems = [
-    { id: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
-    { id: '/orders', label: t('nav.orders'), icon: ShoppingCart },
-    { id: '/transactions', label: t('nav.transactions'), icon: ArrowRightLeft },
-    { id: '/inventory', label: t('nav.inventory'), icon: Package },
-    { id: '/storage', label: t('nav.storage'), icon: Archive },
-    { id: '/customers', label: t('nav.customers'), icon: Users },
-    { id: '/users', label: t('nav.users'), icon: UserCog },
-    { id: '/settings', label: t('nav.settings'), icon: Settings, disabled: true },
-  ];
+  // Lấy danh sách routes mà user có quyền truy cập dựa trên role
+  // Fallback: Nếu chưa có userData, load từ localStorage
+  const storedUser = React.useMemo(() => getUserFromLocalStorage(), []);
+  const userRole = userData?.role || storedUser?.role;
+  
+  
+  const accessibleRoutes = getAccessibleRoutes(userRole);
+  
+  // Map routes config thành navItems với translation
+  const navItems = accessibleRoutes.map(route => ({
+    id: route.path,
+    label: t(route.labelKey),
+    icon: route.icon,
+    disabled: route.disabled
+  }));
 
   const getPageTitle = () => {
     if (location.pathname === '/') return t('header.dashboardTitle');
     if (location.pathname === '/orders') return t('header.ordersTitle');
     if (location.pathname === '/transactions') return t('header.transactionsTitle');
-    if (location.pathname === '/inventory') return t('header.inventoryTitle');
-    if (location.pathname === '/storage') return t('header.storageTitle');
+    if (location.pathname === '/storage') return t('header.inventoryTitle');
     if (location.pathname === '/customers') return t('header.customersTitle');
+    if (location.pathname === '/suppliers') return t('header.suppliersTitle');
     if (location.pathname === '/users') return t('header.usersTitle');
     return 'CucQuyBakery';
   };
@@ -96,20 +103,18 @@ const Layout: React.FC = () => {
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
         {/* Header */}
         <header className="h-16 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 md:px-8 z-10 sticky top-0 transition-colors duration-200">
-          <div className="flex items-center md:hidden">
-            <button 
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 -ml-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
-            <span className="ml-3 text-lg font-bold text-slate-800 dark:text-white">CucQuyBakery</span>
-          </div>
-
-          <div className="hidden md:block">
-            <h1 className="text-xl font-bold text-slate-800 dark:text-white">
-              {getPageTitle()}
-            </h1>
+          <div className="flex items-center gap-3">
+            <div className="md:hidden flex items-center gap-2">
+              <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm shadow-orange-300 dark:shadow-none">
+                C
+              </div>
+              <span className="text-lg font-bold text-slate-800 dark:text-white">CucQuyBakery</span>
+            </div>
+            <div className="hidden md:block">
+              <h1 className="text-xl font-bold text-slate-800 dark:text-white">
+                {getPageTitle()}
+              </h1>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -157,54 +162,15 @@ const Layout: React.FC = () => {
           </div>
         </header>
 
-        {/* Mobile Navigation Dropdown */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden absolute top-16 left-0 right-0 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 z-30 shadow-lg animate-fade-in">
-             <nav className="p-4 space-y-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.id}
-                  to={item.disabled ? '#' : item.id}
-                  onClick={(e) => {
-                    if (item.disabled) {
-                      e.preventDefault();
-                      return;
-                    }
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                    location.pathname === item.id
-                      ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400'
-                      : item.disabled
-                        ? 'text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-60'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
-                  }`}
-                >
-                  <item.icon className={`w-5 h-5 mr-3 ${location.pathname === item.id ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'}`} />
-                  {item.label}
-                  {item.disabled && <span className="ml-auto text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded">{t('nav.soon')}</span>}
-                </Link>
-              ))}
-              <button
-                onClick={() => {
-                  handleLogout();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 dark:hover:text-red-400 transition-all"
-              >
-                <LogOut className="w-5 h-5 mr-3" />
-                {t('nav.signOut')}
-              </button>
-            </nav>
-          </div>
-        )}
-
         {/* Scrollable Main Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
-          <div className="max-w-7xl mx-auto h-full">
+        <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-8 md:pb-8 scroll-smooth">
+          <div className=" mx-auto w-full">
             <Outlet />
           </div>
         </main>
+
+        {/* Mobile Footer Navigation */}
+        <MobileFooterNav />
       </div>
     </div>
   );

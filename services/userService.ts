@@ -1,7 +1,7 @@
 import { doc, setDoc, getDoc, Timestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { User } from 'firebase/auth';
-import { db } from '../config/firebase';
-import { UserData, UserStatus } from '../types/user';
+import { db } from '@/config/firebase';
+import { UserData, UserRole, UserStatus } from '@/types/user';
 
 /**
  * Kiểm tra xem user với email đã tồn tại trong Firestore chưa
@@ -34,6 +34,7 @@ export const getUserByEmail = async (email: string | null): Promise<UserData | n
  * @returns UserData nếu tồn tại, null nếu không
  */
 export const getUserByUid = async (uid: string): Promise<UserData | null> => {
+  if (!uid) return null;
   try {
     const userRef = doc(db, 'users', uid);
     const userSnap = await getDoc(userRef);
@@ -87,9 +88,10 @@ export const saveUserToFirestore = async (user: User): Promise<UserData> => {
       email: user.email,
       displayName: user.displayName,
       photoURL: user.photoURL,
-      status: 'pending', // Mặc định là pending, cần admin phê duyệt
+      status: UserStatus.PENDING, // Mặc định là pending, cần admin phê duyệt
       createdAt: now,
-      lastLoginAt: now
+      lastLoginAt: now,
+      role: UserRole.COLABORATOR,
     };
 
     await setDoc(userRef, userData);
@@ -146,6 +148,21 @@ export const updateUserCustomName = async (uid: string, customName: string): Pro
     await setDoc(userRef, { customName }, { merge: true });
   } catch (error) {
     console.error('Error updating user custom name:', error);
+    throw error;
+  }
+};
+
+/**
+ * Cập nhật role của user
+ * @param uid - UID của user
+ * @param role - Role mới
+ */
+export const updateUserRole = async (uid: string, role: UserRole): Promise<void> => {
+  try {
+    const userRef = doc(db, 'users', uid);
+    await setDoc(userRef, { role }, { merge: true });
+  } catch (error) {
+    console.error('Error updating user role:', error);
     throw error;
   }
 };

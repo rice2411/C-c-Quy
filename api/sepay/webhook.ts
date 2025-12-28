@@ -3,12 +3,6 @@
  * POST /api/sepay/webhook
  */
 
-export enum PaymentStatus {
-  PAID = 'Paid',
-  UNPAID = 'Unpaid',
-  REFUNDED = 'Refunded'
-}
-
 
 interface ApiRequest {
   method?: string;
@@ -106,7 +100,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
   // 4. Update thanh toán
   await updateDoc(orderRef, {
-    paymentStatus: PaymentStatus.PAID,
+    paymentStatus: "PAID",
     sepayId: webhookData.id,
   });
 
