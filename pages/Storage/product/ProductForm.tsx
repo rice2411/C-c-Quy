@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Save, Image, Tag, DollarSign, AlignLeft, AlertCircle, Upload, Cake, CheckCircle2, Loader2, Trash2 } from 'lucide-react';
+import { Save, Image, Tag, DollarSign, AlignLeft, AlertCircle, Upload, Cake, CheckCircle2, Loader2, Trash2 } from 'lucide-react';
+import BaseSlidePanel from '@/components/BaseSlidePanel';
 import { Product, ProductRecipe, ProductMaterial, Recipe, Ingredient, IngredientType } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { uploadImage, getProductImagePath } from '@/services/imageService';
@@ -246,23 +247,46 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
     return materials.find(m => m.materialId === materialId);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm transition-opacity" onClick={onCancel}></div>
-      <div className="absolute inset-y-0 right-0 max-w-2xl w-full flex pointer-events-none">
-        <div className="w-full h-full bg-white dark:bg-slate-800 shadow-2xl flex flex-col pointer-events-auto animate-slide-in-right">
-          
-          <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-800">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-              {initialData ? t('inventory.formTitleEdit') : t('inventory.formTitleAdd')}
-            </h2>
-            <button onClick={onCancel} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full text-slate-400 transition-colors">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+  const footerContent = (
+    <div className="flex justify-end gap-3">
+      <button
+        type="button"
+        onClick={onCancel}
+        disabled={isSubmitting}
+        className="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+      >
+        {t('form.cancel')}
+      </button>
+      <button
+        type="submit"
+        disabled={isSubmitting || isUploading}
+        className="px-6 py-2 bg-orange-600 dark:bg-orange-500 rounded-lg text-sm font-medium text-white hover:bg-orange-700 dark:hover:bg-orange-600 shadow-sm flex items-center justify-center gap-2 disabled:opacity-70 transition-colors"
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            {t('form.saving')}
+          </>
+        ) : (
+          <>
+            <Save className="w-4 h-4" />
+            {t('form.save')}
+          </>
+        )}
+      </button>
+    </div>
+  );
 
-          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-            {error && (
+  return (
+    <BaseSlidePanel
+      isOpen={true}
+      onClose={onCancel}
+      maxWidth="2xl"
+      title={initialData ? t('inventory.formTitleEdit') : t('inventory.formTitleAdd')}
+      footer={footerContent}
+    >
+      <form id="product-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+        {error && (
               <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg flex items-center gap-2">
                 <AlertCircle className="w-4 h-4" />
                 {error}
@@ -560,8 +584,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
               )}
             </button>
           </div>
-        </div>
-      </div>
 
       {/* Recipe Quantity Modal */}
       {showRecipeQuantityModal && quantityModalRecipe && (
@@ -682,7 +704,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
           </div>
         </div>
       )}
-    </div>
+    </BaseSlidePanel>
   );
 };
 
