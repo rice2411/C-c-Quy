@@ -7,11 +7,14 @@ import {
   AlignLeft,
   Box,
   CheckCircle2,
+  Edit,
+  DollarSign,
 } from "lucide-react";
 import BaseSlidePanel from "@/components/BaseSlidePanel";
 import { Recipe, RecipeIngredient, Ingredient, IngredientType } from "@/types";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { calculateCurrentQuantity, isOutOfStock } from "@/utils/ingredientUtil";
+import { calculateCurrentQuantity, isOutOfStock, calculateAveragePrice } from "@/utils/ingredientUtil";
+import { formatVND } from "@/utils/currencyUtil";
 
 const getTypeColors = (type: IngredientType) => {
   switch (type) {
@@ -50,6 +53,7 @@ const BaseRecipeForm: React.FC<BaseRecipeFormProps> = ({
   const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"edit" | "cost">("edit");
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -84,6 +88,7 @@ const BaseRecipeForm: React.FC<BaseRecipeFormProps> = ({
       setShowQuantityModal(false);
       setQuantityModalIngredient(null);
       setQuantityModalValue("");
+      setActiveTab("edit");
     }
   }, [initialData, isOpen]);
 
@@ -265,14 +270,41 @@ const BaseRecipeForm: React.FC<BaseRecipeFormProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <BaseSlidePanel
-      isOpen={isOpen}
-      onClose={onClose}
-      maxWidth="3/4"
-      headerContent={headerContent}
-      footer={footerContent}
-    >
+  const tabsContent = (
+    <React.Fragment>
+      <div className="border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+        <div className="flex gap-1 px-4 sm:px-6">
+          <button
+            type="button"
+            onClick={() => setActiveTab("edit")}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "edit"
+                ? "border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400"
+                : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <Edit className="w-4 h-4" />
+              <span>{t("recipes.form.tabEdit") || "Chỉnh sửa"}</span>
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("cost")}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "cost"
+                ? "border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400"
+                : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              <span>{t("recipes.form.tabCost") || "Giá thành"}</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
       <div className="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/50 p-4 sm:p-6 space-y-4 sm:space-y-5">
         {error && (
           <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg flex items-center gap-2">
@@ -281,11 +313,12 @@ const BaseRecipeForm: React.FC<BaseRecipeFormProps> = ({
           </div>
         )}
 
-        <form
-          id="base-recipe-form"
-          onSubmit={handleSubmit}
-          className="space-y-4 sm:space-y-5"
-        >
+        {activeTab === "edit" ? (
+          <form
+            id="base-recipe-form"
+            onSubmit={handleSubmit}
+            className="space-y-4 sm:space-y-5"
+          >
           <div className="bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-3">
             <div>
               <label className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1 uppercase tracking-wide">
@@ -431,7 +464,152 @@ const BaseRecipeForm: React.FC<BaseRecipeFormProps> = ({
             </div>
           </div>
         </form>
+        ) : activeTab === "cost" ? (
+          <div className="space-y-4 sm:space-y-5">
+            {recipeIngredients.length === 0 ? (
+              <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm text-center">
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  {t("recipes.form.noIngredientsForCost") ||
+                    "Vui lòng thêm nguyên liệu vào công thức trước khi xem giá thành"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-slate-50 dark:bg-slate-700">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                            {t("recipes.form.ingredientName") || "Nguyên liệu"}
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                            {t("recipes.form.quantityInRecipe") || "Số lượng trong công thức"}
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                            {t("recipes.form.averagePrice") || "Giá trung bình"}
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                            {t("recipes.form.totalCostForQuantity") || "Tổng giá cho số lượng này"}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                        {recipeIngredients.map((ri) => {
+                          const ingredient = ingredients.find(
+                            (ing) => ing.id === ri.ingredientId
+                          );
+                          if (!ingredient) return null;
+
+                          const averagePrice = calculateAveragePrice(ingredient);
+                          const totalCostForQuantity =
+                            averagePrice > 0 && isFinite(averagePrice)
+                              ? averagePrice * ri.quantity
+                              : 0;
+
+                          return (
+                            <tr
+                              key={ri.ingredientId}
+                              className="hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                            >
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className={`p-1.5 rounded-lg ${getTypeColors(ingredient.type).bg} ${getTypeColors(ingredient.type).border} border`}
+                                  >
+                                    <Box className={`w-3.5 h-3.5 ${getTypeColors(ingredient.type).icon}`} />
+                                  </div>
+                                  <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                    {ri.ingredientName}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className="text-sm text-slate-900 dark:text-white font-medium">
+                                  {ri.quantity.toLocaleString(undefined, {
+                                    maximumFractionDigits: 2,
+                                  })}{" "}
+                                  {ri.unit === "piece"
+                                    ? t("ingredients.form.unitPiece")
+                                    : "g"}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                {averagePrice > 0 && isFinite(averagePrice) ? (
+                                  <span className="text-sm text-slate-900 dark:text-white font-medium">
+                                    {formatVND(averagePrice)} /{" "}
+                                    {ri.unit === "piece"
+                                      ? t("ingredients.form.unitPiece")
+                                      : "g"}
+                                  </span>
+                                ) : (
+                                  <span className="text-sm text-slate-400 dark:text-slate-500 italic">
+                                    {t("recipes.form.noPriceData") || "Chưa có dữ liệu giá"}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                {totalCostForQuantity > 0 ? (
+                                  <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                                    {formatVND(totalCostForQuantity)}
+                                  </span>
+                                ) : (
+                                  <span className="text-sm text-slate-400 dark:text-slate-500 italic">
+                                    -
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      <tfoot className="bg-slate-50 dark:bg-slate-700 border-t-2 border-slate-200 dark:border-slate-600">
+                        <tr>
+                          <td
+                            colSpan={3}
+                            className="px-4 py-4 text-sm font-bold text-slate-900 dark:text-white"
+                          >
+                            {t("recipes.form.totalRecipeCost") || "Tổng giá thành công thức"}
+                          </td>
+                          <td className="px-4 py-4">
+                            <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                              {formatVND(
+                                recipeIngredients.reduce((total, ri) => {
+                                  const ingredient = ingredients.find(
+                                    (ing) => ing.id === ri.ingredientId
+                                  );
+                                  if (!ingredient) return total;
+                                  const averagePrice = calculateAveragePrice(ingredient);
+                                  if (averagePrice <= 0 || !isFinite(averagePrice)) return total;
+                                  return total + averagePrice * ri.quantity;
+                                }, 0)
+                              )}
+                            </span>
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
+    </React.Fragment>
+  );
+
+  if (!isOpen) return null;
+
+  return (
+    <BaseSlidePanel
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="3/4"
+      headerContent={headerContent}
+      footer={activeTab === "edit" ? footerContent : undefined}
+    >
+      {tabsContent}
 
       {showQuantityModal && quantityModalIngredient && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">

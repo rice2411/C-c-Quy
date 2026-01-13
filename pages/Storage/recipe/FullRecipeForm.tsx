@@ -16,11 +16,13 @@ import {
   CheckCircle,
   XCircle,
   Package,
+  DollarSign,
 } from "lucide-react";
 import BaseSlidePanel from "@/components/BaseSlidePanel";
 import { Recipe, RecipeIngredient, Ingredient, IngredientType } from "@/types";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { calculateCurrentQuantity, isOutOfStock } from "@/utils/ingredientUtil";
+import { calculateCurrentQuantity, isOutOfStock, calculateAveragePrice } from "@/utils/ingredientUtil";
+import { formatVND } from "@/utils/currencyUtil";
 import {
   calculateIngredientRequirements,
   checkAllIngredientsSufficient,
@@ -86,7 +88,7 @@ const FullRecipeForm: React.FC<FullRecipeFormProps> = ({
   const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"edit" | "calculation">("edit");
+  const [activeTab, setActiveTab] = useState<"edit" | "calculation" | "cost">("edit");
 
   const [baseRecipeId, setBaseRecipeId] = useState<string>("");
   const [name, setName] = useState("");
@@ -435,6 +437,20 @@ const FullRecipeForm: React.FC<FullRecipeFormProps> = ({
               <span>{t("recipes.form.tabCalculation") || "Tính toán"}</span>
             </div>
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("cost")}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === "cost"
+                ? "border-orange-600 dark:border-orange-400 text-orange-600 dark:text-orange-400"
+                : "border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              <span>{t("recipes.form.tabCost") || "Giá thành"}</span>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -748,7 +764,7 @@ const FullRecipeForm: React.FC<FullRecipeFormProps> = ({
               </div>
             )}
           </form>
-        ) : (
+        ) : activeTab === "calculation" ? (
           <div className="space-y-4 sm:space-y-5">
             {outputQuantity > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
@@ -967,7 +983,369 @@ const FullRecipeForm: React.FC<FullRecipeFormProps> = ({
               </div>
             )}
           </div>
-        )}
+        ) : activeTab === "cost" ? (
+          <div className="space-y-4 sm:space-y-5">
+            {recipeIngredients.length === 0 ? (
+              <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm text-center">
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  {t("recipes.form.noIngredientsForCost") ||
+                    "Vui lòng thêm nguyên liệu vào công thức trước khi xem giá thành"}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-slate-50 dark:bg-slate-700">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                            {t("recipes.form.ingredientName") || "Nguyên liệu"}
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                            {t("recipes.form.quantityInRecipe") || "Số lượng trong công thức"}
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                            {t("recipes.form.averagePrice") || "Giá trung bình"}
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                            {t("recipes.form.totalCostForQuantity") || "Tổng giá cho số lượng này"}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                        {selectedBaseRecipe && selectedBaseRecipe.ingredients.length > 0 && (
+                          <>
+                            <tr className="bg-blue-50 dark:bg-blue-900/20">
+                              <td colSpan={4} className="px-4 py-2">
+                                <span className="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide">
+                                  {t("recipes.form.fromBaseRecipe") || "Từ công thức nền"} ({selectedBaseRecipe.name})
+                                </span>
+                              </td>
+                            </tr>
+                            {selectedBaseRecipe.ingredients.map((ri) => {
+                              const ingredient = ingredients.find(
+                                (ing) => ing.id === ri.ingredientId
+                              );
+                              if (!ingredient) return null;
+
+                              const averagePrice = calculateAveragePrice(ingredient);
+                              const totalCostForQuantity =
+                                averagePrice > 0 && isFinite(averagePrice)
+                                  ? averagePrice * ri.quantity
+                                  : 0;
+
+                              return (
+                                <tr
+                                  key={`base-${ri.ingredientId}`}
+                                  className="hover:bg-slate-50 dark:hover:bg-slate-700/50 bg-blue-50/50 dark:bg-blue-900/10"
+                                >
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center gap-2">
+                                      <div
+                                        className={`p-1.5 rounded-lg ${getTypeColors(ingredient.type).bg} ${getTypeColors(ingredient.type).border} border`}
+                                      >
+                                        <Box className={`w-3.5 h-3.5 ${getTypeColors(ingredient.type).icon}`} />
+                                      </div>
+                                      <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                        {ri.ingredientName}
+                                      </span>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <span className="text-sm text-slate-900 dark:text-white font-medium">
+                                      {ri.quantity.toLocaleString(undefined, {
+                                        maximumFractionDigits: 2,
+                                      })}{" "}
+                                      {ri.unit === "piece"
+                                        ? t("ingredients.form.unitPiece")
+                                        : "g"}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    {averagePrice > 0 && isFinite(averagePrice) ? (
+                                      <span className="text-sm text-slate-900 dark:text-white font-medium">
+                                        {formatVND(averagePrice)} /{" "}
+                                        {ri.unit === "piece"
+                                          ? t("ingredients.form.unitPiece")
+                                          : "g"}
+                                      </span>
+                                    ) : (
+                                      <span className="text-sm text-slate-400 dark:text-slate-500 italic">
+                                        {t("recipes.form.noPriceData") || "Chưa có dữ liệu giá"}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    {totalCostForQuantity > 0 ? (
+                                      <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                                        {formatVND(totalCostForQuantity)}
+                                      </span>
+                                    ) : (
+                                      <span className="text-sm text-slate-400 dark:text-slate-500 italic">
+                                        -
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </>
+                        )}
+                        {recipeIngredients
+                          .filter((ri) => {
+                            const ing = ingredients.find((i) => i.id === ri.ingredientId);
+                            return ing && (ing.type === IngredientType.FLAVOR || ing.type === IngredientType.TOPPING);
+                          })
+                          .length > 0 && (
+                          <>
+                            <tr className="bg-purple-50 dark:bg-purple-900/20">
+                              <td colSpan={4} className="px-4 py-2">
+                                <span className="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wide">
+                                  {t("recipes.form.additionalIngredients") || "Nguyên liệu bổ sung"} (Flavor + Topping)
+                                </span>
+                              </td>
+                            </tr>
+                            {recipeIngredients
+                              .filter((ri) => {
+                                const ing = ingredients.find((i) => i.id === ri.ingredientId);
+                                return ing && (ing.type === IngredientType.FLAVOR || ing.type === IngredientType.TOPPING);
+                              })
+                              .map((ri) => {
+                                const ingredient = ingredients.find(
+                                  (ing) => ing.id === ri.ingredientId
+                                );
+                                if (!ingredient) return null;
+
+                                const averagePrice = calculateAveragePrice(ingredient);
+                                const totalCostForQuantity =
+                                  averagePrice > 0 && isFinite(averagePrice)
+                                    ? averagePrice * ri.quantity
+                                    : 0;
+                                const TypeIcon = getTypeIcon(ingredient.type);
+
+                                return (
+                                  <tr
+                                    key={`additional-${ri.ingredientId}`}
+                                    className="hover:bg-slate-50 dark:hover:bg-slate-700/50 bg-purple-50/50 dark:bg-purple-900/10"
+                                  >
+                                    <td className="px-4 py-3">
+                                      <div className="flex items-center gap-2">
+                                        <div
+                                          className={`p-1.5 rounded-lg ${getTypeColors(ingredient.type).bg} ${getTypeColors(ingredient.type).border} border`}
+                                        >
+                                          <TypeIcon
+                                            className={`w-3.5 h-3.5 ${getTypeColors(ingredient.type).icon}`}
+                                          />
+                                        </div>
+                                        <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                          {ri.ingredientName}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className="text-sm text-slate-900 dark:text-white font-medium">
+                                        {ri.quantity.toLocaleString(undefined, {
+                                          maximumFractionDigits: 2,
+                                        })}{" "}
+                                        {ri.unit === "piece"
+                                          ? t("ingredients.form.unitPiece")
+                                          : "g"}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      {averagePrice > 0 && isFinite(averagePrice) ? (
+                                        <span className="text-sm text-slate-900 dark:text-white font-medium">
+                                          {formatVND(averagePrice)} /{" "}
+                                          {ri.unit === "piece"
+                                            ? t("ingredients.form.unitPiece")
+                                            : "g"}
+                                        </span>
+                                      ) : (
+                                        <span className="text-sm text-slate-400 dark:text-slate-500 italic">
+                                          {t("recipes.form.noPriceData") || "Chưa có dữ liệu giá"}
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      {totalCostForQuantity > 0 ? (
+                                        <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+                                          {formatVND(totalCostForQuantity)}
+                                        </span>
+                                      ) : (
+                                        <span className="text-sm text-slate-400 dark:text-slate-500 italic">
+                                          -
+                                        </span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </>
+                        )}
+                      </tbody>
+                      <tfoot className="bg-slate-50 dark:bg-slate-700 border-t-2 border-slate-200 dark:border-slate-600">
+                        {selectedBaseRecipe && selectedBaseRecipe.ingredients.length > 0 && (
+                          <tr>
+                            <td
+                              colSpan={3}
+                              className="px-4 py-3 text-sm font-semibold text-blue-700 dark:text-blue-300"
+                            >
+                              {t("recipes.form.baseRecipeCost") || "Tổng giá công thức nền"}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                                {formatVND(
+                                  selectedBaseRecipe.ingredients.reduce((total, ri) => {
+                                    const ingredient = ingredients.find(
+                                      (ing) => ing.id === ri.ingredientId
+                                    );
+                                    if (!ingredient) return total;
+                                    const averagePrice = calculateAveragePrice(ingredient);
+                                    if (averagePrice <= 0 || !isFinite(averagePrice)) return total;
+                                    return total + averagePrice * ri.quantity;
+                                  }, 0)
+                                )}
+                              </span>
+                            </td>
+                          </tr>
+                        )}
+                        {recipeIngredients
+                          .filter((ri) => {
+                            const ing = ingredients.find((i) => i.id === ri.ingredientId);
+                            return ing && (ing.type === IngredientType.FLAVOR || ing.type === IngredientType.TOPPING);
+                          })
+                          .length > 0 && (
+                          <tr>
+                            <td
+                              colSpan={3}
+                              className="px-4 py-3 text-sm font-semibold text-purple-700 dark:text-purple-300"
+                            >
+                              {t("recipes.form.additionalCost") || "Tổng giá nguyên liệu bổ sung"}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+                                {formatVND(
+                                  recipeIngredients
+                                    .filter((ri) => {
+                                      const ing = ingredients.find((i) => i.id === ri.ingredientId);
+                                      return ing && (ing.type === IngredientType.FLAVOR || ing.type === IngredientType.TOPPING);
+                                    })
+                                    .reduce((total, ri) => {
+                                      const ingredient = ingredients.find(
+                                        (ing) => ing.id === ri.ingredientId
+                                      );
+                                      if (!ingredient) return total;
+                                      const averagePrice = calculateAveragePrice(ingredient);
+                                      if (averagePrice <= 0 || !isFinite(averagePrice)) return total;
+                                      return total + averagePrice * ri.quantity;
+                                    }, 0)
+                                )}
+                              </span>
+                            </td>
+                          </tr>
+                        )}
+                        <tr className="border-t-2 border-slate-300 dark:border-slate-600">
+                          <td
+                            colSpan={3}
+                            className="px-4 py-4 text-sm font-bold text-slate-900 dark:text-white"
+                          >
+                            {t("recipes.form.totalRecipeCost") || "Tổng giá thành công thức"}
+                          </td>
+                          <td className="px-4 py-4">
+                            <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                              {formatVND(
+                                (() => {
+                                  const baseCost = selectedBaseRecipe
+                                    ? selectedBaseRecipe.ingredients.reduce((total, ri) => {
+                                        const ingredient = ingredients.find(
+                                          (ing) => ing.id === ri.ingredientId
+                                        );
+                                        if (!ingredient) return total;
+                                        const averagePrice = calculateAveragePrice(ingredient);
+                                        if (averagePrice <= 0 || !isFinite(averagePrice)) return total;
+                                        return total + averagePrice * ri.quantity;
+                                      }, 0)
+                                    : 0;
+                                  const additionalCost = recipeIngredients
+                                    .filter((ri) => {
+                                      const ing = ingredients.find((i) => i.id === ri.ingredientId);
+                                      return ing && (ing.type === IngredientType.FLAVOR || ing.type === IngredientType.TOPPING);
+                                    })
+                                    .reduce((total, ri) => {
+                                      const ingredient = ingredients.find(
+                                        (ing) => ing.id === ri.ingredientId
+                                      );
+                                      if (!ingredient) return total;
+                                      const averagePrice = calculateAveragePrice(ingredient);
+                                      if (averagePrice <= 0 || !isFinite(averagePrice)) return total;
+                                      return total + averagePrice * ri.quantity;
+                                    }, 0);
+                                  return baseCost + additionalCost;
+                                })()
+                              )}
+                            </span>
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+
+                {outputQuantity > 0 && (
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/20 p-4 rounded-xl border-2 border-orange-300 dark:border-orange-700 shadow-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-2 bg-orange-500/10 dark:bg-orange-400/20 rounded-lg">
+                        <DollarSign className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                      </div>
+                      <span className="text-xs font-semibold text-orange-700 dark:text-orange-300 uppercase tracking-wide">
+                        {t("recipes.form.costPerProduct") || "Giá thành mỗi thành phẩm"}
+                      </span>
+                    </div>
+                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                      {formatVND(
+                        (() => {
+                          const baseCost = selectedBaseRecipe
+                            ? selectedBaseRecipe.ingredients.reduce((total, ri) => {
+                                const ingredient = ingredients.find(
+                                  (ing) => ing.id === ri.ingredientId
+                                );
+                                if (!ingredient) return total;
+                                const averagePrice = calculateAveragePrice(ingredient);
+                                if (averagePrice <= 0 || !isFinite(averagePrice)) return total;
+                                return total + averagePrice * ri.quantity;
+                              }, 0)
+                            : 0;
+                          const additionalCost = recipeIngredients
+                            .filter((ri) => {
+                              const ing = ingredients.find((i) => i.id === ri.ingredientId);
+                              return ing && (ing.type === IngredientType.FLAVOR || ing.type === IngredientType.TOPPING);
+                            })
+                            .reduce((total, ri) => {
+                              const ingredient = ingredients.find(
+                                (ing) => ing.id === ri.ingredientId
+                              );
+                              if (!ingredient) return total;
+                              const averagePrice = calculateAveragePrice(ingredient);
+                              if (averagePrice <= 0 || !isFinite(averagePrice)) return total;
+                              return total + averagePrice * ri.quantity;
+                            }, 0);
+                          const totalCost = baseCost + additionalCost;
+                          const costPerProduct = outputQuantity > 0 ? totalCost / outputQuantity : 0;
+                          return costPerProduct > 0 && isFinite(costPerProduct) ? costPerProduct : 0;
+                        })()
+                      )}
+                    </p>
+                    <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                      ({t("recipes.form.for") || "cho"} {outputQuantity}{" "}
+                      {t("recipes.form.products") || "thành phẩm"})
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
     </React.Fragment>
   );
