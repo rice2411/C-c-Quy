@@ -1,11 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Save, Image, Tag, DollarSign, AlignLeft, AlertCircle, Upload, Cake, CheckCircle2, Loader2, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Save, Image, Tag, DollarSign, AlignLeft, AlertCircle, Upload, Cake, CheckCircle2, Loader2, Lightbulb } from 'lucide-react';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import { Product, ProductRecipe, ProductMaterial, Recipe, Ingredient, IngredientType } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { uploadImage, getProductImagePath } from '@/services/imageService';
 import { fetchRecipes } from '@/services/recipeService';
 import { getTypeColors, getTypeIcon } from '@/utils/ingredientTypeUtil';
+import { computeRecipeCost } from '@/utils/productUtil';
+import { calculateAveragePrice } from '@/utils/ingredientUtil';
+import { formatVND } from '@/utils/currencyUtil';
 
 interface ProductFormProps {
   initialData?: Product | null;
@@ -27,24 +30,21 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
+  const [cakesPerProduct, setCakesPerProduct] = useState<number>(0);
+  const [profitMarginPercent, setProfitMarginPercent] = useState<number>(0);
   const [recipes, setRecipes] = useState<ProductRecipe[]>([]);
   const [materials, setMaterials] = useState<ProductMaterial[]>([]);
   const [fullRecipes, setFullRecipes] = useState<Recipe[]>([]);
   const [loadingRecipes, setLoadingRecipes] = useState(false);
-  const [recipeSearch, setRecipeSearch] = useState('');
   const [materialSearch, setMaterialSearch] = useState('');
-  const [showRecipeQuantityModal, setShowRecipeQuantityModal] = useState(false);
   const [showMaterialQuantityModal, setShowMaterialQuantityModal] = useState(false);
-  const [quantityModalRecipe, setQuantityModalRecipe] = useState<{ recipe: Recipe; productRecipe: ProductRecipe } | null>(null);
   const [quantityModalMaterial, setQuantityModalMaterial] = useState<{ material: Ingredient; productMaterial: ProductMaterial } | null>(null);
   const [quantityModalValue, setQuantityModalValue] = useState<string>('');
   const quantityInputRef = useRef<HTMLInputElement>(null);
 
   const materialIngredients = ingredients.filter(ing => ing.type === IngredientType.MATERIAL);
 
-  const filteredRecipes = fullRecipes.filter(r => 
-    r.name.toLowerCase().includes(recipeSearch.toLowerCase())
-  );
+  const filteredRecipes = fullRecipes;
 
   const filteredMaterials = materialIngredients.filter(ing =>
     ing.name.toLowerCase().includes(materialSearch.toLowerCase())
@@ -74,10 +74,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
       setCategory(initialData.category);
       setDescription(initialData.description || '');
       setStatus(initialData.status);
+      setCakesPerProduct(initialData.cakesPerProduct ?? 0);
       setRecipes(initialData.recipes || []);
       setMaterials(initialData.materials || []);
     } else {
       setImage('');
+      setCakesPerProduct(0);
       setRecipes([]);
       setMaterials([]);
     }
@@ -114,48 +116,20 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
     }
   };
 
-  const handleToggleRecipe = (recipe: Recipe) => {
-    const existing = recipes.find(r => r.recipeId === recipe.id);
-    if (existing) {
-      setRecipes(recipes.filter(r => r.recipeId !== recipe.id));
-    } else {
-      setRecipes([...recipes, { recipeId: recipe.id, quantity: 1 }]);
-    }
+  const handleRecipePricePerSetChange = (recipeId: string, value: string) => {
+    const num = value.trim() === '' ? undefined : Number(value);
+    const pricePerSet = num != null && !isNaN(num) && num >= 0 ? num : undefined;
+    setRecipes(recipes.map(r =>
+      r.recipeId === recipeId ? { ...r, pricePerSet } : r
+    ));
   };
 
-  const handleOpenRecipeQuantityModal = (recipe: Recipe, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const productRecipe = recipes.find(r => r.recipeId === recipe.id);
-    if (productRecipe) {
-      setQuantityModalRecipe({ recipe, productRecipe });
-      setQuantityModalValue(productRecipe.quantity.toString());
-      setShowRecipeQuantityModal(true);
-      setTimeout(() => {
-        quantityInputRef.current?.focus();
-        quantityInputRef.current?.select();
-      }, 10);
-    }
-  };
-
-  const handleSaveRecipeQuantity = () => {
-    if (!quantityModalRecipe) return;
-    const numValue = quantityModalValue === '' ? 1 : Number(quantityModalValue);
-    if (!isNaN(numValue) && numValue > 0) {
-      setRecipes(recipes.map(r => 
-        r.recipeId === quantityModalRecipe.recipe.id 
-          ? { ...r, quantity: numValue } 
-          : r
-      ));
-    }
-    setShowRecipeQuantityModal(false);
-    setQuantityModalRecipe(null);
-    setQuantityModalValue('');
-  };
-
-  const handleCancelRecipeQuantityModal = () => {
-    setShowRecipeQuantityModal(false);
-    setQuantityModalRecipe(null);
-    setQuantityModalValue('');
+  const handleRecipeQuantityChange = (recipeId: string, value: string) => {
+    const num = value.trim() === '' ? 1 : Math.max(1, Math.floor(Number(value)));
+    if (isNaN(num)) return;
+    setRecipes(recipes.map(r =>
+      r.recipeId === recipeId ? { ...r, quantity: num } : r
+    ));
   };
 
   const handleToggleMaterial = (material: Ingredient) => {
@@ -202,6 +176,78 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
     setQuantityModalValue('');
   };
 
+  /** Danh sách công thức đã chọn kèm giá mỗi thành phẩm (tính từ nguyên liệu). */
+  const recipeCostList = useMemo(() => {
+    return recipes
+      .filter(r => r.quantity > 0)
+      .map(pr => {
+        const recipe = fullRecipes.find(f => f.id === pr.recipeId);
+        if (!recipe) return null;
+        const { costPerOutput } = computeRecipeCost(recipe, ingredients);
+        return {
+          productRecipe: pr,
+          recipe,
+          costPerOutput,
+        };
+      })
+      .filter((x): x is NonNullable<typeof x> => x != null);
+  }, [recipes, fullRecipes, ingredients]);
+
+  /** Tổng tiền công thức (dùng pricePerSet nếu có, không thì dùng totalCost 1 set). */
+  const totalRecipeCost = useMemo(() => {
+    return recipeCostList.reduce((sum, { productRecipe, recipe }) => {
+      const { totalCost } = computeRecipeCost(recipe, ingredients);
+      const costPerSet = productRecipe.pricePerSet != null && productRecipe.pricePerSet >= 0
+        ? productRecipe.pricePerSet
+        : totalCost;
+      return sum + productRecipe.quantity * costPerSet;
+    }, 0);
+  }, [recipeCostList, ingredients]);
+
+  /** Tổng số thành phẩm từ các công thức (số set × thành phẩm/set). */
+  const totalCakesFromRecipes = useMemo(() => {
+    return recipeCostList.reduce((sum, { productRecipe, recipe }) => {
+      const out = recipe.outputQuantity && recipe.outputQuantity > 0 ? recipe.outputQuantity : 1;
+      return sum + productRecipe.quantity * out;
+    }, 0);
+  }, [recipeCostList]);
+
+  /** Giá thành mỗi bánh (VND/bánh) từ công thức. */
+  const costPerCake = useMemo(() => {
+    if (totalCakesFromRecipes <= 0) return 0;
+    return totalRecipeCost / totalCakesFromRecipes;
+  }, [totalRecipeCost, totalCakesFromRecipes]);
+
+  /** Tổng giá vật liệu. */
+  const materialsCost = useMemo(() => {
+    return materials
+      .filter(m => m.quantity > 0)
+      .reduce((sum, m) => {
+        const ing = ingredients.find(i => i.id === m.materialId);
+        if (!ing) return sum;
+        const avg = calculateAveragePrice(ing);
+        if (avg <= 0 || !Number.isFinite(avg)) return sum;
+        return sum + m.quantity * avg;
+      }, 0);
+  }, [materials, ingredients]);
+
+  /** Gợi ý giá thành sản phẩm: vật liệu + (số bánh × giá/bánh). Số bánh mặc định 1, hoặc theo field người dùng nhập. */
+  const suggestedPrice = useMemo(() => {
+    const cakes = cakesPerProduct > 0 ? cakesPerProduct : 1;
+    return materialsCost + cakes * costPerCake;
+  }, [cakesPerProduct, costPerCake, materialsCost]);
+
+  /** Giá bán gợi ý = giá thành × (1 + tỉ lệ lời %). */
+  const suggestedSellingPrice = useMemo(() => {
+    const margin = profitMarginPercent >= 0 && Number.isFinite(profitMarginPercent) ? profitMarginPercent : 0;
+    return suggestedPrice * (1 + margin / 100);
+  }, [suggestedPrice, profitMarginPercent]);
+
+  const applySuggestedPrice = () => {
+    const val = Math.round(suggestedSellingPrice);
+    if (Number.isFinite(val) && val >= 0) setPrice(val);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -220,8 +266,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
         category: category || 'General',
         description,
         status,
-        recipes: recipes.filter(r => r.quantity > 0),
-        materials: materials.filter(m => m.quantity > 0)
+        cakesPerProduct: cakesPerProduct > 0 ? cakesPerProduct : undefined,
+        recipes: recipes.filter(r => r.quantity > 0).map(r => ({
+          recipeId: r.recipeId,
+          quantity: r.quantity,
+          ...(r.pricePerSet != null && r.pricePerSet >= 0 ? { pricePerSet: r.pricePerSet } : {}),
+        })),
+        materials: materials.filter(m => m.quantity > 0),
       };
 
       await onSave(formData);
@@ -229,14 +280,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
       setError(err.message || "Không thể lưu sản phẩm");
       setIsSubmitting(false);
     }
-  };
-
-  const isRecipeSelected = (recipeId: string) => {
-    return recipes.some(r => r.recipeId === recipeId);
-  };
-
-  const getSelectedRecipe = (recipeId: string) => {
-    return recipes.find(r => r.recipeId === recipeId);
   };
 
   const isMaterialSelected = (materialId: string) => {
@@ -259,6 +302,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
       </button>
       <button
         type="submit"
+        form="product-form"
         disabled={isSubmitting || isUploading}
         className="px-6 py-2 bg-orange-600 dark:bg-orange-500 rounded-lg text-sm font-medium text-white hover:bg-orange-700 dark:hover:bg-orange-600 shadow-sm flex items-center justify-center gap-2 disabled:opacity-70 transition-colors"
       >
@@ -352,8 +396,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                 </div>
               </div>
 
-              {/* Price & Category */}
-              <div className="grid grid-cols-2 gap-4">
+              {/* Price, Category, Số lượng bánh */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('inventory.price')}</label>
                   <div className="relative">
@@ -369,8 +413,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                   </div>
                 </div>
                 <div>
-                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('inventory.category')}</label>
-                   <input 
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('inventory.category')}</label>
+                  <input 
                     type="text" 
                     value={category}
                     onChange={e => setCategory(e.target.value)}
@@ -378,17 +422,76 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                     placeholder="VD: Bánh kem"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Số lượng bánh</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    step="1"
+                    value={cakesPerProduct || ''}
+                    onChange={e => setCakesPerProduct(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))}
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                    placeholder="VD: 6"
+                  />
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Dùng cho gợi ý giá thành</p>
+                </div>
               </div>
+
+              {/* Gợi ý giá thành sản phẩm */}
+              {recipeCostList.length > 0 && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200">Gợi ý giá thành sản phẩm</h3>
+                  </div>
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    {materials.length > 0
+                      ? `Giá vật liệu + (Số bánh × Giá mỗi bánh) = ${formatVND(materialsCost)} + ${cakesPerProduct > 0 ? cakesPerProduct : 1} × ${formatVND(costPerCake)}`
+                      : `Số bánh × Giá mỗi bánh = ${cakesPerProduct > 0 ? cakesPerProduct : 1} × ${formatVND(costPerCake)}`}
+                  </p>
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    Giá thành: <span className="font-semibold">{formatVND(suggestedPrice)}</span>
+                  </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
+                      <span>Tỉ lệ lời (%):</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.5}
+                        value={profitMarginPercent}
+                        onChange={(e) => {
+                          const v = e.target.value.trim();
+                          if (v === '') setProfitMarginPercent(0);
+                          else {
+                            const n = Number(v);
+                            if (!isNaN(n) && n >= 0) setProfitMarginPercent(n);
+                          }
+                        }}
+                        className="w-20 px-2 py-1.5 bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 outline-none"
+                        placeholder="0"
+                      />
+                    </label>
+                    <span className="text-amber-800 dark:text-amber-200 text-sm">
+                      Giá bán gợi ý: <span className="text-lg font-bold text-amber-700 dark:text-amber-300">{formatVND(suggestedSellingPrice)}</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={applySuggestedPrice}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Áp dụng vào giá
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Recipes Selection */}
               <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wide">
-                    Công thức bánh *
+                    Giá thành mỗi bánh *
                   </h3>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {recipes.length} {t('recipes.form.selected') || 'đã chọn'}
-                  </span>
                 </div>
 
                 {loadingRecipes ? (
@@ -397,36 +500,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                   </div>
                 ) : (
                   <>
-                    <div className="relative">
-                      <Cake className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10 pointer-events-none" />
-                      <input
-                        type="text"
-                        value={recipeSearch}
-                        onChange={(e) => setRecipeSearch(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                        placeholder="Tìm công thức bánh..."
-                      />
-                    </div>
-
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-[400px] overflow-y-auto">
                       {filteredRecipes.map((recipe) => {
-                        const isSelected = isRecipeSelected(recipe.id);
-                        const selectedRecipe = getSelectedRecipe(recipe.id);
+                        const { costPerOutput } = computeRecipeCost(recipe, ingredients);
                         return (
                           <div
                             key={recipe.id}
-                            onClick={() => handleToggleRecipe(recipe)}
-                            className={`relative p-3 bg-white dark:bg-slate-800 rounded-lg border-2 transition-all cursor-pointer touch-manipulation ${
-                              isSelected
-                                ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20 shadow-md'
-                                : 'border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600 hover:shadow-md'
-                            }`}
+                            className="relative p-3 bg-white dark:bg-slate-800 rounded-lg border-2 border-purple-200 dark:border-purple-800 transition-all"
                           >
-                            {isSelected && (
-                              <div className="absolute top-1 right-1">
-                                <CheckCircle2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                              </div>
-                            )}
                             <div className="flex flex-col items-center text-center space-y-2">
                               <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
                                 <Cake className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -435,20 +516,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                                 <p className="text-xs font-semibold text-slate-900 dark:text-white line-clamp-2 mb-1">
                                   {recipe.name}
                                 </p>
-                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded inline-block text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700">
-                                  Sản phẩm: {recipe.outputQuantity || 0}
-                                </span>
-                              </div>
-                              {isSelected && selectedRecipe && (
-                                <div
-                                  onClick={(e) => handleOpenRecipeQuantityModal(recipe, e)}
-                                  className="w-full px-2 py-1.5 bg-purple-600 dark:bg-purple-500 text-white rounded-md text-xs font-bold hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors touch-manipulation"
-                                >
-                                  {selectedRecipe.quantity > 0
-                                    ? `${selectedRecipe.quantity} set`
-                                    : 'Nhập số lượng'}
+                                <div className="space-y-0.5">
+                                  {costPerOutput > 0 && (
+                                    <p className="text-[10px] font-semibold text-orange-600 dark:text-orange-400">
+                                      {formatVND(costPerOutput)} / 1 cái
+                                    </p>
+                                  )}
                                 </div>
-                              )}
+                              </div>
                             </div>
                           </div>
                         );
@@ -458,11 +533,13 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                 )}
               </div>
 
-              {/* Materials Selection */}
+             
+
+              {/* Materials Selection (optional) */}
               <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wide">
-                    Vật liệu
+                    Vật liệu <span className="text-slate-500 dark:text-slate-400 font-normal">(Tùy chọn)</span>
                   </h3>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
                     {materials.length} {t('recipes.form.selected') || 'đã chọn'}
@@ -489,6 +566,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                         const selectedMaterial = getSelectedMaterial(material.id);
                         const materialColors = getTypeColors(IngredientType.MATERIAL);
                         const MaterialIcon = getTypeIcon(IngredientType.MATERIAL);
+                        const avgPrice = calculateAveragePrice(material);
+                        const qty = selectedMaterial?.quantity ?? 0;
+                        const materialCost = qty > 0 && avgPrice > 0 ? qty * avgPrice : 0;
                         return (
                           <div
                             key={material.id}
@@ -512,17 +592,22 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                                 <p className={`text-xs font-semibold ${materialColors.text} line-clamp-2 mb-1`}>
                                   {material.name}
                                 </p>
+                                {isSelected && selectedMaterial && (
+                                  <div className="space-y-0.5">
+                                    <div
+                                      onClick={(e) => handleOpenMaterialQuantityModal(material, e)}
+                                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded inline-block text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 touch-manipulation"
+                                    >
+                                      Số lượng: {selectedMaterial.quantity > 0 ? selectedMaterial.quantity : 'Nhập'}
+                                    </div>
+                                    {materialCost > 0 && (
+                                      <p className="text-[10px] font-semibold text-orange-600 dark:text-orange-400">
+                                        {formatVND(materialCost)}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                              {isSelected && selectedMaterial && (
-                                <div
-                                  onClick={(e) => handleOpenMaterialQuantityModal(material, e)}
-                                  className="w-full px-2 py-1.5 bg-orange-600 dark:bg-orange-500 text-white rounded-md text-xs font-bold hover:bg-orange-700 dark:hover:bg-orange-600 transition-colors touch-manipulation"
-                                >
-                                  {selectedMaterial.quantity > 0
-                                    ? `${selectedMaterial.quantity}`
-                                    : 'Nhập số lượng'}
-                                </div>
-                              )}
                             </div>
                           </div>
                         );
@@ -562,88 +647,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
             </div>
 
           </form>
-
-          <div className="p-4 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-end gap-3">
-             <button 
-              type="button" 
-              onClick={onCancel}
-              disabled={isSubmitting || isUploading}
-              className="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
-            >
-              {t('form.cancel')}
-            </button>
-            <button 
-              onClick={handleSubmit}
-              disabled={isSubmitting || isUploading}
-              className="px-6 py-2 bg-orange-600 dark:bg-orange-500 rounded-lg text-sm font-medium text-white hover:bg-orange-700 dark:hover:bg-orange-600 shadow-sm flex items-center gap-2 disabled:opacity-70 transition-colors"
-            >
-               {isSubmitting ? t('form.saving') : (
-                <>
-                  <Save className="w-4 h-4" /> {t('form.saveProduct')}
-                </>
-              )}
-            </button>
-          </div>
-
-      {/* Recipe Quantity Modal */}
-      {showRecipeQuantityModal && quantityModalRecipe && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
-            onClick={handleCancelRecipeQuantityModal}
-          />
-          <div className="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-sm">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-              Nhập số lượng set
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              {quantityModalRecipe.recipe.name}
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
-                  Số lượng set *
-                </label>
-                <div className="relative">
-                  <input
-                    ref={quantityInputRef}
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={quantityModalValue}
-                    onChange={(e) => setQuantityModalValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSaveRecipeQuantity();
-                      } else if (e.key === 'Escape') {
-                        handleCancelRecipeQuantityModal();
-                      }
-                    }}
-                    className="w-full px-4 py-3 text-base font-medium bg-slate-50 dark:bg-slate-700 border-2 border-purple-500 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-500 outline-none touch-manipulation"
-                    placeholder="1"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleCancelRecipeQuantityModal}
-                  className="flex-1 px-4 py-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-colors touch-manipulation"
-                >
-                  {t('form.cancel')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveRecipeQuantity}
-                  className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors touch-manipulation"
-                >
-                  Áp dụng
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Material Quantity Modal */}
       {showMaterialQuantityModal && quantityModalMaterial && (

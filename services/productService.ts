@@ -30,6 +30,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
         category: data.category || 'General',
         description: data.description || '',
         status: data.status || 'active',
+        cakesPerProduct: data.cakesPerProduct != null ? Number(data.cakesPerProduct) : undefined,
         recipes,
         materials,
         createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString()
