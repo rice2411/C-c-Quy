@@ -69,8 +69,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
     loadProducts();
   }, []);
 
-  // Initialize Data
+  // Initialize or reset form when panel opens; reset fully when opening for new order
   useEffect(() => {
+    if (!isOpen) return;
+    setError(null);
+    setShowCreateCustomerModal(false);
+    setPendingOrderData(null);
     if (initialData) {
       setOrderNumber(initialData.orderNumber || 'N/A');
       setCustomerName(initialData.customer.name);
@@ -84,31 +88,27 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPaymentStatus(initialData.paymentStatus || PaymentStatus.UNPAID);
       setPaymentMethod(initialData.paymentMethod || PaymentMethod.CASH);
       setShippingCost(initialData.shippingCost || 0);
-      
       if (initialData.items && initialData.items.length > 0) {
-        const loadedItems = initialData.items.map((item, index) => {
-           return {
-             id: `item-${Date.now()}-${index}`,
-             productId: item.id,
-             productName: item.name,
-             quantity: item.quantity,
-             unitPrice: item.price,
-             image: item.image
-           };
-        });
+        const loadedItems = initialData.items.map((item, index) => ({
+          id: `item-${Date.now()}-${index}`,
+          productId: item.id,
+          productName: item.name,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          image: item.image
+        }));
         setItems(loadedItems);
       } else if (products.length > 0) {
         setItems([{
-           id: `item-${Date.now()}-0`,
-           productId: products[0]?.id || '',
-           productName: products[0]?.name || '',
-           quantity: 1,
-           unitPrice: products[0]?.price || 0,
-           image: products[0]?.image
+          id: `item-${Date.now()}-0`,
+          productId: products[0]?.id || '',
+          productName: products[0]?.name || '',
+          quantity: 1,
+          unitPrice: products[0]?.price || 0,
+          image: products[0]?.image
         }]);
       }
     } else {
-      // Create New Order
       const fetchNextId = async () => {
         setLoadingOrderNumber(true);
         try {
@@ -120,9 +120,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
           setLoadingOrderNumber(false);
         }
       };
-      
       fetchNextId();
-      
       setCustomerName('');
       setPhone('');
       setAddress('');
@@ -134,22 +132,23 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setStatus(OrderStatus.PENDING);
       setPaymentStatus(PaymentStatus.UNPAID);
       setPaymentMethod(PaymentMethod.CASH);
+      setItems([]);
     }
-  }, [initialData]);
+  }, [initialData, isOpen]);
 
-  // Initialize items when products are loaded (for new orders only)
+  // Default to one item when opening for new order and products are loaded
   useEffect(() => {
-    if (!initialData && products.length > 0 && items.length === 0) {
+    if (isOpen && !initialData && products.length > 0 && items.length === 0) {
       setItems([{
-         id: `item-${Date.now()}-0`,
-         productId: products[0]?.id || '',
-         productName: products[0]?.name || '',
-         quantity: 1,
-         unitPrice: products[0]?.price || 0,
-         image: products[0]?.image
+        id: `item-${Date.now()}-0`,
+        productId: products[0]?.id || '',
+        productName: products[0]?.name || '',
+        quantity: 1,
+        unitPrice: products[0]?.price || 0,
+        image: products[0]?.image
       }]);
     }
-  }, [products, initialData]);
+  }, [isOpen, initialData, products, items.length]);
 
   const handleAddItem = () => {
     const first = products[0];
@@ -240,6 +239,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       await onSave(formData);
     } catch (err: any) {
       setError(err.message || "Failed to save order");
+    } finally {
       setIsSubmitting(false);
     }
   };

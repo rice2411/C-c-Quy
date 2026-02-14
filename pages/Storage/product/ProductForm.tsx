@@ -256,7 +256,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
     try {
       if (!name.trim()) throw new Error("Tên sản phẩm là bắt buộc");
       if (price < 0) throw new Error("Giá không được âm");
-      if (recipes.length === 0) throw new Error("Vui lòng chọn ít nhất một công thức bánh");
 
       const formData = {
         id: initialData?.id,
@@ -437,54 +436,70 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                 </div>
               </div>
 
-              {/* Gợi ý giá thành sản phẩm */}
-              {recipeCostList.length > 0 && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Lightbulb className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                    <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200">Gợi ý giá thành sản phẩm</h3>
+              {/* Suggested cost block: only when at least one recipe or material is selected */}
+              {(() => {
+                const hasRecipes = recipeCostList.length > 0;
+                const hasMaterials = materials.some(m => m.quantity > 0);
+                if (!hasRecipes && !hasMaterials) {
+                  return (
+                    <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-600 rounded-xl p-4">
+                      <p className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-2">
+                        <Lightbulb className="w-4 h-4 text-slate-400" />
+                        Chọn công thức bánh hoặc thêm vật liệu để xem gợi ý giá thành.
+                      </p>
+                    </div>
+                  );
+                }
+                return (
+                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Lightbulb className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                      <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200">Gợi ý giá thành sản phẩm</h3>
+                    </div>
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      {hasRecipes && hasMaterials
+                        ? `Giá vật liệu + (Số bánh × Giá mỗi bánh) = ${formatVND(materialsCost)} + ${cakesPerProduct > 0 ? cakesPerProduct : 1} × ${formatVND(costPerCake)}`
+                        : hasRecipes
+                          ? `Số bánh × Giá mỗi bánh = ${cakesPerProduct > 0 ? cakesPerProduct : 1} × ${formatVND(costPerCake)}`
+                          : `Giá vật liệu = ${formatVND(materialsCost)}`}
+                    </p>
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      Giá thành: <span className="font-semibold">{formatVND(suggestedPrice)}</span>
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
+                        <span>Tỉ lệ lời (%):</span>
+                        <input
+                          type="number"
+                          min={0}
+                          step={0.5}
+                          value={profitMarginPercent}
+                          onChange={(e) => {
+                            const v = e.target.value.trim();
+                            if (v === '') setProfitMarginPercent(0);
+                            else {
+                              const n = Number(v);
+                              if (!isNaN(n) && n >= 0) setProfitMarginPercent(n);
+                            }
+                          }}
+                          className="w-20 px-2 py-1.5 bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 outline-none"
+                          placeholder="0"
+                        />
+                      </label>
+                      <span className="text-amber-800 dark:text-amber-200 text-sm">
+                        Giá bán gợi ý: <span className="text-lg font-bold text-amber-700 dark:text-amber-300">{formatVND(suggestedSellingPrice)}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={applySuggestedPrice}
+                        className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+                      >
+                        Áp dụng vào giá
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-sm text-amber-800 dark:text-amber-200">
-                    {materials.length > 0
-                      ? `Giá vật liệu + (Số bánh × Giá mỗi bánh) = ${formatVND(materialsCost)} + ${cakesPerProduct > 0 ? cakesPerProduct : 1} × ${formatVND(costPerCake)}`
-                      : `Số bánh × Giá mỗi bánh = ${cakesPerProduct > 0 ? cakesPerProduct : 1} × ${formatVND(costPerCake)}`}
-                  </p>
-                  <p className="text-sm text-amber-800 dark:text-amber-200">
-                    Giá thành: <span className="font-semibold">{formatVND(suggestedPrice)}</span>
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <label className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
-                      <span>Tỉ lệ lời (%):</span>
-                      <input
-                        type="number"
-                        min={0}
-                        step={0.5}
-                        value={profitMarginPercent}
-                        onChange={(e) => {
-                          const v = e.target.value.trim();
-                          if (v === '') setProfitMarginPercent(0);
-                          else {
-                            const n = Number(v);
-                            if (!isNaN(n) && n >= 0) setProfitMarginPercent(n);
-                          }
-                        }}
-                        className="w-20 px-2 py-1.5 bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 outline-none"
-                        placeholder="0"
-                      />
-                    </label>
-                    <span className="text-amber-800 dark:text-amber-200 text-sm">
-                      Giá bán gợi ý: <span className="text-lg font-bold text-amber-700 dark:text-amber-300">{formatVND(suggestedSellingPrice)}</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={applySuggestedPrice}
-                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
-                    >
-                      Áp dụng vào giá
-                    </button>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Recipes Selection */}
               <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-3">

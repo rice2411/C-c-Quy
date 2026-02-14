@@ -49,11 +49,15 @@ export const fetchProducts = async (): Promise<Product[]> => {
   }
 };
 
+const omitUndefined = <T extends Record<string, unknown>>(obj: T): Record<string, unknown> => {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
+};
+
 export const addProduct = async (productData: Omit<Product, 'id'>): Promise<void> => {
   try {
     const productsRef = collection(db, 'products');
     await addDoc(productsRef, {
-      ...productData,
+      ...omitUndefined(productData as Record<string, unknown>),
       createdAt: Timestamp.now()
     });
   } catch (error) {
@@ -65,8 +69,8 @@ export const addProduct = async (productData: Omit<Product, 'id'>): Promise<void
 export const updateProduct = async (id: string, productData: Partial<Product>): Promise<void> => {
   try {
     const productRef = doc(db, 'products', id);
-    const { id: _, ...updateData } = productData as any; // Exclude ID from update
-    await updateDoc(productRef, updateData);
+    const { id: _, ...rest } = productData as Record<string, unknown>;
+    await updateDoc(productRef, omitUndefined(rest));
   } catch (error) {
     console.error("Error updating product:", error);
     throw error;
