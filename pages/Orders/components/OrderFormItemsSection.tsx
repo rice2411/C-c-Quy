@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Package, DollarSign, Plus, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Product } from '@/types';
@@ -21,6 +21,22 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
   total, products
 }) => {
   const { t } = useLanguage();
+  const [quantityInputs, setQuantityInputs] = useState<Record<string, string>>({});
+  const [shippingInput, setShippingInput] = useState<string>(String(shippingCost ?? 0));
+
+  useEffect(() => {
+    setQuantityInputs((prev) => {
+      const next: Record<string, string> = {};
+      items.forEach((item) => {
+        next[item.id] = prev[item.id] ?? String(item.quantity ?? 1);
+      });
+      return next;
+    });
+  }, [items]);
+
+  useEffect(() => {
+    setShippingInput(String(shippingCost ?? 0));
+  }, [shippingCost]);
 
   const getProductImage = (item: FormItem) => {
     if (item.image) return item.image;
@@ -97,8 +113,28 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                     <input 
                                         type="number" 
                                         min="1"
-                                        value={item.quantity}
-                                        onChange={(e) => onUpdateItem(item.id, 'quantity', Math.max(1, Number(e.target.value)))}
+                                        value={quantityInputs[item.id] ?? String(item.quantity)}
+                                        onChange={(e) => {
+                                          const raw = e.target.value;
+                                          setQuantityInputs((prev) => ({ ...prev, [item.id]: raw }));
+                                          if (raw === '') return;
+                                          const parsed = Math.floor(Number(raw));
+                                          if (!isNaN(parsed)) {
+                                            onUpdateItem(item.id, 'quantity', Math.max(1, parsed));
+                                          }
+                                        }}
+                                        onBlur={() => {
+                                          const raw = quantityInputs[item.id];
+                                          if (raw === undefined || raw === '') {
+                                            setQuantityInputs((prev) => ({ ...prev, [item.id]: String(Math.max(1, item.quantity || 1)) }));
+                                            onUpdateItem(item.id, 'quantity', Math.max(1, item.quantity || 1));
+                                            return;
+                                          }
+                                          const parsed = Math.floor(Number(raw));
+                                          const normalized = !isNaN(parsed) ? Math.max(1, parsed) : Math.max(1, item.quantity || 1);
+                                          setQuantityInputs((prev) => ({ ...prev, [item.id]: String(normalized) }));
+                                          onUpdateItem(item.id, 'quantity', normalized);
+                                        }}
                                         className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
                                     />
                                 </div>
@@ -130,10 +166,20 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
             <span className="absolute left-3 top-2.5 text-slate-400 text-xs font-bold">SHIP</span>
             <input 
                 type="number" 
-                min="0"
-                step="1000"
-                value={shippingCost}
-                onChange={e => setShippingCost(Math.max(0, Number(e.target.value)))}
+                value={shippingInput}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  setShippingInput(raw);
+                  if (raw === '') return;
+                  const parsed = Number(raw);
+                  if (!isNaN(parsed)) setShippingCost(Math.max(0, parsed));
+                }}
+                onBlur={() => {
+                  const parsed = Number(shippingInput);
+                  const normalized = shippingInput.trim() === '' || isNaN(parsed) ? 0 : Math.max(0, parsed);
+                  setShippingInput(String(normalized));
+                  setShippingCost(normalized);
+                }}
                 className="w-full pl-12 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
             />
             </div>
