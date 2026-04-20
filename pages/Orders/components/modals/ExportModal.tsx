@@ -4,6 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import BaseModal from '@/components/BaseModal';
 import { Order } from '@/types';
 import { exportOrdersToExcel, ExportColumn, getOrderTotal } from '@/utils/orderUtils';
+import { parseDateValue } from '@/utils/dateUtil';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ interface ExportModalProps {
 // Define available columns configuration
 const AVAILABLE_COLUMNS: ExportColumn[] = [
   { id: 'orderNumber', label: 'Order #', field: (o) => o.orderNumber || o.id },
-  { id: 'date', label: 'Date', field: (o) => new Date(o.date).toLocaleDateString('vi-VN') },
+  { id: 'date', label: 'Date', field: (o) => parseDateValue(o.orderDate || o.date)?.toLocaleDateString('vi-VN') || '' },
   { id: 'customer', label: 'Customer Name', field: (o) => o.customer.name },
   { id: 'phone', label: 'Phone', field: (o) => `'${o.customer.phone}` }, // Add quote to force string in Excel
   { id: 'address', label: 'Address', field: (o) => o.customer.address },
@@ -104,7 +105,8 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders }) =>
         const startOfMonth = new Date(year, month - 1, 1, 0, 0, 0, 0);
         const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
         result = result.filter(o => {
-            const d = new Date(o.date);
+            const d = parseDateValue(o.orderDate || o.date);
+            if (!d) return false;
             return d >= startOfMonth && d <= endOfMonth;
         });
     } else if (rangeType === 'custom' && startMonth && endMonth) {
@@ -122,19 +124,25 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders }) =>
         }
 
         result = result.filter(o => {
-            const d = new Date(o.date);
+            const d = parseDateValue(o.orderDate || o.date);
+            if (!d) return false;
             return d >= start && d <= end;
         });
     }
 
-    return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return result.sort((a, b) => {
+      const bDate = parseDateValue(b.orderDate || b.date)?.getTime() || 0;
+      const aDate = parseDateValue(a.orderDate || a.date)?.getTime() || 0;
+      return bDate - aDate;
+    });
   }, [orders, rangeType, startMonth, endMonth, selectedMonth]);
 
   // Grouping Logic for Multi-sheet Preview
   const groupedOrders = useMemo(() => {
     const groups: Record<string, Order[]> = {};
     filteredOrders.forEach(o => {
-      const d = new Date(o.date);
+      const d = parseDateValue(o.orderDate || o.date);
+      if (!d) return;
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       if (!groups[key]) groups[key] = [];
       groups[key].push(o);

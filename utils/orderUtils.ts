@@ -2,6 +2,7 @@
 
 import * as XLSX from 'xlsx-js-style';
 import { Order, OrderItem } from '@/types/order';
+import { parseDateValue } from './dateUtil';
 
 /**
  * Tính tổng giá trị đơn hàng từ items và shipping cost
@@ -137,7 +138,8 @@ export const exportOrdersToExcel = (
   // Group orders by Month (YYYY-MM)
   const groupedOrders: Record<string, Order[]> = {};
   orders.forEach(order => {
-    const d = new Date(order.date);
+    const d = parseDateValue(order.orderDate || order.date);
+    if (!d) return;
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
     if (!groupedOrders[key]) groupedOrders[key] = [];
     groupedOrders[key].push(order);

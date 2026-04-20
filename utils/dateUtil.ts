@@ -36,6 +36,14 @@ export const parseDateValue = (value: any) => {
   if (!value) return null;
   if (value instanceof Date) return value;
   if (typeof value === "string" || typeof value === "number") {
+    // Parse YYYY-MM-DD as local date to avoid timezone shift.
+    if (typeof value === "string") {
+      const dateOnlyMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (dateOnlyMatch) {
+        const [, y, m, d] = dateOnlyMatch;
+        return new Date(Number(y), Number(m) - 1, Number(d), 0, 0, 0, 0);
+      }
+    }
     const parsed = new Date(value);
     return isNaN(parsed.getTime()) ? null : parsed;
   }
