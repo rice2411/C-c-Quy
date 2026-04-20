@@ -5,6 +5,7 @@ import { OrderProvider } from "./contexts/OrderContext";
 import { CustomerProvider } from "./contexts/CustomerContext";
 import { SupplierProvider } from "./contexts/SupplierContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ScreenConfigProvider } from "./contexts/ScreenConfigContext";
 import { useOfflineDetector } from "./hooks/useOfflineDetector";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -34,11 +35,12 @@ const App: React.FC = () => {
   return (
     <HashRouter>
         <AuthProvider>
-          <LanguageProvider>
-            <OrderProvider>
-              <CustomerProvider>
-                <SupplierProvider>
-                  <Routes>
+          <ScreenConfigProvider>
+            <LanguageProvider>
+              <OrderProvider>
+                <CustomerProvider>
+                  <SupplierProvider>
+                    <Routes>
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/" element={
                     <ProtectedRoute>
@@ -92,11 +94,12 @@ const App: React.FC = () => {
                     } />
                   </Route>
                   <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </SupplierProvider>
-              </CustomerProvider>
-            </OrderProvider>
-          </LanguageProvider>
+                    </Routes>
+                  </SupplierProvider>
+                </CustomerProvider>
+              </OrderProvider>
+            </LanguageProvider>
+          </ScreenConfigProvider>
         </AuthProvider>
       {/* Global toast configuration - match project color palette & support dark/light mode */}
       <Toaster

@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useScreenConfig } from '@/contexts/ScreenConfigContext';
 import { getAccessibleRoutes } from '@/config/routes';
 import { getUserFromLocalStorage } from '@/utils/userUtil';
 import ThemeToggle from './ThemeToggle';
@@ -14,6 +15,7 @@ const Layout: React.FC = () => {
   const { currentUser, userData, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { screenVisibility, isScreenEnabled } = useScreenConfig();
   
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'vi' : 'en');
@@ -36,7 +38,14 @@ const Layout: React.FC = () => {
   const userRole = userData?.role || storedUser?.role;
   
   
-  const accessibleRoutes = getAccessibleRoutes(userRole);
+  const accessibleRoutes = getAccessibleRoutes(userRole, screenVisibility);
+
+  React.useEffect(() => {
+    if (location.pathname === '/') return;
+    if (!isScreenEnabled(location.pathname)) {
+      navigate('/', { replace: true });
+    }
+  }, [location.pathname, isScreenEnabled, navigate]);
   
   // Map routes config thành navItems với translation
   const navItems = accessibleRoutes.map(route => ({
@@ -83,7 +92,7 @@ const Layout: React.FC = () => {
             >
               <item.icon className={`w-5 h-5 mr-3 ${location.pathname === item.id ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'}`} />
               {item.label}
-              {item.disabled && <span className="ml-auto text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded">{t('nav.soon')}</span>}
+              {item.disabled && <span className="ml-auto text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">Bảo trì</span>}
             </Link>
           ))}
           

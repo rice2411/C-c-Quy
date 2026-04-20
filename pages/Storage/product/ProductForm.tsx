@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Save, Image, Tag, DollarSign, AlignLeft, AlertCircle, Upload, Cake, CheckCircle2, Loader2, Lightbulb } from 'lucide-react';
+import { Save, Image, Tag, DollarSign, AlignLeft, AlertCircle, Upload, CheckCircle2, Loader2, Lightbulb } from 'lucide-react';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
-import { Product, ProductRecipe, ProductMaterial, Recipe, Ingredient, IngredientType } from '@/types';
+import { Product, ProductMaterial, Ingredient, IngredientType } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { uploadImage, getProductImagePath } from '@/services/imageService';
-import { fetchRecipes } from '@/services/recipeService';
 import { getTypeColors, getTypeIcon } from '@/utils/ingredientTypeUtil';
-import { computeRecipeCost } from '@/utils/productUtil';
 import { calculateAveragePrice } from '@/utils/ingredientUtil';
 import { formatVND } from '@/utils/currencyUtil';
 
@@ -30,12 +28,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
-  const [cakesPerProduct, setCakesPerProduct] = useState<number>(0);
   const [profitMarginPercent, setProfitMarginPercent] = useState<number>(0);
-  const [recipes, setRecipes] = useState<ProductRecipe[]>([]);
   const [materials, setMaterials] = useState<ProductMaterial[]>([]);
-  const [fullRecipes, setFullRecipes] = useState<Recipe[]>([]);
-  const [loadingRecipes, setLoadingRecipes] = useState(false);
   const [materialSearch, setMaterialSearch] = useState('');
   const [showMaterialQuantityModal, setShowMaterialQuantityModal] = useState(false);
   const [quantityModalMaterial, setQuantityModalMaterial] = useState<{ material: Ingredient; productMaterial: ProductMaterial } | null>(null);
@@ -44,27 +38,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
 
   const materialIngredients = ingredients.filter(ing => ing.type === IngredientType.MATERIAL);
 
-  const filteredRecipes = fullRecipes;
-
   const filteredMaterials = materialIngredients.filter(ing =>
     ing.name.toLowerCase().includes(materialSearch.toLowerCase())
   );
-
-  useEffect(() => {
-    const loadFullRecipes = async () => {
-      setLoadingRecipes(true);
-      try {
-        const recipesData = await fetchRecipes();
-        const fullOnly = recipesData.filter(r => r.recipeType === 'full');
-        setFullRecipes(fullOnly);
-      } catch (error) {
-        console.error('Failed to load recipes:', error);
-      } finally {
-        setLoadingRecipes(false);
-      }
-    };
-    loadFullRecipes();
-  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -74,13 +50,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
       setCategory(initialData.category);
       setDescription(initialData.description || '');
       setStatus(initialData.status);
-      setCakesPerProduct(initialData.cakesPerProduct ?? 0);
-      setRecipes(initialData.recipes || []);
       setMaterials(initialData.materials || []);
     } else {
       setImage('');
-      setCakesPerProduct(0);
-      setRecipes([]);
       setMaterials([]);
     }
   }, [initialData]);
@@ -114,22 +86,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
     if (file) {
       handleImageUpload(file);
     }
-  };
-
-  const handleRecipePricePerSetChange = (recipeId: string, value: string) => {
-    const num = value.trim() === '' ? undefined : Number(value);
-    const pricePerSet = num != null && !isNaN(num) && num >= 0 ? num : undefined;
-    setRecipes(recipes.map(r =>
-      r.recipeId === recipeId ? { ...r, pricePerSet } : r
-    ));
-  };
-
-  const handleRecipeQuantityChange = (recipeId: string, value: string) => {
-    const num = value.trim() === '' ? 1 : Math.max(1, Math.floor(Number(value)));
-    if (isNaN(num)) return;
-    setRecipes(recipes.map(r =>
-      r.recipeId === recipeId ? { ...r, quantity: num } : r
-    ));
   };
 
   const handleToggleMaterial = (material: Ingredient) => {
@@ -176,48 +132,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
     setQuantityModalValue('');
   };
 
-  /** Danh sách công thức đã chọn kèm giá mỗi thành phẩm (tính từ nguyên liệu). */
-  const recipeCostList = useMemo(() => {
-    return recipes
-      .filter(r => r.quantity > 0)
-      .map(pr => {
-        const recipe = fullRecipes.find(f => f.id === pr.recipeId);
-        if (!recipe) return null;
-        const { costPerOutput } = computeRecipeCost(recipe, ingredients);
-        return {
-          productRecipe: pr,
-          recipe,
-          costPerOutput,
-        };
-      })
-      .filter((x): x is NonNullable<typeof x> => x != null);
-  }, [recipes, fullRecipes, ingredients]);
-
-  /** Tổng tiền công thức (dùng pricePerSet nếu có, không thì dùng totalCost 1 set). */
-  const totalRecipeCost = useMemo(() => {
-    return recipeCostList.reduce((sum, { productRecipe, recipe }) => {
-      const { totalCost } = computeRecipeCost(recipe, ingredients);
-      const costPerSet = productRecipe.pricePerSet != null && productRecipe.pricePerSet >= 0
-        ? productRecipe.pricePerSet
-        : totalCost;
-      return sum + productRecipe.quantity * costPerSet;
-    }, 0);
-  }, [recipeCostList, ingredients]);
-
-  /** Tổng số thành phẩm từ các công thức (số set × thành phẩm/set). */
-  const totalCakesFromRecipes = useMemo(() => {
-    return recipeCostList.reduce((sum, { productRecipe, recipe }) => {
-      const out = recipe.outputQuantity && recipe.outputQuantity > 0 ? recipe.outputQuantity : 1;
-      return sum + productRecipe.quantity * out;
-    }, 0);
-  }, [recipeCostList]);
-
-  /** Giá thành mỗi bánh (VND/bánh) từ công thức. */
-  const costPerCake = useMemo(() => {
-    if (totalCakesFromRecipes <= 0) return 0;
-    return totalRecipeCost / totalCakesFromRecipes;
-  }, [totalRecipeCost, totalCakesFromRecipes]);
-
   /** Tổng giá vật liệu. */
   const materialsCost = useMemo(() => {
     return materials
@@ -231,11 +145,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
       }, 0);
   }, [materials, ingredients]);
 
-  /** Gợi ý giá thành sản phẩm: vật liệu + (số bánh × giá/bánh). Số bánh mặc định 1, hoặc theo field người dùng nhập. */
+  /** Gợi ý giá thành sản phẩm: tổng giá vật liệu đã chọn. */
   const suggestedPrice = useMemo(() => {
-    const cakes = cakesPerProduct > 0 ? cakesPerProduct : 1;
-    return materialsCost + cakes * costPerCake;
-  }, [cakesPerProduct, costPerCake, materialsCost]);
+    return materialsCost;
+  }, [materialsCost]);
 
   /** Giá bán gợi ý = giá thành × (1 + tỉ lệ lời %). */
   const suggestedSellingPrice = useMemo(() => {
@@ -265,12 +178,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
         category: category || 'General',
         description,
         status,
-        cakesPerProduct: cakesPerProduct > 0 ? cakesPerProduct : undefined,
-        recipes: recipes.filter(r => r.quantity > 0).map(r => ({
-          recipeId: r.recipeId,
-          quantity: r.quantity,
-          ...(r.pricePerSet != null && r.pricePerSet >= 0 ? { pricePerSet: r.pricePerSet } : {}),
-        })),
         materials: materials.filter(m => m.quantity > 0),
       };
 
@@ -395,8 +302,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                 </div>
               </div>
 
-              {/* Price, Category, Số lượng bánh */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Price, Category */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('inventory.price')}</label>
                   <div className="relative">
@@ -421,31 +328,17 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                     placeholder="VD: Bánh kem"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Số lượng bánh</label>
-                  <input 
-                    type="number" 
-                    min="0"
-                    step="1"
-                    value={cakesPerProduct || ''}
-                    onChange={e => setCakesPerProduct(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                    placeholder="VD: 6"
-                  />
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Dùng cho gợi ý giá thành</p>
-                </div>
               </div>
 
-              {/* Suggested cost block: only when at least one recipe or material is selected */}
+              {/* Suggested cost block */}
               {(() => {
-                const hasRecipes = recipeCostList.length > 0;
                 const hasMaterials = materials.some(m => m.quantity > 0);
-                if (!hasRecipes && !hasMaterials) {
+                if (!hasMaterials) {
                   return (
                     <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-600 rounded-xl p-4">
                       <p className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-2">
                         <Lightbulb className="w-4 h-4 text-slate-400" />
-                        Chọn công thức bánh hoặc thêm vật liệu để xem gợi ý giá thành.
+                        Chọn vật liệu để xem gợi ý giá thành.
                       </p>
                     </div>
                   );
@@ -457,11 +350,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                       <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200">Gợi ý giá thành sản phẩm</h3>
                     </div>
                     <p className="text-sm text-amber-800 dark:text-amber-200">
-                      {hasRecipes && hasMaterials
-                        ? `Giá vật liệu + (Số bánh × Giá mỗi bánh) = ${formatVND(materialsCost)} + ${cakesPerProduct > 0 ? cakesPerProduct : 1} × ${formatVND(costPerCake)}`
-                        : hasRecipes
-                          ? `Số bánh × Giá mỗi bánh = ${cakesPerProduct > 0 ? cakesPerProduct : 1} × ${formatVND(costPerCake)}`
-                          : `Giá vật liệu = ${formatVND(materialsCost)}`}
+                      {`Giá vật liệu = ${formatVND(materialsCost)}`}
                     </p>
                     <p className="text-sm text-amber-800 dark:text-amber-200">
                       Giá thành: <span className="font-semibold">{formatVND(suggestedPrice)}</span>
@@ -501,55 +390,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                 );
               })()}
 
-              {/* Recipes Selection */}
-              <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wide">
-                    Giá thành mỗi bánh *
-                  </h3>
-                </div>
-
-                {loadingRecipes ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
-                  </div>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-[400px] overflow-y-auto">
-                      {filteredRecipes.map((recipe) => {
-                        const { costPerOutput } = computeRecipeCost(recipe, ingredients);
-                        return (
-                          <div
-                            key={recipe.id}
-                            className="relative p-3 bg-white dark:bg-slate-800 rounded-lg border-2 border-purple-200 dark:border-purple-800 transition-all"
-                          >
-                            <div className="flex flex-col items-center text-center space-y-2">
-                              <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800">
-                                <Cake className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                              </div>
-                              <div className="flex-1 w-full">
-                                <p className="text-xs font-semibold text-slate-900 dark:text-white line-clamp-2 mb-1">
-                                  {recipe.name}
-                                </p>
-                                <div className="space-y-0.5">
-                                  {costPerOutput > 0 && (
-                                    <p className="text-[10px] font-semibold text-orange-600 dark:text-orange-400">
-                                      {formatVND(costPerOutput)} / 1 cái
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-              </div>
-
-             
-
               {/* Materials Selection (optional) */}
               <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
@@ -557,7 +397,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                     Vật liệu <span className="text-slate-500 dark:text-slate-400 font-normal">(Tùy chọn)</span>
                   </h3>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {materials.length} {t('recipes.form.selected') || 'đã chọn'}
+                    {materials.length} đã chọn
                   </span>
                 </div>
 

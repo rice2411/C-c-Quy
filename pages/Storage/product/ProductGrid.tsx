@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, Tag, Cake, Loader2, Image as ImageIcon, DollarSign } from 'lucide-react';
+import { Package, Tag, Loader2, Image as ImageIcon, DollarSign } from 'lucide-react';
 import { Product, IngredientType } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatVND } from '@/utils/currencyUtil';
@@ -118,17 +118,9 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, onEdit, on
               )}
             </div>
 
-            {/* Recipe & Materials Info */}
-            {((product.recipes && product.recipes.length > 0) || (product.materials && product.materials.length > 0)) && (
+            {/* Materials Info */}
+            {(product.materials && product.materials.length > 0) && (
               <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-                {product.recipes && product.recipes.length > 0 && (
-                  <div className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-                    <Cake className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
-                    <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
-                      {product.recipes.length} công thức
-                    </span>
-                  </div>
-                )}
                 {product.materials && product.materials.length > 0 && (() => {
                   const materialColors = getTypeColors(IngredientType.MATERIAL);
                   const MaterialIcon = getTypeIcon(IngredientType.MATERIAL);

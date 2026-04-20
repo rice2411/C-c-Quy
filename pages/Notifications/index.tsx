@@ -121,6 +121,19 @@ const NotificationsPage: React.FC = () => {
     }
   };
 
+  const getOrderCountByType = (type: NotificationType) => {
+    switch (type) {
+      case 'unpaid':
+        return unpaidOrders.length;
+      case 'pending':
+        return pendingOrders.length;
+      case 'delivery':
+        return deliveryDueOrders.length;
+      default:
+        return 0;
+    }
+  };
+
   const notificationOptions = [
     {
       type: 'unpaid' as NotificationType,
@@ -178,7 +191,7 @@ const NotificationsPage: React.FC = () => {
         {notificationOptions.map((option) => {
           const Icon = option.icon;
           const isSelected = selectedType === option.type;
-          const count = option.type !== 'custom' ? getOrderCount() : null;
+          const count = option.type !== 'custom' ? getOrderCountByType(option.type) : null;
 
           return (
             <button

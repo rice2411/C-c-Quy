@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Package, PlusCircle, ShoppingCart, Users, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useScreenConfig } from '@/contexts/ScreenConfigContext';
 import { getAccessibleRoutes } from '@/config/routes';
 import { getUserFromLocalStorage } from '@/utils/userUtil';
 
@@ -11,17 +12,22 @@ const MobileFooterNav: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { userData } = useAuth();
+  const { screenVisibility } = useScreenConfig();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const storedUser = React.useMemo(() => getUserFromLocalStorage(), []);
   const userRole = userData?.role || storedUser?.role;
-  const accessibleRoutes = getAccessibleRoutes(userRole);
+  const accessibleRoutes = getAccessibleRoutes(userRole, screenVisibility);
+  const routeByPath = React.useMemo(
+    () => Object.fromEntries(accessibleRoutes.map((route) => [route.path, route])),
+    [accessibleRoutes]
+  );
 
   const mainTabs = ['/', '/orders', '/customers', '/storage'];
   const otherRoutes = accessibleRoutes.filter(
-    (route) => !mainTabs.includes(route.path) && route.path !== '/' && !route.disabled
+    (route) => !mainTabs.includes(route.path) && route.path !== '/'
   );
 
   const isMoreActive = otherRoutes.some((route) => route.path === location.pathname);
@@ -104,6 +110,8 @@ const MobileFooterNav: React.FC = () => {
             const active = location.pathname === tab.id;
             const isMore = tab.id === 'more';
             const isDashboard = tab.id === '/';
+            const routeMeta = routeByPath[tab.id];
+            const isDisabled = !isMore && !isDashboard ? !routeMeta || Boolean(routeMeta.disabled) : false;
 
             if (isDashboard) {
               return (
@@ -136,14 +144,17 @@ const MobileFooterNav: React.FC = () => {
             return (
               <button
                 key={tab.id}
-                onClick={isMore ? handleMoreClick : () => navigate(tab.id)}
-                className="flex flex-1 flex-col items-center gap-0.5 text-[11px] min-w-0"
+                onClick={isMore ? handleMoreClick : () => !isDisabled && navigate(tab.id)}
+                className={`flex flex-1 flex-col items-center gap-0.5 text-[11px] min-w-0 ${isDisabled ? 'opacity-50' : ''}`}
                 title={displayLabel}
+                disabled={isDisabled}
               >
                 <div
                   className={`w-9 h-9 rounded-full flex items-center justify-center transition-all flex-shrink-0 ${
                     isMore && (isMoreMenuOpen || isMoreActive)
                       ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-300'
+                      : isDisabled
+                        ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
                       : active
                         ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-300'
                         : 'text-slate-500 dark:text-slate-300'
@@ -155,6 +166,8 @@ const MobileFooterNav: React.FC = () => {
                   className={`mt-0.5 w-full text-center truncate px-0.5 ${
                     isMore && (isMoreMenuOpen || isMoreActive)
                       ? 'text-orange-600 dark:text-orange-300 font-semibold'
+                      : isDisabled
+                        ? 'text-slate-400 dark:text-slate-500'
                       : active
                         ? 'text-orange-600 dark:text-orange-300 font-semibold'
                         : 'text-slate-500 dark:text-slate-300'
@@ -202,19 +215,27 @@ const MobileFooterNav: React.FC = () => {
                     return (
                       <button
                         key={route.path}
-                        onClick={() => handleRouteClick(route.path)}
+                        onClick={() => !route.disabled && handleRouteClick(route.path)}
                         className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all ${
                           active
                             ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400'
+                            : route.disabled
+                              ? 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-700/40'
                             : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                         }`}
+                        disabled={route.disabled}
                       >
                         <Icon
                           className={`w-5 h-5 mr-3 ${
-                            active ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'
+                            active ? 'text-orange-600 dark:text-orange-400' : route.disabled ? 'text-slate-400 dark:text-slate-500' : 'text-slate-400 dark:text-slate-500'
                           }`}
                         />
                         {t(route.labelKey)}
+                        {route.disabled && (
+                          <span className="ml-auto text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
+                            Bảo trì
+                          </span>
+                        )}
                       </button>
                     );
                   })}
