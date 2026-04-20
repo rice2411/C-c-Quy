@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Save, Image, Tag, DollarSign, AlignLeft, AlertCircle, Upload, CheckCircle2, Loader2, Lightbulb } from 'lucide-react';
+import { Save, Image, Tag, DollarSign, AlignLeft, AlertCircle, Upload, Loader2, Plus, X } from 'lucide-react';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
-import { Product, ProductMaterial, Ingredient, IngredientType } from '@/types';
+import { Product, Ingredient } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { uploadImage, getProductImagePath } from '@/services/imageService';
-import { getTypeColors, getTypeIcon } from '@/utils/ingredientTypeUtil';
-import { calculateAveragePrice } from '@/utils/ingredientUtil';
-import { formatVND } from '@/utils/currencyUtil';
 
 interface ProductFormProps {
   initialData?: Product | null;
@@ -15,7 +12,58 @@ interface ProductFormProps {
   onCancel: () => void;
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onSave, onCancel }) => {
+const TAG_COLOR_PALETTES = [
+  {
+    selected: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700',
+    idle: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700 hover:border-red-300 dark:hover:border-red-600',
+    chip: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700',
+    removeHover: 'hover:text-red-900 dark:hover:text-red-100',
+  },
+  {
+    selected: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700',
+    idle: 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700 hover:border-orange-300 dark:hover:border-orange-600',
+    chip: 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700',
+    removeHover: 'hover:text-orange-900 dark:hover:text-orange-100',
+  },
+  {
+    selected: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700',
+    idle: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700 hover:border-amber-300 dark:hover:border-amber-600',
+    chip: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700',
+    removeHover: 'hover:text-amber-900 dark:hover:text-amber-100',
+  },
+  {
+    selected: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700',
+    idle: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 hover:border-green-300 dark:hover:border-green-600',
+    chip: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700',
+    removeHover: 'hover:text-green-900 dark:hover:text-green-100',
+  },
+  {
+    selected: 'bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border-teal-300 dark:border-teal-700',
+    idle: 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-700 hover:border-teal-300 dark:hover:border-teal-600',
+    chip: 'bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-700',
+    removeHover: 'hover:text-teal-900 dark:hover:text-teal-100',
+  },
+  {
+    selected: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700',
+    idle: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 hover:border-blue-300 dark:hover:border-blue-600',
+    chip: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700',
+    removeHover: 'hover:text-blue-900 dark:hover:text-blue-100',
+  },
+  {
+    selected: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700',
+    idle: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700 hover:border-indigo-300 dark:hover:border-indigo-600',
+    chip: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700',
+    removeHover: 'hover:text-indigo-900 dark:hover:text-indigo-100',
+  },
+  {
+    selected: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700',
+    idle: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700 hover:border-purple-300 dark:hover:border-purple-600',
+    chip: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700',
+    removeHover: 'hover:text-purple-900 dark:hover:text-purple-100',
+  },
+];
+
+const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients: _ingredients, onSave, onCancel }) => {
   const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,21 +74,19 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
   const [price, setPrice] = useState(0);
   const [image, setImage] = useState('');
   const [category, setCategory] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagSearch, setTagSearch] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
-  const [profitMarginPercent, setProfitMarginPercent] = useState<number>(0);
-  const [materials, setMaterials] = useState<ProductMaterial[]>([]);
-  const [materialSearch, setMaterialSearch] = useState('');
-  const [showMaterialQuantityModal, setShowMaterialQuantityModal] = useState(false);
-  const [quantityModalMaterial, setQuantityModalMaterial] = useState<{ material: Ingredient; productMaterial: ProductMaterial } | null>(null);
-  const [quantityModalValue, setQuantityModalValue] = useState<string>('');
-  const quantityInputRef = useRef<HTMLInputElement>(null);
-
-  const materialIngredients = ingredients.filter(ing => ing.type === IngredientType.MATERIAL);
-
-  const filteredMaterials = materialIngredients.filter(ing =>
-    ing.name.toLowerCase().includes(materialSearch.toLowerCase())
+  const TAG_SUGGESTIONS = useMemo(
+    () => ['Bánh kem', 'Bánh quy', 'Set quà', 'Sinh nhật', 'Lễ tết', 'Bán chạy', 'Mới', 'Theo mùa'],
+    []
   );
+
+  const filteredTagSuggestions = useMemo(() => {
+    const q = tagSearch.trim().toLowerCase();
+    return TAG_SUGGESTIONS.filter((tag) => tag.toLowerCase().includes(q));
+  }, [TAG_SUGGESTIONS, tagSearch]);
 
   useEffect(() => {
     if (initialData) {
@@ -48,12 +94,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
       setPrice(initialData.price);
       setImage(initialData.image || '');
       setCategory(initialData.category);
+      setTags(initialData.tags || []);
       setDescription(initialData.description || '');
       setStatus(initialData.status);
-      setMaterials(initialData.materials || []);
     } else {
       setImage('');
-      setMaterials([]);
+      setTags([]);
     }
   }, [initialData]);
 
@@ -88,77 +134,31 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
     }
   };
 
-  const handleToggleMaterial = (material: Ingredient) => {
-    const existing = materials.find(m => m.materialId === material.id);
-    if (existing) {
-      setMaterials(materials.filter(m => m.materialId !== material.id));
-    } else {
-      setMaterials([...materials, { materialId: material.id, quantity: 1 }]);
-    }
+  const normalizeTag = (raw: string) => raw.trim().replace(/\s+/g, ' ');
+
+  const hasTag = (value: string) => {
+    const normalized = normalizeTag(value).toLowerCase();
+    return tags.some((tag) => tag.toLowerCase() === normalized);
   };
 
-  const handleOpenMaterialQuantityModal = (material: Ingredient, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const productMaterial = materials.find(m => m.materialId === material.id);
-    if (productMaterial) {
-      setQuantityModalMaterial({ material, productMaterial });
-      setQuantityModalValue(productMaterial.quantity.toString());
-      setShowMaterialQuantityModal(true);
-      setTimeout(() => {
-        quantityInputRef.current?.focus();
-        quantityInputRef.current?.select();
-      }, 10);
-    }
+  const addTag = (rawTag: string) => {
+    const normalized = normalizeTag(rawTag);
+    if (!normalized || hasTag(normalized)) return;
+    setTags((prev) => [...prev, normalized]);
   };
 
-  const handleSaveMaterialQuantity = () => {
-    if (!quantityModalMaterial) return;
-    const numValue = quantityModalValue === '' ? 1 : Number(quantityModalValue);
-    if (!isNaN(numValue) && numValue > 0) {
-      setMaterials(materials.map(m => 
-        m.materialId === quantityModalMaterial.material.id 
-          ? { ...m, quantity: numValue } 
-          : m
-      ));
-    }
-    setShowMaterialQuantityModal(false);
-    setQuantityModalMaterial(null);
-    setQuantityModalValue('');
+  const removeTag = (tagToRemove: string) => {
+    setTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   };
 
-  const handleCancelMaterialQuantityModal = () => {
-    setShowMaterialQuantityModal(false);
-    setQuantityModalMaterial(null);
-    setQuantityModalValue('');
+  const handleAddTagFromInput = () => {
+    addTag(tagSearch);
+    setTagSearch('');
   };
 
-  /** Tổng giá vật liệu. */
-  const materialsCost = useMemo(() => {
-    return materials
-      .filter(m => m.quantity > 0)
-      .reduce((sum, m) => {
-        const ing = ingredients.find(i => i.id === m.materialId);
-        if (!ing) return sum;
-        const avg = calculateAveragePrice(ing);
-        if (avg <= 0 || !Number.isFinite(avg)) return sum;
-        return sum + m.quantity * avg;
-      }, 0);
-  }, [materials, ingredients]);
-
-  /** Gợi ý giá thành sản phẩm: tổng giá vật liệu đã chọn. */
-  const suggestedPrice = useMemo(() => {
-    return materialsCost;
-  }, [materialsCost]);
-
-  /** Giá bán gợi ý = giá thành × (1 + tỉ lệ lời %). */
-  const suggestedSellingPrice = useMemo(() => {
-    const margin = profitMarginPercent >= 0 && Number.isFinite(profitMarginPercent) ? profitMarginPercent : 0;
-    return suggestedPrice * (1 + margin / 100);
-  }, [suggestedPrice, profitMarginPercent]);
-
-  const applySuggestedPrice = () => {
-    const val = Math.round(suggestedSellingPrice);
-    if (Number.isFinite(val) && val >= 0) setPrice(val);
+  const getTagPalette = (tag: string) => {
+    const hash = tag.split('').reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+    return TAG_COLOR_PALETTES[hash % TAG_COLOR_PALETTES.length];
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -176,9 +176,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
         price,
         image,
         category: category || 'General',
+        tags: tags.filter((tag) => normalizeTag(tag) !== ''),
         description,
         status,
-        materials: materials.filter(m => m.quantity > 0),
       };
 
       await onSave(formData);
@@ -186,14 +186,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
       setError(err.message || "Không thể lưu sản phẩm");
       setIsSubmitting(false);
     }
-  };
-
-  const isMaterialSelected = (materialId: string) => {
-    return materials.some(m => m.materialId === materialId);
-  };
-
-  const getSelectedMaterial = (materialId: string) => {
-    return materials.find(m => m.materialId === materialId);
   };
 
   const footerContent = (
@@ -330,145 +322,86 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
                 </div>
               </div>
 
-              {/* Suggested cost block */}
-              {(() => {
-                const hasMaterials = materials.some(m => m.quantity > 0);
-                if (!hasMaterials) {
-                  return (
-                    <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-600 rounded-xl p-4">
-                      <p className="text-sm text-slate-600 dark:text-slate-400 flex items-center gap-2">
-                        <Lightbulb className="w-4 h-4 text-slate-400" />
-                        Chọn vật liệu để xem gợi ý giá thành.
-                      </p>
-                    </div>
-                  );
-                }
-                return (
-                  <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Lightbulb className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                      <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200">Gợi ý giá thành sản phẩm</h3>
-                    </div>
-                    <p className="text-sm text-amber-800 dark:text-amber-200">
-                      {`Giá vật liệu = ${formatVND(materialsCost)}`}
-                    </p>
-                    <p className="text-sm text-amber-800 dark:text-amber-200">
-                      Giá thành: <span className="font-semibold">{formatVND(suggestedPrice)}</span>
-                    </p>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <label className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
-                        <span>Tỉ lệ lời (%):</span>
-                        <input
-                          type="number"
-                          min={0}
-                          step={0.5}
-                          value={profitMarginPercent}
-                          onChange={(e) => {
-                            const v = e.target.value.trim();
-                            if (v === '') setProfitMarginPercent(0);
-                            else {
-                              const n = Number(v);
-                              if (!isNaN(n) && n >= 0) setProfitMarginPercent(n);
-                            }
-                          }}
-                          className="w-20 px-2 py-1.5 bg-white dark:bg-slate-800 border border-amber-300 dark:border-amber-700 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-amber-500 outline-none"
-                          placeholder="0"
-                        />
-                      </label>
-                      <span className="text-amber-800 dark:text-amber-200 text-sm">
-                        Giá bán gợi ý: <span className="text-lg font-bold text-amber-700 dark:text-amber-300">{formatVND(suggestedSellingPrice)}</span>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={applySuggestedPrice}
-                        className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
-                      >
-                        Áp dụng vào giá
-                      </button>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Materials Selection (optional) */}
+              {/* Product Tags */}
               <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wide">
-                    Vật liệu <span className="text-slate-500 dark:text-slate-400 font-normal">(Tùy chọn)</span>
+                    Tag sản phẩm <span className="text-slate-500 dark:text-slate-400 font-normal">(Tùy chọn)</span>
                   </h3>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {materials.length} đã chọn
+                    {tags.length} đã chọn
                   </span>
                 </div>
 
-                {materialIngredients.length === 0 ? (
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Chưa có vật liệu nào</p>
-                ) : (
-                  <>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={materialSearch}
-                        onChange={(e) => setMaterialSearch(e.target.value)}
-                        className="w-full pl-3 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                        placeholder="Tìm vật liệu..."
-                      />
-                    </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={tagSearch}
+                    onChange={(e) => setTagSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddTagFromInput();
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+                    placeholder="Nhập tag sản phẩm..."
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddTagFromInput}
+                    className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-1"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Thêm
+                  </button>
+                </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-[400px] overflow-y-auto">
-                      {filteredMaterials.map((material) => {
-                        const isSelected = isMaterialSelected(material.id);
-                        const selectedMaterial = getSelectedMaterial(material.id);
-                        const materialColors = getTypeColors(IngredientType.MATERIAL);
-                        const MaterialIcon = getTypeIcon(IngredientType.MATERIAL);
-                        const avgPrice = calculateAveragePrice(material);
-                        const qty = selectedMaterial?.quantity ?? 0;
-                        const materialCost = qty > 0 && avgPrice > 0 ? qty * avgPrice : 0;
-                        return (
-                          <div
-                            key={material.id}
-                            onClick={() => handleToggleMaterial(material)}
-                            className={`relative p-3 bg-white dark:bg-slate-800 rounded-lg border-2 transition-all cursor-pointer touch-manipulation ${
-                              isSelected
-                                ? `${materialColors.border} bg-orange-50 dark:bg-orange-900/20 shadow-md`
-                                : `${materialColors.border} hover:border-orange-400 dark:hover:border-orange-500 hover:shadow-md`
-                            }`}
+                {filteredTagSuggestions.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {filteredTagSuggestions.map((tag) => {
+                      const selected = hasTag(tag);
+                      const palette = getTagPalette(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => (selected ? removeTag(tag) : addTag(tag))}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                            selected
+                              ? palette.selected
+                              : palette.idle
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {tags.map((tag) => {
+                      const palette = getTagPalette(tag);
+                      return (
+                        <span
+                          key={tag}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${palette.chip}`}
+                        >
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => removeTag(tag)}
+                            className={palette.removeHover}
+                            aria-label={`Remove tag ${tag}`}
                           >
-                            {isSelected && (
-                              <div className="absolute top-1 right-1">
-                                <CheckCircle2 className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                              </div>
-                            )}
-                            <div className="flex flex-col items-center text-center space-y-2">
-                              <div className={`p-2 rounded-lg ${materialColors.bg} ${materialColors.border} border`}>
-                                <MaterialIcon className={`w-5 h-5 ${materialColors.icon}`} />
-                              </div>
-                              <div className="flex-1 w-full">
-                                <p className={`text-xs font-semibold ${materialColors.text} line-clamp-2 mb-1`}>
-                                  {material.name}
-                                </p>
-                                {isSelected && selectedMaterial && (
-                                  <div className="space-y-0.5">
-                                    <div
-                                      onClick={(e) => handleOpenMaterialQuantityModal(material, e)}
-                                      className="text-[10px] font-semibold px-1.5 py-0.5 rounded inline-block text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-700 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 touch-manipulation"
-                                    >
-                                      Số lượng: {selectedMaterial.quantity > 0 ? selectedMaterial.quantity : 'Nhập'}
-                                    </div>
-                                    {materialCost > 0 && (
-                                      <p className="text-[10px] font-semibold text-orange-600 dark:text-orange-400">
-                                        {formatVND(materialCost)}
-                                      </p>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </>
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
 
@@ -503,65 +436,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients, onS
 
           </form>
 
-      {/* Material Quantity Modal */}
-      {showMaterialQuantityModal && quantityModalMaterial && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
-            onClick={handleCancelMaterialQuantityModal}
-          />
-          <div className="relative bg-white dark:bg-slate-800 rounded-xl shadow-2xl p-6 w-full max-w-sm">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-              Nhập số lượng
-            </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              {quantityModalMaterial.material.name}
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
-                  Số lượng *
-                </label>
-                <div className="relative">
-                  <input
-                    ref={quantityInputRef}
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={quantityModalValue}
-                    onChange={(e) => setQuantityModalValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSaveMaterialQuantity();
-                      } else if (e.key === 'Escape') {
-                        handleCancelMaterialQuantityModal();
-                      }
-                    }}
-                    className="w-full px-4 py-3 text-base font-medium bg-slate-50 dark:bg-slate-700 border-2 border-orange-500 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none touch-manipulation"
-                    placeholder="1"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleCancelMaterialQuantityModal}
-                  className="flex-1 px-4 py-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-colors touch-manipulation"
-                >
-                  {t('form.cancel')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveMaterialQuantity}
-                  className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors touch-manipulation"
-                >
-                  Áp dụng
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </BaseSlidePanel>
   );
 };

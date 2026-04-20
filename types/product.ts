@@ -9,6 +9,7 @@ export interface Product {
   price: number;
   image: string;
   category: string;
+  tags?: string[];
   description?: string;
   status: 'active' | 'inactive';
   materials?: ProductMaterial[];

@@ -1,16 +1,59 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Save, Settings } from 'lucide-react';
+import { Save, Settings, Database, ChevronRight, ChevronDown } from 'lucide-react';
 import { getRouteConfigKey, routes, storageTabRoutes } from '@/config/routes';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
 import { ScreenVisibilityMap } from '@/types';
 import toast from 'react-hot-toast';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '@/config/firebase';
+
+interface DbCollectionConfig {
+  id: string;
+  label: string;
+}
+
+interface DbRecord {
+  id: string;
+  data: Record<string, any>;
+}
+
+const DATABASE_COLLECTIONS: DbCollectionConfig[] = [
+  { id: 'orders', label: 'Orders' },
+  { id: 'products', label: 'Products' },
+  { id: 'ingredients', label: 'Ingredients' },
+  { id: 'customers', label: 'Customers' },
+  { id: 'suppliers', label: 'Suppliers' },
+  { id: 'users', label: 'Users' },
+  { id: 'transactions', label: 'Transactions' },
+  { id: 'configurations', label: 'Configurations' },
+];
+
+const toSerializable = (value: any): any => {
+  if (value == null) return value;
+  if (Array.isArray(value)) return value.map(toSerializable);
+  if (typeof value === 'object') {
+    if (typeof value.toDate === 'function') {
+      try {
+        return value.toDate().toISOString();
+      } catch {
+        return String(value);
+      }
+    }
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, toSerializable(v)]));
+  }
+  return value;
+};
 
 const SettingsPage: React.FC = () => {
   const { t } = useLanguage();
   const { screenVisibility, loading, saving, saveVisibility } = useScreenConfig();
   const [draftVisibility, setDraftVisibility] = useState<ScreenVisibilityMap>({});
   const [activeTab, setActiveTab] = useState<'screens' | 'database'>('screens');
+  const [selectedCollection, setSelectedCollection] = useState<string>(DATABASE_COLLECTIONS[0].id);
+  const [collectionRecords, setCollectionRecords] = useState<Record<string, DbRecord[]>>({});
+  const [loadingCollectionId, setLoadingCollectionId] = useState<string | null>(null);
+  const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
 
   useEffect(() => {
     setDraftVisibility(screenVisibility);
@@ -55,6 +98,31 @@ const SettingsPage: React.FC = () => {
       toast.error('Không thể lưu cấu hình màn hình');
     }
   };
+
+  const loadCollectionRecords = async (collectionId: string) => {
+    setLoadingCollectionId(collectionId);
+    try {
+      const snapshot = await getDocs(collection(db, collectionId));
+      const records: DbRecord[] = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        data: toSerializable(docSnap.data()) as Record<string, any>,
+      }));
+      setCollectionRecords((prev) => ({ ...prev, [collectionId]: records }));
+    } catch (error) {
+      console.error(`Failed to load collection ${collectionId}`, error);
+      toast.error(`Không thể tải bảng ${collectionId}`);
+    } finally {
+      setLoadingCollectionId(null);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab !== 'database') return;
+    if (collectionRecords[selectedCollection]) return;
+    loadCollectionRecords(selectedCollection);
+  }, [activeTab, selectedCollection]);
+
+  const selectedRecords = collectionRecords[selectedCollection] || [];
 
   if (loading) {
     return (
@@ -207,28 +275,104 @@ const SettingsPage: React.FC = () => {
           })}
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 space-y-4">
-          <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-            <p className="text-sm font-semibold text-slate-900 dark:text-white">Firestore Document</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">`configurations/screen-visibility`</p>
+        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 md:p-5 space-y-4">
+          <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-800/60">
+            <p className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <Database className="w-4 h-4 text-orange-500" />
+              Database Explorer
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Hiển thị toàn bộ record của bảng được chọn.</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-              <p className="text-xs text-slate-500 dark:text-slate-400">Tổng cấu hình page + tab</p>
-              <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                {pageItems.length + tabItems.length}
-              </p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+              <div className="px-3 py-2 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Bảng dữ liệu</p>
+              </div>
+              <div className="max-h-[500px] overflow-y-auto p-2 space-y-1">
+                {DATABASE_COLLECTIONS.map((item) => {
+                  const active = selectedCollection === item.id;
+                  const loadedCount = collectionRecords[item.id]?.length;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCollection(item.id);
+                        setExpandedRecordId(null);
+                        if (!collectionRecords[item.id]) {
+                          loadCollectionRecords(item.id);
+                        }
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm border transition-colors ${
+                        active
+                          ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-700 text-orange-700 dark:text-orange-300'
+                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-orange-200 dark:hover:border-orange-700'
+                      }`}
+                    >
+                      <span className="font-medium text-left">{item.label}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{loadedCount != null ? loadedCount : '-'}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-              <p className="text-xs text-slate-500 dark:text-slate-400">Đang bật</p>
-              <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                {[...pageItems, ...tabItems].filter((item) => draftVisibility[getRouteConfigKey(item)] !== false).length}
-              </p>
+
+            <div className="lg:col-span-2 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+              <div className="px-3 py-2 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                  Records: {selectedCollection}
+                </p>
+                {loadingCollectionId === selectedCollection ? (
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Đang tải...</p>
+                ) : (
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{selectedRecords.length} record</p>
+                )}
+              </div>
+              <div className="max-h-[500px] overflow-y-auto">
+                {selectedRecords.length === 0 && loadingCollectionId !== selectedCollection ? (
+                  <p className="p-4 text-sm text-slate-500 dark:text-slate-400">Không có record hoặc chưa tải dữ liệu.</p>
+                ) : (
+                  <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                    {selectedRecords.map((record) => {
+                      const expanded = expandedRecordId === record.id;
+                      const previewKeys = Object.keys(record.data).slice(0, 3);
+                      return (
+                        <div key={record.id}>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedRecordId(expanded ? null : record.id)}
+                            className="w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors"
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{record.id}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                  {previewKeys.length > 0 ? previewKeys.join(', ') : '(no fields)'}
+                                </p>
+                              </div>
+                              {expanded ? (
+                                <ChevronDown className="w-4 h-4 text-slate-400" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4 text-slate-400" />
+                              )}
+                            </div>
+                          </button>
+                          {expanded && (
+                            <div className="px-4 pb-4">
+                              <pre className="text-xs bg-slate-900 text-slate-100 rounded-lg p-3 overflow-auto">
+                                {JSON.stringify(record.data, null, 2)}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Tab Database hiện hiển thị thông tin cấu hình cơ bản. Nếu bạn muốn, mình có thể bổ sung thêm công cụ backup/restore và export JSON ở bước tiếp theo.
-          </p>
         </div>
       )}
     </div>

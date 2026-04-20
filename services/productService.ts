@@ -22,6 +22,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
         price: Number(data.price),
         image: data.image,
         category: data.category || 'General',
+        tags: Array.isArray(data.tags) ? data.tags.filter((tag: unknown) => typeof tag === 'string') : [],
         description: data.description || '',
         status: data.status || 'active',
         materials,
