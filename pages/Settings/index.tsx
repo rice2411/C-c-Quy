@@ -453,11 +453,11 @@ const SettingsPage: React.FC = () => {
                             disableVariantHover
                             disableVariantTextColor
                             sizeClassName="px-4 py-3"
-                            layoutClassName="w-full text-left"
+                            layoutClassName="w-full justify-start text-left"
                             hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700/40"
                             stateClassName="transition-colors"
                           >
-                            <Box layoutClassName="flex items-center justify-between gap-3">
+                            <Box layoutClassName="flex w-full items-center justify-between gap-3 text-left">
                               <Box layoutClassName="min-w-0">
                                 <Typography size="sm" layoutClassName="truncate font-semibold">{record.id}</Typography>
                                 <Typography size="xs" variant="muted" layoutClassName="truncate">
