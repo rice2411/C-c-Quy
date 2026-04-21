@@ -3,6 +3,7 @@ import { Customer } from '@/types';
 import CustomerFilters from './CustomerFilters';
 import CustomerTable from './desktop/CustomerTable';
 import CustomerCardList from './mobile/CustomerCardList';
+import Card from '@/components/ui/Card';
 
 interface CustomerListProps {
   customers: Customer[];
@@ -14,19 +15,27 @@ interface CustomerListProps {
 const CustomerList: React.FC<CustomerListProps> = ({ customers, customerStats, onEdit, onDelete }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredCustomers = useMemo(() => {
-    return customers.filter(c => 
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.phone.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [customers, searchTerm]);
+  const filteredCustomers = useMemo(
+    () =>
+      customers.filter(
+        (c) =>
+          c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          c.phone.toLowerCase().includes(searchTerm.toLowerCase())
+      ),
+    [customers, searchTerm]
+  );
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col h-full animate-fade-in transition-colors overflow-hidden">
-      <CustomerFilters
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-      />
+    <Card
+      padding="none"
+      layoutClassName="flex h-full flex-col overflow-hidden animate-fade-in"
+      borderClassName="border border-slate-100 dark:border-slate-700"
+      backgroundClassName="bg-white dark:bg-slate-800"
+      roundedClassName="rounded-xl"
+      shadowClassName="shadow-sm"
+      stateClassName="transition-colors"
+    >
+      <CustomerFilters searchTerm={searchTerm} onSearchChange={setSearchTerm} />
 
       <CustomerTable
         customers={filteredCustomers}
@@ -41,7 +50,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ customers, customerStats, o
         onEdit={onEdit}
         onDelete={onDelete}
       />
-    </div>
+    </Card>
   );
 };
 

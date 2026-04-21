@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Filter, Search } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
+import Heading from '@/components/ui/Heading';
+import IconButton from '@/components/ui/IconButton';
+import Input from '@/components/ui/Input';
 
 interface OrderFiltersToolbarProps {
   searchTerm: string;
@@ -8,53 +13,68 @@ interface OrderFiltersToolbarProps {
   onOpenAdvanced: () => void;
 }
 
-// Toolbar tách riêng để giữ OrderList gọn gàng, dễ tái sử dụng
-const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({ searchTerm, onSearchChange, onOpenAdvanced }) => {
+const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
+  searchTerm,
+  onSearchChange,
+  onOpenAdvanced
+}) => {
   const { t } = useLanguage();
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   return (
-    <div className="p-5 border-b border-slate-100 dark:border-slate-700 flex flex-col gap-4 shrink-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center justify-between w-full sm:w-auto">
-          <h2 className="text-lg font-semibold text-slate-800 dark:text-white flex items-center gap-2">
-            <Filter className="w-5 h-5 text-orange-500" />
+    <Box
+      layoutClassName="flex shrink-0 flex-col gap-4 p-5"
+      borderClassName="border-b border-slate-100 dark:border-slate-700"
+    >
+      <Box layoutClassName="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <Box layoutClassName="flex w-full items-center justify-between sm:w-auto">
+          <Heading level={2} layoutClassName="flex items-center gap-2" textClassName="text-lg font-semibold">
+            <Filter className="h-5 w-5 text-orange-500" />
             {t('orders.recent')}
-          </h2>
-          <button
+          </Heading>
+          <IconButton
+            type="button"
+            label="Toggle filters"
+            variant="ghost"
+            layoutClassName="sm:hidden"
             onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-            className="sm:hidden p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-            aria-label="Toggle filters"
           >
-            {isFiltersOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </button>
-        </div>
+            {isFiltersOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+          </IconButton>
+        </Box>
 
-        <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-3 sm:items-center">
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <input
+        <Box layoutClassName="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+          <Box layoutClassName="relative w-full sm:w-64">
+            <Input
               type="text"
               placeholder={t('orders.searchPlaceholder')}
-              className="pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 w-full placeholder-slate-400 transition-all"
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
+              leftIcon={<Search />}
+              leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
             />
-          </div>
-          <button
+          </Box>
+          <Button
             type="button"
             onClick={onOpenAdvanced}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            variant="secondary"
+            disableVariantHover
+            disableVariantTextColor
+            borderClassName="border border-slate-200 dark:border-slate-600"
+            backgroundClassName="bg-white dark:bg-slate-800"
+            hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+            textClassName="text-sm font-medium text-slate-700 dark:text-slate-200"
+            roundedClassName="rounded-lg"
+            sizeClassName="px-3 py-2"
+            layoutClassName="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+            stateClassName="transition-colors"
           >
             {t('orders.filters') ?? 'Filters'}
-          </button>
-        </div>
-      </div>
-
-      {/* Rút gọn: dùng modal nâng cao, toolbar chỉ còn search + nút mở */}
-    </div>
+          </Button>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
 export default OrderFiltersToolbar;
-

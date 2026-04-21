@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, Loader2 } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { UserData, UserStatus, UserRole } from '@/types/user';
 import { getAllUsers, updateUserStatus, updateUserCustomName, updateUserRole } from '@/services/userService';
@@ -8,6 +8,9 @@ import UserStats from './components/UserStats';
 import UserFilters from './components/UserFilters';
 import UserTable from './components/desktop/UserTable';
 import UserCardList from './components/mobile/UserCardList';
+import Box from '@/components/ui/Box';
+import Spinner from '@/components/ui/Spinner';
+import Typography from '@/components/ui/Typography';
 
 const UsersPage: React.FC = () => {
   const { t } = useLanguage();
@@ -119,7 +122,7 @@ const UsersPage: React.FC = () => {
   }, [users]);
 
   return (
-    <div className="h-full relative flex flex-col space-y-6">
+    <Box layoutClassName="relative flex h-full flex-col space-y-6">
       <UserStats 
         total={stats.total}
         pending={stats.pending}
@@ -135,14 +138,14 @@ const UsersPage: React.FC = () => {
       />
 
       {loading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
-        </div>
+        <Box layoutClassName="flex flex-1 items-center justify-center">
+          <Spinner size="lg" textClassName="text-orange-500" />
+        </Box>
       ) : filteredUsers.length === 0 ? (
-        <div className="flex flex-col items-center justify-center flex-1 text-slate-400 dark:text-slate-500">
-          <Users className="w-16 h-16 mb-4 opacity-20" />
-          <p>{t('users.noUsers')}</p>
-        </div>
+        <Box layoutClassName="flex flex-1 flex-col items-center justify-center" textClassName="text-slate-400 dark:text-slate-500">
+          <Users className="mb-4 h-16 w-16 opacity-20" />
+          <Typography>{t('users.noUsers')}</Typography>
+        </Box>
       ) : (
         <>
           <UserTable
@@ -180,7 +183,7 @@ const UsersPage: React.FC = () => {
           />
         </>
       )}
-    </div>
+    </Box>
   );
 };
 

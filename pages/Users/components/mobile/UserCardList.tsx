@@ -1,5 +1,6 @@
 import React from 'react';
-import { UserData, UserStatus, UserRole } from '@/@/types/user';
+import Box from '@/components/ui/Box';
+import { UserData, UserStatus, UserRole } from '@/types/user';
 import UserCard from './UserCard';
 
 interface UserCardListProps {
@@ -36,7 +37,7 @@ const UserCardList: React.FC<UserCardListProps> = ({
   onStatusChange
 }) => {
   return (
-    <div className="lg:hidden space-y-4">
+    <Box layoutClassName="space-y-4 lg:hidden">
       {users.map((user) => (
         <UserCard
           key={user.uid}
@@ -56,7 +57,7 @@ const UserCardList: React.FC<UserCardListProps> = ({
           onStatusChange={onStatusChange}
         />
       ))}
-    </div>
+    </Box>
   );
 };
 

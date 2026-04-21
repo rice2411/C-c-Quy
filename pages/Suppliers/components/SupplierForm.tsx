@@ -3,6 +3,12 @@ import { Save, User, Phone, Mail, MapPin, FileText, AlertCircle, Store } from 'l
 import { Supplier, SupplierType } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import BaseModal from '@/components/BaseModal';
+import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
+import Field from '@/components/ui/Field';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Textarea from '@/components/ui/Textarea';
 
 interface SupplierFormProps {
   isOpen: boolean;
@@ -74,27 +80,44 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ isOpen, initialData, onSave
   };
 
   const footer = (
-    <div className="flex justify-end gap-3 w-full">
-       <button 
-        type="button" 
+    <Box layoutClassName="flex w-full justify-end gap-3">
+      <Button
+        type="button"
         onClick={onClose}
         disabled={isSubmitting}
-        className="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+        variant="secondary"
+        disableVariantHover
+        disableVariantTextColor
+        borderClassName="border border-slate-200 dark:border-slate-600"
+        backgroundClassName="bg-transparent"
+        hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+        textClassName="text-sm font-medium text-slate-700 dark:text-slate-300"
+        roundedClassName="rounded-lg"
+        sizeClassName="px-4 py-2"
+        stateClassName="transition-colors disabled:opacity-50"
       >
         {t('form.cancel')}
-      </button>
-      <button 
+      </Button>
+      <Button
+        type="button"
         onClick={handleSubmit}
         disabled={isSubmitting}
-        className="px-6 py-2 bg-orange-600 dark:bg-orange-500 rounded-lg text-sm font-medium text-white hover:bg-orange-700 dark:hover:bg-orange-600 shadow-sm flex items-center gap-2 disabled:opacity-70 transition-colors"
+        leftIcon={isSubmitting ? undefined : <Save />}
+        iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+        backgroundClassName="bg-orange-600 dark:bg-orange-500"
+        hoverClassName="hover:bg-orange-700 dark:hover:bg-orange-600"
+        textClassName="text-sm font-medium text-white"
+        roundedClassName="rounded-lg"
+        shadowClassName="shadow-sm"
+        layoutClassName="flex items-center gap-2"
+        sizeClassName="px-6 py-2"
+        stateClassName="transition-colors disabled:opacity-70"
+        disableVariantHover
+        disableVariantTextColor
       >
-         {isSubmitting ? t('form.saving') : (
-          <>
-            <Save className="w-4 h-4" /> {t('suppliers.form.save')}
-          </>
-        )}
-      </button>
-    </div>
+        {isSubmitting ? t('form.saving') : t('suppliers.form.save')}
+      </Button>
+    </Box>
   );
 
   return (
@@ -105,121 +128,119 @@ const SupplierForm: React.FC<SupplierFormProps> = ({ isOpen, initialData, onSave
       footer={footer}
       size="md"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
-              {error}
-            </div>
-          )}
-
-          <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('suppliers.form.type')}</label>
-          <div className="relative">
-            <Store className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as SupplierType)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+      <form onSubmit={handleSubmit}>
+        <Box layoutClassName="space-y-4">
+          {error ? (
+            <Box
+              layoutClassName="flex items-center gap-2 rounded-lg p-3 text-sm"
+              backgroundClassName="bg-red-50 dark:bg-red-900/20"
+              textClassName="text-red-600 dark:text-red-400"
             >
-              {Object.values(SupplierType).map((value) => {
-                const key = value.toString().toLowerCase();
-                return (
-                  <option key={value} value={value}>
-                    {t(`suppliers.form.types.${key}`)}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-        </div>
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {error}
+            </Box>
+          ) : null}
 
-        <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('suppliers.form.name')} *</label>
-            <div className="relative">
-              <User className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-              <input 
-                type="text" 
-                required
-                value={name}
-                onChange={e => setName(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                placeholder={t('suppliers.form.namePlaceholder')}
+          <Field label={t('suppliers.form.type')} htmlFor="supplier-form-type">
+            <Box layoutClassName="relative">
+              <Store className="pointer-events-none absolute left-3 top-2.5 z-10 h-4 w-4 text-slate-400" />
+              <Select
+                id="supplier-form-type"
+                fullWidth
+                value={type}
+                onChange={(e) => setType(e.target.value as SupplierType)}
+                sizeClassName="pl-9"
+                backgroundClassName="bg-slate-50 dark:bg-slate-700"
+                borderClassName="border-slate-200 dark:border-slate-600"
+              >
+                {Object.values(SupplierType).map((value) => {
+                  const key = value.toString().toLowerCase();
+                  return (
+                    <option key={value} value={value}>
+                      {t(`suppliers.form.types.${key}`)}
+                    </option>
+                  );
+                })}
+              </Select>
+            </Box>
+          </Field>
+
+          <Field label={`${t('suppliers.form.name')} *`} htmlFor="supplier-form-name">
+            <Input
+              id="supplier-form-name"
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('suppliers.form.namePlaceholder')}
+              leftIcon={<User />}
+              leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+            />
+          </Field>
+
+          <Field label={t('suppliers.form.contactName')} htmlFor="supplier-form-contact-name">
+            <Input
+              id="supplier-form-contact-name"
+              type="text"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              placeholder={t('suppliers.form.contactPlaceholder')}
+              leftIcon={<User />}
+              leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+            />
+          </Field>
+
+          <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field label={t('suppliers.form.phone')} htmlFor="supplier-form-phone">
+              <Input
+                id="supplier-form-phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="090..."
+                leftIcon={<Phone />}
+                leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
               />
-            </div>
-          </div>
+            </Field>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('suppliers.form.contactName')}</label>
-            <div className="relative">
-              <User className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-              <input 
-                type="text" 
-                value={contactName}
-                onChange={e => setContactName(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                placeholder={t('suppliers.form.contactPlaceholder')}
+            <Field label={t('suppliers.form.email')} htmlFor="supplier-form-email">
+              <Input
+                id="supplier-form-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="supplier@mail.com"
+                leftIcon={<Mail />}
+                leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
               />
-            </div>
-          </div>
+            </Field>
+          </Box>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('suppliers.form.phone')}</label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                <input 
-                  type="tel" 
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                  placeholder="090..."
-                />
-              </div>
-            </div>
+          <Field label={t('suppliers.form.address')} htmlFor="supplier-form-address">
+            <Input
+              id="supplier-form-address"
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder={t('suppliers.form.addressPlaceholder')}
+              leftIcon={<MapPin />}
+              leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+            />
+          </Field>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('suppliers.form.email')}</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                <input 
-                  type="email" 
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                  placeholder="supplier@mail.com"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('suppliers.form.address')}</label>
-            <div className="relative">
-              <MapPin className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-              <input 
-                type="text" 
-                value={address}
-                onChange={e => setAddress(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                placeholder={t('suppliers.form.addressPlaceholder')}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('suppliers.form.note')}</label>
-            <div className="relative">
-              <FileText className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-              <textarea 
-                value={note}
-                onChange={e => setNote(e.target.value)}
-                rows={3}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none resize-none"
-                placeholder={t('suppliers.form.notePlaceholder')}
-              />
-            </div>
-          </div>
+          <Field label={t('suppliers.form.note')} htmlFor="supplier-form-note">
+            <Textarea
+              id="supplier-form-note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              resize="none"
+              placeholder={t('suppliers.form.notePlaceholder')}
+              leftIcon={<FileText />}
+              leftIconClassName="top-2.5 [&_svg]:h-4 [&_svg]:w-4"
+            />
+          </Field>
+        </Box>
       </form>
     </BaseModal>
   );

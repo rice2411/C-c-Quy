@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Save, Image, Tag, DollarSign, AlignLeft, AlertCircle, Upload, Loader2, Plus, X } from 'lucide-react';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
+import Badge from '@/components/ui/Badge';
+import Textarea from '@/components/ui/Textarea';
 import { Product, Ingredient } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { uploadImage, getProductImagePath } from '@/services/imageService';
@@ -247,7 +249,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients: _in
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-slate-400">
-                    <Image className="w-12 h-12" />
+                    <Image layoutClassName="w-12 h-12" />
                   </div>
                 )}
                 {isUploading && (
@@ -385,9 +387,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients: _in
                     {tags.map((tag) => {
                       const palette = getTagPalette(tag);
                       return (
-                        <span
+                        <Badge
                           key={tag}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${palette.chip}`}
+                          className={palette.chip}
                         >
                           {tag}
                           <button
@@ -398,7 +400,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients: _in
                           >
                             <X className="w-3 h-3" />
                           </button>
-                        </span>
+                        </Badge>
                       );
                     })}
                   </div>
@@ -421,16 +423,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients: _in
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('inventory.description')}</label>
-                <div className="relative">
-                   <AlignLeft className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                   <textarea 
-                    value={description}
-                    onChange={e => setDescription(e.target.value)}
-                    rows={3}
-                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none resize-none"
-                    placeholder="Mô tả sản phẩm..."
-                  />
-                </div>
+                <Textarea
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  rows={3}
+                  className="resize-none"
+                  placeholder="Mô tả sản phẩm..."
+                  leftIcon={<AlignLeft className="h-4 w-4" />}
+                />
               </div>
             </div>
 

@@ -2,6 +2,10 @@ import React from 'react';
 import { ArrowRightLeft, Calendar, Building2, CreditCard, TrendingUp, TrendingDown } from 'lucide-react';
 import { Transaction } from '@/types';
 import { formatVND } from '@/utils/currencyUtil';
+import Badge from '@/components/ui/Badge';
+import Box from '@/components/ui/Box';
+import Card from '@/components/ui/Card';
+import Typography from '@/components/ui/Typography';
 
 interface TransactionsMobileListProps {
   transactions: Transaction[];
@@ -19,83 +23,111 @@ const TransactionsMobileList: React.FC<TransactionsMobileListProps> = ({
   }
 
   return (
-    <div className="lg:hidden flex-1 overflow-y-auto space-y-3 pb-4">
+    <Box layoutClassName="flex-1 space-y-3 overflow-y-auto pb-4 lg:hidden">
       {transactions.map((tr) => (
-        <div
+        <Card
           key={tr.id}
           onClick={() => onTransactionClick?.(tr)}
-          className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm mx-[-0.25rem] sm:mx-0 cursor-pointer hover:shadow-md hover:border-orange-300 dark:hover:border-orange-600 transition-all"
+          padding="none"
+          layoutClassName="mx-[-0.25rem] cursor-pointer p-3 transition-all hover:shadow-md sm:mx-0"
+          borderClassName="border-slate-200 hover:border-orange-300 dark:border-slate-700 dark:hover:border-orange-600"
+          backgroundClassName="bg-white dark:bg-slate-800"
         >
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-9 h-9 rounded-full border flex items-center justify-center flex-shrink-0 ${
+          <Box layoutClassName="mb-2 flex items-start justify-between gap-2">
+            <Box layoutClassName="flex items-center gap-2">
+              <Box
+                layoutClassName={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${
                   tr.transferType === 'in'
                     ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-700'
                     : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700'
                 }`}
               >
                 {tr.transferType === 'in' ? (
-                  <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 ) : (
-                  <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400" />
+                  <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
                 )}
-              </div>
-              <div className="flex flex-col">
-                <span
-                  className={`text-sm font-semibold ${
+              </Box>
+              <Box layoutClassName="flex flex-col">
+                <Typography
+                  as="span"
+                  size="sm"
+                  layoutClassName="font-semibold"
+                  textClassName={
                     tr.transferType === 'in'
                       ? 'text-emerald-700 dark:text-emerald-300'
                       : 'text-red-600 dark:text-red-400'
-                  }`}
+                  }
                 >
                   {tr.transferType === 'in' ? '+' : '-'}
                   {formatVND(tr.transferAmount)}
-                </span>
-                <div className="flex items-center text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                  <Calendar className="w-3 h-3 mr-1" />
+                </Typography>
+                <Typography
+                  as="span"
+                  size="xs"
+                  layoutClassName="mt-0.5 flex items-center text-[11px]"
+                  textClassName="text-slate-500 dark:text-slate-400"
+                >
+                  <Calendar className="mr-1 h-3 w-3" />
                   {formatDate(tr.transactionDate)}
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-1 min-w-0">
+                </Typography>
+              </Box>
+            </Box>
+            <Box layoutClassName="flex min-w-0 flex-col items-end gap-1">
               {tr.orderNumber && (
-                <span className="inline-flex items-center gap-1 bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300 px-2 py-1 rounded-md text-[10px] font-medium font-mono max-w-[140px] truncate">
-                  <ArrowRightLeft className="w-3 h-3" />
+                <Badge
+                  size="sm"
+                  layoutClassName="inline-flex max-w-[140px] items-center gap-1 truncate px-2 py-1 text-[10px] font-medium font-mono"
+                  borderClassName="border-transparent"
+                  backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
+                  textClassName="text-orange-700 dark:text-orange-300"
+                >
+                  <ArrowRightLeft className="h-3 w-3" />
                   {tr.orderNumber}
-                </span>
+                </Badge>
               )}
               {tr.sepayId ? (
-                <span className="inline-flex items-center gap-1 bg-slate-50 text-slate-700 dark:bg-slate-800/60 dark:text-slate-200 px-2 py-1 rounded-md text-[10px] font-mono max-w-[140px] truncate">
+                <Badge
+                  size="sm"
+                  layoutClassName="inline-flex max-w-[140px] items-center gap-1 truncate px-2 py-1 text-[10px] font-mono"
+                  borderClassName="border-transparent"
+                  backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
+                  textClassName="text-slate-700 dark:text-slate-200"
+                >
                   SePay #{tr.sepayId}
-                </span>
+                </Badge>
               ) : null}
-            </div>
-          </div>
+            </Box>
+          </Box>
 
-          <div className="mb-2">
-            <p className="text-xs text-slate-700 dark:text-slate-200 line-clamp-1">
+          <Box layoutClassName="mb-2">
+            <Typography size="xs" layoutClassName="line-clamp-1" textClassName="text-slate-700 dark:text-slate-200">
               {tr.content || '-'}
-            </p>
-          </div>
+            </Typography>
+          </Box>
 
-          <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-700">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <Building2 className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+          <Box layoutClassName="flex items-center justify-between gap-3 border-t border-slate-100 pt-2 dark:border-slate-700">
+            <Box layoutClassName="flex min-w-0 items-center gap-1.5">
+              <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              <Typography as="span" size="xs" layoutClassName="truncate text-[11px]" textClassName="text-slate-500 dark:text-slate-400">
                 {tr.gateway || '-'}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 min-w-0">
-              <CreditCard className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-              <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate max-w-[120px] text-right">
+              </Typography>
+            </Box>
+            <Box layoutClassName="flex min-w-0 items-center gap-1.5">
+              <CreditCard className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+              <Typography
+                as="span"
+                size="xs"
+                layoutClassName="max-w-[120px] truncate text-right text-[11px] font-mono"
+                textClassName="text-slate-500 dark:text-slate-400"
+              >
                 {tr.subAccount || tr.accountNumber || '-'}
-              </span>
-            </div>
-          </div>
-        </div>
+              </Typography>
+            </Box>
+          </Box>
+        </Card>
       ))}
-    </div>
+    </Box>
   );
 };
 

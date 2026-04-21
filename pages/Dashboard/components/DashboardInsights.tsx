@@ -1,5 +1,10 @@
 import React from 'react';
 import { Sparkles } from 'lucide-react';
+import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
+import Heading from '@/components/ui/Heading';
+import Spinner from '@/components/ui/Spinner';
+import Typography from '@/components/ui/Typography';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface DashboardInsightsProps {
@@ -16,40 +21,66 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
   const { t } = useLanguage();
 
   return (
-    <div className="lg:col-span-1 bg-gradient-to-br from-orange-600 to-rose-600 dark:from-orange-800 dark:to-rose-900 p-6 rounded-xl shadow-lg text-white relative overflow-hidden transition-colors">
-      <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl"></div>
-      <div className="relative z-10 flex flex-col h-full">
-        <div className="flex items-center space-x-2 mb-4">
+    <Box
+      layoutClassName="relative overflow-hidden p-6 text-white lg:col-span-1"
+      backgroundClassName="bg-gradient-to-br from-orange-600 to-rose-600 dark:from-orange-800 dark:to-rose-900"
+      roundedClassName="rounded-xl"
+      shadowClassName="shadow-lg"
+      stateClassName="transition-colors"
+    >
+      <Box
+        layoutClassName="absolute top-0 right-0 -mr-8 -mt-8 h-32 w-32"
+        backgroundClassName="bg-white"
+        roundedClassName="rounded-full"
+        stateClassName="opacity-10 blur-2xl"
+      />
+      <Box layoutClassName="relative z-10 flex h-full flex-col">
+        <Box layoutClassName="mb-4 flex items-center space-x-2">
           <Sparkles className="text-yellow-300" />
-          <h3 className="text-lg font-bold">{t('dashboard.aiTitle')}</h3>
-        </div>
+          <Heading level={3} textClassName="text-lg font-bold text-white">
+            {t('dashboard.aiTitle')}
+          </Heading>
+        </Box>
         
-        <div className="flex-grow">
+        <Box layoutClassName="flex-grow">
           {loading ? (
-             <div className="flex flex-col items-center justify-center h-full space-y-3">
-               <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
-               <p className="text-sm font-medium text-white/80">{t('dashboard.analyzing')}</p>
-             </div>
+             <Box layoutClassName="flex h-full flex-col items-center justify-center space-y-3">
+               <Spinner
+                 size="lg"
+                 borderClassName="border-white/30 border-t-white"
+                 textClassName="text-white"
+               />
+               <Typography size="sm" textClassName="font-medium text-white/80">
+                 {t('dashboard.analyzing')}
+               </Typography>
+             </Box>
           ) : insight ? (
-            <div className="prose prose-invert prose-sm">
-              <p className="text-orange-50 whitespace-pre-line leading-relaxed">{insight}</p>
-            </div>
+            <Box layoutClassName="prose prose-sm prose-invert">
+              <Typography textClassName="whitespace-pre-line leading-relaxed text-orange-50">{insight}</Typography>
+            </Box>
           ) : (
-            <p className="text-orange-50 text-sm leading-relaxed">
+            <Typography size="sm" textClassName="leading-relaxed text-orange-50">
               {t('dashboard.aiPlaceholder')}
-            </p>
+            </Typography>
           )}
-        </div>
+        </Box>
 
-        <button 
+        <Button
           onClick={onGenerate}
           disabled={loading}
-          className="mt-6 w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg font-medium text-sm transition-all flex items-center justify-center space-x-2 backdrop-blur-sm"
+          variant="primary"
+          fullWidth
+          layoutClassName="mt-6"
+          borderClassName="border border-white/20"
+          backgroundClassName="bg-white/10"
+          textClassName="text-sm font-medium text-white"
+          stateClassName="backdrop-blur-sm"
+          hoverClassName="hover:bg-white/20"
         >
-          <span>{insight ? t('dashboard.updateAnalysis') : t('dashboard.generateBrief')}</span>
-        </button>
-      </div>
-    </div>
+          {insight ? t('dashboard.updateAnalysis') : t('dashboard.generateBrief')}
+        </Button>
+      </Box>
+    </Box>
   );
 };
 

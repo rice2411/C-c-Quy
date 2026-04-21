@@ -2,6 +2,8 @@ import React from 'react';
 import { Supplier } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SupplierCard from './SupplierCard';
+import Box from '@/components/ui/Box';
+import Typography from '@/components/ui/Typography';
 
 interface SupplierCardListProps {
   suppliers: Supplier[];
@@ -13,7 +15,10 @@ const SupplierCardList: React.FC<SupplierCardListProps> = ({ suppliers, onEdit, 
   const { t } = useLanguage();
 
   return (
-    <div className="lg:hidden p-4 space-y-4 bg-slate-50/50 dark:bg-slate-900/50 flex-1 overflow-y-auto">
+    <Box
+      layoutClassName="flex-1 space-y-4 overflow-y-auto p-4 lg:hidden"
+      backgroundClassName="bg-slate-50/50 dark:bg-slate-900/50"
+    >
       {suppliers.length > 0 ? (
         suppliers.map((supplier) => (
           <SupplierCard
@@ -24,9 +29,11 @@ const SupplierCardList: React.FC<SupplierCardListProps> = ({ suppliers, onEdit, 
           />
         ))
       ) : (
-        <div className="text-center py-10 text-slate-400 dark:text-slate-500 text-sm">{t('suppliers.noData')}</div>
+        <Typography size="sm" variant="muted" layoutClassName="py-10 text-center">
+          {t('suppliers.noData')}
+        </Typography>
       )}
-    </div>
+    </Box>
   );
 };
 

@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, User, Phone, AlertCircle } from 'lucide-react';
+import { Save, User, Phone, AlertCircle } from 'lucide-react';
 import { Customer } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import BaseModal from '@/components/BaseModal';
-
+import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
+import Field from '@/components/ui/Field';
+import Input from '@/components/ui/Input';
 interface CustomerFormProps {
   isOpen: boolean;
   initialData?: Customer | undefined;
@@ -36,47 +39,55 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ isOpen, initialData, onSave
     setIsSubmitting(true);
 
     try {
-      if (!name.trim()) throw new Error("Name is required");
+      if (!name.trim()) throw new Error('Name is required');
 
       const formData = {
         id: initialData?.id,
         name,
-        phone,
-        // Reset optional fields if they existed, or keep them if we were preserving data.
-        // For this requirement "only 2 fields", we only send these.
+        phone
       };
 
       await onSave(formData);
       onClose();
     } catch (err: any) {
-      setError(err.message || "Failed to save customer");
+      setError(err.message || 'Failed to save customer');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const footer = (
-    <div className="flex justify-end gap-3 w-full">
-       <button 
-        type="button" 
+    <Box layoutClassName="flex w-full justify-end gap-3">
+      <Button
+        type="button"
         onClick={onClose}
         disabled={isSubmitting}
-        className="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+        variant="secondary"
+        textClassName="text-sm font-medium text-slate-700 dark:text-slate-300"
+        borderClassName="border border-slate-200 dark:border-slate-600"
+        roundedClassName="rounded-lg"
+        hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+        stateClassName="transition-colors disabled:opacity-50"
       >
         {t('form.cancel')}
-      </button>
-      <button 
+      </Button>
+      <Button
+        type="button"
         onClick={handleSubmit}
         disabled={isSubmitting}
-        className="px-6 py-2 bg-orange-600 dark:bg-orange-500 rounded-lg text-sm font-medium text-white hover:bg-orange-700 dark:hover:bg-orange-600 shadow-sm flex items-center gap-2 disabled:opacity-70 transition-colors"
+        leftIcon={isSubmitting ? undefined : <Save />}
+        iconClassName={isSubmitting ? undefined : 'inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4'}
+        backgroundClassName="bg-orange-600 dark:bg-orange-500"
+        hoverClassName="hover:bg-orange-700 dark:hover:bg-orange-600"
+        textClassName="text-sm font-medium text-white"
+        roundedClassName="rounded-lg"
+        shadowClassName="shadow-sm"
+        layoutClassName="flex items-center gap-2"
+        stateClassName="transition-colors disabled:opacity-70"
       >
-         {isSubmitting ? t('form.saving') : (
-          <>
-            <Save className="w-4 h-4" /> {t('customers.form.save')}
-          </>
-        )}
-      </button>
-    </div>
+        {isSubmitting ? t('form.saving') : t('customers.form.save')}
+      </Button>
+    </Box>
   );
 
   return (
@@ -87,42 +98,42 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ isOpen, initialData, onSave
       footer={footer}
       size="sm"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
-              {error}
-            </div>
-          )}
+      <form onSubmit={handleSubmit}>
+        <Box layoutClassName="space-y-4">
+        {error ? (
+          <Box
+            layoutClassName="flex items-center gap-2 rounded-lg p-3 text-sm"
+            backgroundClassName="bg-red-50 dark:bg-red-900/20"
+            textClassName="text-red-600 dark:text-red-400"
+          >
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            {error}
+          </Box>
+        ) : null}
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('customers.form.name')} *</label>
-            <div className="relative">
-              <User className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-              <input 
-                type="text" 
-                required
-                value={name}
-                onChange={e => setName(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                placeholder="Full Name"
-              />
-            </div>
-          </div>
+        <Field label={`${t('customers.form.name')} *`} htmlFor="customer-form-name">
+          <Input
+            id="customer-form-name"
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            leftIcon={<User className="h-4 w-4" />}
+            placeholder="Full Name"
+          />
+        </Field>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('customers.form.phone')}</label>
-            <div className="relative">
-              <Phone className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-              <input 
-                type="tel" 
-                value={phone}
-                onChange={e => setPhone(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                placeholder="090..."
-              />
-            </div>
-          </div>
+        <Field label={t('customers.form.phone')} htmlFor="customer-form-phone">
+          <Input
+            id="customer-form-phone"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            leftIcon={<Phone className="h-4 w-4" />}
+            placeholder="090..."
+          />
+        </Field>
+        </Box>
       </form>
     </BaseModal>
   );

@@ -1,5 +1,9 @@
 import React, { useMemo } from 'react';
 import { ArrowRight, Calendar, User, Package } from 'lucide-react';
+import Box from '@/components/ui/Box';
+import Card from '@/components/ui/Card';
+import Heading from '@/components/ui/Heading';
+import Typography from '@/components/ui/Typography';
 import { Order } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { STATUS_COLORS } from '@/constant/order';
@@ -23,69 +27,73 @@ const DashboardRecentOrders: React.FC<DashboardRecentOrdersProps> = ({ orders })
   if (recentOrders.length === 0) return null;
 
   return (
-    <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+    <Card layoutClassName="p-4 sm:p-5">
+      <Box layoutClassName="mb-4 flex items-center justify-between">
+        <Heading level={3} layoutClassName="flex items-center gap-2" textClassName="text-sm font-semibold text-slate-800 dark:text-white">
           <Package className="w-4 h-4 text-orange-500" />
           {t('dashboard.recentOrders') || 'Recent orders'}
-        </h3>
-        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+        </Heading>
+        <Typography as="span" size="xs" textClassName="text-[11px] text-slate-500 dark:text-slate-400">
           {recentOrders.length} {t('dashboard.totalOrders')?.toLowerCase() || 'orders'}
-        </span>
-      </div>
-      <div className="space-y-2">
+        </Typography>
+      </Box>
+      <Box layoutClassName="space-y-2">
         {recentOrders.map((order) => (
-          <div
+          <Box
             key={order.id}
-            className="flex items-center justify-between gap-3 px-2.5 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors"
+            layoutClassName="flex items-center justify-between gap-3 px-2.5 py-2.5"
+            roundedClassName="rounded-lg"
+            hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700/60"
+            stateClassName="transition-colors"
           >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+            <Box layoutClassName="flex min-w-0 items-center gap-3">
+              <Box layoutClassName="flex h-9 w-9 flex-shrink-0 items-center justify-center" roundedClassName="rounded-full" backgroundClassName="bg-slate-50 dark:bg-slate-700">
                 <User className="w-4 h-4 text-slate-500 dark:text-slate-300" />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  <span className="font-mono text-[11px] text-orange-600 dark:text-orange-400">
+              </Box>
+              <Box layoutClassName="flex min-w-0 flex-col">
+                <Box layoutClassName="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  <Typography as="span" textClassName="font-mono text-[11px] text-orange-600 dark:text-orange-400">
                     #{order.orderNumber}
-                  </span>
-                  <span>•</span>
+                  </Typography>
+                  <Typography as="span">•</Typography>
                   <Calendar className="w-3 h-3" />
-                  <span>
+                  <Typography as="span">
                     {new Date(order.createdAt.toDate()).toLocaleDateString(
                       t('language') === 'vi' ? 'vi-VN' : 'en-US'
                     )}
-                  </span>
-                </div>
-                <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
+                  </Typography>
+                </Box>
+                <Typography layoutClassName="truncate" textClassName="text-xs font-semibold text-slate-800 dark:text-slate-100 sm:text-sm">
                   {order.customer?.name || t('orders.unknownCustomer') || 'Customer'}
-                </p>
-                <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                  <span className="truncate max-w-[150px] sm:max-w-[220px]">
+                </Typography>
+                <Box layoutClassName="mt-0.5 flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                  <Typography as="span" layoutClassName="truncate max-w-[150px] sm:max-w-[220px]">
                     {order.items?.[0]?.name || t('orders.productUnknown') || 'Product'}
                     {order.items && order.items.length > 1 && ` +${order.items.length - 1}`}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <div className="flex flex-col items-end">
-                <span className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+            <Box layoutClassName="flex flex-shrink-0 items-center gap-3">
+              <Box layoutClassName="flex flex-col items-end">
+                <Typography as="span" textClassName="text-xs font-semibold text-slate-800 dark:text-slate-100 sm:text-sm">
                   {formatVND(Number(order.total) || 0)}
-                </span>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium border border-transparent ${
+                </Typography>
+                <Typography
+                  as="span"
+                  textClassName={`px-2 py-0.5 rounded-full text-[10px] font-medium border border-transparent ${
                     STATUS_COLORS[order.status]
                   }`}
                 >
                   {t(`orders.statusLabels.${order.status}`)}
-                </span>
-              </div>
+                </Typography>
+              </Box>
               <ArrowRight className="w-4 h-4 text-slate-300 dark:text-slate-500 hidden sm:block" />
-            </div>
-          </div>
+            </Box>
+          </Box>
         ))}
-      </div>
-    </div>
+      </Box>
+    </Card>
   );
 };
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { useFadeAnimation } from '@/hooks/useFadeAnimation';
+import IconButton from '@/components/ui/IconButton';
 
 interface BaseModalProps {
   isOpen: boolean;
@@ -60,12 +61,9 @@ const BaseModal: React.FC<BaseModalProps> = ({
             <h3 className="text-lg font-bold text-slate-900 dark:text-white" id="modal-title">
               {title}
             </h3>
-            <button 
-              onClick={onClose} 
-              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full text-slate-400 transition-colors focus:outline-none"
-            >
+            <IconButton onClick={onClose} label="Close modal">
               <X className="w-5 h-5" />
-            </button>
+            </IconButton>
           </div>
 
           {/* Body */}

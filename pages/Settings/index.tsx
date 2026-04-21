@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Save, Settings, Database, ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronRight, Database, Save, Settings } from 'lucide-react';
 import { getRouteConfigKey, routes, storageTabRoutes } from '@/config/routes';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
@@ -7,6 +7,14 @@ import { ScreenVisibilityMap } from '@/types';
 import toast from 'react-hot-toast';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/config/firebase';
+import Badge from '@/components/ui/Badge';
+import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import Heading from '@/components/ui/Heading';
+import IconButton from '@/components/ui/IconButton';
+import Spinner from '@/components/ui/Spinner';
+import Typography from '@/components/ui/Typography';
 
 interface DbCollectionConfig {
   id: string;
@@ -126,175 +134,255 @@ const SettingsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500">
-        <Settings className="w-16 h-16 mb-4 opacity-20 animate-spin" />
-        <p>Đang tải cấu hình màn hình...</p>
-      </div>
+      <Box
+        layoutClassName="flex h-full flex-col items-center justify-center"
+        textClassName="text-slate-400 dark:text-slate-500"
+      >
+        <Settings className="mb-4 h-16 w-16 animate-spin opacity-20" />
+        <Typography>Đang tải cấu hình màn hình...</Typography>
+      </Box>
     );
   }
 
   return (
-    <div className="max-w-8xl mx-auto space-y-6">
-      <div className="w-full border-b border-slate-200 dark:border-slate-700">
-        <div className="flex gap-6">
-          <button
+    <Box layoutClassName="mx-auto max-w-8xl space-y-6">
+      <Box layoutClassName="w-full border-b border-slate-200 dark:border-slate-700">
+        <Box layoutClassName="flex gap-6">
+          <Button
             type="button"
             onClick={() => setActiveTab('screens')}
-            className={`relative pb-2 text-sm font-semibold tracking-wide uppercase transition-colors duration-200 ${
+            variant="ghost"
+            disableVariantHover
+            disableVariantTextColor
+            roundedClassName="rounded-none"
+            layoutClassName="relative pb-2 text-sm font-semibold uppercase tracking-wide"
+            textClassName={
               activeTab === 'screens'
                 ? 'text-orange-500 dark:text-orange-400'
-                : 'text-slate-500 dark:text-slate-300 hover:text-orange-500 dark:hover:text-orange-400'
-            }`}
+                : 'text-slate-500 hover:text-orange-500 dark:text-slate-300 dark:hover:text-orange-400'
+            }
+            stateClassName="transition-colors duration-200"
           >
             Màn hình
             {activeTab === 'screens' && (
-              <span className="absolute left-0 right-0 -bottom-[1px] h-0.5 bg-orange-500 dark:bg-orange-400 rounded-full" />
+              <Box
+                layoutClassName="absolute -bottom-[1px] left-0 right-0 h-0.5"
+                roundedClassName="rounded-full"
+                backgroundClassName="bg-orange-500 dark:bg-orange-400"
+              />
             )}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => setActiveTab('database')}
-            className={`relative pb-2 text-sm font-semibold tracking-wide uppercase transition-colors duration-200 ${
+            variant="ghost"
+            disableVariantHover
+            disableVariantTextColor
+            roundedClassName="rounded-none"
+            layoutClassName="relative pb-2 text-sm font-semibold uppercase tracking-wide"
+            textClassName={
               activeTab === 'database'
                 ? 'text-orange-500 dark:text-orange-400'
-                : 'text-slate-500 dark:text-slate-300 hover:text-orange-500 dark:hover:text-orange-400'
-            }`}
+                : 'text-slate-500 hover:text-orange-500 dark:text-slate-300 dark:hover:text-orange-400'
+            }
+            stateClassName="transition-colors duration-200"
           >
             Database
             {activeTab === 'database' && (
-              <span className="absolute left-0 right-0 -bottom-[1px] h-0.5 bg-orange-500 dark:bg-orange-400 rounded-full" />
+              <Box
+                layoutClassName="absolute -bottom-[1px] left-0 right-0 h-0.5"
+                roundedClassName="rounded-full"
+                backgroundClassName="bg-orange-500 dark:bg-orange-400"
+              />
             )}
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Box>
+      </Box>
 
-      <div className="flex items-center justify-between">
-        <div>
+      <Box layoutClassName="flex items-center justify-between">
+        <Box>
           {activeTab === 'screens' ? (
             <>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Quản lý màn hình</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <Heading level={2} textClassName="text-xl font-semibold">Quản lý màn hình</Heading>
+              <Typography size="sm" variant="muted" layoutClassName="mt-1">
                 Bật/tắt quyền hiển thị các màn hình trên menu điều hướng.
-              </p>
+              </Typography>
             </>
           ) : (
             <>
-              <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Quản lý database</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <Heading level={2} textClassName="text-xl font-semibold">Quản lý database</Heading>
+              <Typography size="sm" variant="muted" layoutClassName="mt-1">
                 Theo dõi cấu hình dữ liệu hệ thống và các bộ sưu tập đang dùng.
-              </p>
+              </Typography>
             </>
           )}
-        </div>
+        </Box>
         {activeTab === 'screens' && (
-          <button
+          <Button
             type="button"
             onClick={handleSave}
             disabled={saving || !hasChanged}
-            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+            leftIcon={saving ? <Spinner size="sm" textClassName="text-white" borderClassName="border-white" /> : <Save />}
+            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+            sizeClassName="px-4 py-2"
+            backgroundClassName="bg-orange-600"
+            hoverClassName="hover:bg-orange-700"
+            textClassName="text-sm font-medium text-white"
+            roundedClassName="rounded-lg"
+            layoutClassName="inline-flex items-center gap-2"
+            stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            disableVariantHover
+            disableVariantTextColor
           >
-            <Save className="w-4 h-4" />
             {saving ? (t('form.saving') || 'Đang lưu...') : (t('form.save') || 'Lưu')}
-          </button>
+          </Button>
         )}
-      </div>
+      </Box>
 
       {activeTab === 'screens' ? (
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl divide-y divide-slate-100 dark:divide-slate-700">
+        <Card
+          padding="none"
+          borderClassName="border-slate-200 dark:border-slate-700"
+          layoutClassName="divide-y divide-slate-100 dark:divide-slate-700"
+        >
           {pageItems.map((page) => {
             const pageConfigKey = getRouteConfigKey(page);
             const pageEnabled = draftVisibility[pageConfigKey] !== false;
             const childTabs = childTabsByParent[page.path] || [];
 
             return (
-              <div key={pageConfigKey} className="p-4 space-y-3">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{t(page.labelKey)}</p>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 uppercase">
+              <Box key={pageConfigKey} layoutClassName="space-y-3 p-4">
+                <Box layoutClassName="flex items-center justify-between gap-4">
+                  <Box layoutClassName="min-w-0">
+                    <Box layoutClassName="flex items-center gap-2">
+                      <Typography size="sm" layoutClassName="font-semibold">{t(page.labelKey)}</Typography>
+                      <Badge
+                        size="sm"
+                        layoutClassName="px-2 py-0.5 text-[10px] uppercase"
+                        borderClassName="border-transparent"
+                        backgroundClassName="bg-slate-100 dark:bg-slate-700"
+                        textClassName="text-slate-500 dark:text-slate-300"
+                      >
                         page
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{page.path}</p>
-                  </div>
-                  <button
+                      </Badge>
+                    </Box>
+                    <Typography size="xs" variant="muted" layoutClassName="mt-0.5">{page.path}</Typography>
+                  </Box>
+                  <Button
                     type="button"
                     onClick={() => handleToggle(pageConfigKey)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      pageEnabled ? 'bg-orange-600' : 'bg-slate-300 dark:bg-slate-600'
-                    }`}
+                    variant="ghost"
+                    disableVariantHover
+                    disableVariantTextColor
+                    sizeClassName="h-6 w-11"
+                    roundedClassName="rounded-full"
+                    layoutClassName="relative inline-flex items-center p-0"
+                    backgroundClassName={pageEnabled ? 'bg-orange-600' : 'bg-slate-300 dark:bg-slate-600'}
+                    stateClassName="transition-colors"
                     aria-label={`Toggle ${pageConfigKey}`}
                   >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        pageEnabled ? 'translate-x-6' : 'translate-x-1'
-                      }`}
+                    <Box
+                      layoutClassName="inline-block h-4 w-4 transform"
+                      roundedClassName="rounded-full"
+                      backgroundClassName="bg-white"
+                      stateClassName={`transition-transform ${pageEnabled ? 'translate-x-6' : 'translate-x-1'}`}
                     />
-                  </button>
-                </div>
+                  </Button>
+                </Box>
 
                 {childTabs.map((tab) => {
                   const tabConfigKey = getRouteConfigKey(tab);
                   const tabEnabled = draftVisibility[tabConfigKey] !== false;
                   return (
-                    <div
+                    <Box
                       key={tabConfigKey}
-                      className="ml-6 pl-4 border-l-2 border-slate-200 dark:border-slate-700 flex items-center justify-between gap-4"
+                      layoutClassName="ml-6 flex items-center justify-between gap-4 border-l-2 pl-4"
+                      borderClassName="border-slate-200 dark:border-slate-700"
                     >
-                      <div className="min-w-0 py-1">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{t(tab.labelKey)}</p>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 uppercase">
+                      <Box layoutClassName="min-w-0 py-1">
+                        <Box layoutClassName="flex items-center gap-2">
+                          <Typography size="sm" layoutClassName="font-medium" textClassName="text-slate-800 dark:text-slate-100">
+                            {t(tab.labelKey)}
+                          </Typography>
+                          <Badge
+                            size="sm"
+                            layoutClassName="px-2 py-0.5 text-[10px] uppercase"
+                            borderClassName="border-transparent"
+                            backgroundClassName="bg-blue-50 dark:bg-blue-900/20"
+                            textClassName="text-blue-600 dark:text-blue-300"
+                          >
                             tab
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          </Badge>
+                        </Box>
+                        <Typography size="xs" variant="muted" layoutClassName="mt-0.5">
                           {tab.parentPath} / {tab.tabId}
-                        </p>
-                      </div>
-                      <button
+                        </Typography>
+                      </Box>
+                      <Button
                         type="button"
                         onClick={() => handleToggle(tabConfigKey)}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          tabEnabled ? 'bg-orange-600' : 'bg-slate-300 dark:bg-slate-600'
-                        }`}
+                        variant="ghost"
+                        disableVariantHover
+                        disableVariantTextColor
+                        sizeClassName="h-6 w-11"
+                        roundedClassName="rounded-full"
+                        layoutClassName="relative inline-flex items-center p-0"
+                        backgroundClassName={tabEnabled ? 'bg-orange-600' : 'bg-slate-300 dark:bg-slate-600'}
+                        stateClassName="transition-colors"
                         aria-label={`Toggle ${tabConfigKey}`}
                       >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                            tabEnabled ? 'translate-x-6' : 'translate-x-1'
-                          }`}
+                        <Box
+                          layoutClassName="inline-block h-4 w-4 transform"
+                          roundedClassName="rounded-full"
+                          backgroundClassName="bg-white"
+                          stateClassName={`transition-transform ${tabEnabled ? 'translate-x-6' : 'translate-x-1'}`}
                         />
-                      </button>
-                    </div>
+                      </Button>
+                    </Box>
                   );
                 })}
-              </div>
+              </Box>
             );
           })}
-        </div>
+        </Card>
       ) : (
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 md:p-5 space-y-4">
-          <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-800/60">
-            <p className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <Database className="w-4 h-4 text-orange-500" />
+        <Card
+          padding="none"
+          borderClassName="border-slate-200 dark:border-slate-700"
+          layoutClassName="space-y-4 p-4 md:p-5"
+        >
+          <Card
+            padding="md"
+            roundedClassName="rounded-lg"
+            borderClassName="border-slate-200 dark:border-slate-700"
+            backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
+          >
+            <Typography size="sm" layoutClassName="flex items-center gap-2 font-semibold">
+              <Database className="h-4 w-4 text-orange-500" />
               Database Explorer
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Hiển thị toàn bộ record của bảng được chọn.</p>
-          </div>
+            </Typography>
+            <Typography size="xs" variant="muted" layoutClassName="mt-1">
+              Hiển thị toàn bộ record của bảng được chọn.
+            </Typography>
+          </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-              <div className="px-3 py-2 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">Bảng dữ liệu</p>
-              </div>
-              <div className="max-h-[500px] overflow-y-auto p-2 space-y-1">
+          <Box layoutClassName="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <Card padding="none" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="overflow-hidden">
+              <Box
+                layoutClassName="border-b px-3 py-2"
+                borderClassName="border-slate-200 dark:border-slate-700"
+                backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+              >
+                <Typography size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-600 dark:text-slate-300">
+                  Bảng dữ liệu
+                </Typography>
+              </Box>
+              <Box layoutClassName="max-h-[500px] space-y-1 overflow-y-auto p-2">
                 {DATABASE_COLLECTIONS.map((item) => {
                   const active = selectedCollection === item.id;
                   const loadedCount = collectionRecords[item.id]?.length;
                   return (
-                    <button
+                    <Button
                       key={item.id}
                       type="button"
                       onClick={() => {
@@ -304,78 +392,108 @@ const SettingsPage: React.FC = () => {
                           loadCollectionRecords(item.id);
                         }
                       }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm border transition-colors ${
+                      variant="ghost"
+                      disableVariantHover
+                      disableVariantTextColor
+                      sizeClassName="px-3 py-2"
+                      roundedClassName="rounded-lg"
+                      borderClassName={
                         active
-                          ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-700 text-orange-700 dark:text-orange-300'
-                          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-orange-200 dark:hover:border-orange-700'
-                      }`}
+                          ? 'border border-orange-200 dark:border-orange-700'
+                          : 'border border-slate-200 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-700'
+                      }
+                      backgroundClassName={active ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-white dark:bg-slate-800'}
+                      textClassName={
+                        active
+                          ? 'text-sm text-orange-700 dark:text-orange-300'
+                          : 'text-sm text-slate-700 dark:text-slate-300'
+                      }
+                      layoutClassName="w-full items-center justify-between"
+                      stateClassName="transition-colors"
                     >
-                      <span className="font-medium text-left">{item.label}</span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">{loadedCount != null ? loadedCount : '-'}</span>
-                    </button>
+                      <Typography as="span" layoutClassName="font-medium text-left">{item.label}</Typography>
+                      <Typography as="span" size="xs" variant="muted">{loadedCount != null ? loadedCount : '-'}</Typography>
+                    </Button>
                   );
                 })}
-              </div>
-            </div>
+              </Box>
+            </Card>
 
-            <div className="lg:col-span-2 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-              <div className="px-3 py-2 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+            <Card padding="none" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="overflow-hidden lg:col-span-2">
+              <Box
+                layoutClassName="flex items-center justify-between border-b px-3 py-2"
+                borderClassName="border-slate-200 dark:border-slate-700"
+                backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+              >
+                <Typography size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-600 dark:text-slate-300">
                   Records: {selectedCollection}
-                </p>
+                </Typography>
                 {loadingCollectionId === selectedCollection ? (
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Đang tải...</p>
+                  <Typography size="xs" variant="muted">Đang tải...</Typography>
                 ) : (
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{selectedRecords.length} record</p>
+                  <Typography size="xs" variant="muted">{selectedRecords.length} record</Typography>
                 )}
-              </div>
-              <div className="max-h-[500px] overflow-y-auto">
+              </Box>
+              <Box layoutClassName="max-h-[500px] overflow-y-auto">
                 {selectedRecords.length === 0 && loadingCollectionId !== selectedCollection ? (
-                  <p className="p-4 text-sm text-slate-500 dark:text-slate-400">Không có record hoặc chưa tải dữ liệu.</p>
+                  <Typography size="sm" variant="muted" layoutClassName="p-4">
+                    Không có record hoặc chưa tải dữ liệu.
+                  </Typography>
                 ) : (
-                  <div className="divide-y divide-slate-100 dark:divide-slate-700">
+                  <Box layoutClassName="divide-y divide-slate-100 dark:divide-slate-700">
                     {selectedRecords.map((record) => {
                       const expanded = expandedRecordId === record.id;
                       const previewKeys = Object.keys(record.data).slice(0, 3);
                       return (
-                        <div key={record.id}>
-                          <button
+                        <Box key={record.id}>
+                          <Button
                             type="button"
                             onClick={() => setExpandedRecordId(expanded ? null : record.id)}
-                            className="w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors"
+                            variant="ghost"
+                            disableVariantHover
+                            disableVariantTextColor
+                            sizeClassName="px-4 py-3"
+                            layoutClassName="w-full text-left"
+                            hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700/40"
+                            stateClassName="transition-colors"
                           >
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{record.id}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                            <Box layoutClassName="flex items-center justify-between gap-3">
+                              <Box layoutClassName="min-w-0">
+                                <Typography size="sm" layoutClassName="truncate font-semibold">{record.id}</Typography>
+                                <Typography size="xs" variant="muted" layoutClassName="truncate">
                                   {previewKeys.length > 0 ? previewKeys.join(', ') : '(no fields)'}
-                                </p>
-                              </div>
+                                </Typography>
+                              </Box>
                               {expanded ? (
-                                <ChevronDown className="w-4 h-4 text-slate-400" />
+                                <ChevronDown className="h-4 w-4 text-slate-400" />
                               ) : (
-                                <ChevronRight className="w-4 h-4 text-slate-400" />
+                                <ChevronRight className="h-4 w-4 text-slate-400" />
                               )}
-                            </div>
-                          </button>
+                            </Box>
+                          </Button>
                           {expanded && (
-                            <div className="px-4 pb-4">
-                              <pre className="text-xs bg-slate-900 text-slate-100 rounded-lg p-3 overflow-auto">
-                                {JSON.stringify(record.data, null, 2)}
-                              </pre>
-                            </div>
+                            <Box layoutClassName="px-4 pb-4">
+                              <Box
+                                layoutClassName="overflow-auto p-3 text-xs"
+                                roundedClassName="rounded-lg"
+                                backgroundClassName="bg-slate-900"
+                                textClassName="text-slate-100"
+                              >
+                                <pre>{JSON.stringify(record.data, null, 2)}</pre>
+                              </Box>
+                            </Box>
                           )}
-                        </div>
+                        </Box>
                       );
                     })}
-                  </div>
+                  </Box>
                 )}
-              </div>
-            </div>
-          </div>
-        </div>
+              </Box>
+            </Card>
+          </Box>
+        </Card>
       )}
-    </div>
+    </Box>
   );
 };
 

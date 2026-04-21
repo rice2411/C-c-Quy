@@ -1,0 +1,2 @@
+python scripts/scan_page_classname.py 
+python scripts/scan_html_tag.py

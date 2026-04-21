@@ -1,5 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Clock, User } from 'lucide-react';
+import AvatarImage from '@/components/ui/AvatarImage';
+import Box from '@/components/ui/Box';
+import Card from '@/components/ui/Card';
+import Heading from '@/components/ui/Heading';
+import Typography from '@/components/ui/Typography';
 import { UserData } from '@/types/user';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getAllUsers } from '@/services/userService';
@@ -56,54 +61,55 @@ const DashboardRecentUsers: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-white flex items-center gap-2">
+    <Card layoutClassName="p-4 sm:p-5">
+      <Box layoutClassName="mb-4 flex items-center justify-between">
+        <Heading level={3} layoutClassName="flex items-center gap-2" textClassName="text-sm font-semibold text-slate-800 dark:text-white">
           <User className="w-4 h-4 text-indigo-500" />
           {t('dashboard.recentUsers') || 'Recent logins'}
-        </h3>
-      </div>
-      <div className="space-y-2">
+        </Heading>
+      </Box>
+      <Box layoutClassName="space-y-2">
         {recentUsers.map((user) => (
-          <div
+          <Box
             key={user.uid}
-            className="flex items-center justify-between gap-3 px-2.5 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors"
+            layoutClassName="flex items-center justify-between gap-3 px-2.5 py-2.5"
+            roundedClassName="rounded-lg"
+            hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700/60"
+            stateClassName="transition-colors"
           >
-            <div className="flex items-center gap-3 min-w-0">
-              {user.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt={user.displayName || user.email || 'avatar'}
-                  className="w-9 h-9 rounded-full object-cover border border-indigo-200 dark:border-indigo-700 flex-shrink-0"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="w-9 h-9 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-300 text-xs font-semibold flex-shrink-0">
-                  {getInitials(user)}
-                </div>
-              )}
-              <div className="flex flex-col min-w-0">
-                <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
+            <Box layoutClassName="flex min-w-0 items-center gap-3">
+              <AvatarImage
+                size="md"
+                src={user.photoURL || undefined}
+                alt={user.displayName || user.email || 'avatar'}
+                referrerPolicy="no-referrer"
+                containerClassName="border-indigo-200 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/30"
+                fallback={
+                  <Typography as="span" textClassName="text-xs font-semibold text-indigo-600 dark:text-indigo-300">
+                    {getInitials(user)}
+                  </Typography>
+                }
+              />
+              <Box layoutClassName="flex min-w-0 flex-col">
+                <Typography layoutClassName="truncate" textClassName="text-xs font-semibold text-slate-800 dark:text-slate-100 sm:text-sm">
                   {user.customName || user.displayName || user.email || 'User'}
-                </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]">
+                </Typography>
+                <Typography layoutClassName="truncate max-w-[200px]" textClassName="text-[11px] text-slate-500 dark:text-slate-400">
                   {user.email}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+                </Typography>
+              </Box>
+            </Box>
+            <Box layoutClassName="flex flex-shrink-0 items-center gap-2">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+              <Typography as="span" textClassName="text-[11px] text-slate-500 dark:text-slate-400">
                 {formatDate(user.lastLoginAt)}
-              </span>
-            </div>
-          </div>
+              </Typography>
+            </Box>
+          </Box>
         ))}
-      </div>
-    </div>
+      </Box>
+    </Card>
   );
 };
 
 export default DashboardRecentUsers;
-
-

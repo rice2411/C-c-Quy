@@ -3,6 +3,7 @@ import { Supplier } from '@/types';
 import SupplierFilters from './SupplierFilters';
 import SupplierTable from './desktop/SupplierTable';
 import SupplierCardList from './mobile/SupplierCardList';
+import Card from '@/components/ui/Card';
 
 interface SupplierListProps {
   suppliers: Supplier[];
@@ -23,7 +24,13 @@ const SupplierList: React.FC<SupplierListProps> = ({ suppliers, onEdit, onDelete
   }, [suppliers, searchTerm]);
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col h-full animate-fade-in transition-colors overflow-hidden">
+    <Card
+      padding="none"
+      layoutClassName="flex h-full animate-fade-in flex-col overflow-hidden"
+      backgroundClassName="bg-white dark:bg-slate-800"
+      borderClassName="border-slate-100 dark:border-slate-700"
+      stateClassName="transition-colors"
+    >
       <SupplierFilters
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -40,7 +47,7 @@ const SupplierList: React.FC<SupplierListProps> = ({ suppliers, onEdit, onDelete
         onEdit={onEdit}
         onDelete={onDelete}
       />
-    </div>
+    </Card>
   );
 };
 

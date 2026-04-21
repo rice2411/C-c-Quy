@@ -1,12 +1,34 @@
 import React, { useState } from 'react';
-import { X, MapPin, Phone, Mail, Truck, CreditCard, Sparkles, AlertTriangle, FileText, QrCode, Copy, Receipt, Wallet, StickyNote, User } from 'lucide-react';
-import { Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus } from '@/types';
-import { STATUS_COLORS } from '@/constant/order'; 
+import {
+  AlertTriangle,
+  Copy,
+  CreditCard,
+  FileText,
+  Mail,
+  MapPin,
+  Phone,
+  QrCode,
+  Receipt,
+  Sparkles,
+  StickyNote,
+  Truck,
+  User,
+  Wallet,
+  X
+} from 'lucide-react';
+import { STATUS_COLORS } from '@/constant/order';
 import { generateOrderAnalysis } from '@/services/geminiService';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus } from '@/types';
 import { formatVND } from '@/utils/currencyUtil';
 import { generateQRCodeImage, getOrderTotal } from '@/utils/orderUtils';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
+import Badge from '@/components/ui/Badge';
+import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
+import Heading from '@/components/ui/Heading';
+import IconButton from '@/components/ui/IconButton';
+import Typography from '@/components/ui/Typography';
 interface OrderDetailProps {
   isOpen: boolean;
   order: Order | null;
@@ -72,50 +94,82 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ isOpen, order, onClose, onEdi
   };
 
   const headerContent = (
-    <div className="flex items-start justify-between w-full">
-      <div>
-        <div className="flex items-center gap-3 mb-1">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">{currentOrder.orderNumber || `Order #${currentOrder.id}`}</h2>
-          <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[currentOrder.status]}`}>
+    <Box layoutClassName="flex w-full items-start justify-between">
+      <Box>
+        <Box layoutClassName="mb-1 flex items-center gap-3">
+          <Heading level={2} textClassName="text-xl font-bold">
+            {currentOrder.orderNumber || `Order #${currentOrder.id}`}
+          </Heading>
+          <Badge
+            size="sm"
+            layoutClassName="px-2.5 py-0.5 text-xs font-medium"
+            className={STATUS_COLORS[currentOrder.status]}
+          >
             {currentOrder.status}
-          </span>
-        </div>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+          </Badge>
+        </Box>
+        <Typography size="sm" variant="muted">
           {t('detail.placedOn')} {new Date(currentOrder.createdAt.toDate()).toLocaleString()}
-        </p>
-        {currentOrder.deliveryDate && (
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+        </Typography>
+        {currentOrder.deliveryDate ? (
+          <Typography size="sm" variant="muted">
             Ngày nhận hàng: {new Date(currentOrder.deliveryDate).toLocaleDateString()}
-            {currentOrder.deliveryTime && ` • ${currentOrder.deliveryTime}`}
-          </p>
-        )}
-      </div>
-      <button
+            {currentOrder.deliveryTime ? ` • ${currentOrder.deliveryTime}` : ''}
+          </Typography>
+        ) : null}
+      </Box>
+      <IconButton
+        type="button"
+        label={t('detail.close')}
+        variant="secondary"
+        layoutClassName="rounded-full"
+        backgroundClassName="bg-slate-50 dark:bg-slate-700"
+        hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-600"
+        textClassName="text-slate-400 dark:text-slate-300"
         onClick={onClose}
-        className="p-2 bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 rounded-full text-slate-400 dark:text-slate-300 hover:text-slate-600 dark:hover:text-white transition-colors"
       >
-        <X className="w-5 h-5" />
-      </button>
-    </div>
+        <X className="h-5 w-5" />
+      </IconButton>
+    </Box>
   );
 
   const footer = (
-    <div className="flex justify-end gap-3">
-      <button
+    <Box layoutClassName="flex justify-end gap-3">
+      <Button
+        type="button"
         onClick={onClose}
-        className="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+        variant="secondary"
+        disableVariantHover
+        disableVariantTextColor
+        borderClassName="border border-slate-200 dark:border-slate-600"
+        backgroundClassName="bg-transparent"
+        hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+        textClassName="text-sm font-medium text-slate-700 dark:text-slate-300"
+        roundedClassName="rounded-lg"
+        layoutClassName="px-4 py-2"
+        stateClassName="transition-colors"
       >
         {t('detail.close')}
-      </button>
-      {onEdit && (
-        <button
+      </Button>
+      {onEdit ? (
+        <Button
+          type="button"
           onClick={onEdit}
-          className="px-4 py-2 bg-orange-600 dark:bg-orange-500 rounded-lg text-sm font-medium text-white hover:bg-orange-700 dark:hover:bg-orange-600 shadow-sm shadow-orange-200 dark:shadow-none transition-colors"
+          backgroundClassName="bg-orange-600 dark:bg-orange-500"
+          hoverClassName="hover:bg-orange-700 dark:hover:bg-orange-600"
+          textClassName="text-sm font-medium text-white"
+          roundedClassName="rounded-lg"
+          shadowClassName="shadow-sm shadow-orange-200 dark:shadow-none"
+          layoutClassName="px-4 py-2"
+          stateClassName="transition-colors"
+          variant="primary"
+          disableVariantHover
+          disableVariantTextColor
         >
           {t('detail.edit')}
-        </button>
-      )}
-    </div>
+        </Button>
+      ) : null}
+    </Box>
   );
 
   return (
@@ -127,29 +181,50 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ isOpen, order, onClose, onEdi
       footer={footer}
     >
       <div className="flex flex-col h-full">
-        <div className="border-b border-slate-100 dark:border-slate-700 px-6 flex space-x-6 bg-white dark:bg-slate-800 transition-colors">
-          <button
+        <Box
+          layoutClassName="flex space-x-6 border-b border-slate-100 bg-white px-6 dark:border-slate-700 dark:bg-slate-800"
+          stateClassName="transition-colors"
+        >
+          <Button
+            type="button"
             onClick={() => setActiveTab('details')}
-            className={`py-4 text-sm font-medium border-b-2 transition-colors ${
+            variant="ghost"
+            disableVariantHover
+            disableVariantTextColor
+            borderClassName={
+              activeTab === 'details' ? 'border-b-2 border-orange-600' : 'border-b-2 border-transparent'
+            }
+            textClassName={
               activeTab === 'details'
-                ? 'border-orange-600 text-orange-600 dark:text-orange-400'
-                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-            }`}
+                ? 'text-sm font-medium text-orange-600 dark:text-orange-400'
+                : 'text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+            }
+            layoutClassName="rounded-none py-4 shadow-none"
+            stateClassName="transition-colors"
           >
             {t('detail.tabDetails')}
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
             onClick={() => setActiveTab('ai')}
-            className={`py-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+            variant="ghost"
+            disableVariantHover
+            disableVariantTextColor
+            borderClassName={
+              activeTab === 'ai' ? 'border-b-2 border-rose-600' : 'border-b-2 border-transparent'
+            }
+            textClassName={
               activeTab === 'ai'
-                ? 'border-rose-600 text-rose-600 dark:text-rose-400'
-                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-            }`}
+                ? 'text-sm font-medium text-rose-600 dark:text-rose-400'
+                : 'text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+            }
+            layoutClassName="flex items-center gap-2 rounded-none py-4 shadow-none"
+            stateClassName="transition-colors"
+            leftIcon={<Sparkles className="h-4 w-4" />}
           >
-            <Sparkles className="w-4 h-4" />
             {t('detail.tabAi')}
-          </button>
-        </div>
+          </Button>
+        </Box>
 
         <div className="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/50 p-6 transition-colors">
             {activeTab === 'details' ? (

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Order, OrderStatus, PaymentStatus, Ingredient, IngredientHistoryType } from '@/types';
+import Box from '@/components/ui/Box';
 import { generateDashboardInsights } from '@/services/geminiService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/contexts/OrderContext';
@@ -246,7 +247,7 @@ const DashboardPage: React.FC = () => {
   );
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <Box layoutClassName="space-y-6 animate-fade-in">
       <DashboardMetrics 
         metrics={metrics}
         totalOrders={totalOrders}
@@ -257,7 +258,7 @@ const DashboardPage: React.FC = () => {
         prevRangeLabel={prevRangeLabel}
         isCurrentPeriod={isCurrentPeriod}
       />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <DashboardChart 
           data={chartData}
           timeRange={timeRange}
@@ -273,13 +274,13 @@ const DashboardPage: React.FC = () => {
           loading={loadingInsight}
           onGenerate={handleGenerateInsight}
         />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      </Box>
+      <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <DashboardRecentOrders orders={recentOrdersForDashboard} />
         <DashboardRecentTransactions />
         <DashboardRecentUsers />
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 

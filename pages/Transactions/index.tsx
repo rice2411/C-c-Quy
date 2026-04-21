@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Loader2, ArrowRightLeft, Calendar, RefreshCw } from 'lucide-react';
+import { Search, ArrowRightLeft, Calendar, RefreshCw } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { fetchTransactions } from '@/services/transactionService';
 import { Transaction } from '@/types';
@@ -7,6 +7,11 @@ import toast from 'react-hot-toast';
 import TransactionsDesktopTable from './components/desktop/TransactionsDesktopTable';
 import TransactionsMobileList from './components/mobile/TransactionsMobileList';
 import TransactionDetailModal from './components/TransactionDetailModal';
+import Box from '@/components/ui/Box';
+import IconButton from '@/components/ui/IconButton';
+import Input from '@/components/ui/Input';
+import Spinner from '@/components/ui/Spinner';
+import Typography from '@/components/ui/Typography';
 
 const TransactionsPage: React.FC = () => {
   const { t } = useLanguage();
@@ -100,73 +105,104 @@ const TransactionsPage: React.FC = () => {
   }, [transactions, searchTerm, fromDate, toDate]);
 
   return (
-    <div className="h-full relative flex flex-col space-y-4 sm:space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <ArrowRightLeft className="w-6 h-6 sm:w-7 sm:h-7 text-orange-500" />
+    <Box layoutClassName="relative flex h-full flex-col space-y-4 sm:space-y-6">
+      <Box layoutClassName="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <Typography
+          as="span"
+          layoutClassName="flex items-center gap-2 text-xl font-bold sm:text-2xl"
+          textClassName="text-slate-800 dark:text-white"
+        >
+          <ArrowRightLeft className="h-6 w-6 text-orange-500 sm:h-7 sm:w-7" />
           {t('transactions.title')}
-        </h2>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <button
+        </Typography>
+        <Box layoutClassName="flex w-full items-center gap-2 sm:w-auto">
+          <IconButton
+            type="button"
+            label={t('transactions.refresh') || 'Refresh'}
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
-            title={t('transactions.refresh') || 'Refresh'}
+            variant="secondary"
+            layoutClassName="rounded-lg p-2"
+            backgroundClassName="bg-white dark:bg-slate-800"
+            borderClassName="border border-slate-200 dark:border-slate-700"
+            textClassName="text-slate-600 dark:text-slate-400"
+            hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+            stateClassName="transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </button>
-          <div className="relative flex-1 sm:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <input
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </IconButton>
+          <Box layoutClassName="relative flex-1 sm:w-72">
+            <Input
               type="text"
               placeholder={t('transactions.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm"
+              leftIcon={<Search />}
+              leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+              backgroundClassName="bg-white dark:bg-slate-800"
+              borderClassName="border-slate-200 dark:border-slate-700"
+              shadowClassName="shadow-sm"
             />
-          </div>
-        </div>
-      </div>
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
-          <Calendar className="w-4 h-4 text-slate-400" />
-          <span>{t('transactions.dateRange') || 'Khoảng ngày:'}</span>
-        </div>
-        <div className="flex flex-row flex-wrap gap-2 w-full sm:w-auto">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 dark:text-slate-400">{t('transactions.from') || 'Từ'}</span>
-            <input
+      <Box layoutClassName="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+        <Box layoutClassName="flex items-center gap-2 text-xs sm:text-sm" textClassName="text-slate-600 dark:text-slate-300">
+          <Calendar className="h-4 w-4 text-slate-400" />
+          <Typography as="span" size="sm" variant="secondary">
+            {t('transactions.dateRange') || 'Khoảng ngày:'}
+          </Typography>
+        </Box>
+        <Box layoutClassName="flex w-full flex-row flex-wrap gap-2 sm:w-auto">
+          <Box layoutClassName="flex items-center gap-2">
+            <Typography as="span" size="xs" variant="muted">
+              {t('transactions.from') || 'Từ'}
+            </Typography>
+            <Input
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-orange-500"
+              sizeClassName="px-2 py-1.5 text-xs sm:text-sm"
+              borderClassName="border-slate-200 dark:border-slate-700"
+              backgroundClassName="bg-white dark:bg-slate-800"
+              textClassName="text-slate-700 dark:text-slate-200"
+              focusClassName="focus:ring-1"
             />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 dark:text-slate-400">{t('transactions.to') || 'Đến'}</span>
-            <input
+          </Box>
+          <Box layoutClassName="flex items-center gap-2">
+            <Typography as="span" size="xs" variant="muted">
+              {t('transactions.to') || 'Đến'}
+            </Typography>
+            <Input
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-orange-500"
+              sizeClassName="px-2 py-1.5 text-xs sm:text-sm"
+              borderClassName="border-slate-200 dark:border-slate-700"
+              backgroundClassName="bg-white dark:bg-slate-800"
+              textClassName="text-slate-700 dark:text-slate-200"
+              focusClassName="focus:ring-1"
             />
-          </div>
-        </div>
-        <span className="ml-auto text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+          </Box>
+        </Box>
+        <Typography as="span" size="sm" variant="muted" layoutClassName="ml-auto">
           {filteredTransactions.length} {t('transactions.results') || 'kết quả'}
-        </span>
-      </div>
+        </Typography>
+      </Box>
 
       {loading ? (
-        <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
-        </div>
+        <Box layoutClassName="flex flex-1 items-center justify-center">
+          <Spinner size="lg" textClassName="text-orange-500" />
+        </Box>
       ) : filteredTransactions.length === 0 ? (
-         <div className="flex flex-col items-center justify-center flex-1 text-slate-400 dark:text-slate-500">
-           <ArrowRightLeft className="w-16 h-16 mb-4 opacity-20" />
-           <p className="mb-4">{t('transactions.noData')}</p>
-         </div>
+        <Box
+          layoutClassName="flex flex-1 flex-col items-center justify-center"
+          textClassName="text-slate-400 dark:text-slate-500"
+        >
+          <ArrowRightLeft className="mb-4 h-16 w-16 opacity-20" />
+          <Typography layoutClassName="mb-4">{t('transactions.noData')}</Typography>
+        </Box>
       ) : (
         <>
           <TransactionsMobileList 
@@ -197,7 +233,7 @@ const TransactionsPage: React.FC = () => {
         transaction={selectedTransaction}
         formatDate={formatDate}
       />
-    </div>
+    </Box>
   );
 };
 

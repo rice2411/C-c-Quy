@@ -8,13 +8,16 @@ import {
   ArrowRightLeft,
   FileText,
   Hash,
-  DollarSign,
   Clock,
 } from 'lucide-react';
 import { Transaction } from '@/types';
 import { formatVND } from '@/utils/currencyUtil';
 import BaseModal from '@/components/BaseModal';
-import { useLanguage } from '@/contexts/LanguageContext';
+import Badge from '@/components/ui/Badge';
+import Box from '@/components/ui/Box';
+import Card from '@/components/ui/Card';
+import Heading from '@/components/ui/Heading';
+import Typography from '@/components/ui/Typography';
 
 interface TransactionDetailModalProps {
   isOpen: boolean;
@@ -29,8 +32,6 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   transaction,
   formatDate,
 }) => {
-  const { t } = useLanguage();
-
   if (!transaction) return null;
 
   const isIncoming = transaction.transferType === 'in';
@@ -56,217 +57,239 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-10 h-10 rounded-full border flex items-center justify-center ${
+        <Box layoutClassName="flex items-center gap-3">
+          <Box
+            layoutClassName={`flex h-10 w-10 items-center justify-center rounded-full border ${
               isIncoming
                 ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-700'
                 : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-700'
             }`}
           >
             {isIncoming ? (
-              <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             ) : (
-              <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
+              <TrendingDown className="h-5 w-5 text-red-600 dark:text-red-400" />
             )}
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+          </Box>
+          <Box>
+            <Heading level={3} textClassName="text-lg text-slate-900 dark:text-white">
               {isIncoming ? 'Giao dịch nhận tiền' : 'Giao dịch chuyển tiền'}
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            </Heading>
+            <Typography size="xs" variant="muted">
               {formatDate(transaction.transactionDate)}
-            </p>
-          </div>
-        </div>
+            </Typography>
+          </Box>
+        </Box>
       }
       size="lg"
     >
-      <div className="space-y-4">
-        <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-slate-600 dark:text-slate-400">Số tiền</span>
-            <span
-              className={`text-2xl font-bold ${
+      <Box layoutClassName="space-y-4">
+        <Card
+          layoutClassName="p-4"
+          backgroundClassName="bg-slate-50 dark:bg-slate-900/50"
+          borderClassName="border-slate-200 dark:border-slate-700"
+        >
+          <Box layoutClassName="mb-2 flex items-center justify-between">
+            <Typography as="span" size="sm" variant="secondary">Số tiền</Typography>
+            <Typography
+              as="span"
+              layoutClassName="text-2xl font-bold"
+              textClassName={
                 isIncoming
                   ? 'text-emerald-600 dark:text-emerald-400'
                   : 'text-red-600 dark:text-red-400'
-              }`}
+              }
             >
               {isIncoming ? '+' : '-'}
               {formatVND(transaction.transferAmount)}
-            </span>
-          </div>
+            </Typography>
+          </Box>
           {transaction.accumulated > 0 && (
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span>Số dư sau giao dịch:</span>
-              <span className="font-medium">{formatVND(transaction.accumulated)}</span>
-            </div>
+            <Box layoutClassName="flex items-center justify-between text-xs" textClassName="text-slate-500 dark:text-slate-400">
+              <Typography as="span" size="xs" variant="muted">Số dư sau giao dịch:</Typography>
+              <Typography as="span" size="xs" layoutClassName="font-medium">{formatVND(transaction.accumulated)}</Typography>
+            </Box>
           )}
-        </div>
+        </Card>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-            <div className="flex items-center gap-2 mb-2">
-              <FileText className="w-4 h-4 text-slate-400" />
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">
+        <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Card layoutClassName="p-3" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-200 dark:border-slate-700">
+            <Box layoutClassName="mb-2 flex items-center gap-2">
+              <FileText className="h-4 w-4 text-slate-400" />
+              <Typography as="span" size="xs" layoutClassName="font-medium uppercase" textClassName="text-slate-600 dark:text-slate-400">
                 Nội dung
-              </span>
-            </div>
-            <p className="text-sm text-slate-900 dark:text-white">
+              </Typography>
+            </Box>
+            <Typography size="sm" textClassName="text-slate-900 dark:text-white">
               {transaction.content || '-'}
-            </p>
+            </Typography>
             {transaction.description && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <Typography size="xs" variant="muted" layoutClassName="mt-1">
                 {transaction.description}
-              </p>
+              </Typography>
             )}
-          </div>
+          </Card>
 
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-            <div className="flex items-center gap-2 mb-2">
-              <Building2 className="w-4 h-4 text-slate-400" />
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">
+          <Card layoutClassName="p-3" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-200 dark:border-slate-700">
+            <Box layoutClassName="mb-2 flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-slate-400" />
+              <Typography as="span" size="xs" layoutClassName="font-medium uppercase" textClassName="text-slate-600 dark:text-slate-400">
                 Cổng thanh toán
-              </span>
-            </div>
-            <p className="text-sm text-slate-900 dark:text-white">
+              </Typography>
+            </Box>
+            <Typography size="sm" textClassName="text-slate-900 dark:text-white">
               {transaction.gateway || '-'}
-            </p>
-          </div>
-        </div>
+            </Typography>
+          </Card>
+        </Box>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {transaction.orderNumber && (
-            <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-              <div className="flex items-center gap-2 mb-2">
-                <ArrowRightLeft className="w-4 h-4 text-slate-400" />
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">
+            <Card layoutClassName="p-3" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-200 dark:border-slate-700">
+              <Box layoutClassName="mb-2 flex items-center gap-2">
+                <ArrowRightLeft className="h-4 w-4 text-slate-400" />
+                <Typography as="span" size="xs" layoutClassName="font-medium uppercase" textClassName="text-slate-600 dark:text-slate-400">
                   Mã đơn hàng
-                </span>
-              </div>
-              <span className="inline-flex items-center gap-1 bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300 px-2 py-1 rounded-md text-sm font-medium font-mono">
+                </Typography>
+              </Box>
+              <Badge
+                size="sm"
+                layoutClassName="inline-flex items-center gap-1 px-2 py-1 text-sm font-medium font-mono"
+                borderClassName="border-transparent"
+                backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
+                textClassName="text-orange-700 dark:text-orange-300"
+              >
                 {transaction.orderNumber}
-              </span>
-            </div>
+              </Badge>
+            </Card>
           )}
 
           {transaction.sepayId && (
-            <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-              <div className="flex items-center gap-2 mb-2">
-                <Hash className="w-4 h-4 text-slate-400" />
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">
+            <Card layoutClassName="p-3" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-200 dark:border-slate-700">
+              <Box layoutClassName="mb-2 flex items-center gap-2">
+                <Hash className="h-4 w-4 text-slate-400" />
+                <Typography as="span" size="xs" layoutClassName="font-medium uppercase" textClassName="text-slate-600 dark:text-slate-400">
                   SePay ID
-                </span>
-              </div>
-              <span className="inline-flex items-center gap-1 bg-slate-50 text-slate-700 dark:bg-slate-800/60 dark:text-slate-200 px-2 py-1 rounded-md text-sm font-mono">
+                </Typography>
+              </Box>
+              <Badge
+                size="sm"
+                layoutClassName="inline-flex items-center gap-1 px-2 py-1 text-sm font-mono"
+                borderClassName="border-transparent"
+                backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
+                textClassName="text-slate-700 dark:text-slate-200"
+              >
                 #{transaction.sepayId}
-              </span>
-            </div>
+              </Badge>
+            </Card>
           )}
-        </div>
+        </Box>
 
-        <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-2 mb-2">
-            <CreditCard className="w-4 h-4 text-slate-400" />
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">
+        <Card layoutClassName="p-3" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-200 dark:border-slate-700">
+          <Box layoutClassName="mb-2 flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-slate-400" />
+            <Typography as="span" size="xs" layoutClassName="font-medium uppercase" textClassName="text-slate-600 dark:text-slate-400">
               Thông tin tài khoản
-            </span>
-          </div>
-          <div className="space-y-2">
+            </Typography>
+          </Box>
+          <Box layoutClassName="space-y-2">
             {transaction.subAccount && (
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500 dark:text-slate-400">Tài khoản phụ:</span>
-                <span className="text-sm font-mono text-slate-900 dark:text-white">
+              <Box layoutClassName="flex items-center justify-between">
+                <Typography as="span" size="xs" variant="muted">Tài khoản phụ:</Typography>
+                <Typography as="span" size="sm" layoutClassName="font-mono" textClassName="text-slate-900 dark:text-white">
                   {transaction.subAccount}
-                </span>
-              </div>
+                </Typography>
+              </Box>
             )}
             {transaction.accountNumber && (
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500 dark:text-slate-400">Số tài khoản:</span>
-                <span className="text-sm font-mono text-slate-900 dark:text-white">
+              <Box layoutClassName="flex items-center justify-between">
+                <Typography as="span" size="xs" variant="muted">Số tài khoản:</Typography>
+                <Typography as="span" size="sm" layoutClassName="font-mono" textClassName="text-slate-900 dark:text-white">
                   {transaction.accountNumber}
-                </span>
-              </div>
+                </Typography>
+              </Box>
             )}
-          </div>
-        </div>
+          </Box>
+        </Card>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-            <div className="flex items-center gap-2 mb-2">
-              <Calendar className="w-4 h-4 text-slate-400" />
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">
+        <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Card layoutClassName="p-3" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-200 dark:border-slate-700">
+            <Box layoutClassName="mb-2 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-slate-400" />
+              <Typography as="span" size="xs" layoutClassName="font-medium uppercase" textClassName="text-slate-600 dark:text-slate-400">
                 Ngày giao dịch
-              </span>
-            </div>
-            <p className="text-sm text-slate-900 dark:text-white">
+              </Typography>
+            </Box>
+            <Typography size="sm" textClassName="text-slate-900 dark:text-white">
               {formatFullDate(transaction.transactionDate)}
-            </p>
-          </div>
+            </Typography>
+          </Card>
 
           {transaction.receivedAt && (
-            <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-slate-400" />
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">
+            <Card layoutClassName="p-3" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-200 dark:border-slate-700">
+              <Box layoutClassName="mb-2 flex items-center gap-2">
+                <Clock className="h-4 w-4 text-slate-400" />
+                <Typography as="span" size="xs" layoutClassName="font-medium uppercase" textClassName="text-slate-600 dark:text-slate-400">
                   Ngày nhận
-                </span>
-              </div>
-              <p className="text-sm text-slate-900 dark:text-white">
+                </Typography>
+              </Box>
+              <Typography size="sm" textClassName="text-slate-900 dark:text-white">
                 {formatFullDate(transaction.receivedAt)}
-              </p>
-            </div>
+              </Typography>
+            </Card>
           )}
-        </div>
+        </Box>
 
         {(transaction.code || transaction.referenceCode) && (
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-            <div className="flex items-center gap-2 mb-2">
-              <Hash className="w-4 h-4 text-slate-400" />
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">
+          <Card layoutClassName="p-3" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-200 dark:border-slate-700">
+            <Box layoutClassName="mb-2 flex items-center gap-2">
+              <Hash className="h-4 w-4 text-slate-400" />
+              <Typography as="span" size="xs" layoutClassName="font-medium uppercase" textClassName="text-slate-600 dark:text-slate-400">
                 Mã tham chiếu
-              </span>
-            </div>
-            <div className="space-y-1">
+              </Typography>
+            </Box>
+            <Box layoutClassName="space-y-1">
               {transaction.code && (
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Code:</span>
-                  <span className="text-sm font-mono text-slate-900 dark:text-white">
+                <Box layoutClassName="flex items-center justify-between">
+                  <Typography as="span" size="xs" variant="muted">Code:</Typography>
+                  <Typography as="span" size="sm" layoutClassName="font-mono" textClassName="text-slate-900 dark:text-white">
                     {transaction.code}
-                  </span>
-                </div>
+                  </Typography>
+                </Box>
               )}
               {transaction.referenceCode && (
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Reference:</span>
-                  <span className="text-sm font-mono text-slate-900 dark:text-white">
+                <Box layoutClassName="flex items-center justify-between">
+                  <Typography as="span" size="xs" variant="muted">Reference:</Typography>
+                  <Typography as="span" size="sm" layoutClassName="font-mono" textClassName="text-slate-900 dark:text-white">
                     {transaction.referenceCode}
-                  </span>
-                </div>
+                  </Typography>
+                </Box>
               )}
-            </div>
-          </div>
+            </Box>
+          </Card>
         )}
 
         {transaction.createdAt && (
-          <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-500 dark:text-slate-400">ID giao dịch:</span>
-              <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+          <Card
+            layoutClassName="p-3"
+            backgroundClassName="bg-slate-50 dark:bg-slate-900/50"
+            borderClassName="border-slate-200 dark:border-slate-700"
+          >
+            <Box layoutClassName="flex items-center justify-between">
+              <Typography as="span" size="xs" variant="muted">ID giao dịch:</Typography>
+              <Typography as="span" size="xs" layoutClassName="font-mono" textClassName="text-slate-600 dark:text-slate-400">
                 {transaction.id}
-              </span>
-            </div>
-            <div className="flex items-center justify-between mt-1">
-              <span className="text-xs text-slate-500 dark:text-slate-400">Tạo lúc:</span>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
+              </Typography>
+            </Box>
+            <Box layoutClassName="mt-1 flex items-center justify-between">
+              <Typography as="span" size="xs" variant="muted">Tạo lúc:</Typography>
+              <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-400">
                 {formatFullDate(transaction.createdAt)}
-              </span>
-            </div>
-          </div>
+              </Typography>
+            </Box>
+          </Card>
         )}
-      </div>
+      </Box>
     </BaseModal>
   );
 };

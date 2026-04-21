@@ -2,6 +2,11 @@ import React from 'react';
 import { Calendar, Building2, CreditCard, TrendingUp, TrendingDown } from 'lucide-react';
 import { Transaction } from '@/types';
 import { formatVND } from '@/utils/currencyUtil';
+import Badge from '@/components/ui/Badge';
+import Box from '@/components/ui/Box';
+import Card from '@/components/ui/Card';
+import Typography from '@/components/ui/Typography';
+import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@/components/ui/Table';
 
 interface TransactionsDesktopTableProps {
   transactions: Transaction[];
@@ -19,104 +24,131 @@ const TransactionsDesktopTable: React.FC<TransactionsDesktopTableProps> = ({
   }
 
   return (
-    <div className="hidden lg:flex bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex-col flex-1 overflow-hidden">
-      <div className="overflow-x-auto flex-1">
-        <table className="w-full text-left border-collapse">
-          <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-700/50 backdrop-blur-sm shadow-sm">
-            <tr className="text-slate-600 dark:text-slate-300 text-xs font-semibold uppercase tracking-wider border-b border-slate-200 dark:border-slate-600">
-              <th className="px-4 sm:px-6 py-3">Date</th>
-              <th className="px-4 sm:px-6 py-3">Amount</th>
-              <th className="px-4 sm:px-6 py-3">Content</th>
-              <th className="px-4 sm:px-6 py-3">Order Ref</th>
-              <th className="px-4 sm:px-6 py-3">SePay ID</th>
-              <th className="px-4 sm:px-6 py-3">Gateway</th>
-              <th className="px-4 sm:px-6 py-3">Account</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+    <Card
+      padding="none"
+      layoutClassName="hidden flex-1 flex-col overflow-hidden lg:flex"
+      borderClassName="border-slate-100 dark:border-slate-700"
+      backgroundClassName="bg-white dark:bg-slate-800"
+    >
+      <Box layoutClassName="flex-1 overflow-x-auto">
+        <Table>
+          <TableHead
+            layoutClassName="sticky top-0 z-10 backdrop-blur-sm"
+            backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+            borderClassName="border-b border-slate-200 dark:border-slate-600"
+            shadowClassName="shadow-sm"
+          >
+            <TableRow textClassName="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">Date</TableHeaderCell>
+              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">Amount</TableHeaderCell>
+              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">Content</TableHeaderCell>
+              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">Order Ref</TableHeaderCell>
+              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">SePay ID</TableHeaderCell>
+              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">Gateway</TableHeaderCell>
+              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">Account</TableHeaderCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {transactions.map((tr) => (
-              <tr
+              <TableRow
                 key={tr.id}
                 onClick={() => onTransactionClick?.(tr)}
-                className="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition-colors group cursor-pointer"
+                hoverClassName="hover:bg-slate-50/80 dark:hover:bg-slate-700/30"
+                stateClassName="group cursor-pointer transition-colors"
               >
-                <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-medium">
+                <TableCell layoutClassName="whitespace-nowrap px-4 py-4 sm:px-6">
+                  <Box layoutClassName="flex items-center gap-2">
+                    <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                    <Typography as="span" size="sm" layoutClassName="font-medium text-xs sm:text-sm" textClassName="text-slate-600 dark:text-slate-300">
                       {formatDate(tr.transactionDate)}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center gap-2">
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell layoutClassName="whitespace-nowrap px-4 py-4 sm:px-6">
+                  <Box layoutClassName="flex items-center gap-2">
                     {tr.transferType === 'in' ? (
-                      <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                      <TrendingUp className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                     ) : (
-                      <TrendingDown className="w-4 h-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+                      <TrendingDown className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
                     )}
-                    <span
-                      className={`text-sm sm:text-base font-bold ${
+                    <Typography
+                      as="span"
+                      layoutClassName="text-sm font-bold sm:text-base"
+                      textClassName={
                         tr.transferType === 'in'
                           ? 'text-emerald-600 dark:text-emerald-400'
                           : 'text-red-600 dark:text-red-400'
-                      }`}
+                      }
                     >
                       {tr.transferType === 'in' ? '+' : '-'}
                       {formatVND(tr.transferAmount)}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-4 sm:px-6 py-4">
-                  <div className="max-w-xs">
-                    <p
-                      className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 truncate group-hover:text-slate-900 dark:group-hover:text-white transition-colors"
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell layoutClassName="px-4 py-4 sm:px-6">
+                  <Box layoutClassName="max-w-xs">
+                    <Typography
+                      size="sm"
+                      layoutClassName="truncate text-xs sm:text-sm"
+                      textClassName="text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white"
                       title={tr.content}
                     >
                       {tr.content || '-'}
-                    </p>
-                  </div>
-                </td>
-                <td className="px-4 sm:px-6 py-4">
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell layoutClassName="px-4 py-4 sm:px-6">
                   {tr.orderNumber ? (
-                    <span className="inline-flex items-center gap-1 bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-300 px-2 py-1 rounded-md text-xs font-medium font-mono">
+                    <Badge
+                      size="sm"
+                      layoutClassName="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium font-mono"
+                      borderClassName="border-transparent"
+                      backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
+                      textClassName="text-orange-700 dark:text-orange-300"
+                    >
                       {tr.orderNumber}
-                    </span>
+                    </Badge>
                   ) : (
-                    <span className="text-slate-400 text-xs">-</span>
+                    <Typography as="span" size="xs" variant="muted">-</Typography>
                   )}
-                </td>
-                <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
+                </TableCell>
+                <TableCell layoutClassName="whitespace-nowrap px-4 py-4 sm:px-6">
                   {tr.sepayId ? (
-                    <span className="inline-flex items-center gap-1 bg-slate-50 text-slate-700 dark:bg-slate-800/60 dark:text-slate-200 px-2 py-1 rounded-md text-[11px] font-mono">
+                    <Badge
+                      size="sm"
+                      layoutClassName="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-mono"
+                      borderClassName="border-transparent"
+                      backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
+                      textClassName="text-slate-700 dark:text-slate-200"
+                    >
                       #{tr.sepayId}
-                    </span>
+                    </Badge>
                   ) : (
-                    <span className="text-slate-400 text-xs">-</span>
+                    <Typography as="span" size="xs" variant="muted">-</Typography>
                   )}
-                </td>
-                <td className="px-4 sm:px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                </TableCell>
+                <TableCell layoutClassName="px-4 py-4 sm:px-6">
+                  <Box layoutClassName="flex items-center gap-2">
+                    <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                    <Typography as="span" size="sm" layoutClassName="text-xs sm:text-sm" textClassName="text-slate-600 dark:text-slate-400">
                       {tr.gateway || '-'}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-4 sm:px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="w-3.5 h-3.5 text-slate-400" />
-                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                    </Typography>
+                  </Box>
+                </TableCell>
+                <TableCell layoutClassName="px-4 py-4 sm:px-6">
+                  <Box layoutClassName="flex items-center gap-2">
+                    <CreditCard className="h-3.5 w-3.5 text-slate-400" />
+                    <Typography as="span" size="xs" layoutClassName="font-mono" textClassName="text-slate-500 dark:text-slate-400">
                       {tr.subAccount || tr.accountNumber || '-'}
-                    </span>
-                  </div>
-                </td>
-              </tr>
+                    </Typography>
+                  </Box>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </TableBody>
+        </Table>
+      </Box>
+    </Card>
   );
 };
 

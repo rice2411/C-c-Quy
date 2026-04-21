@@ -2,6 +2,8 @@ import React from 'react';
 import { Customer } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import CustomerCard from './CustomerCard';
+import Box from '@/components/ui/Box';
+import Typography from '@/components/ui/Typography';
 
 interface CustomerCardListProps {
   customers: Customer[];
@@ -19,9 +21,12 @@ const CustomerCardList: React.FC<CustomerCardListProps> = ({ customers, customer
   };
 
   return (
-    <div className="lg:hidden p-4 space-y-4 bg-slate-50/50 dark:bg-slate-900/50 flex-1 overflow-y-auto">
+    <Box
+      layoutClassName="flex flex-1 flex-col space-y-4 overflow-y-auto p-4 lg:hidden"
+      backgroundClassName="bg-slate-50/50 dark:bg-slate-900/50"
+    >
       {customers.length > 0 ? (
-        customers.map(customer => (
+        customers.map((customer) => (
           <CustomerCard
             key={customer.id}
             customer={customer}
@@ -31,11 +36,12 @@ const CustomerCardList: React.FC<CustomerCardListProps> = ({ customers, customer
           />
         ))
       ) : (
-        <div className="text-center py-10 text-slate-400 dark:text-slate-500 text-sm">{t('customers.noData')}</div>
+        <Typography size="sm" layoutClassName="py-10 text-center" variant="muted">
+          {t('customers.noData')}
+        </Typography>
       )}
-    </div>
+    </Box>
   );
 };
 
 export default CustomerCardList;
-

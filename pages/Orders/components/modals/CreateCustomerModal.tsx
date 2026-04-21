@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { User, Phone, AlertCircle, Save } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { AlertCircle, Phone, Save, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import BaseModal from '@/components/BaseModal';
-
+import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
+import Field from '@/components/ui/Field';
+import Input from '@/components/ui/Input';
 interface CreateCustomerModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -16,7 +19,7 @@ const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
   onClose,
   onSave,
   phone,
-  customerName = '',
+  customerName = ''
 }) => {
   const { t } = useLanguage();
   const [name, setName] = useState(customerName);
@@ -54,87 +57,99 @@ const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
   };
 
   const footer = (
-    <div className="flex justify-end gap-3 w-full">
-      <button
+    <Box layoutClassName="flex w-full justify-end gap-3">
+      <Button
         type="button"
         onClick={onClose}
         disabled={isSubmitting}
-        className="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+        variant="secondary"
+        disableVariantHover
+        disableVariantTextColor
+        borderClassName="border border-slate-200 dark:border-slate-600"
+        backgroundClassName="bg-transparent"
+        hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+        textClassName="text-sm font-medium text-slate-700 dark:text-slate-300"
+        roundedClassName="rounded-lg"
+        sizeClassName="px-4 py-2"
+        stateClassName="transition-colors disabled:opacity-50"
       >
         {t('form.cancel')}
-      </button>
-      <button
+      </Button>
+      <Button
+        type="button"
         onClick={handleSubmit}
         disabled={isSubmitting}
-        className="px-6 py-2 bg-orange-600 dark:bg-orange-500 rounded-lg text-sm font-medium text-white hover:bg-orange-700 dark:hover:bg-orange-600 shadow-sm flex items-center gap-2 disabled:opacity-70 transition-colors"
+        leftIcon={isSubmitting ? undefined : <Save />}
+        iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+        backgroundClassName="bg-orange-600 dark:bg-orange-500"
+        hoverClassName="hover:bg-orange-700 dark:hover:bg-orange-600"
+        textClassName="text-sm font-medium text-white"
+        roundedClassName="rounded-lg"
+        shadowClassName="shadow-sm"
+        layoutClassName="flex items-center gap-2"
+        sizeClassName="px-6 py-2"
+        stateClassName="transition-colors disabled:opacity-70"
+        variant="primary"
+        disableVariantHover
+        disableVariantTextColor
       >
-        {isSubmitting ? t('form.saving') : (
-          <>
-            <Save className="w-4 h-4" /> Tạo khách hàng
-          </>
-        )}
-      </button>
-    </div>
+        {isSubmitting ? t('form.saving') : 'Tạo khách hàng'}
+      </Button>
+    </Box>
   );
 
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Tạo khách hàng mới"
-      footer={footer}
-      size="sm"
-    >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" />
-            {error}
-          </div>
-        )}
+    <BaseModal isOpen={isOpen} onClose={onClose} title="Tạo khách hàng mới" footer={footer} size="sm">
+      <form onSubmit={handleSubmit}>
+        <Box layoutClassName="space-y-4">
+          {error ? (
+            <Box
+              layoutClassName="flex items-center gap-2 rounded-lg p-3 text-sm"
+              backgroundClassName="bg-red-50 dark:bg-red-900/20"
+              textClassName="text-red-600 dark:text-red-400"
+            >
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {error}
+            </Box>
+          ) : null}
 
-        <div className="p-3 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 text-sm rounded-lg">
-          Số điện thoại <strong>{phone}</strong> chưa tồn tại trong hệ thống. Vui lòng tạo khách hàng mới để tiếp tục.
-        </div>
+          <Box
+            layoutClassName="rounded-lg p-3 text-sm"
+            backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
+            textClassName="text-orange-700 dark:text-orange-300"
+          >
+            Số điện thoại <strong>{phone}</strong> chưa tồn tại trong hệ thống. Vui lòng tạo khách hàng mới để tiếp
+            tục.
+          </Box>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Tên khách hàng *
-          </label>
-          <div className="relative">
-            <User className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-            <input
+          <Field label="Tên khách hàng" required>
+            <Input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
               placeholder="Nhập tên khách hàng"
               autoFocus
+              leftIcon={<User />}
+              leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
             />
-          </div>
-        </div>
+          </Field>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Số điện thoại *
-          </label>
-          <div className="relative">
-            <Phone className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-            <input
+          <Field label="Số điện thoại" required>
+            <Input
               type="tel"
               required
               value={phoneValue}
               onChange={(e) => setPhoneValue(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
               placeholder="090 123 4567"
+              leftIcon={<Phone />}
+              leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
             />
-          </div>
-        </div>
+          </Field>
+        </Box>
       </form>
     </BaseModal>
   );
 };
 
 export default CreateCustomerModal;
-

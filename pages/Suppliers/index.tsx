@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { Plus, Factory, Loader2 } from 'lucide-react';
+import { Factory, Plus } from 'lucide-react';
 import { useSuppliers } from '@/contexts/SupplierContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Supplier } from '@/types';
 import SupplierList from './components/SupplierList';
 import SupplierForm from './components/SupplierForm';
 import ConfirmModal from '@/components/ConfirmModal';
+import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
+import Spinner from '@/components/ui/Spinner';
+import Typography from '@/components/ui/Typography';
 
 const SuppliersPage: React.FC = () => {
   const { suppliers, loading, createSupplier, modifySupplier, removeSupplier } = useSuppliers();
@@ -58,39 +62,62 @@ const SuppliersPage: React.FC = () => {
   };
 
   return (
-    <div className="h-full relative flex flex-col space-y-6">
-       <div className="flex justify-end">
-          <button 
-             onClick={handleCreate}
-             className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm shadow-orange-200 dark:shadow-none whitespace-nowrap"
-           >
-             <Plus className="w-4 h-4" />
-             <span>{t('suppliers.add')}</span>
-           </button>
-       </div>
+    <Box layoutClassName="relative flex h-full flex-col space-y-6">
+      <Box layoutClassName="flex justify-end">
+        <Button
+          type="button"
+          onClick={handleCreate}
+          leftIcon={<Plus />}
+          iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+          sizeClassName="px-4 py-2"
+          layoutClassName="whitespace-nowrap gap-2"
+          backgroundClassName="bg-orange-600"
+          hoverClassName="hover:bg-orange-700"
+          textClassName="text-sm font-medium text-white"
+          roundedClassName="rounded-lg"
+          shadowClassName="shadow-sm shadow-orange-200 dark:shadow-none"
+          stateClassName="transition-colors"
+          disableVariantHover
+          disableVariantTextColor
+        >
+          {t('suppliers.add')}
+        </Button>
+      </Box>
 
-       {loading ? (
-          <div className="flex-1 flex items-center justify-center">
-             <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
-          </div>
-       ) : suppliers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center flex-1 text-slate-400 dark:text-slate-500">
-             <Factory className="w-16 h-16 mb-4 opacity-20" />
-             <p className="mb-4">{t('suppliers.noData')}</p>
-             <button 
-                onClick={handleCreate}
-                className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-sm hover:bg-slate-200 dark:hover:bg-slate-700"
-              >
-                {t('suppliers.createFirst')}
-              </button>
-          </div>
-       ) : (
-          <SupplierList 
-            suppliers={suppliers}
-            onEdit={handleEdit}
-            onDelete={handleDeleteClick}
-          />
-       )}
+      {loading ? (
+        <Box layoutClassName="flex flex-1 items-center justify-center">
+          <Spinner size="lg" textClassName="text-orange-500" />
+        </Box>
+      ) : suppliers.length === 0 ? (
+        <Box
+          layoutClassName="flex flex-1 flex-col items-center justify-center"
+          textClassName="text-slate-400 dark:text-slate-500"
+        >
+          <Factory className="mb-4 h-16 w-16 opacity-20" />
+          <Typography layoutClassName="mb-4">{t('suppliers.noData')}</Typography>
+          <Button
+            type="button"
+            onClick={handleCreate}
+            variant="secondary"
+            disableVariantHover
+            disableVariantTextColor
+            sizeClassName="px-4 py-2"
+            backgroundClassName="bg-slate-100 dark:bg-slate-800"
+            hoverClassName="hover:bg-slate-200 dark:hover:bg-slate-700"
+            textClassName="text-sm text-slate-600 dark:text-slate-300"
+            roundedClassName="rounded-lg"
+            stateClassName="transition-colors"
+          >
+            {t('suppliers.createFirst')}
+          </Button>
+        </Box>
+      ) : (
+        <SupplierList
+          suppliers={suppliers}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
+        />
+      )}
 
        {isFormOpen && (
          <SupplierForm 
@@ -101,15 +128,15 @@ const SuppliersPage: React.FC = () => {
          />
        )}
 
-       <ConfirmModal 
-          isOpen={isDeleteModalOpen}
-          title={t('suppliers.delete.title')}
-          message={t('suppliers.delete.confirm')}
-          onConfirm={handleConfirmDelete}
-          onCancel={() => setIsDeleteModalOpen(false)}
-          isLoading={isDeleting}
-       />
-    </div>
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        title={t('suppliers.delete.title')}
+        message={t('suppliers.delete.confirm')}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsDeleteModalOpen(false)}
+        isLoading={isDeleting}
+      />
+    </Box>
   );
 };
 

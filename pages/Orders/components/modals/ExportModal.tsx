@@ -1,7 +1,18 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Download, Calendar, Eye, Settings, Check, ChevronDown, ArrowRight, Table as TableIcon, FileSpreadsheet } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Calendar,
+  Check,
+  ChevronDown,
+  Download,
+  Eye,
+  FileSpreadsheet,
+  Settings,
+  Table as TableIcon
+} from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import BaseModal from '@/components/BaseModal';
+import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
 import { Order } from '@/types';
 import { exportOrdersToExcel, ExportColumn, getOrderTotal } from '@/utils/orderUtils';
 import { parseDateValue } from '@/utils/dateUtil';
@@ -216,19 +227,42 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders }) =>
   };
 
   const footerContent = (
-    <div className="flex justify-between w-full">
-      <button onClick={onClose} className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+    <Box layoutClassName="flex w-full justify-between">
+      <Button
+        type="button"
+        onClick={onClose}
+        variant="ghost"
+        disableVariantHover
+        disableVariantTextColor
+        textClassName="text-sm text-slate-600 dark:text-slate-400"
+        hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700"
+        roundedClassName="rounded-lg"
+        sizeClassName="px-4 py-2"
+        stateClassName="transition-colors"
+      >
         {t('orders.exportCancel')}
-      </button>
-      <button 
+      </Button>
+      <Button
+        type="button"
         onClick={handleExport}
         disabled={rangeType === 'custom' && (!startMonth || !endMonth)}
-        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg shadow-sm flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        leftIcon={<Download />}
+        iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+        backgroundClassName="bg-green-600"
+        hoverClassName="hover:bg-green-700"
+        textClassName="text-sm font-medium text-white"
+        roundedClassName="rounded-lg"
+        shadowClassName="shadow-sm"
+        sizeClassName="px-4 py-2"
+        layoutClassName="flex items-center gap-2"
+        stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        variant="primary"
+        disableVariantHover
+        disableVariantTextColor
       >
-        <Download className="w-4 h-4" />
         {t('orders.exportConfirm')}
-      </button>
-    </div>
+      </Button>
+    </Box>
   );
 
   return (

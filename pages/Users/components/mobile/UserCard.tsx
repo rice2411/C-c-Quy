@@ -1,6 +1,14 @@
 import React from 'react';
 import { CheckCircle, XCircle, Edit2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import IconButton from '@/components/ui/IconButton';
+import Image from '@/components/ui/Image';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Typography from '@/components/ui/Typography';
 import { UserData, UserStatus, UserRole } from '@/types/user';
 import { StatusBadge, RoleBadge } from '@/pages/Users/components/UserBadges';
 
@@ -40,42 +48,44 @@ const UserCard: React.FC<UserCardProps> = ({
   const { t } = useLanguage();
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-4">
-      {/* User Header */}
-      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100 dark:border-slate-700">
-        <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-slate-600 overflow-hidden border border-slate-200 dark:border-slate-500 flex items-center justify-center flex-shrink-0">
+    <Card
+      layoutClassName="p-4"
+      backgroundClassName="bg-white dark:bg-slate-800"
+      borderClassName="border-slate-100 dark:border-slate-700"
+    >
+      <Box layoutClassName="mb-4 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-700">
+        <Box layoutClassName="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-orange-100 dark:border-slate-500 dark:bg-slate-600">
           {user.photoURL ? (
-            <img 
+            <Image
               src={user.photoURL} 
               alt={user.displayName || 'User'} 
-              className="w-full h-full object-cover"
+              layoutClassName="h-full w-full object-cover"
             />
           ) : (
-            <span className="text-orange-600 dark:text-orange-400 font-bold text-base">
+            <Typography as="span" layoutClassName="text-base font-bold" textClassName="text-orange-600 dark:text-orange-400">
               {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
-            </span>
+            </Typography>
           )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-900 dark:text-white truncate">
+        </Box>
+        <Box layoutClassName="min-w-0 flex-1">
+          <Typography layoutClassName="truncate font-semibold" textClassName="text-slate-900 dark:text-white">
             {user.displayName || t('users.table.user')}
-          </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+          </Typography>
+          <Typography size="xs" layoutClassName="truncate" textClassName="text-slate-500 dark:text-slate-400">
             {user.email}
-          </p>
-        </div>
-      </div>
+          </Typography>
+        </Box>
+      </Box>
 
-      {/* Custom Name */}
-      <div className="mb-3">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+      <Box layoutClassName="mb-3">
+        <Box layoutClassName="mb-1 flex items-center justify-between">
+          <Typography as="span" size="xs" layoutClassName="font-medium uppercase" textClassName="text-slate-500 dark:text-slate-400">
             {t('users.table.customName')}
-          </span>
-        </div>
+          </Typography>
+        </Box>
         {editingUser?.uid === user.uid ? (
-          <div className="flex items-center gap-2">
-            <input
+          <Box layoutClassName="flex items-center gap-2">
+            <Input
               type="text"
               value={customName}
               onChange={(e) => onCustomNameChange(e.target.value)}
@@ -83,135 +93,182 @@ const UserCard: React.FC<UserCardProps> = ({
                 if (e.key === 'Enter') onSaveCustomName();
                 if (e.key === 'Escape') onCancelEditCustomName();
               }}
-              className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              layoutClassName="flex-1"
+              sizeClassName="px-3 py-2 text-sm"
+              borderClassName="border-slate-200 dark:border-slate-600"
+              backgroundClassName="bg-white dark:bg-slate-700"
+              textClassName="text-slate-900 dark:text-white"
               autoFocus
             />
-            <button
+            <IconButton
+              type="button"
+              label={t('common.save') || 'Save'}
               onClick={onSaveCustomName}
-              className="text-emerald-600 hover:text-emerald-700"
+              variant="ghost"
+              textClassName="text-emerald-600"
+              hoverClassName="hover:text-emerald-700"
             >
               <CheckCircle className="w-5 h-5" />
-            </button>
-            <button
+            </IconButton>
+            <IconButton
+              type="button"
+              label={t('common.cancel') || 'Cancel'}
               onClick={onCancelEditCustomName}
-              className="text-red-600 hover:text-red-700"
+              variant="ghost"
+              textClassName="text-red-600"
+              hoverClassName="hover:text-red-700"
             >
               <XCircle className="w-5 h-5" />
-            </button>
-          </div>
+            </IconButton>
+          </Box>
         ) : (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-slate-600 dark:text-slate-300">
+          <Box layoutClassName="flex items-center justify-between">
+            <Typography as="span" size="sm" textClassName="text-slate-600 dark:text-slate-300">
               {user.customName || '-'}
-            </span>
-            <button
+            </Typography>
+            <IconButton
+              type="button"
+              label={t('users.table.customName')}
               onClick={() => onEditCustomName(user)}
-              className="text-slate-400 hover:text-orange-600 dark:hover:text-orange-400"
-              title={t('users.table.customName')}
+              variant="ghost"
+              textClassName="text-slate-400"
+              hoverClassName="hover:text-orange-600 dark:hover:text-orange-400"
             >
               <Edit2 className="w-4 h-4" />
-            </button>
-          </div>
+            </IconButton>
+          </Box>
         )}
-      </div>
+      </Box>
 
       {/* Role */}
-      <div className="mb-3">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+      <Box layoutClassName="mb-3">
+        <Box layoutClassName="mb-1 flex items-center justify-between">
+          <Typography as="span" size="xs" layoutClassName="font-medium uppercase" textClassName="text-slate-500 dark:text-slate-400">
             {t('users.table.role')}
-          </span>
-        </div>
+          </Typography>
+        </Box>
         {editingRoleUser?.uid === user.uid ? (
-          <div className="flex items-center gap-2">
-            <select
+          <Box layoutClassName="flex items-center gap-2">
+            <Select
               value={selectedRole}
               onChange={(e) => onRoleChange(e.target.value as UserRole)}
-              className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+              layoutClassName="flex-1"
+              sizeClassName="px-3 py-2 text-sm"
+              borderClassName="border-slate-200 dark:border-slate-600"
+              backgroundClassName="bg-white dark:bg-slate-700"
+              textClassName="text-slate-900 dark:text-white"
               autoFocus
             >
               <option value={UserRole.ADMIN}>{t('users.role.admin')}</option>
               <option value={UserRole.COLABORATOR}>{t('users.role.colaborator')}</option>
-            </select>
-            <button
+            </Select>
+            <IconButton
+              type="button"
+              label={t('common.save') || 'Save'}
               onClick={onSaveRole}
-              className="text-emerald-600 hover:text-emerald-700"
+              variant="ghost"
+              textClassName="text-emerald-600"
+              hoverClassName="hover:text-emerald-700"
             >
               <CheckCircle className="w-5 h-5" />
-            </button>
-            <button
+            </IconButton>
+            <IconButton
+              type="button"
+              label={t('common.cancel') || 'Cancel'}
               onClick={onCancelEditRole}
-              className="text-red-600 hover:text-red-700"
+              variant="ghost"
+              textClassName="text-red-600"
+              hoverClassName="hover:text-red-700"
             >
               <XCircle className="w-5 h-5" />
-            </button>
-          </div>
+            </IconButton>
+          </Box>
         ) : (
-          <div className="flex items-center justify-between">
+          <Box layoutClassName="flex items-center justify-between">
             <RoleBadge role={user.role} />
             {user.role !== UserRole.SUPER_ADMIN && (
-              <button
+              <IconButton
+                type="button"
+                label={t('users.table.role')}
                 onClick={() => onEditRole(user)}
-                className="text-slate-400 hover:text-orange-600 dark:hover:text-orange-400"
-                title={t('users.table.role')}
+                variant="ghost"
+                textClassName="text-slate-400"
+                hoverClassName="hover:text-orange-600 dark:hover:text-orange-400"
               >
                 <Edit2 className="w-4 h-4" />
-              </button>
+              </IconButton>
             )}
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
 
       {/* Status */}
-      <div className="mb-3">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+      <Box layoutClassName="mb-3">
+        <Box layoutClassName="mb-1 flex items-center justify-between">
+          <Typography as="span" size="xs" layoutClassName="font-medium uppercase" textClassName="text-slate-500 dark:text-slate-400">
             {t('users.table.status')}
-          </span>
-        </div>
+          </Typography>
+        </Box>
         <StatusBadge status={user.status} />
-      </div>
+      </Box>
 
       {/* Last Login */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+      <Box layoutClassName="mb-4">
+        <Box layoutClassName="mb-1 flex items-center justify-between">
+          <Typography as="span" size="xs" layoutClassName="font-medium uppercase" textClassName="text-slate-500 dark:text-slate-400">
             {t('users.table.lastLogin')}
-          </span>
-        </div>
-        <span className="text-sm text-slate-600 dark:text-slate-300">
+          </Typography>
+        </Box>
+        <Typography as="span" size="sm" textClassName="text-slate-600 dark:text-slate-300">
           {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString('vi-VN') : '-'}
-        </span>
-      </div>
+        </Typography>
+      </Box>
 
-      {/* Actions */}
-      <div className="flex gap-2 pt-3 border-t border-slate-100 dark:border-slate-700">
+      <Box layoutClassName="flex gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
         {user.status === 'pending' && (
-          <button
+          <Button
+            type="button"
             onClick={() => onStatusChange(user.uid, UserStatus.ACTIVE)}
-            className="flex-1 px-3 py-2 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"
+            variant="secondary"
+            layoutClassName="flex-1"
+            sizeClassName="px-3 py-2 text-xs"
+            textClassName="font-medium text-emerald-700 dark:text-emerald-400"
+            backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20"
+            hoverClassName="hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
           >
             {t('users.actions.approve')}
-          </button>
+          </Button>
         )}
         {user.status === 'active' && (
-          <button
+          <Button
+            type="button"
             onClick={() => onStatusChange(user.uid, UserStatus.INACTIVE)}
-            className="flex-1 px-3 py-2 text-xs font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+            variant="secondary"
+            layoutClassName="flex-1"
+            sizeClassName="px-3 py-2 text-xs"
+            textClassName="font-medium text-red-700 dark:text-red-400"
+            backgroundClassName="bg-red-50 dark:bg-red-900/20"
+            hoverClassName="hover:bg-red-100 dark:hover:bg-red-900/30"
           >
             {t('users.actions.deactivate')}
-          </button>
+          </Button>
         )}
         {user.status === 'inactive' && (
-          <button
+          <Button
+            type="button"
             onClick={() => onStatusChange(user.uid, UserStatus.ACTIVE)}
-            className="flex-1 px-3 py-2 text-xs font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"
+            variant="secondary"
+            layoutClassName="flex-1"
+            sizeClassName="px-3 py-2 text-xs"
+            textClassName="font-medium text-emerald-700 dark:text-emerald-400"
+            backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20"
+            hoverClassName="hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
           >
             {t('users.actions.activate')}
-          </button>
+          </Button>
         )}
-      </div>
-    </div>
+      </Box>
+    </Card>
   );
 };
 

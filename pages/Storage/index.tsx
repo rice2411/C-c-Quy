@@ -10,6 +10,9 @@ import { getAccessibleStorageTabs } from '@/config/routes';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
 import { getUserFromLocalStorage } from '@/utils/userUtil';
+import Box from '@/components/ui/Box';
+import Card from '@/components/ui/Card';
+import Typography from '@/components/ui/Typography';
 
 const InventoryPage: React.FC = () => {
   const { t } = useLanguage();
@@ -132,18 +135,28 @@ const InventoryPage: React.FC = () => {
   const renderTabContent = () => {
     if (accessibleTabs.length === 0) {
       return (
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-6 text-sm text-slate-600 dark:text-slate-300">
+        <Card
+          padding="lg"
+          borderClassName="border-slate-200 dark:border-slate-700"
+          backgroundClassName="bg-white dark:bg-slate-800"
+          textClassName="text-sm text-slate-600 dark:text-slate-300"
+        >
           Tất cả tab trong Kho đang bị tắt trong Cài đặt màn hình.
-        </div>
+        </Card>
       );
     }
 
     const activeTabConfig = accessibleTabs.find((tab) => tab.tabId === activeTab);
     if (activeTabConfig?.disabled) {
       return (
-        <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-6 text-sm text-amber-700 dark:text-amber-300">
+        <Card
+          padding="lg"
+          borderClassName="border-amber-200 dark:border-amber-800"
+          backgroundClassName="bg-amber-50 dark:bg-amber-900/20"
+          textClassName="text-sm text-amber-700 dark:text-amber-300"
+        >
           Tab này đang ở trạng thái bảo trì.
-        </div>
+        </Card>
       );
     }
 
@@ -188,7 +201,7 @@ const InventoryPage: React.FC = () => {
   };
 
   return (
-    <div className="h-full relative flex flex-col space-y-6">
+    <Box layoutClassName="relative flex h-full flex-col space-y-6">
       <TabsHeader tabs={accessibleTabs} activeTab={activeTab} onChange={setActiveTab} />
 
       {renderTabContent()}
@@ -210,7 +223,7 @@ const InventoryPage: React.FC = () => {
           onClose={() => setIsIngredientFormOpen(false)}
         />
       )}
-    </div>
+    </Box>
   );
 };
 

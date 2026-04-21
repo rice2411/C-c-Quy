@@ -1,17 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { Save, AlertCircle, Hash, Loader2, Calendar, Clock } from 'lucide-react';
-import { Order, OrderStatus, PaymentStatus, PaymentMethod, Product } from '@/types/index';
-import { useLanguage } from '@/contexts/LanguageContext';
+import React, { useEffect, useState } from 'react';
+import { AlertCircle, Calendar, Clock, Hash, Save } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserByUid } from '@/services/userService';
+import { useCustomers } from '@/contexts/CustomerContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { getNextOrderNumber } from '@/services/orderService';
 import { fetchProducts } from '@/services/productService';
-import OrderFormCustomerSection from '../OrderFormCustomerSection';
-import OrderFormItemsSection from '../OrderFormItemsSection';
-import OrderFormStatusSection from '../OrderFormStatusSection';
-import CreateCustomerModal from './CreateCustomerModal';
-import { useCustomers } from '@/contexts/CustomerContext';
+import { getUserByUid } from '@/services/userService';
+import { Order, OrderStatus, PaymentMethod, PaymentStatus, Product } from '@/types/index';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
+import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
+import Checkbox from '@/components/ui/Checkbox';
+import Field from '@/components/ui/Field';
+import Input from '@/components/ui/Input';
+import Label from '@/components/ui/Label';
+import Spinner from '@/components/ui/Spinner';
+import CreateCustomerModal from '@/pages/Orders/components/modals/CreateCustomerModal';
+import OrderFormCustomerSection from '@/pages/Orders/components/OrderFormCustomerSection';
+import OrderFormItemsSection from '@/pages/Orders/components/OrderFormItemsSection';
+import OrderFormStatusSection from '@/pages/Orders/components/OrderFormStatusSection';
 
 interface OrderFormProps {
   isOpen: boolean;
@@ -305,27 +312,45 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   };
 
   const footer = (
-    <div className="flex justify-end gap-3">
-      <button
+    <Box layoutClassName="flex justify-end gap-3">
+      <Button
         type="button"
         onClick={onCancel}
         disabled={isSubmitting}
-        className="px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+        variant="secondary"
+        disableVariantHover
+        disableVariantTextColor
+        borderClassName="border border-slate-200 dark:border-slate-600"
+        backgroundClassName="bg-transparent"
+        hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+        textClassName="text-sm font-medium text-slate-700 dark:text-slate-300"
+        roundedClassName="rounded-lg"
+        sizeClassName="px-4 py-2"
+        stateClassName="transition-colors disabled:opacity-50"
       >
         {t('form.cancel')}
-      </button>
-      <button
+      </Button>
+      <Button
+        type="button"
         onClick={handleSubmit}
         disabled={isSubmitting || loadingOrderNumber}
-        className="px-6 py-2 bg-orange-600 dark:bg-orange-500 rounded-lg text-sm font-medium text-white hover:bg-orange-700 dark:hover:bg-orange-600 shadow-sm flex items-center gap-2 disabled:opacity-70 transition-colors"
+        leftIcon={isSubmitting ? undefined : <Save />}
+        iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+        backgroundClassName="bg-orange-600 dark:bg-orange-500"
+        hoverClassName="hover:bg-orange-700 dark:hover:bg-orange-600"
+        textClassName="text-sm font-medium text-white"
+        roundedClassName="rounded-lg"
+        shadowClassName="shadow-sm"
+        sizeClassName="px-6 py-2"
+        layoutClassName="flex items-center gap-2"
+        stateClassName="transition-colors disabled:opacity-70"
+        variant="primary"
+        disableVariantHover
+        disableVariantTextColor
       >
-        {isSubmitting ? t('form.saving') : (
-          <>
-            <Save className="w-4 h-4" /> {t('form.save')}
-          </>
-        )}
-      </button>
-    </div>
+        {isSubmitting ? t('form.saving') : t('form.save')}
+      </Button>
+    </Box>
   );
 
   return (
@@ -337,82 +362,87 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         maxWidth="xl"
         footer={footer}
       >
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {error && (
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg flex items-center gap-2">
-                <AlertCircle className="w-4 h-4" />
+        <form onSubmit={handleSubmit}>
+          <Box layoutClassName="space-y-6 p-6">
+            {error ? (
+              <Box
+                layoutClassName="flex items-center gap-2 rounded-lg p-3 text-sm"
+                backgroundClassName="bg-red-50 dark:bg-red-900/20"
+                textClassName="text-red-600 dark:text-red-400"
+              >
+                <AlertCircle className="h-4 w-4 shrink-0" />
                 {error}
-              </div>
-            )}
-            
-            {/* Order Number Read-Only Field */}
-            <div>
-               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('detail.orderId')}</label>
-               <div className="relative">
-                  <Hash className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                  <input 
-                    type="text" 
-                    value={loadingOrderNumber ? 'Generating...' : orderNumber}
-                    disabled
-                    readOnly
-                    className="w-full pl-9 pr-3 py-2 bg-slate-100 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-500 dark:text-slate-400 font-mono cursor-not-allowed"
-                  />
-                  {loadingOrderNumber && (
-                    <div className="absolute right-3 top-2.5">
-                      <Loader2 className="w-4 h-4 text-orange-500 animate-spin" />
-                    </div>
-                  )}
-               </div>
-            </div>
+              </Box>
+            ) : null}
+
+            <Field label={t('detail.orderId')} htmlFor="order-form-order-number">
+              <Box layoutClassName="relative">
+                <Input
+                  id="order-form-order-number"
+                  type="text"
+                  value={loadingOrderNumber ? 'Generating...' : orderNumber}
+                  disabled
+                  readOnly
+                  leftIcon={<Hash />}
+                  leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+                  backgroundClassName="bg-slate-100 dark:bg-slate-700/50"
+                  textClassName="font-mono text-slate-500 dark:text-slate-400"
+                  stateClassName="cursor-not-allowed"
+                />
+                {loadingOrderNumber ? (
+                  <Box layoutClassName="absolute right-3 top-2.5">
+                    <Spinner size="sm" textClassName="text-orange-500" />
+                  </Box>
+                ) : null}
+              </Box>
+            </Field>
 
             <OrderFormCustomerSection 
               customerName={customerName} setCustomerName={setCustomerName}
               phone={phone} setPhone={setPhone}
               address={address} setAddress={setAddress}
             />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Ngày nhận hàng</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                  <input
-                    type="date"
-                    value={deliveryDate}
-                    onChange={(e) => setDeliveryDate(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+            <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <Field label="Ngày nhận hàng" htmlFor="order-form-delivery-date">
+                <Input
+                  id="order-form-delivery-date"
+                  type="date"
+                  value={deliveryDate}
+                  onChange={(e) => setDeliveryDate(e.target.value)}
+                  leftIcon={<Calendar />}
+                  leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+                />
+              </Field>
+              <Box layoutClassName="space-y-2">
+                <Box layoutClassName="flex items-center justify-between">
+                  <Label htmlFor="order-form-delivery-time" className="mb-0">
+                    Giờ nhận (tùy chọn)
+                  </Label>
+                  <Checkbox
+                    checked={isDeliveryTimeEnabled}
+                    onChange={(e) => setIsDeliveryTimeEnabled(e.target.checked)}
+                    label="Thêm"
+                    containerClassName="text-sm text-slate-600 dark:text-slate-400"
                   />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Giờ nhận (tùy chọn)</label>
-                  <label className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                    <input
-                      type="checkbox"
-                      checked={isDeliveryTimeEnabled}
-                      onChange={(e) => setIsDeliveryTimeEnabled(e.target.checked)}
-                      className="h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
-                    />
-                    Thêm
-                  </label>
-                </div>
-                <div className={`transition-all ${isDeliveryTimeEnabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                    <input
-                      type="time"
-                      value={deliveryTime}
-                      onChange={(e) => setDeliveryTime(e.target.value)}
-                      disabled={!isDeliveryTimeEnabled}
-                      className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none disabled:opacity-60 disabled:cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+                </Box>
+                <Box
+                  layoutClassName="transition-all"
+                  stateClassName={isDeliveryTimeEnabled ? 'opacity-100' : 'pointer-events-none opacity-50'}
+                >
+                  <Input
+                    id="order-form-delivery-time"
+                    type="time"
+                    value={deliveryTime}
+                    onChange={(e) => setDeliveryTime(e.target.value)}
+                    disabled={!isDeliveryTimeEnabled}
+                    leftIcon={<Clock />}
+                    leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+                  />
+                </Box>
+              </Box>
+            </Box>
             <hr className="border-slate-100 dark:border-slate-700" />
-            
-            {/* Items Section Handling Multiple Products */}
+
             <OrderFormItemsSection 
               items={items}
               onAddItem={handleAddItem}
@@ -425,15 +455,19 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
             />
 
             <hr className="border-slate-100 dark:border-slate-700" />
-            <OrderFormStatusSection 
-              status={status} setStatus={setStatus}
-              paymentStatus={paymentStatus} setPaymentStatus={setPaymentStatus}
-              paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod}
-              note={note} setNote={setNote}
+            <OrderFormStatusSection
+              status={status}
+              setStatus={setStatus}
+              paymentStatus={paymentStatus}
+              setPaymentStatus={setPaymentStatus}
+              paymentMethod={paymentMethod}
+              setPaymentMethod={setPaymentMethod}
+              note={note}
+              setNote={setNote}
               total={total}
-              customerName={customerName}
               orderNumber={orderNumber}
             />
+          </Box>
         </form>
       </BaseSlidePanel>
 

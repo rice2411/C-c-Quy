@@ -1,12 +1,16 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Order } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
-import OrderListMobile from './mobile/OrderListMobile';
-import OrderListDesktop from './desktop/OrderListDesktop';
-import OrderFiltersToolbar from './OrderFiltersToolbar';
-import OrderFiltersModal, { OrderFiltersState } from './modals/OrderFiltersModal';
+import { Order } from '@/types';
 import { parseDateValue } from '@/utils/dateUtil';
+import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import Typography from '@/components/ui/Typography';
+import OrderListDesktop from '@/pages/Orders/components/desktop/OrderListDesktop';
+import OrderFiltersModal, { OrderFiltersState } from '@/pages/Orders/components/modals/OrderFiltersModal';
+import OrderFiltersToolbar from '@/pages/Orders/components/OrderFiltersToolbar';
+import OrderListMobile from '@/pages/Orders/components/mobile/OrderListMobile';
 
 interface OrderListProps {
   orders: Order[];
@@ -162,23 +166,41 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
   };
 
   const renderProductSummary = (order: Order) => {
-    if (!order.items || order.items.length === 0) return 'No items';
+    if (!order.items || order.items.length === 0) {
+      return (
+        <Typography size="sm" variant="muted">
+          No items
+        </Typography>
+      );
+    }
     const firstItem = order.items[0];
     const remainingCount = order.items.length - 1;
     return (
-      <div className="flex flex-col">
-        <span className="font-medium text-slate-700 dark:text-slate-300 line-clamp-1" title={firstItem.name}>{firstItem.name}</span>
-        {remainingCount > 0 && (
-          <span className="text-xs text-slate-500 italic">+{remainingCount} more</span>
-        )}
-      </div>
+      <Box layoutClassName="flex flex-col">
+        <Typography
+          as="span"
+          size="sm"
+          layoutClassName="line-clamp-1 font-medium"
+          title={firstItem.name}
+        >
+          {firstItem.name}
+        </Typography>
+        {remainingCount > 0 ? (
+          <Typography as="span" size="xs" variant="muted" layoutClassName="italic">
+            +{remainingCount} more
+          </Typography>
+        ) : null}
+      </Box>
     );
   };
 
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col h-full animate-fade-in transition-colors overflow-hidden">
-      
+    <Card
+      padding="none"
+      layoutClassName="flex h-full animate-fade-in flex-col overflow-hidden transition-colors"
+      borderClassName="border-slate-100 dark:border-slate-700"
+    >
       <OrderFiltersToolbar
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -228,34 +250,67 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
         }}
       />
       
-      <div className="p-4 border-t border-slate-100 dark:border-slate-700 text-xs text-slate-400 dark:text-slate-500 flex justify-between items-center bg-white dark:bg-slate-800 rounded-b-xl shrink-0">
-        <span>
-          {filteredOrders.length > 0 
-            ? `${t('orders.showing')} ${startIndex + 1}-${endIndex} ${t('orders.of')} ${filteredOrders.length}` 
-            : t('orders.noOrdersCriteria')
-          }
-        </span>
-        <div className="flex gap-2">
-          <button 
+      <Box
+        layoutClassName="flex shrink-0 items-center justify-between p-4"
+        borderClassName="border-t border-slate-100 dark:border-slate-700"
+        backgroundClassName="bg-white dark:bg-slate-800"
+        roundedClassName="rounded-b-xl"
+      >
+        <Typography as="span" size="xs" variant="muted" textClassName="text-slate-500 dark:text-slate-400">
+          {filteredOrders.length > 0
+            ? `${t('orders.showing')} ${startIndex + 1}-${endIndex} ${t('orders.of')} ${filteredOrders.length}`
+            : t('orders.noOrdersCriteria')}
+        </Typography>
+        <Box layoutClassName="flex gap-2">
+          <Button
+            type="button"
             onClick={handlePrevPage}
             disabled={currentPage === 1}
-            className="px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+            variant="secondary"
+            disableVariantHover
+            disableVariantTextColor
+            borderClassName="border border-slate-200 dark:border-slate-600"
+            backgroundClassName="bg-transparent"
+            hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+            textClassName="text-slate-700 dark:text-slate-200"
+            roundedClassName="rounded-lg"
+            layoutClassName="flex items-center"
+            sizeClassName="px-3 py-1"
+            stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            leftIcon={<ChevronLeft />}
+            iconClassName="mr-1 inline-flex [&_svg]:h-3 [&_svg]:w-3"
           >
-            <ChevronLeft className="w-3 h-3 mr-1" /> Prev
-          </button>
-          <div className="px-2 py-1 flex items-center justify-center font-medium text-slate-600 dark:text-slate-300">
+            Prev
+          </Button>
+          <Box
+            layoutClassName="flex items-center justify-center px-2 py-1"
+            textClassName="font-medium text-slate-600 dark:text-slate-300"
+          >
             {currentPage} / {Math.max(1, totalPages)}
-          </div>
-          <button 
+          </Box>
+          <Button
+            type="button"
             onClick={handleNextPage}
             disabled={currentPage === totalPages || totalPages === 0}
-            className="px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+            variant="secondary"
+            disableVariantHover
+            disableVariantTextColor
+            borderClassName="border border-slate-200 dark:border-slate-600"
+            backgroundClassName="bg-transparent"
+            hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+            textClassName="text-slate-700 dark:text-slate-200"
+            roundedClassName="rounded-lg"
+            layoutClassName="flex items-center"
+            sizeClassName="px-3 py-1"
+            stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            rightIcon={<ChevronRight />}
+            iconClassName="ml-1 inline-flex [&_svg]:h-3 [&_svg]:w-3"
           >
-            Next <ChevronRight className="w-3 h-3 ml-1" />
-          </button>
-        </div>
-      </div>
-    </div>
+            Next
+          </Button>
+        </Box>
+      </Box>
+    </Card>
   );
 };
 

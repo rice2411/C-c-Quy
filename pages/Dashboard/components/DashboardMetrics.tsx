@@ -1,5 +1,9 @@
 import React from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Package, AlertCircle, ShoppingBag } from 'lucide-react';
+import Box from '@/components/ui/Box';
+import Card from '@/components/ui/Card';
+import Heading from '@/components/ui/Heading';
+import Typography from '@/components/ui/Typography';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatVND } from '@/utils/currencyUtil';
 interface DashboardMetricsProps {
@@ -59,80 +63,104 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
   const ingredientCostInfo = getTrendInfo(metrics.ingredientCostChange);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       {/* Total Revenue */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between transition-colors">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('dashboard.totalRevenue')}</p>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{formatVND(metrics.revenue)}</h3>
-          </div>
-          <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg text-emerald-600 dark:text-emerald-400">
+      <Card layoutClassName="flex flex-col justify-between p-6" stateClassName="transition-colors">
+        <Box layoutClassName="flex items-start justify-between">
+          <Box>
+            <Typography size="sm" variant="muted" textClassName="font-medium">{t('dashboard.totalRevenue')}</Typography>
+            <Heading level={3} layoutClassName="mt-1" textClassName="text-2xl font-bold">{formatVND(metrics.revenue)}</Heading>
+          </Box>
+          <Box
+            layoutClassName="p-2"
+            roundedClassName="rounded-lg"
+            backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20"
+            textClassName="text-emerald-600 dark:text-emerald-400"
+          >
             <DollarSign size={20} />
-          </div>
-        </div>
-        <div className={`flex items-center mt-4 text-sm ${revenueInfo.colorClass}`}>
+          </Box>
+        </Box>
+        <Box layoutClassName={`mt-4 flex items-center text-sm ${revenueInfo.colorClass}`}>
           <revenueInfo.Icon size={16} className="mr-1" />
-          <span>{revenueInfo.isPositive ? '+' : ''}{metrics.revenueChange.toFixed(1)}% {revenueInfo.trendText}</span>
-        </div>
-        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-medium tracking-wide">
+          <Typography as="span" textClassName={revenueInfo.colorClass}>
+            {revenueInfo.isPositive ? '+' : ''}{metrics.revenueChange.toFixed(1)}% {revenueInfo.trendText}
+          </Typography>
+        </Box>
+        <Typography size="xs" layoutClassName="mt-1" textClassName="text-[10px] font-medium tracking-wide text-slate-400 dark:text-slate-500">
           {revenueInfo.bottomNote}
-        </p>
-      </div>
+        </Typography>
+      </Card>
 
       {/* Total Orders */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between transition-colors">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('dashboard.totalOrders')}</p>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{totalOrders}</h3>
-          </div>
-          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400">
+      <Card layoutClassName="flex flex-col justify-between p-6" stateClassName="transition-colors">
+        <Box layoutClassName="flex items-start justify-between">
+          <Box>
+            <Typography size="sm" variant="muted" textClassName="font-medium">{t('dashboard.totalOrders')}</Typography>
+            <Heading level={3} layoutClassName="mt-1" textClassName="text-2xl font-bold">{totalOrders}</Heading>
+          </Box>
+          <Box
+            layoutClassName="p-2"
+            roundedClassName="rounded-lg"
+            backgroundClassName="bg-blue-50 dark:bg-blue-900/20"
+            textClassName="text-blue-600 dark:text-blue-400"
+          >
             <Package size={20} />
-          </div>
-        </div>
-         <div className="flex items-center mt-4 text-sm text-blue-600 dark:text-blue-400">
+          </Box>
+        </Box>
+         <Box layoutClassName="mt-4 flex items-center text-sm text-blue-600 dark:text-blue-400">
           <TrendingUp size={16} className="mr-1" />
-          <span>+{newOrdersToday} {t('dashboard.newToday')}</span>
-        </div>
-      </div>
+          <Typography as="span" textClassName="text-blue-600 dark:text-blue-400">+{newOrdersToday} {t('dashboard.newToday')}</Typography>
+        </Box>
+      </Card>
 
       {/* Pending Orders */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between transition-colors">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('dashboard.pending')}</p>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{pendingOrders}</h3>
-          </div>
-          <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-yellow-600 dark:text-yellow-400">
+      <Card layoutClassName="flex flex-col justify-between p-6" stateClassName="transition-colors">
+        <Box layoutClassName="flex items-start justify-between">
+          <Box>
+            <Typography size="sm" variant="muted" textClassName="font-medium">{t('dashboard.pending')}</Typography>
+            <Heading level={3} layoutClassName="mt-1" textClassName="text-2xl font-bold">{pendingOrders}</Heading>
+          </Box>
+          <Box
+            layoutClassName="p-2"
+            roundedClassName="rounded-lg"
+            backgroundClassName="bg-yellow-50 dark:bg-yellow-900/20"
+            textClassName="text-yellow-600 dark:text-yellow-400"
+          >
             <AlertCircle size={20} />
-          </div>
-        </div>
-         <div className="flex items-center mt-4 text-sm text-slate-500 dark:text-slate-400">
-          <span>{t('dashboard.requiresAttention')}</span>
-        </div>
-      </div>
+          </Box>
+        </Box>
+         <Box layoutClassName="mt-4 flex items-center text-sm text-slate-500 dark:text-slate-400">
+          <Typography as="span" variant="muted">{t('dashboard.requiresAttention')}</Typography>
+        </Box>
+      </Card>
 
       {/* Ingredient Cost */}
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col justify-between transition-colors">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('dashboard.ingredientCost')}</p>
-            <h3 className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{formatVND(metrics.ingredientCost)}</h3>
-          </div>
-          <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">
+      <Card layoutClassName="flex flex-col justify-between p-6" stateClassName="transition-colors">
+        <Box layoutClassName="flex items-start justify-between">
+          <Box>
+            <Typography size="sm" variant="muted" textClassName="font-medium">{t('dashboard.ingredientCost')}</Typography>
+            <Heading level={3} layoutClassName="mt-1" textClassName="text-2xl font-bold text-red-600 dark:text-red-400">{formatVND(metrics.ingredientCost)}</Heading>
+          </Box>
+          <Box
+            layoutClassName="p-2"
+            roundedClassName="rounded-lg"
+            backgroundClassName="bg-red-50 dark:bg-red-900/20"
+            textClassName="text-red-600 dark:text-red-400"
+          >
             <ShoppingBag size={20} />
-          </div>
-        </div>
-         <div className={`flex items-center mt-4 text-sm ${ingredientCostInfo.colorClass}`}>
+          </Box>
+        </Box>
+         <Box layoutClassName={`mt-4 flex items-center text-sm ${ingredientCostInfo.colorClass}`}>
           <ingredientCostInfo.Icon size={16} className="mr-1" />
-          <span>{ingredientCostInfo.isPositive ? '+' : ''}{metrics.ingredientCostChange.toFixed(1)}% {ingredientCostInfo.trendText}</span>
-        </div>
-         <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-medium tracking-wide">
+          <Typography as="span" textClassName={ingredientCostInfo.colorClass}>
+            {ingredientCostInfo.isPositive ? '+' : ''}{metrics.ingredientCostChange.toFixed(1)}% {ingredientCostInfo.trendText}
+          </Typography>
+        </Box>
+         <Typography size="xs" layoutClassName="mt-1" textClassName="text-[10px] font-medium tracking-wide text-slate-400 dark:text-slate-500">
           {ingredientCostInfo.bottomNote}
-        </p>
-      </div>
-    </div>
+        </Typography>
+      </Card>
+    </Box>
   );
 };
 

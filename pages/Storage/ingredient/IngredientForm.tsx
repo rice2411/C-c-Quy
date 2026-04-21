@@ -525,7 +525,10 @@ const IngredientForm: React.FC<IngredientFormProps> = ({
                   {t("ingredients.form.type")} *
                 </label>
                 <div className="relative">
-                  <Box className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-slate-400 z-10 pointer-events-none" />
+                  <Box
+                    layoutClassName="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 sm:h-5 sm:w-5"
+                    textClassName="text-slate-400"
+                  />
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value as IngredientType)}
