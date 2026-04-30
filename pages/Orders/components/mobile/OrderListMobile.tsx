@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Package, User } from 'lucide-react';
+import { Calendar, ChevronRight, Package, User } from 'lucide-react';
 import { PAYMENT_METHOD_COLORS, PAYMENT_STATUS_COLORS, STATUS_COLORS } from '@/constant/order';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Order } from '@/types';
@@ -18,6 +18,7 @@ interface OrderListMobileProps {
 
 const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder, renderProductSummary }) => {
   const { t } = useLanguage();
+  const getItemCount = (order: Order) => order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
 
   return (
     <Box
@@ -31,139 +32,140 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
             padding="md"
             layoutClassName="relative cursor-pointer transition-all active:scale-[0.98] group"
             onClick={() => onSelectOrder(order)}
+            borderClassName="border-slate-200 dark:border-slate-700"
           >
-            <Box layoutClassName="mb-3 flex items-center justify-between">
-              <Box>
-                <Typography
-                  as="span"
-                  size="sm"
-                  layoutClassName="font-bold"
-                  textClassName="text-orange-600 dark:text-orange-400"
-                  title={order.id}
-                >
-                  #{order.orderNumber}
-                </Typography>
-                <Box layoutClassName="mt-1 flex items-center text-xs text-slate-400 dark:text-slate-500">
-                  <Calendar className="mr-1 h-3 w-3" />
-                  {new Date(order.createdAt.toDate()).toLocaleDateString()}
-                </Box>
-                {order.deliveryDate ? (
-                  <Box layoutClassName="flex items-center text-xs text-slate-400 dark:text-slate-500">
-                    <Calendar className="mr-1 h-3 w-3" />
-                    {`${t('orders.tableDeliveryDate')}: ${formatDateOnly(order.deliveryDate)}`}
-                    {order.deliveryTime ? ` • ${order.deliveryTime}` : ''}
-                  </Box>
-                ) : null}
+            <Box
+              layoutClassName="mb-3 flex items-center justify-between border-b pb-2"
+              borderClassName="border-slate-100 dark:border-slate-700"
+            >
+              <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-slate-100">
+                {order.orderNumber || order.id}
+              </Typography>
+              <Badge
+                size="sm"
+                layoutClassName="px-2 py-0.5 text-[11px] font-semibold"
+                borderClassName="border-transparent"
+                className={STATUS_COLORS[order.status]}
+              >
+                {t(`orders.statusLabels.${order.status}`)}
+              </Badge>
+            </Box>
+
+            <Box layoutClassName="mb-3 grid grid-cols-[80px_1fr] gap-3">
+              <Box
+                layoutClassName="h-20 w-20 shrink-0 overflow-hidden"
+                roundedClassName="rounded-md"
+                borderClassName="border border-slate-200 dark:border-slate-600"
+              >
+                <img
+                  src={order.items?.[0]?.image || `https://placehold.co/120x120?text=${encodeURIComponent(order.items?.[0]?.name || 'Order')}`}
+                  alt={order.items?.[0]?.name || 'Order item'}
+                  className="h-full w-full object-cover"
+                />
               </Box>
-              <Box layoutClassName="flex flex-col items-center gap-1">
-                <Typography
-                  as="span"
-                  layoutClassName="text-[11px] font-semibold text-slate-500 dark:text-slate-400"
-                >
-                  {t('orders.tableStatus')}
+              <Box layoutClassName="min-w-0 flex-1">
+                <Typography size="sm" layoutClassName="line-clamp-2 font-medium" textClassName="text-slate-900 dark:text-white">
+                  {order.items?.[0]?.name || t('orders.tableProduct')}
                 </Typography>
-                <Badge
-                  size="sm"
-                  layoutClassName="px-2.5 py-1 text-xs font-medium"
-                  borderClassName="border-transparent"
-                  className={STATUS_COLORS[order.status]}
+                <Typography size="sm" variant="muted" layoutClassName="mt-1 line-clamp-1">
+                  {renderProductSummary(order)}
+                </Typography>
+                <Box layoutClassName="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                  <Box layoutClassName="flex items-center gap-1">
+                    <Package className="h-3.5 w-3.5" />
+                    <span>{getItemCount(order)} sản phẩm</span>
+                  </Box>
+                  <Box layoutClassName="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>Tạo: {formatDateOnly(order.orderDate || order.date)}</span>
+                  </Box>
+                </Box>
+                <Box
+                  layoutClassName="mt-2 rounded-md border border-slate-100 p-2 text-xs dark:border-slate-700"
+                  backgroundClassName="bg-slate-50/70 dark:bg-slate-800/50"
                 >
-                  {t(`orders.statusLabels.${order.status}`)}
-                </Badge>
+                  <Box layoutClassName="flex items-center justify-between gap-2">
+                    <Typography size="xs" variant="muted">Người tạo: {order.createdBy || '--'}</Typography>
+                    <Typography size="xs" variant="muted">Phí ship: {formatVND(order.shippingCost || 0)}</Typography>
+                  </Box>
+                </Box>
               </Box>
             </Box>
+
+            <Box layoutClassName="mb-3 text-right border-t pt-2" borderClassName="border-slate-100 dark:border-slate-700">
+              <Typography size="sm" variant="muted">
+                Tổng số tiền ({getItemCount(order)} sản phẩm):{' '}
+                <span className="font-bold text-slate-900 dark:text-white">{formatVND(order.total)}</span>
+              </Typography>
+            </Box>
+
+            {order.deliveryDate ? (
+              <Box
+                layoutClassName="mb-3 flex items-center justify-between rounded-lg p-3"
+                backgroundClassName="bg-teal-50 dark:bg-teal-900/20"
+              >
+                <Box>
+                  <Typography size="sm" layoutClassName="font-semibold" textClassName="text-teal-700 dark:text-teal-300">
+                    Ngày giao dự kiến: {formatDateOnly(order.deliveryDate)}
+                  </Typography>
+                  <Typography size="sm" variant="secondary">
+                    {t(`orders.statusLabels.${order.status}`)} - {t(`orders.paymentStatusLabels.${order.paymentStatus}`)}
+                  </Typography>
+                </Box>
+                <ChevronRight className="h-4 w-4 text-teal-600 dark:text-teal-300" />
+              </Box>
+            ) : null}
 
             <Box
-              layoutClassName="mb-4 flex flex-col gap-2 rounded-lg p-3"
-              backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+              layoutClassName="mb-3 grid grid-cols-1 gap-2 rounded-lg p-3"
+              backgroundClassName="bg-slate-50 dark:bg-slate-700/40"
             >
-              <Box layoutClassName="flex items-center gap-3">
+              <Box layoutClassName="flex items-center gap-2">
                 <Box
-                  layoutClassName="flex h-8 w-8 shrink-0 items-center justify-center text-slate-500 dark:text-slate-400"
+                  layoutClassName="flex h-7 w-7 shrink-0 items-center justify-center text-slate-500 dark:text-slate-400"
                   roundedClassName="rounded-full"
                   borderClassName="border border-slate-200 dark:border-slate-600"
                   backgroundClassName="bg-white dark:bg-slate-700"
                 >
-                  <User className="h-4 w-4" />
+                  <User className="h-3.5 w-3.5" />
                 </Box>
-                <Box layoutClassName="flex flex-col">
-                  <Typography size="sm" layoutClassName="line-clamp-1 font-medium">
-                    {order.customer.name}
+                <Box layoutClassName="min-w-0">
+                  <Typography size="xs" variant="muted">Khách hàng</Typography>
+                  <Typography size="sm" layoutClassName="truncate font-medium">{order.customer.name}</Typography>
+                  <Typography size="xs" variant="muted" layoutClassName="truncate">
+                    {order.customer.phone || order.customer.email || '--'}
                   </Typography>
-                  {(order.customer.email || order.customer.phone) && (
-                    <Typography size="xs" variant="muted" layoutClassName="line-clamp-1">
-                      {order.customer.email || order.customer.phone}
-                    </Typography>
-                  )}
+                  <Typography size="xs" variant="muted" layoutClassName="line-clamp-1">
+                    {order.customer.address || '--'}
+                  </Typography>
                 </Box>
-              </Box>
-
-              <Box layoutClassName="flex items-center gap-3">
-                <Box
-                  layoutClassName="flex h-8 w-8 shrink-0 items-center justify-center text-slate-500 dark:text-slate-400"
-                  roundedClassName="rounded-full"
-                  borderClassName="border border-slate-200 dark:border-slate-600"
-                  backgroundClassName="bg-white dark:bg-slate-700"
-                >
-                  <Package className="h-4 w-4" />
-                </Box>
-                <Box layoutClassName="text-sm text-slate-700 dark:text-slate-300">{renderProductSummary(order)}</Box>
-              </Box>
-
-              <Box
-                layoutClassName="mt-1 flex items-center justify-between border-t border-slate-100 pt-2 dark:border-slate-600"
-              >
-                <Typography size="xs" variant="muted">
-                  {t('orders.tableTotal')}
-                </Typography>
-                <Typography size="sm" layoutClassName="font-bold text-slate-900 dark:text-white">
-                  {formatVND(order.total)}
-                </Typography>
               </Box>
             </Box>
-            <Box layoutClassName="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-600 dark:text-slate-300">
-              <Box layoutClassName="flex flex-col gap-1">
-                <Typography
-                  as="span"
-                  layoutClassName="text-[11px] font-semibold text-slate-500 dark:text-slate-400"
-                >
-                  {t('detail.payment')}
-                </Typography>
+
+            <Box layoutClassName="flex items-center justify-between border-t pt-3" borderClassName="border-slate-100 dark:border-slate-700">
+              <Box layoutClassName="flex items-center gap-2">
                 <Badge
                   size="sm"
-                  layoutClassName="inline-flex w-fit px-2 py-1 text-[11px] font-semibold whitespace-nowrap"
+                  layoutClassName="px-2 py-0.5 text-[11px] font-semibold"
+                  borderClassName="border-transparent"
+                  className={PAYMENT_METHOD_COLORS[order.paymentMethod]}
+                >
+                  {order.paymentMethod === 'BANKING' ? t('paymentMethod.banking') : t('paymentMethod.cash')}
+                </Badge>
+                <Badge
+                  size="sm"
+                  layoutClassName="px-2 py-0.5 text-[11px] font-semibold uppercase"
                   borderClassName="border-transparent"
                   className={PAYMENT_STATUS_COLORS[order.paymentStatus]}
                 >
                   {t(`orders.paymentStatusLabels.${order.paymentStatus}`)}
                 </Badge>
               </Box>
-              <Box layoutClassName="flex flex-col gap-1">
-                <Typography
-                  as="span"
-                  layoutClassName="text-[11px] font-semibold text-slate-500 dark:text-slate-400"
-                >
-                  {t('detail.paymentMethod')}
-                </Typography>
-                <Badge
-                  size="sm"
-                  layoutClassName="inline-flex w-fit px-2 py-1 text-[11px] font-semibold"
-                  borderClassName="border-transparent"
-                  className={PAYMENT_METHOD_COLORS[order.paymentMethod]}
-                >
-                  {order.paymentMethod === 'BANKING' ? t('paymentMethod.banking') : t('paymentMethod.cash')}
-                </Badge>
-              </Box>
-
-              <Typography as="span" size="xs" layoutClassName="block">
-                {t('orders.labelCreated')}: {formatDateTime(order.createdAt)}{' '}
-                {order.createdBy ? `(${order.createdBy})` : ''}
-              </Typography>
-              <Typography as="span" size="xs" layoutClassName="block">
-                {t('orders.labelUpdated')}: {formatDateTime(order.updatedAt)}{' '}
-                {order.updatedBy ? `(${order.updatedBy})` : ''}
-              </Typography>
             </Box>
+
+            <Typography as="span" size="xs" variant="muted" layoutClassName="mt-2 block">
+              {t('orders.labelCreated')}: {formatDateTime(order.createdAt)}
+            </Typography>
           </Card>
         ))
       ) : (

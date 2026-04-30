@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Order } from '@/types';
+import { getAllUsers } from '@/services/userService';
 import { parseDateValue } from '@/utils/dateUtil';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -29,15 +30,30 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
   const [selectedMonth, setSelectedMonth] = useState(''); // Format: YYYY-MM
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('All');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('All');
+  const [creatorFilter, setCreatorFilter] = useState('');
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
   const [dateType, setDateType] = useState<'orderDate' | 'deliveryDate'>('orderDate');
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [creatorOptions, setCreatorOptions] = useState<string[]>([]);
 
   const [sortField, setSortField] = useState<keyof Order>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    const loadCreatorOptions = async () => {
+      const users = await getAllUsers();
+      const creators = users
+        .map((user) => user.customName || user.displayName || user.email)
+        .filter((name): name is string => Boolean(name && name.trim()))
+        .map((name) => name.trim());
+      const uniqueCreators = Array.from(new Set(creators)).sort((a, b) => a.localeCompare(b, 'vi'));
+      setCreatorOptions(uniqueCreators);
+    };
+    loadCreatorOptions();
+  }, []);
 
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
@@ -74,6 +90,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
 
       const matchesPaymentStatus = paymentStatusFilter === 'All' || order.paymentStatus === paymentStatusFilter;
       const matchesPaymentMethod = paymentMethodFilter === 'All' || order.paymentMethod === paymentMethodFilter;
+      const matchesCreator = !creatorFilter || (order.createdBy && order.createdBy.toLowerCase().includes(creatorFilter.toLowerCase().trim()));
 
       let matchesRange = true;
       if (dateFrom || dateTo) {
@@ -99,7 +116,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
         }
       }
 
-      return matchesSearch && matchesStatus && matchesProduct && matchesDate && matchesPaymentStatus && matchesPaymentMethod && matchesRange;
+      return matchesSearch && matchesStatus && matchesProduct && matchesDate && matchesPaymentStatus && matchesPaymentMethod && matchesCreator && matchesRange;
     }).sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
@@ -127,12 +144,12 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
       if (aStr > bStr) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [orders, searchTerm, statusFilter, sortField, sortDirection, productFilter, selectedMonth, paymentStatusFilter, paymentMethodFilter, dateFrom, dateTo, dateType]);
+  }, [orders, searchTerm, statusFilter, sortField, sortDirection, productFilter, selectedMonth, paymentStatusFilter, paymentMethodFilter, creatorFilter, dateFrom, dateTo, dateType]);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, productFilter, selectedMonth, paymentStatusFilter, paymentMethodFilter, dateFrom, dateTo, dateType]);
+  }, [searchTerm, statusFilter, productFilter, selectedMonth, paymentStatusFilter, paymentMethodFilter, creatorFilter, dateFrom, dateTo, dateType]);
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
@@ -225,6 +242,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
       <OrderFiltersModal
         isOpen={isAdvancedOpen}
         onClose={() => setIsAdvancedOpen(false)}
+        creatorOptions={creatorOptions}
         initialValues={{
           searchTerm,
           statusFilter,
@@ -232,6 +250,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
           selectedMonth,
           paymentStatusFilter,
           paymentMethodFilter,
+          creatorFilter,
           dateFrom,
           dateTo,
           dateType,
@@ -243,6 +262,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
           setSelectedMonth(values.selectedMonth);
           setPaymentStatusFilter(values.paymentStatusFilter);
           setPaymentMethodFilter(values.paymentMethodFilter);
+          setCreatorFilter(values.creatorFilter);
           setDateFrom(values.dateFrom);
           setDateTo(values.dateTo);
           setDateType(values.dateType);

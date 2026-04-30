@@ -19,6 +19,7 @@ export interface OrderFiltersState {
   selectedMonth: string;
   paymentStatusFilter: string;
   paymentMethodFilter: string;
+  creatorFilter: string;
   dateFrom: string;
   dateTo: string;
   dateType: 'orderDate' | 'deliveryDate';
@@ -27,11 +28,12 @@ export interface OrderFiltersState {
 interface OrderFiltersModalProps {
   isOpen: boolean;
   initialValues: OrderFiltersState;
+  creatorOptions: string[];
   onClose: () => void;
   onApply: (values: OrderFiltersState) => void;
 }
 
-const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialValues, onClose, onApply }) => {
+const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialValues, creatorOptions, onClose, onApply }) => {
   const { t, language } = useLanguage();
   const [values, setValues] = useState<OrderFiltersState>(initialValues);
   const { show, isAnimating } = useFadeAnimation(isOpen, true);
@@ -97,6 +99,7 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
       selectedMonth: '',
       paymentStatusFilter: 'All',
       paymentMethodFilter: 'All',
+      creatorFilter: '',
       dateFrom: '',
       dateTo: '',
       dateType: 'orderDate'
@@ -208,6 +211,22 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
                 <option value="All">{t('orders.allStatus')}</option>
                 <option value="CASH">{t('paymentMethod.cash')}</option>
                 <option value="BANKING">{t('paymentMethod.banking')}</option>
+              </Select>
+            </Field>
+
+            <Field label="Người tạo đơn" htmlFor="order-filters-creator">
+              <Select
+                id="order-filters-creator"
+                fullWidth
+                value={values.creatorFilter}
+                onChange={(e) => handleChange('creatorFilter', e.target.value)}
+              >
+                <option value="">Tất cả người tạo</option>
+                {creatorOptions.map((creator) => (
+                  <option key={creator} value={creator}>
+                    {creator}
+                  </option>
+                ))}
               </Select>
             </Field>
 
