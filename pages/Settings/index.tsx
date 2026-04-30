@@ -14,6 +14,7 @@ import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
 import IconButton from '@/components/ui/IconButton';
 import Spinner from '@/components/ui/Spinner';
+import Switch from '@/components/ui/Switch';
 import Typography from '@/components/ui/Typography';
 
 interface DbCollectionConfig {
@@ -268,26 +269,11 @@ const SettingsPage: React.FC = () => {
                     </Box>
                     <Typography size="xs" variant="muted" layoutClassName="mt-0.5">{page.path}</Typography>
                   </Box>
-                  <Button
-                    type="button"
-                    onClick={() => handleToggle(pageConfigKey)}
-                    variant="ghost"
-                    disableVariantHover
-                    disableVariantTextColor
-                    sizeClassName="h-6 w-11"
-                    roundedClassName="rounded-full"
-                    layoutClassName="relative inline-flex items-center p-0"
-                    backgroundClassName={pageEnabled ? 'bg-orange-600' : 'bg-slate-300 dark:bg-slate-600'}
-                    stateClassName="transition-colors"
+                  <Switch
+                    checked={pageEnabled}
+                    onCheckedChange={() => handleToggle(pageConfigKey)}
                     aria-label={`Toggle ${pageConfigKey}`}
-                  >
-                    <Box
-                      layoutClassName="inline-block h-4 w-4 transform"
-                      roundedClassName="rounded-full"
-                      backgroundClassName="bg-white"
-                      stateClassName={`transition-transform ${pageEnabled ? 'translate-x-6' : 'translate-x-1'}`}
-                    />
-                  </Button>
+                  />
                 </Box>
 
                 {childTabs.map((tab) => {
@@ -318,26 +304,11 @@ const SettingsPage: React.FC = () => {
                           {tab.parentPath} / {tab.tabId}
                         </Typography>
                       </Box>
-                      <Button
-                        type="button"
-                        onClick={() => handleToggle(tabConfigKey)}
-                        variant="ghost"
-                        disableVariantHover
-                        disableVariantTextColor
-                        sizeClassName="h-6 w-11"
-                        roundedClassName="rounded-full"
-                        layoutClassName="relative inline-flex items-center p-0"
-                        backgroundClassName={tabEnabled ? 'bg-orange-600' : 'bg-slate-300 dark:bg-slate-600'}
-                        stateClassName="transition-colors"
+                      <Switch
+                        checked={tabEnabled}
+                        onCheckedChange={() => handleToggle(tabConfigKey)}
                         aria-label={`Toggle ${tabConfigKey}`}
-                      >
-                        <Box
-                          layoutClassName="inline-block h-4 w-4 transform"
-                          roundedClassName="rounded-full"
-                          backgroundClassName="bg-white"
-                          stateClassName={`transition-transform ${tabEnabled ? 'translate-x-6' : 'translate-x-1'}`}
-                        />
-                      </Button>
+                      />
                     </Box>
                   );
                 })}
