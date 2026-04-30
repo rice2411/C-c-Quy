@@ -13,7 +13,12 @@ const ZALO_ENDPOINT = {
   sendImageToGroup: "https://new.abitstore.vn/zalo/sendImageToGroupZalo/2",
   sendMessToGroup: "https://new.abitstore.vn/zalo/sendMessageToGroupZalo/2",
 };
-const ZALO_GROUP_ID = "165291943369399492";
+const ZALO_GROUP_IDS = [
+  //group chinh
+  "165291943369399492",
+  //group ctv minh hanh
+  "8689347864867666713",
+];
 const ZALO_SENDER_NUMBER = "84776750418";
 
 export const sendZaloMessage = async (message: string) => {
@@ -26,11 +31,15 @@ export const sendZaloMessage = async (message: string) => {
   }
 
   try {
-    await axios.post(`${url}/${shopCode}/${token}`, {
-      send_from_number: ZALO_SENDER_NUMBER,
-      send_to_groupid: ZALO_GROUP_ID,
-      message: message,
-    });
+    await Promise.all(
+      ZALO_GROUP_IDS.map((groupId) =>
+        axios.post(`${url}/${shopCode}/${token}`, {
+          send_from_number: ZALO_SENDER_NUMBER,
+          send_to_groupid: groupId,
+          message,
+        }),
+      ),
+    );
   } catch (error: any) {
     console.error(
       "Lỗi khi gửi tin nhắn:",
@@ -64,13 +73,17 @@ export const sendMessageToGroup = async (order: any) => {
   }
 
   try {
-    await axios.post(`${url}/${shopCode}/${token}`, {
-      caption: `QR thanh toán đơn ${orderNumber}`,
-      image_url: [qrUrl],
-      message,
-      send_from_number: ZALO_SENDER_NUMBER,
-      send_to_groupid: ZALO_GROUP_ID,
-    });
+    await Promise.all(
+      ZALO_GROUP_IDS.map((groupId) =>
+        axios.post(`${url}/${shopCode}/${token}`, {
+          caption: `QR thanh toán đơn ${orderNumber}`,
+          image_url: [qrUrl],
+          message,
+          send_from_number: ZALO_SENDER_NUMBER,
+          send_to_groupid: groupId,
+        }),
+      ),
+    );
   } catch (error: any) {
     console.error(
       "Lỗi khi gửi tin nhắn kèm QR đơn hàng:",

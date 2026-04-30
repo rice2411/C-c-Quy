@@ -14,13 +14,16 @@ import BaseModal from '@/components/BaseModal';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import { Order } from '@/types';
+import { UserRole } from '@/types/user';
 import { exportOrdersToExcel, ExportColumn, getOrderTotal } from '@/utils/orderUtils';
 import { parseDateValue } from '@/utils/dateUtil';
+import toast from 'react-hot-toast';
 
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   orders: Order[]; // Receive full order list to handle filtering internally
+  userRole?: UserRole;
 }
 
 // Define available columns configuration
@@ -41,8 +44,9 @@ const AVAILABLE_COLUMNS: ExportColumn[] = [
   { id: 'note', label: 'Note', field: (o) => o.note },
 ];
 
-const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders }) => {
+const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, userRole }) => {
   const { t, language } = useLanguage();
+  const canExportOrders = userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN;
 
   // State: Range Selection
   const [rangeType, setRangeType] = useState<'month' | 'all' | 'custom'>('month');
@@ -213,6 +217,10 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders }) =>
   };
 
   const handleExport = () => {
+    if (!canExportOrders) {
+      toast.error('Only admin or super admin can export orders');
+      return;
+    }
     exportOrdersToExcel(filteredOrders, activeColumns, headerColor);
     onClose();
   };

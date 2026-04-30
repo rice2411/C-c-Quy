@@ -20,6 +20,8 @@ const OrdersPage: React.FC = () => {
   const { orders, createNewOrder, modifyOrder, removeOrder, refreshOrders } = useOrders();
   const { t } = useLanguage();
   const canPermanentDelete = userData?.role === UserRole.SUPER_ADMIN;
+  const canExportOrders =
+    userData?.role === UserRole.ADMIN || userData?.role === UserRole.SUPER_ADMIN;
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
@@ -95,6 +97,14 @@ const OrdersPage: React.FC = () => {
     }
   };
 
+  const handleOpenExportModal = () => {
+    if (!canExportOrders) {
+      toast.error('Only admin or super admin can export orders');
+      return;
+    }
+    setIsExportModalOpen(true);
+  };
+
   return (
     <Box layoutClassName="relative h-full">
       <Box layoutClassName="mb-4 flex flex-col items-center justify-end gap-3 sm:flex-row">
@@ -122,7 +132,7 @@ const OrdersPage: React.FC = () => {
           </Button>
           <Button
             type="button"
-            onClick={() => setIsExportModalOpen(true)}
+            onClick={handleOpenExportModal}
             variant="secondary"
             disableVariantHover
             disableVariantTextColor
@@ -209,7 +219,12 @@ const OrdersPage: React.FC = () => {
         onCancel={() => setIsOrderFormOpen(false)}
       />
 
-      <ExportModal isOpen={isExportModalOpen} onClose={() => setIsExportModalOpen(false)} orders={orders} />
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        orders={orders}
+        userRole={userData?.role}
+      />
 
       <ConfirmModal
         isOpen={isDeleteModalOpen}
