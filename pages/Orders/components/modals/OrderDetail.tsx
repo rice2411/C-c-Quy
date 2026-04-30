@@ -11,6 +11,7 @@ import {
   Receipt,
   Sparkles,
   StickyNote,
+  Trash2,
   Truck,
   User,
   Wallet,
@@ -34,10 +35,12 @@ interface OrderDetailProps {
   order: Order | null;
   onClose: () => void;
   onEdit?: () => void;
+  onDelete?: () => void;
+  canDelete?: boolean;
   onUpdateOrder?: (id: string, data: Partial<Order>) => Promise<void>;
 }
 
-const OrderDetail: React.FC<OrderDetailProps> = ({ isOpen, order, onClose, onEdit, onUpdateOrder }) => {
+const OrderDetail: React.FC<OrderDetailProps> = ({ isOpen, order, onClose, onEdit, onDelete, canDelete = false, onUpdateOrder }) => {
   const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState<'details' | 'ai'>('details');
   const [aiResponse, setAiResponse] = useState<string>('');
@@ -167,6 +170,26 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ isOpen, order, onClose, onEdi
           disableVariantTextColor
         >
           {t('detail.edit')}
+        </Button>
+      ) : null}
+      {canDelete && onDelete ? (
+        <Button
+          type="button"
+          onClick={onDelete}
+          variant="secondary"
+          disableVariantHover
+          disableVariantTextColor
+          borderClassName="border border-red-200 dark:border-red-700/50"
+          backgroundClassName="bg-red-50 dark:bg-red-900/20"
+          hoverClassName="hover:bg-red-100 dark:hover:bg-red-900/30"
+          textClassName="text-sm font-medium text-red-700 dark:text-red-300"
+          roundedClassName="rounded-lg"
+          layoutClassName="px-4 py-2"
+          stateClassName="transition-colors"
+          leftIcon={<Trash2 className="h-4 w-4" />}
+          iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+        >
+          {t('orders.delete')}
         </Button>
       ) : null}
     </Box>

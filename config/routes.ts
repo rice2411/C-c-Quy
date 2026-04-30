@@ -1,9 +1,19 @@
-import { UserRole } from '@/types/user';
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings, ArrowRightLeft, UserCog, Building2, Bell } from 'lucide-react';
-import { LucideIcon } from 'lucide-react';
-import { ScreenVisibilityMap } from '@/types';
+import { UserRole } from "@/types/user";
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Package,
+  Users,
+  Settings,
+  ArrowRightLeft,
+  UserCog,
+  Building2,
+  Bell,
+} from "lucide-react";
+import { LucideIcon } from "lucide-react";
+import { ScreenVisibilityMap } from "@/types";
 
-export type RouteType = 'page' | 'tab';
+export type RouteType = "page" | "tab";
 
 export interface RouteConfig {
   type: RouteType;
@@ -17,7 +27,7 @@ export interface RouteConfig {
 }
 
 export const getRouteConfigKey = (route: RouteConfig): string => {
-  if (route.type === 'tab' && route.parentPath && route.tabId) {
+  if (route.type === "tab" && route.parentPath && route.tabId) {
     return `${route.parentPath}#${route.tabId}`;
   }
   return route.path;
@@ -28,86 +38,86 @@ export const getRouteConfigKey = (route: RouteConfig): string => {
  */
 export const routes: RouteConfig[] = [
   {
-    type: 'page',
-    path: '/',
-    labelKey: 'nav.dashboard',
+    type: "page",
+    path: "/",
+    labelKey: "nav.dashboard",
     icon: LayoutDashboard,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR]
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
-    type: 'page',
-    path: '/orders',
-    labelKey: 'nav.orders',
+    type: "page",
+    path: "/orders",
+    labelKey: "nav.orders",
     icon: ShoppingCart,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR]
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR],
   },
   {
-    type: 'page',
-    path: '/transactions',
-    labelKey: 'nav.transactions',
+    type: "page",
+    path: "/transactions",
+    labelKey: "nav.transactions",
     icon: ArrowRightLeft,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN]
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
-    type: 'page',
-    path: '/storage',
-    labelKey: 'nav.inventory',
-    icon: Package,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN]
-  },
-  {
-    type: 'page',
-    path: '/customers',
-    labelKey: 'nav.customers',
-    icon: Users,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR]
-  },
-  {
-    type: 'page',
-    path: '/suppliers',
-    labelKey: 'nav.suppliers',
-    icon: Building2,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR]
-  },
-  {
-    type: 'page',
-    path: '/users',
-    labelKey: 'nav.users',
-    icon: UserCog,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN] // Chỉ admin mới quản lý users
-  },
-  {
-    type: 'page',
-    path: '/notifications',
-    labelKey: 'nav.notifications',
-    icon: Bell,
-    roles: [UserRole.SUPER_ADMIN]
-  },
-  {
-    type: 'page',
-    path: '/settings',
-    labelKey: 'nav.settings',
-    icon: Settings,
-    roles: [UserRole.SUPER_ADMIN]
-  }
-];
-
-export const storageTabRoutes: RouteConfig[] = [
-  {
-    type: 'tab',
-    path: '/storage',
-    parentPath: '/storage',
-    tabId: 'products',
-    labelKey: 'inventory.productsTab',
+    type: "page",
+    path: "/storage",
+    labelKey: "nav.inventory",
     icon: Package,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
-    type: 'tab',
-    path: '/storage',
-    parentPath: '/storage',
-    tabId: 'ingredients',
-    labelKey: 'inventory.ingredientsTab',
+    type: "page",
+    path: "/customers",
+    labelKey: "nav.customers",
+    icon: Users,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR],
+  },
+  {
+    type: "page",
+    path: "/suppliers",
+    labelKey: "nav.suppliers",
+    icon: Building2,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/users",
+    labelKey: "nav.users",
+    icon: UserCog,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN], // Chỉ admin mới quản lý users
+  },
+  {
+    type: "page",
+    path: "/notifications",
+    labelKey: "nav.notifications",
+    icon: Bell,
+    roles: [UserRole.SUPER_ADMIN],
+  },
+  {
+    type: "page",
+    path: "/settings",
+    labelKey: "nav.settings",
+    icon: Settings,
+    roles: [UserRole.SUPER_ADMIN],
+  },
+];
+
+export const storageTabRoutes: RouteConfig[] = [
+  {
+    type: "tab",
+    path: "/storage",
+    parentPath: "/storage",
+    tabId: "products",
+    labelKey: "inventory.productsTab",
+    icon: Package,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "tab",
+    path: "/storage",
+    parentPath: "/storage",
+    tabId: "ingredients",
+    labelKey: "inventory.ingredientsTab",
     icon: Package,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
@@ -116,38 +126,43 @@ export const storageTabRoutes: RouteConfig[] = [
 /**
  * Kiểm tra xem role có quyền truy cập route không
  */
-export const hasRoutePermission = (routePath: string, userRole: UserRole | undefined): boolean => {
+export const hasRoutePermission = (
+  routePath: string,
+  userRole: UserRole | undefined,
+): boolean => {
   if (!userRole) return false;
-  
-  const route = routes.find(r => r.path === routePath);
+
+  const route = routes.find((r) => r.path === routePath);
   if (!route) return false;
-  
+
   return route.roles.includes(userRole);
 };
 
 /**
  * Normalize role từ string hoặc enum về UserRole enum
  */
-const normalizeRole = (role: UserRole | string | undefined): UserRole | undefined => {
+const normalizeRole = (
+  role: UserRole | string | undefined,
+): UserRole | undefined => {
   if (!role) return undefined;
-  
+
   // Nếu đã là enum, return luôn
   if (Object.values(UserRole).includes(role as UserRole)) {
     return role as UserRole;
   }
-  
+
   // Nếu là string, thử match với enum values
   const roleString = String(role).toLowerCase();
-  if (roleString === 'super_admin' || roleString === UserRole.SUPER_ADMIN) {
+  if (roleString === "super_admin" || roleString === UserRole.SUPER_ADMIN) {
     return UserRole.SUPER_ADMIN;
   }
-  if (roleString === 'admin' || roleString === UserRole.ADMIN) {
+  if (roleString === "admin" || roleString === UserRole.ADMIN) {
     return UserRole.ADMIN;
   }
-  if (roleString === 'colaborator' || roleString === UserRole.COLABORATOR) {
+  if (roleString === "colaborator" || roleString === UserRole.COLABORATOR) {
     return UserRole.COLABORATOR;
   }
-  
+
   return undefined;
 };
 
@@ -156,14 +171,14 @@ const normalizeRole = (role: UserRole | string | undefined): UserRole | undefine
  */
 export const getAccessibleRoutes = (
   userRole: UserRole | string | undefined,
-  screenVisibility: ScreenVisibilityMap = {}
+  screenVisibility: ScreenVisibilityMap = {},
 ): RouteConfig[] => {
   const normalizedRole = normalizeRole(userRole);
-  
+
   if (!normalizedRole) {
     return [];
   }
-  
+
   return routes
     .filter((route) => route.roles.includes(normalizedRole))
     .map((route) => {
@@ -178,7 +193,7 @@ export const getAccessibleRoutes = (
 
 export const getAccessibleStorageTabs = (
   userRole: UserRole | string | undefined,
-  screenVisibility: ScreenVisibilityMap = {}
+  screenVisibility: ScreenVisibilityMap = {},
 ): RouteConfig[] => {
   const normalizedRole = normalizeRole(userRole);
   if (!normalizedRole) return [];
@@ -193,4 +208,3 @@ export const getAccessibleStorageTabs = (
       };
     });
 };
-

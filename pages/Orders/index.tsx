@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Download, Package, Plus, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/contexts/OrderContext';
 import { Order } from '@/types';
+import { UserRole } from '@/types/user';
 import ConfirmModal from '@/components/ConfirmModal';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -14,8 +16,10 @@ import OrderForm from '@/pages/Orders/components/modals/OrderForm';
 import OrderList from '@/pages/Orders/components/OrderList';
 
 const OrdersPage: React.FC = () => {
+  const { userData } = useAuth();
   const { orders, createNewOrder, modifyOrder, removeOrder, refreshOrders } = useOrders();
   const { t } = useLanguage();
+  const canPermanentDelete = userData?.role === UserRole.SUPER_ADMIN;
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
@@ -44,6 +48,9 @@ const OrdersPage: React.FC = () => {
   };
 
   const handleDeleteClick = (orderId: string) => {
+    if (!canPermanentDelete) {
+      return;
+    }
     setDeleteId(orderId);
     setIsDeleteModalOpen(true);
   };
@@ -54,6 +61,7 @@ const OrdersPage: React.FC = () => {
     setIsDeleting(true);
     try {
       await removeOrder(deleteId);
+      setSelectedOrder(null);
       setIsDeleteModalOpen(false);
       setDeleteId(null);
     } catch (error) {
@@ -189,6 +197,8 @@ const OrdersPage: React.FC = () => {
         order={selectedOrder}
         onClose={() => setSelectedOrder(null)}
         onEdit={() => selectedOrder && handleEditOrder(selectedOrder)}
+        onDelete={() => selectedOrder && handleDeleteClick(selectedOrder.id)}
+        canDelete={canPermanentDelete}
         onUpdateOrder={modifyOrder}
       />
 
