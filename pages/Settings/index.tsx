@@ -12,11 +12,11 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
-import IconButton from '@/components/ui/IconButton';
 import Spinner from '@/components/ui/Spinner';
 import Switch from '@/components/ui/Switch';
 import Typography from '@/components/ui/Typography';
 import ZaloSettingsTab from '@/pages/Settings/ZaloSettingsTab';
+import ProductDatabaseToolsPanel from '@/pages/Settings/ProductDatabaseToolsPanel';
 
 interface DbCollectionConfig {
   id: string;
@@ -370,10 +370,13 @@ const SettingsPage: React.FC = () => {
               Database Explorer
             </Typography>
             <Typography size="xs" variant="muted" layoutClassName="mt-1">
-              Hiển thị toàn bộ record của bảng được chọn.
+              Danh sách bảng và record bên trái; công cụ bulk cho collection{' '}
+              <span className="font-mono text-[11px] text-slate-600 dark:text-slate-400">products</span> bên phải — màn hẹp: cuộn xuống để dùng cả hai.
             </Typography>
           </Card>
 
+          <Box layoutClassName="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
+            <Box layoutClassName="min-w-0 space-y-4 lg:col-span-7">
           <Box layoutClassName="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <Card padding="none" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="overflow-hidden">
               <Box
@@ -498,6 +501,19 @@ const SettingsPage: React.FC = () => {
                 )}
               </Box>
             </Card>
+          </Box>
+            </Box>
+
+            <Box
+              layoutClassName="min-w-0 lg:col-span-5 lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:pr-1"
+              borderClassName="lg:border-l lg:border-slate-200 lg:pl-4 lg:dark:border-slate-700"
+            >
+              <ProductDatabaseToolsPanel
+                onMutate={() => {
+                  void loadCollectionRecords('products');
+                }}
+              />
+            </Box>
           </Box>
         </Card>
       )}
