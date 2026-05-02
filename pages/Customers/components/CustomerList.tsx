@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Customer } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 import CustomerFilters from './CustomerFilters';
 import CustomerTable from './desktop/CustomerTable';
 import CustomerCardList from './mobile/CustomerCardList';
@@ -13,6 +14,7 @@ interface CustomerListProps {
 }
 
 const CustomerList: React.FC<CustomerListProps> = ({ customers, customerStats, onEdit, onDelete }) => {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredCustomers = useMemo(
@@ -25,23 +27,34 @@ const CustomerList: React.FC<CustomerListProps> = ({ customers, customerStats, o
     [customers, searchTerm]
   );
 
+  const emptyMessage = useMemo(() => {
+    if (filteredCustomers.length > 0) return '';
+    if (searchTerm.trim() && customers.length > 0) return t('customers.searchEmpty');
+    return t('customers.noData');
+  }, [filteredCustomers.length, searchTerm, customers.length, t]);
+
+  const toolbarHint = t('customers.listToolbarHint')
+    .replace('{{filtered}}', String(filteredCustomers.length))
+    .replace('{{total}}', String(customers.length));
+
   return (
     <Card
       padding="none"
-      layoutClassName="flex h-full flex-col overflow-hidden animate-fade-in"
-      borderClassName="border border-slate-100 dark:border-slate-700"
+      layoutClassName="flex h-full min-h-0 flex-1 flex-col overflow-hidden animate-fade-in"
+      borderClassName="border border-slate-200/90 dark:border-slate-700"
       backgroundClassName="bg-white dark:bg-slate-800"
-      roundedClassName="rounded-xl"
-      shadowClassName="shadow-sm"
+      roundedClassName="rounded-2xl"
+      shadowClassName="shadow-sm shadow-slate-200/40 dark:shadow-none"
       stateClassName="transition-colors"
     >
-      <CustomerFilters searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+      <CustomerFilters searchTerm={searchTerm} onSearchChange={setSearchTerm} toolbarHint={toolbarHint} />
 
       <CustomerTable
         customers={filteredCustomers}
         customerStats={customerStats}
         onEdit={onEdit}
         onDelete={onDelete}
+        emptyMessage={emptyMessage}
       />
 
       <CustomerCardList
@@ -49,6 +62,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ customers, customerStats, o
         customerStats={customerStats}
         onEdit={onEdit}
         onDelete={onDelete}
+        emptyMessage={emptyMessage}
       />
     </Card>
   );

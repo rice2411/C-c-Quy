@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Order } from "@/types";
 import { PaymentMethod } from "@/types/enums";
+import { getZaloMainGroupIdOrFallback } from "@/config/zaloEnv";
 import { generateQRCodeImage, getOrderTotal } from "@/utils/orderUtils";
 import {
   formatDeliveryDueMessage,
@@ -13,15 +14,9 @@ const ZALO_ENDPOINT = {
   sendImageToGroup: "https://new.abitstore.vn/zalo/sendImageToGroupZalo/2",
   sendMessToGroup: "https://new.abitstore.vn/zalo/sendMessageToGroupZalo/2",
 };
-const ZALO_GROUP_IDS = [
-  //group chinh
-  "165291943369399492",
-  //group ctv minh hanh
-  "8689347864867666713",
-];
 const ZALO_SENDER_NUMBER = "84776750418";
 
-export const sendZaloMessage = async (message: string) => {
+const postTextToGroups = async (groupIds: string[], message: string) => {
   const url = ZALO_ENDPOINT.sendMessToGroup;
   const shopCode = process.env.ZALO_SHOP_CODE;
   const token = process.env.ZALO_TOKEN;
@@ -30,16 +25,48 @@ export const sendZaloMessage = async (message: string) => {
     throw new Error("Zalo configuration is missing");
   }
 
+  await Promise.all(
+    groupIds.map((groupId) =>
+      axios.post(`${url}/${shopCode}/${token}`, {
+        send_from_number: ZALO_SENDER_NUMBER,
+        send_to_groupid: groupId,
+        message,
+      }),
+    ),
+  );
+};
+
+const postImageToGroups = async (
+  groupIds: string[],
+  body: {
+    caption: string;
+    image_url: string[];
+    message: string;
+  },
+) => {
+  const url = ZALO_ENDPOINT.sendImageToGroup;
+  const shopCode = process.env.ZALO_SHOP_CODE;
+  const token = process.env.ZALO_TOKEN;
+  if (!url || !shopCode || !token) {
+    throw new Error("Zalo configuration is missing");
+  }
+
+  await Promise.all(
+    groupIds.map((groupId) =>
+      axios.post(`${url}/${shopCode}/${token}`, {
+        ...body,
+        send_from_number: ZALO_SENDER_NUMBER,
+        send_to_groupid: groupId,
+      }),
+    ),
+  );
+};
+
+/** Broadcast-style messages: main group from env (with legacy fallback). */
+export const sendZaloMessage = async (message: string) => {
+  const mainIds = [getZaloMainGroupIdOrFallback()];
   try {
-    await Promise.all(
-      ZALO_GROUP_IDS.map((groupId) =>
-        axios.post(`${url}/${shopCode}/${token}`, {
-          send_from_number: ZALO_SENDER_NUMBER,
-          send_to_groupid: groupId,
-          message,
-        }),
-      ),
-    );
+    await postTextToGroups(mainIds, message);
   } catch (error: any) {
     console.error(
       "Lỗi khi gửi tin nhắn:",
@@ -49,18 +76,24 @@ export const sendZaloMessage = async (message: string) => {
   }
 };
 
-export const sendMessageToGroup = async (order: any) => {
+/** New order: send to explicit group ids (from order routing). */
+export const sendNewOrderZaloNotifications = async (
+  order: any,
+  groupIds: string[],
+) => {
+  if (groupIds.length === 0) return;
+
   const message = formatOrderMessage(order);
   const isBankingOrder = order?.paymentMethod === PaymentMethod.BANKING;
+
   if (!isBankingOrder) {
-    await sendZaloMessage(message);
+    await postTextToGroups(groupIds, message);
     return;
   }
 
-  const url = ZALO_ENDPOINT.sendImageToGroup;
   const shopCode = process.env.ZALO_SHOP_CODE;
   const token = process.env.ZALO_TOKEN;
-  if (!url || !shopCode || !token) {
+  if (!shopCode || !token) {
     throw new Error("Zalo configuration is missing");
   }
 
@@ -68,22 +101,16 @@ export const sendMessageToGroup = async (order: any) => {
   const amount = getOrderTotal(order);
   const qrUrl = generateQRCodeImage(orderNumber, amount);
   if (!orderNumber || !amount || !qrUrl) {
-    await sendZaloMessage(message);
+    await postTextToGroups(groupIds, message);
     return;
   }
 
   try {
-    await Promise.all(
-      ZALO_GROUP_IDS.map((groupId) =>
-        axios.post(`${url}/${shopCode}/${token}`, {
-          caption: `QR thanh toán đơn ${orderNumber}`,
-          image_url: [qrUrl],
-          message,
-          send_from_number: ZALO_SENDER_NUMBER,
-          send_to_groupid: groupId,
-        }),
-      ),
-    );
+    await postImageToGroups(groupIds, {
+      caption: `QR thanh toán đơn ${orderNumber}`,
+      image_url: [qrUrl],
+      message,
+    });
   } catch (error: any) {
     console.error(
       "Lỗi khi gửi tin nhắn kèm QR đơn hàng:",

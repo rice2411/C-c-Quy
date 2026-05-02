@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { AlertCircle, Calendar, Clock, Hash, Save } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { collaboratorHasZaloGroup } from '@/services/configurationService';
+import { UserRole } from '@/types/user';
 import { useCustomers } from '@/contexts/CustomerContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getNextOrderNumber } from '@/services/orderService';
@@ -37,7 +40,7 @@ export interface FormItem {
 }
 const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCancel }) => {
   const { t } = useLanguage();
-  const { currentUser } = useAuth();
+  const { currentUser, userData } = useAuth();
   const { customers, createNewCustomer } = useCustomers();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -241,9 +244,21 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   };
 
   const submitOrderData = async (formData: any) => {
+    if (userData?.role === UserRole.COLABORATOR && currentUser?.uid) {
+      const ok = await collaboratorHasZaloGroup(currentUser.uid);
+      if (!ok) {
+        toast.error(
+          'Bạn chưa được thêm vào nhóm Zalo. Hãy liên hệ quản trị viên.',
+        );
+        setPendingOrderData(null);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       await onSave(formData);
+      setPendingOrderData(null);
     } catch (err: any) {
       setError(err.message || "Failed to save order");
     } finally {

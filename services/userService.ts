@@ -2,6 +2,7 @@ import { doc, setDoc, getDoc, Timestamp, collection, query, where, getDocs } fro
 import { User } from 'firebase/auth';
 import { db } from '@/config/firebase';
 import { UserData, UserRole, UserStatus } from '@/types/user';
+import type { ZaloGroupConfig } from '@/types';
 
 /**
  * Kiểm tra xem user với email đã tồn tại trong Firestore chưa
@@ -17,8 +18,8 @@ export const getUserByEmail = async (email: string | null): Promise<UserData | n
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-      const doc = querySnapshot.docs[0];
-      return doc.data() as UserData;
+      const userDoc = querySnapshot.docs[0];
+      return { ...userDoc.data(), uid: userDoc.id } as UserData;
     }
 
     return null;
@@ -163,6 +164,37 @@ export const updateUserRole = async (uid: string, role: UserRole): Promise<void>
     await setDoc(userRef, { role }, { merge: true });
   } catch (error) {
     console.error('Error updating user role:', error);
+    throw error;
+  }
+};
+
+/**
+ * Writes zaloCtvGroupChatId on each user doc from Zalo group membership (clears when not in any group).
+ */
+export const syncZaloCtvGroupFieldsFromGroups = async (
+  groups: ZaloGroupConfig[]
+): Promise<void> => {
+  const uidToChat = new Map<string, string>();
+  for (const g of groups) {
+    const chat = g.zaloGroupId.trim();
+    if (!chat) continue;
+    for (const uid of g.memberUids) {
+      uidToChat.set(uid, chat);
+    }
+  }
+
+  try {
+    const usersRef = collection(db, 'users');
+    const snapshot = await getDocs(usersRef);
+    await Promise.all(
+      snapshot.docs.map((d) => {
+        const uid = d.id;
+        const zaloCtvGroupChatId = uidToChat.get(uid) ?? null;
+        return setDoc(doc(db, 'users', uid), { zaloCtvGroupChatId }, { merge: true });
+      })
+    );
+  } catch (error) {
+    console.error('Error syncing Zalo fields to users:', error);
     throw error;
   }
 };

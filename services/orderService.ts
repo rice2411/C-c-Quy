@@ -12,7 +12,8 @@ import {
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
 import { Order, PaymentMethod, PaymentStatus } from "@/types"; 
-import { sendMessageToGroup } from "./zaloService";
+import { resolveZaloGroupIdsForNewOrder } from "./configurationService";
+import { sendNewOrderZaloNotifications } from "./zaloService";
 import { getUserByUid } from "./userService";
 
 /**
@@ -113,8 +114,11 @@ export const addOrder = async (orderData: Order): Promise<void> => {
       paymentMethod: orderData.paymentMethod || PaymentMethod.CASH,
       createdBy: orderData.createdBy || undefined,
     };
+    const zaloGroupIds = await resolveZaloGroupIdsForNewOrder(
+      orderData.createdBy as string | undefined,
+    );
     await addDoc(ordersRef, payload);
-    await sendMessageToGroup(payload as any);
+    await sendNewOrderZaloNotifications(payload as any, zaloGroupIds);
   } catch (error) {
     console.error("Error adding order:", error);
     throw error;

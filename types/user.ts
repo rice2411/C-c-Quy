@@ -14,6 +14,8 @@ export interface UserData {
   createdAt: string;
   lastLoginAt: string;
   role: UserRole;
+  /** Zalo group chat id (API) when user is a CTV assigned to a Zalo group; synced from Settings → Zalo */
+  zaloCtvGroupChatId?: string | null;
 }
 
 export enum UserRole {

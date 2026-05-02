@@ -64,6 +64,7 @@ export default defineConfig(({ mode }) => {
       "process.env.ZALO_SHOP_CODE": JSON.stringify(env.ZALO_SHOP_CODE),
       "process.env.ZALO_TOKEN": JSON.stringify(env.ZALO_TOKEN),
       "process.env.ZALO_URL": JSON.stringify(env.ZALO_URL),
+      "process.env.ZALO_MAIN_GROUP_ID": JSON.stringify(env.ZALO_MAIN_GROUP_ID ?? ""),
     },
     resolve: {
       alias: {

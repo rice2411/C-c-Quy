@@ -8,3 +8,4 @@ export * from './stat';
 export * from './user';
 export * from './supplier';
 export * from './configuration';
+export * from './zaloConfig';
