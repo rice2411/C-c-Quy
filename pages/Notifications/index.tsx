@@ -1,5 +1,16 @@
-import React, { useMemo, useState } from 'react';
-import { Bell, Calendar, Clock, DollarSign, MessageSquare, Package, Send } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Bell,
+  Calendar,
+  Clock,
+  DollarSign,
+  MessageSquare,
+  MessageCircle,
+  Package,
+  Receipt,
+  Send,
+  Users,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/contexts/OrderContext';
@@ -7,7 +18,7 @@ import {
   sendCustomNotification,
   sendDeliveryDueNotification,
   sendPendingOrdersNotification,
-  sendUnpaidOrdersNotification
+  sendUnpaidOrdersNotification,
 } from '@/services/zaloService';
 import { OrderStatus, PaymentStatus } from '@/types';
 import { parseDateValue } from '@/utils/dateUtil';
@@ -21,24 +32,59 @@ import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
 import Textarea from '@/components/ui/Textarea';
 import Typography from '@/components/ui/Typography';
+import Tabs, { TabsItem } from '@/components/ui/Tabs';
 
 type NotificationType = 'unpaid' | 'pending' | 'delivery' | 'custom';
+
+type NotificationGroupId = 'zalo' | 'customers' | 'orders' | 'transactions';
+
+const GROUP_ORDER: NotificationGroupId[] = ['orders', 'zalo', 'customers', 'transactions'];
+
+const GROUP_META: Record<
+  NotificationGroupId,
+  { titleKey: string; descKey: string; SectionIcon: typeof MessageCircle }
+> = {
+  zalo: {
+    titleKey: 'notifications.groups.zalo',
+    descKey: 'notifications.groups.zaloDesc',
+    SectionIcon: MessageCircle,
+  },
+  customers: {
+    titleKey: 'notifications.groups.customers',
+    descKey: 'notifications.groups.customersDesc',
+    SectionIcon: Users,
+  },
+  orders: {
+    titleKey: 'notifications.groups.orders',
+    descKey: 'notifications.groups.ordersDesc',
+    SectionIcon: Package,
+  },
+  transactions: {
+    titleKey: 'notifications.groups.transactions',
+    descKey: 'notifications.groups.transactionsDesc',
+    SectionIcon: Receipt,
+  },
+};
 
 const NotificationsPage: React.FC = () => {
   const { t } = useLanguage();
   const { orders } = useOrders();
+  const [activeTab, setActiveTab] = useState<NotificationGroupId>('orders');
   const [selectedType, setSelectedType] = useState<NotificationType>('unpaid');
   const [isSending, setIsSending] = useState(false);
   const [customMessage, setCustomMessage] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
 
   const unpaidOrders = useMemo(() => {
-    return orders.filter((order) => order.paymentStatus === PaymentStatus.UNPAID);
+    return orders.filter(
+      (order) =>
+        order.paymentStatus === PaymentStatus.UNPAID && order.status !== OrderStatus.CANCELLED,
+    );
   }, [orders]);
 
   const pendingOrders = useMemo(() => {
     return orders.filter(
-      (order) => order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.CANCELLED
+      (order) => order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.CANCELLED,
     );
   }, [orders]);
 
@@ -62,6 +108,84 @@ const NotificationsPage: React.FC = () => {
       );
     });
   }, [orders, deliveryDate]);
+
+  const notificationOptions = useMemo(
+    () =>
+      [
+        {
+          group: 'orders' as const,
+          type: 'unpaid' as const,
+          icon: DollarSign,
+          title: t('notifications.unpaidOrders'),
+          description: t('notifications.unpaidOrdersDesc'),
+          color: 'text-red-600 dark:text-red-400',
+          bgColor: 'bg-red-50 dark:bg-red-900/20',
+          borderColor: 'border-red-200 dark:border-red-800',
+        },
+        {
+          group: 'orders' as const,
+          type: 'pending' as const,
+          icon: Clock,
+          title: t('notifications.pendingOrders'),
+          description: t('notifications.pendingOrdersDesc'),
+          color: 'text-orange-600 dark:text-orange-400',
+          bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+          borderColor: 'border-orange-200 dark:border-orange-800',
+        },
+        {
+          group: 'orders' as const,
+          type: 'delivery' as const,
+          icon: Package,
+          title: t('notifications.deliveryOrders'),
+          description: t('notifications.deliveryOrdersDesc'),
+          color: 'text-blue-600 dark:text-blue-400',
+          bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+          borderColor: 'border-blue-200 dark:border-blue-800',
+        },
+        {
+          group: 'zalo' as const,
+          type: 'custom' as const,
+          icon: MessageSquare,
+          title: t('notifications.customMessage'),
+          description: t('notifications.customMessageDesc'),
+          color: 'text-purple-600 dark:text-purple-400',
+          bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+          borderColor: 'border-purple-200 dark:border-purple-800',
+        },
+      ] as const,
+    [t],
+  );
+
+  const optionsByGroup = useMemo(() => {
+    const groups: Record<
+      NotificationGroupId,
+      (typeof notificationOptions)[number][]
+    > = {
+      zalo: [],
+      customers: [],
+      orders: [],
+      transactions: [],
+    };
+    for (const opt of notificationOptions) {
+      groups[opt.group].push(opt);
+    }
+    return groups;
+  }, [notificationOptions]);
+
+  useEffect(() => {
+    const items = optionsByGroup[activeTab];
+    if (items.length === 0) return;
+    if (!items.some((o) => o.type === selectedType)) {
+      setSelectedType(items[0].type);
+    }
+  }, [activeTab, optionsByGroup, selectedType]);
+
+  const tabItems = useMemo<TabsItem[]>(() => {
+    return GROUP_ORDER.map((id) => ({
+      id,
+      label: t(GROUP_META[id].titleKey),
+    }));
+  }, [t]);
 
   const handleSendNotification = async () => {
     if (isSending) return;
@@ -145,44 +269,9 @@ const NotificationsPage: React.FC = () => {
     }
   };
 
-  const notificationOptions = [
-    {
-      type: 'unpaid' as NotificationType,
-      icon: DollarSign,
-      title: t('notifications.unpaidOrders'),
-      description: t('notifications.unpaidOrdersDesc'),
-      color: 'text-red-600 dark:text-red-400',
-      bgColor: 'bg-red-50 dark:bg-red-900/20',
-      borderColor: 'border-red-200 dark:border-red-800'
-    },
-    {
-      type: 'pending' as NotificationType,
-      icon: Clock,
-      title: t('notifications.pendingOrders'),
-      description: t('notifications.pendingOrdersDesc'),
-      color: 'text-orange-600 dark:text-orange-400',
-      bgColor: 'bg-orange-50 dark:bg-orange-900/20',
-      borderColor: 'border-orange-200 dark:border-orange-800'
-    },
-    {
-      type: 'delivery' as NotificationType,
-      icon: Package,
-      title: t('notifications.deliveryOrders'),
-      description: t('notifications.deliveryOrdersDesc'),
-      color: 'text-blue-600 dark:text-blue-400',
-      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
-      borderColor: 'border-blue-200 dark:border-blue-800'
-    },
-    {
-      type: 'custom' as NotificationType,
-      icon: MessageSquare,
-      title: t('notifications.customMessage'),
-      description: t('notifications.customMessageDesc'),
-      color: 'text-purple-600 dark:text-purple-400',
-      bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-      borderColor: 'border-purple-200 dark:border-purple-800'
-    }
-  ];
+  const tabPanelItems = optionsByGroup[activeTab];
+  const showActionCard = tabPanelItems.length > 0;
+  const ActiveSectionIcon = GROUP_META[activeTab].SectionIcon;
 
   return (
     <Box layoutClassName="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
@@ -198,83 +287,119 @@ const NotificationsPage: React.FC = () => {
         </Typography>
       </Box>
 
-      <Box layoutClassName="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-        {notificationOptions.map((option) => {
-          const Icon = option.icon;
-          const isSelected = selectedType === option.type;
-          const count = option.type !== 'custom' ? getOrderCountByType(option.type) : null;
+      <Box layoutClassName="relative flex flex-col space-y-6">
+        <Tabs
+          items={tabItems}
+          value={activeTab}
+          onChange={(id) => setActiveTab(id as NotificationGroupId)}
+        />
 
-          return (
-            <Button
-              key={option.type}
-              type="button"
-              variant="ghost"
-              disableVariantHover={isSelected}
-              disableVariantTextColor
-              sizeClassName="!min-h-0 !p-0"
-              roundedClassName="rounded-xl"
-              borderClassName={
-                isSelected
-                  ? `border-2 ${option.borderColor}`
-                  : 'border-2 border-slate-200 dark:border-slate-700'
-              }
-              backgroundClassName={isSelected ? option.bgColor : 'bg-white dark:bg-slate-800'}
-              hoverClassName={
-                isSelected
-                  ? ''
-                  : 'hover:border-slate-300 hover:bg-white dark:hover:border-slate-600 dark:hover:bg-slate-800'
-              }
-              shadowClassName={isSelected ? 'shadow-lg' : 'shadow-none'}
-              stateClassName={isSelected ? 'scale-[1.02] transition-all' : 'transition-all'}
-              layoutClassName="flex w-full flex-col items-stretch text-left"
-              textClassName="font-normal"
-              focusClassName="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
-              onClick={() => setSelectedType(option.type)}
+        <Box>
+          <Box layoutClassName="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+            <Box layoutClassName="flex items-center gap-2">
+              <ActiveSectionIcon
+                className="h-5 w-5 shrink-0 text-orange-600 dark:text-orange-400"
+                aria-hidden
+              />
+              <Heading level={2} textClassName="text-lg font-semibold text-slate-900 dark:text-white">
+                {t(GROUP_META[activeTab].titleKey)}
+              </Heading>
+            </Box>
+            <Typography size="sm" variant="muted" layoutClassName="sm:ml-1">
+              {t(GROUP_META[activeTab].descKey)}
+            </Typography>
+          </Box>
+
+          {tabPanelItems.length === 0 ? (
+            <Box
+              layoutClassName="rounded-xl border border-dashed border-slate-200 px-4 py-10 dark:border-slate-600"
+              backgroundClassName="bg-slate-50/80 dark:bg-slate-800/40"
             >
-              <Box layoutClassName="flex items-start gap-3 p-4">
-                <Box
-                  layoutClassName="p-2"
-                  roundedClassName="rounded-lg"
-                  backgroundClassName={option.bgColor}
-                >
-                  <Icon className={`h-5 w-5 ${option.color}`} />
-                </Box>
-                <Box layoutClassName="min-w-0 flex-1">
-                  <Box layoutClassName="mb-1 flex items-center justify-between gap-2">
-                    <Typography
-                      as="span"
-                      size="inherit"
-                      layoutClassName="block min-w-0"
-                      textClassName={
-                        isSelected
-                          ? `${option.color} font-semibold`
-                          : 'font-semibold text-slate-900 dark:text-white'
-                      }
-                    >
-                      {option.title}
-                    </Typography>
-                    {count !== null ? (
-                      <Badge
-                        size="sm"
-                        layoutClassName="shrink-0 px-2 py-1"
-                        borderClassName="border-transparent"
-                        backgroundClassName={option.bgColor}
-                        textClassName={`${option.color} text-sm font-bold`}
-                      >
-                        {count}
-                      </Badge>
-                    ) : null}
-                  </Box>
-                  <Typography size="sm" variant="muted">
-                    {option.description}
-                  </Typography>
-                </Box>
-              </Box>
-            </Button>
-          );
-        })}
-      </Box>
+              <Typography size="sm" variant="muted" layoutClassName="text-center">
+                {t('notifications.groups.empty')}
+              </Typography>
+            </Box>
+          ) : (
+            <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {tabPanelItems.map((option) => {
+                const Icon = option.icon;
+                const isSelected = selectedType === option.type;
+                const count = option.type !== 'custom' ? getOrderCountByType(option.type) : null;
 
+                return (
+                  <Button
+                    key={option.type}
+                    type="button"
+                    variant="ghost"
+                    disableVariantHover={isSelected}
+                    disableVariantTextColor
+                    sizeClassName="!min-h-0 !p-0"
+                    roundedClassName="rounded-xl"
+                    borderClassName={
+                      isSelected
+                        ? `border-2 ${option.borderColor}`
+                        : 'border-2 border-slate-200 dark:border-slate-700'
+                    }
+                    backgroundClassName={isSelected ? option.bgColor : 'bg-white dark:bg-slate-800'}
+                    hoverClassName={
+                      isSelected
+                        ? ''
+                        : 'hover:border-slate-300 hover:bg-white dark:hover:border-slate-600 dark:hover:bg-slate-800'
+                    }
+                    shadowClassName={isSelected ? 'shadow-lg' : 'shadow-none'}
+                    stateClassName={isSelected ? 'scale-[1.02] transition-all' : 'transition-all'}
+                    layoutClassName="flex w-full flex-col items-stretch text-left"
+                    textClassName="font-normal"
+                    focusClassName="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+                    onClick={() => setSelectedType(option.type)}
+                  >
+                    <Box layoutClassName="flex items-start gap-3 p-4">
+                      <Box
+                        layoutClassName="p-2"
+                        roundedClassName="rounded-lg"
+                        backgroundClassName={option.bgColor}
+                      >
+                        <Icon className={`h-5 w-5 ${option.color}`} />
+                      </Box>
+                      <Box layoutClassName="min-w-0 flex-1">
+                        <Box layoutClassName="mb-1 flex items-center justify-between gap-2">
+                          <Typography
+                            as="span"
+                            size="inherit"
+                            layoutClassName="block min-w-0"
+                            textClassName={
+                              isSelected
+                                ? `${option.color} font-semibold`
+                                : 'font-semibold text-slate-900 dark:text-white'
+                            }
+                          >
+                            {option.title}
+                          </Typography>
+                          {count !== null ? (
+                            <Badge
+                              size="sm"
+                              layoutClassName="shrink-0 px-2 py-1"
+                              borderClassName="border-transparent"
+                              backgroundClassName={option.bgColor}
+                              textClassName={`${option.color} text-sm font-bold`}
+                            >
+                              {count}
+                            </Badge>
+                          ) : null}
+                        </Box>
+                        <Typography size="sm" variant="muted">
+                          {option.description}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Button>
+                );
+              })}
+            </Box>
+          )}
+        </Box>
+
+      {showActionCard ? (
       <Card padding="lg">
         {selectedType === 'delivery' ? (
           <Box layoutClassName="mb-6">
@@ -323,7 +448,7 @@ const NotificationsPage: React.FC = () => {
                 ?.replace('{count}', String(getOrderCount()))
                 ?.replace(
                   '{type}',
-                  notificationOptions.find((o) => o.type === selectedType)?.title || ''
+                  notificationOptions.find((o) => o.type === selectedType)?.title || '',
                 ) ||
                 `Sẽ gửi thông báo về ${getOrderCount()} ${notificationOptions.find((o) => o.type === selectedType)?.title || ''}`}
             </Typography>
@@ -361,6 +486,8 @@ const NotificationsPage: React.FC = () => {
           {isSending ? t('notifications.sending') : t('notifications.send')}
         </Button>
       </Card>
+      ) : null}
+      </Box>
     </Box>
   );
 };

@@ -14,6 +14,7 @@ import ExportModal from '@/pages/Orders/components/modals/ExportModal';
 import OrderDetail from '@/pages/Orders/components/modals/OrderDetail';
 import OrderForm from '@/pages/Orders/components/modals/OrderForm';
 import OrderList from '@/pages/Orders/components/OrderList';
+import OrdersStats from '@/pages/Orders/components/OrdersStats';
 
 const OrdersPage: React.FC = () => {
   const { userData } = useAuth();
@@ -107,6 +108,8 @@ const OrdersPage: React.FC = () => {
 
   return (
     <Box layoutClassName="relative h-full">
+      <OrdersStats orders={orders} />
+
       <Box layoutClassName="mb-4 flex flex-col items-center justify-end gap-3 sm:flex-row">
         <Box layoutClassName="flex w-full gap-2 sm:w-auto">
           <Button
