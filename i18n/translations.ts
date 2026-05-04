@@ -373,7 +373,17 @@ export const translations = {
       statsPillActive: "{{n}} with order history",
       namePlaceholder: "e.g. Jane Doe",
       phonePlaceholder: "e.g. 0901234567",
+      phoneEmpty: "Phone number is empty",
+      phoneEmptyBadge: "No phone",
       loadingHint: "Loading customers…",
+      phoneBadge: {
+        invalid: "Invalid mobile number",
+        viettel: "Viettel",
+        vina: "VinaPhone",
+        mobi: "MobiFone",
+        vietnamobile: "Vietnamobile",
+        gmobile: "Gmobile",
+      },
       table: {
         name: "Customer",
         contact: "Contact Info",
@@ -384,17 +394,31 @@ export const translations = {
       form: {
         addTitle: "Add New Customer",
         editTitle: "Edit Customer",
+        sectionTitle: "Customer details",
         name: "Full Name",
         email: "Email",
         phone: "Phone Number",
         address: "Address",
         city: "City",
         country: "Country",
-        save: "Save Customer"
+        save: "Save Customer",
+        errors: {
+          nameRequired: "Name is required",
+          saveFailed: "Could not save customer",
+        },
       },
       delete: {
         title: "Delete Customer",
         confirm: "Are you sure you want to delete this customer? This action cannot be undone."
+      },
+      detail: {
+        contactSection: "Contact",
+        ordersHeading: "Orders ({{n}})",
+        noOrders: "No orders linked to this phone number yet.",
+        itemsLine: "{{n}} products in order",
+        paymentPending: "Not paid yet",
+        paymentDateLabel: "Payment recorded at",
+        paymentAtHint: "Recorded when status was set to paid (no separate payment timestamp).",
       }
     },
     suppliers: {
@@ -973,7 +997,17 @@ export const translations = {
       statsPillActive: "{{n}} đã có đơn",
       namePlaceholder: "VD: Nguyễn Văn A",
       phonePlaceholder: "VD: 0901234567",
+      phoneEmpty: "SĐT đang bị trống",
+      phoneEmptyBadge: "Chưa có SĐT",
       loadingHint: "Đang tải danh sách khách hàng…",
+      phoneBadge: {
+        invalid: "SĐT chưa hợp lệ",
+        viettel: "Viettel",
+        vina: "VinaPhone",
+        mobi: "MobiFone",
+        vietnamobile: "Vietnamobile",
+        gmobile: "Gmobile",
+      },
       table: {
         name: "Khách hàng",
         contact: "Liên hệ",
@@ -984,17 +1018,31 @@ export const translations = {
       form: {
         addTitle: "Thêm khách hàng mới",
         editTitle: "Sửa thông tin khách hàng",
+        sectionTitle: "Thông tin khách hàng",
         name: "Họ và tên",
         email: "Email",
         phone: "Số điện thoại",
         address: "Địa chỉ",
         city: "Thành phố",
         country: "Quốc gia",
-        save: "Lưu khách hàng"
+        save: "Lưu khách hàng",
+        errors: {
+          nameRequired: "Vui lòng nhập họ tên",
+          saveFailed: "Không thể lưu khách hàng",
+        },
       },
       delete: {
         title: "Xóa khách hàng",
         confirm: "Bạn có chắc chắn muốn xóa khách hàng này không? Hành động này không thể hoàn tác."
+      },
+      detail: {
+        contactSection: "Liên hệ",
+        ordersHeading: "Đơn hàng ({{n}})",
+        noOrders: "Chưa có đơn hàng gắn với số điện thoại này.",
+        itemsLine: "{{n}} sản phẩm trong đơn",
+        paymentPending: "Chưa thanh toán",
+        paymentDateLabel: "Ngày thanh toán (ghi nhận)",
+        paymentAtHint: "Thời điểm cập nhật khi đơn chuyển sang đã thanh toán (hệ thống không lưu riêng ngày thanh toán).",
       }
     },
     suppliers: {

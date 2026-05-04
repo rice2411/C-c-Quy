@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import { Customer } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import CustomerFilters from './CustomerFilters';
-import CustomerTable from './desktop/CustomerTable';
 import CustomerCardList from './mobile/CustomerCardList';
 import Card from '@/components/ui/Card';
 
@@ -11,9 +10,18 @@ interface CustomerListProps {
   customerStats: Map<string, number>;
   onEdit: (customer: Customer) => void;
   onDelete: (id: string) => void;
+  onOpenDetail?: (customer: Customer) => void;
+  onSavePhone?: (customerId: string, phone: string) => void | Promise<void>;
 }
 
-const CustomerList: React.FC<CustomerListProps> = ({ customers, customerStats, onEdit, onDelete }) => {
+const CustomerList: React.FC<CustomerListProps> = ({
+  customers,
+  customerStats,
+  onEdit,
+  onDelete,
+  onOpenDetail,
+  onSavePhone,
+}) => {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -22,7 +30,7 @@ const CustomerList: React.FC<CustomerListProps> = ({ customers, customerStats, o
       customers.filter(
         (c) =>
           c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.phone.toLowerCase().includes(searchTerm.toLowerCase())
+          (c.phone ?? '').toLowerCase().includes(searchTerm.toLowerCase())
       ),
     [customers, searchTerm]
   );
@@ -49,19 +57,13 @@ const CustomerList: React.FC<CustomerListProps> = ({ customers, customerStats, o
     >
       <CustomerFilters searchTerm={searchTerm} onSearchChange={setSearchTerm} toolbarHint={toolbarHint} />
 
-      <CustomerTable
-        customers={filteredCustomers}
-        customerStats={customerStats}
-        onEdit={onEdit}
-        onDelete={onDelete}
-        emptyMessage={emptyMessage}
-      />
-
       <CustomerCardList
         customers={filteredCustomers}
         customerStats={customerStats}
         onEdit={onEdit}
         onDelete={onDelete}
+        onOpenDetail={onOpenDetail}
+        onSavePhone={onSavePhone}
         emptyMessage={emptyMessage}
       />
     </Card>

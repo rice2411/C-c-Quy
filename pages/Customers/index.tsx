@@ -6,6 +6,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Customer } from '@/types';
 import CustomerList from '@/pages/Customers/components/CustomerList';
 import CustomerForm from '@/pages/Customers/components/CustomerForm';
+import CustomerDetailPanel from '@/pages/Customers/components/CustomerDetailPanel';
+import { parseDateValue } from '@/utils/dateUtil';
+import { getNormalizedPhoneDigits } from '@/utils/vietnameseMobilePhone';
 import ConfirmModal from '@/components/ConfirmModal';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -24,10 +27,25 @@ const CustomersPage: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const [detailCustomer, setDetailCustomer] = useState<Customer | undefined>(undefined);
+
+  const ordersForDetailCustomer = useMemo(() => {
+    if (!detailCustomer) return [];
+    const key = getNormalizedPhoneDigits(detailCustomer.phone);
+    if (!key) return [];
+    return orders
+      .filter((o) => getNormalizedPhoneDigits(o.customer.phone) === key)
+      .sort((a, b) => {
+        const ta = parseDateValue(a.orderDate || a.date)?.getTime() ?? 0;
+        const tb = parseDateValue(b.orderDate || b.date)?.getTime() ?? 0;
+        return tb - ta;
+      });
+  }, [orders, detailCustomer]);
+
   const customerStats = useMemo(() => {
     const stats = new Map<string, number>();
     orders.forEach((order) => {
-      const phone = order.customer.phone?.replace(/\D/g, '');
+      const phone = getNormalizedPhoneDigits(order.customer.phone);
       if (!phone) return;
 
       const itemCount = order.items.reduce((sum, item) => sum + Number(item.quantity), 0);
@@ -40,7 +58,7 @@ const CustomersPage: React.FC = () => {
   const withOrderHistory = useMemo(
     () =>
       customers.filter((c) => {
-        const key = c.phone?.replace(/\D/g, '') ?? '';
+        const key = getNormalizedPhoneDigits(c.phone);
         return key.length > 0 && (customerStats.get(key) ?? 0) > 0;
       }).length,
     [customers, customerStats]
@@ -85,6 +103,11 @@ const CustomersPage: React.FC = () => {
       const { id: _id, ...customerData } = data;
       await createNewCustomer(customerData);
     }
+  };
+
+  const handleSaveCustomerPhone = async (id: string, phone: string) => {
+    await modifyCustomer(id, { phone });
+    setDetailCustomer((prev) => (prev?.id === id ? { ...prev, phone } : prev));
   };
 
   return (
@@ -213,17 +236,26 @@ const CustomersPage: React.FC = () => {
           customerStats={customerStats}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
+          onOpenDetail={(c) => setDetailCustomer(c)}
+          onSavePhone={handleSaveCustomerPhone}
         />
       )}
 
-      {isFormOpen && (
-        <CustomerForm
-          isOpen={isFormOpen}
-          initialData={editingCustomer}
-          onSave={handleSave}
-          onClose={() => setIsFormOpen(false)}
+      {detailCustomer ? (
+        <CustomerDetailPanel
+          customer={detailCustomer}
+          orders={ordersForDetailCustomer}
+          onClose={() => setDetailCustomer(undefined)}
+          onSavePhone={handleSaveCustomerPhone}
         />
-      )}
+      ) : null}
+
+      <CustomerForm
+        isOpen={isFormOpen}
+        initialData={editingCustomer}
+        onSave={handleSave}
+        onClose={() => setIsFormOpen(false)}
+      />
 
       <ConfirmModal
         isOpen={isDeleteModalOpen}

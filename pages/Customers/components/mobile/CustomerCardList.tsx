@@ -10,6 +10,8 @@ interface CustomerCardListProps {
   customerStats: Map<string, number>;
   onEdit: (customer: Customer) => void;
   onDelete: (id: string) => void;
+  onOpenDetail?: (customer: Customer) => void;
+  onSavePhone?: (customerId: string, phone: string) => void | Promise<void>;
   emptyMessage: string;
 }
 
@@ -18,28 +20,34 @@ const CustomerCardList: React.FC<CustomerCardListProps> = ({
   customerStats,
   onEdit,
   onDelete,
+  onOpenDetail,
+  onSavePhone,
   emptyMessage,
 }) => {
-  const getProductCount = (phone: string) => {
-    const normalized = phone.replace(/\D/g, '');
+  const getProductCount = (phone: string | undefined) => {
+    const normalized = (phone ?? '').replace(/\D/g, '');
     return customerStats.get(normalized) || 0;
   };
 
   return (
     <Box
-      layoutClassName="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 lg:hidden"
+      layoutClassName="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6"
       backgroundClassName="bg-gradient-to-b from-slate-50/80 to-transparent dark:from-slate-900/40 dark:to-transparent"
     >
       {customers.length > 0 ? (
-        customers.map((customer) => (
-          <CustomerCard
-            key={customer.id}
-            customer={customer}
-            productCount={getProductCount(customer.phone)}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        ))
+        <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          {customers.map((customer) => (
+            <CustomerCard
+              key={customer.id}
+              customer={customer}
+              productCount={getProductCount(customer.phone)}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onOpenDetail={onOpenDetail}
+              onSavePhone={onSavePhone}
+            />
+          ))}
+        </Box>
       ) : (
         <Box
           layoutClassName="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 py-14 dark:border-slate-600"
