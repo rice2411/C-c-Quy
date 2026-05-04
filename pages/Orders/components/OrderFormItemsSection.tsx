@@ -12,6 +12,8 @@ import Image from '@/components/ui/Image';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Typography from '@/components/ui/Typography';
+import Badge from '@/components/ui/Badge';
+import { getTagPalette } from '@/utils/productTagPalette';
 
 interface OrderItemsSectionProps {
   items: FormItem[];
@@ -87,6 +89,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
       <Box layoutClassName="space-y-6">
         {items.map((item, index) => {
           const currentImage = getProductImage(item);
+          const selectedProduct = item.productId ? products.find((p) => p.id === item.productId) : undefined;
           return (
             <Box
               key={item.id}
@@ -145,6 +148,18 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                           </option>
                         ) : null}
                       </Select>
+                      {selectedProduct?.tags && selectedProduct.tags.length > 0 ? (
+                        <Box layoutClassName="mt-2 flex flex-wrap gap-2">
+                          {selectedProduct.tags.map((tag, ti) => {
+                            const palette = getTagPalette(tag);
+                            return (
+                              <Badge key={`${item.id}-tag-${ti}`} className={palette.chip}>
+                                {tag}
+                              </Badge>
+                            );
+                          })}
+                        </Box>
+                      ) : null}
                     </Field>
                   </Box>
 

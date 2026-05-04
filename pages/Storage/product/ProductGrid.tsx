@@ -4,6 +4,8 @@ import { Product, IngredientType } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatVND } from '@/utils/currencyUtil';
 import { getTypeColors, getTypeIcon } from '@/utils/ingredientTypeUtil';
+import { getTagPalette } from '@/utils/productTagPalette';
+import Badge from '@/components/ui/Badge';
 
 interface ProductGridProps {
   products: Product[];
@@ -111,6 +113,21 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, onEdit, on
               <h3 className="font-bold text-slate-900 dark:text-white line-clamp-1 text-base mb-1" title={product.name}>
                 {product.name}
               </h3>
+              {product.tags && product.tags.length > 0 ? (
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {product.tags.map((tag, idx) => {
+                    const palette = getTagPalette(tag);
+                    return (
+                      <Badge
+                        key={`${product.id}-tag-${idx}-${tag}`}
+                        className={palette.chip}
+                      >
+                        {tag}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              ) : null}
               {product.description && (
                 <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
                   {product.description}
