@@ -1,9 +1,8 @@
 import React from 'react';
-import { Package, Tag, Loader2, Image as ImageIcon, DollarSign } from 'lucide-react';
-import { Product, IngredientType } from '@/types';
+import { Package, Tag, Loader2, Image as ImageIcon, DollarSign, Boxes } from 'lucide-react';
+import { Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatVND } from '@/utils/currencyUtil';
-import { getTypeColors, getTypeIcon } from '@/utils/ingredientTypeUtil';
 import { getTagPalette } from '@/utils/productTagPalette';
 import Badge from '@/components/ui/Badge';
 
@@ -136,20 +135,14 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, onEdit, on
             </div>
 
             {/* Materials Info */}
-            {(product.materials && product.materials.length > 0) && (
-              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-                {product.materials && product.materials.length > 0 && (() => {
-                  const materialColors = getTypeColors(IngredientType.MATERIAL);
-                  const MaterialIcon = getTypeIcon(IngredientType.MATERIAL);
-                  return (
-                    <div className={`flex items-center gap-1.5 px-2 py-1 ${materialColors.bg} rounded-lg border ${materialColors.border}`}>
-                      <MaterialIcon className={`w-3.5 h-3.5 ${materialColors.icon} flex-shrink-0`} />
-                      <span className={`text-xs font-medium ${materialColors.text}`}>
-                        {product.materials.length} vật liệu
-                      </span>
-                    </div>
-                  );
-                })()}
+            {product.materials && product.materials.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2 dark:border-slate-700">
+                <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 dark:border-slate-600 dark:bg-slate-700/50">
+                  <Boxes className="h-3.5 w-3.5 flex-shrink-0 text-slate-500 dark:text-slate-400" />
+                  <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                    {product.materials.length} vật liệu
+                  </span>
+                </div>
               </div>
             )}
 

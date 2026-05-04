@@ -1,4 +1,3 @@
-import { getZaloMainGroupId } from '@/config/zaloEnv';
 import { db } from '@/config/firebase';
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { ScreenConfiguration, ScreenVisibilityMap, ZaloGroupConfig, ZaloGroupsConfiguration } from '@/types';
@@ -88,7 +87,10 @@ const dedupeIds = (ids: string[]): string[] => [...new Set(ids.map((x) => x.trim
 export const resolveZaloGroupIdsForNewOrder = async (
   createdByUid: string | undefined
 ): Promise<string[]> => {
-  const mainId = getZaloMainGroupId();
+  const mainId = String(process.env.ZALO_MAIN_GROUP_ID ?? '').trim();
+  if (!mainId) {
+    throw new Error('ZALO_MAIN_GROUP_ID is not configured');
+  }
 
   if (!createdByUid) {
     return dedupeIds([mainId]);

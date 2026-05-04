@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Package, AlertCircle, ShoppingBag } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Package, AlertCircle } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
@@ -10,8 +10,6 @@ interface DashboardMetricsProps {
   metrics: {
     revenue: number;
     revenueChange: number;
-    ingredientCost: number;
-    ingredientCostChange: number;
   };
   totalOrders: number;
   newOrdersToday: number;
@@ -60,10 +58,9 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
   };
 
   const revenueInfo = getTrendInfo(metrics.revenueChange);
-  const ingredientCostInfo = getTrendInfo(metrics.ingredientCostChange);
 
   return (
-    <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {/* Total Revenue */}
       <Card layoutClassName="flex flex-col justify-between p-6" stateClassName="transition-colors">
         <Box layoutClassName="flex items-start justify-between">
@@ -132,33 +129,6 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
          <Box layoutClassName="mt-4 flex items-center text-sm text-slate-500 dark:text-slate-400">
           <Typography as="span" variant="muted">{t('dashboard.requiresAttention')}</Typography>
         </Box>
-      </Card>
-
-      {/* Ingredient Cost */}
-      <Card layoutClassName="flex flex-col justify-between p-6" stateClassName="transition-colors">
-        <Box layoutClassName="flex items-start justify-between">
-          <Box>
-            <Typography size="sm" variant="muted" textClassName="font-medium">{t('dashboard.ingredientCost')}</Typography>
-            <Heading level={3} layoutClassName="mt-1" textClassName="text-2xl font-bold text-red-600 dark:text-red-400">{formatVND(metrics.ingredientCost)}</Heading>
-          </Box>
-          <Box
-            layoutClassName="p-2"
-            roundedClassName="rounded-lg"
-            backgroundClassName="bg-red-50 dark:bg-red-900/20"
-            textClassName="text-red-600 dark:text-red-400"
-          >
-            <ShoppingBag size={20} />
-          </Box>
-        </Box>
-         <Box layoutClassName={`mt-4 flex items-center text-sm ${ingredientCostInfo.colorClass}`}>
-          <ingredientCostInfo.Icon size={16} className="mr-1" />
-          <Typography as="span" textClassName={ingredientCostInfo.colorClass}>
-            {ingredientCostInfo.isPositive ? '+' : ''}{metrics.ingredientCostChange.toFixed(1)}% {ingredientCostInfo.trendText}
-          </Typography>
-        </Box>
-         <Typography size="xs" layoutClassName="mt-1" textClassName="text-[10px] font-medium tracking-wide text-slate-400 dark:text-slate-500">
-          {ingredientCostInfo.bottomNote}
-        </Typography>
       </Card>
     </Box>
   );

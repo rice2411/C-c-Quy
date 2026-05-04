@@ -1,7 +1,6 @@
 import axios from "axios";
 import { Order } from "@/types";
 import { PaymentMethod } from "@/types/enums";
-import { getZaloMainGroupIdOrFallback } from "@/config/zaloEnv";
 import { generateQRCodeImage, getOrderTotal } from "@/utils/orderUtils";
 import {
   formatDeliveryDueMessage,
@@ -62,9 +61,11 @@ const postImageToGroups = async (
   );
 };
 
+
 /** Broadcast-style messages: main group from env (with legacy fallback). */
 export const sendZaloMessage = async (message: string) => {
-  const mainIds = [getZaloMainGroupIdOrFallback()];
+  const fromEnv = String(process.env.ZALO_MAIN_GROUP_ID ?? '').trim();
+  const mainIds = [fromEnv];
   try {
     await postTextToGroups(mainIds, message);
   } catch (error: any) {

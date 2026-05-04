@@ -43,6 +43,7 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     define: {
+      "process.env.VISION_API_KEY": JSON.stringify(env.VISION_API_KEY ?? ""),
       "process.env.GEMINI_API_KEY": JSON.stringify(env.GEMINI_API_KEY),
       "process.env.FIREBASE_API_KEY": JSON.stringify(env.FIREBASE_API_KEY),
       "process.env.FIREBASE_AUTH_DOMAIN": JSON.stringify(

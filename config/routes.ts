@@ -2,12 +2,12 @@ import { UserRole } from "@/types/user";
 import {
   LayoutDashboard,
   ShoppingCart,
-  Package,
+  Boxes,
+  FileText,
   Users,
   Settings,
   ArrowRightLeft,
   UserCog,
-  Building2,
   Bell,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
@@ -62,7 +62,14 @@ export const routes: RouteConfig[] = [
     type: "page",
     path: "/storage",
     labelKey: "nav.inventory",
-    icon: Package,
+    icon: Boxes,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/bill-import",
+    labelKey: "nav.billImport",
+    icon: FileText,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -71,13 +78,6 @@ export const routes: RouteConfig[] = [
     labelKey: "nav.customers",
     icon: Users,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR],
-  },
-  {
-    type: "page",
-    path: "/suppliers",
-    labelKey: "nav.suppliers",
-    icon: Building2,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
     type: "page",
@@ -109,16 +109,7 @@ export const storageTabRoutes: RouteConfig[] = [
     parentPath: "/storage",
     tabId: "products",
     labelKey: "inventory.productsTab",
-    icon: Package,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  },
-  {
-    type: "tab",
-    path: "/storage",
-    parentPath: "/storage",
-    tabId: "ingredients",
-    labelKey: "inventory.ingredientsTab",
-    icon: Package,
+    icon: Boxes,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
 ];

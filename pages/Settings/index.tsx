@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, Database, MessageCircle, Save, Settings } from 'lucide-react';
+import { ChevronDown, ChevronRight, Database, MessageCircle, Save, Settings, Trash2 } from 'lucide-react';
 import { getRouteConfigKey, routes, storageTabRoutes } from '@/config/routes';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
 import { ScreenVisibilityMap } from '@/types';
 import toast from 'react-hot-toast';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
@@ -31,13 +31,14 @@ interface DbRecord {
 const DATABASE_COLLECTIONS: DbCollectionConfig[] = [
   { id: 'orders', label: 'Orders' },
   { id: 'products', label: 'Products' },
-  { id: 'ingredients', label: 'Ingredients' },
+  { id: 'stock_receipts', label: 'Stock Receipts' },
   { id: 'customers', label: 'Customers' },
-  { id: 'suppliers', label: 'Suppliers' },
   { id: 'users', label: 'Users' },
   { id: 'transactions', label: 'Transactions' },
   { id: 'configurations', label: 'Configurations' },
 ];
+
+const FIRESTORE_BATCH_MAX = 500;
 
 const toSerializable = (value: any): any => {
   if (value == null) return value;
@@ -63,6 +64,8 @@ const SettingsPage: React.FC = () => {
   const [selectedCollection, setSelectedCollection] = useState<string>(DATABASE_COLLECTIONS[0].id);
   const [collectionRecords, setCollectionRecords] = useState<Record<string, DbRecord[]>>({});
   const [loadingCollectionId, setLoadingCollectionId] = useState<string | null>(null);
+  const [deletingCollectionId, setDeletingCollectionId] = useState<string | null>(null);
+  const [productToolsStatsNonce, setProductToolsStatsNonce] = useState(0);
   const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -133,6 +136,40 @@ const SettingsPage: React.FC = () => {
   }, [activeTab, selectedCollection]);
 
   const selectedRecords = collectionRecords[selectedCollection] || [];
+
+  const handleDeleteEntireCollection = async () => {
+    const collectionId = selectedCollection;
+    const label = DATABASE_COLLECTIONS.find((c) => c.id === collectionId)?.label ?? collectionId;
+    const count = selectedRecords.length;
+
+    const msg1 = `Xóa HẾT document trong bảng "${label}" (${collectionId})?\nHiện có ${count} record (theo lần tải gần nhất).\n\nThao tác không hoàn tác.`;
+    if (!window.confirm(msg1)) return;
+    if (!window.confirm('Xác nhận lần 2: tiếp tục xóa toàn bộ document trong bảng này?')) return;
+
+    setDeletingCollectionId(collectionId);
+    try {
+      const snapshot = await getDocs(collection(db, collectionId));
+      const refs = snapshot.docs.map((d) => doc(db, collectionId, d.id));
+      for (let i = 0; i < refs.length; i += FIRESTORE_BATCH_MAX) {
+        const batch = writeBatch(db);
+        for (const ref of refs.slice(i, i + FIRESTORE_BATCH_MAX)) {
+          batch.delete(ref);
+        }
+        await batch.commit();
+      }
+      setCollectionRecords((prev) => ({ ...prev, [collectionId]: [] }));
+      setExpandedRecordId(null);
+      if (collectionId === 'products') {
+        setProductToolsStatsNonce((n) => n + 1);
+      }
+      toast.success(`Đã xóa ${refs.length} document trong ${collectionId}`);
+    } catch (error) {
+      console.error(`Failed to delete collection ${collectionId}`, error);
+      toast.error(`Không thể xóa bảng ${collectionId}`);
+    } finally {
+      setDeletingCollectionId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -432,18 +469,45 @@ const SettingsPage: React.FC = () => {
 
             <Card padding="none" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="overflow-hidden lg:col-span-2">
               <Box
-                layoutClassName="flex items-center justify-between border-b px-3 py-2"
+                layoutClassName="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2"
                 borderClassName="border-slate-200 dark:border-slate-700"
                 backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
               >
                 <Typography size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-600 dark:text-slate-300">
                   Records: {selectedCollection}
                 </Typography>
-                {loadingCollectionId === selectedCollection ? (
-                  <Typography size="xs" variant="muted">Đang tải...</Typography>
-                ) : (
-                  <Typography size="xs" variant="muted">{selectedRecords.length} record</Typography>
-                )}
+                <Box layoutClassName="flex flex-wrap items-center justify-end gap-2">
+                  {loadingCollectionId === selectedCollection ? (
+                    <Typography size="xs" variant="muted">Đang tải...</Typography>
+                  ) : (
+                    <Typography size="xs" variant="muted">{selectedRecords.length} record</Typography>
+                  )}
+                  <Button
+                    type="button"
+                    variant="danger"
+                    size="sm"
+                    onClick={() => void handleDeleteEntireCollection()}
+                    disabled={
+                      loadingCollectionId === selectedCollection || deletingCollectionId === selectedCollection
+                    }
+                    leftIcon={
+                      deletingCollectionId === selectedCollection ? (
+                        <Spinner size="sm" textClassName="text-white" borderClassName="border-white" />
+                      ) : (
+                        <Trash2 />
+                      )
+                    }
+                    iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                    sizeClassName="px-2.5 py-1 text-xs"
+                    roundedClassName="rounded-md"
+                    layoutClassName="inline-flex items-center gap-1.5"
+                    stateClassName="disabled:cursor-not-allowed disabled:opacity-50"
+                    disableVariantHover
+                    disableVariantTextColor
+                  >
+                    Xóa bảng
+                  </Button>
+                </Box>
               </Box>
               <Box layoutClassName="max-h-[500px] overflow-y-auto">
                 {selectedRecords.length === 0 && loadingCollectionId !== selectedCollection ? (
@@ -509,6 +573,7 @@ const SettingsPage: React.FC = () => {
               borderClassName="lg:border-l lg:border-slate-200 lg:pl-4 lg:dark:border-slate-700"
             >
               <ProductDatabaseToolsPanel
+                refreshStatsNonce={productToolsStatsNonce}
                 onMutate={() => {
                   void loadCollectionRecords('products');
                 }}

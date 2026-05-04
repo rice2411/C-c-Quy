@@ -3,7 +3,6 @@ import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { OrderProvider } from "./contexts/OrderContext";
 import { CustomerProvider } from "./contexts/CustomerContext";
-import { SupplierProvider } from "./contexts/SupplierContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ScreenConfigProvider } from "./contexts/ScreenConfigContext";
 import { useOfflineDetector } from "./hooks/useOfflineDetector";
@@ -14,8 +13,9 @@ import DashboardPage from "./pages/Dashboard/index";
 import OrdersPage from "./pages/Orders/index";
 import TransactionsPage from "./pages/Transactions/index";
 import InventoryPage from "./pages/Storage/index";
+import BillImportPage from "./pages/BillImport/index";
+import BillImportReceiptsPage from "./pages/BillImport/Receipts";
 import CustomersPage from "./pages/Customers/index";
-import SuppliersPage from "./pages/Suppliers/index";
 import UsersPage from "./pages/Users/index";
 import NotificationsPage from "./pages/Notifications/index";
 import SettingsPage from "./pages/Settings/index";
@@ -39,7 +39,6 @@ const App: React.FC = () => {
             <LanguageProvider>
               <OrderProvider>
                 <CustomerProvider>
-                  <SupplierProvider>
                     <Routes>
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/" element={
@@ -67,14 +66,19 @@ const App: React.FC = () => {
                         <InventoryPage />
                       </RoleBasedRoute>
                     } />
+                    <Route path="bill-import" element={
+                      <RoleBasedRoute requiredRole={routes.find(r => r.path === '/bill-import')?.roles}>
+                        <BillImportPage />
+                      </RoleBasedRoute>
+                    } />
+                    <Route path="bill-import/receipts" element={
+                      <RoleBasedRoute requiredRole={routes.find(r => r.path === '/bill-import')?.roles}>
+                        <BillImportReceiptsPage />
+                      </RoleBasedRoute>
+                    } />
                     <Route path="customers" element={
                       <RoleBasedRoute requiredRole={routes.find(r => r.path === '/customers')?.roles}>
                         <CustomersPage />
-                      </RoleBasedRoute>
-                    } />
-                    <Route path="suppliers" element={
-                      <RoleBasedRoute requiredRole={routes.find(r => r.path === '/suppliers')?.roles}>
-                        <SuppliersPage />
                       </RoleBasedRoute>
                     } />
                     <Route path="users" element={
@@ -95,7 +99,6 @@ const App: React.FC = () => {
                   </Route>
                   <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
-                  </SupplierProvider>
                 </CustomerProvider>
               </OrderProvider>
             </LanguageProvider>

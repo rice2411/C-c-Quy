@@ -96,9 +96,14 @@ const toComparable = (value: unknown, normalizeString: boolean): string => {
 
 export interface ProductDatabaseToolsPanelProps {
   onMutate: () => void;
+  /** Tăng khi collection `products` thay đổi bên ngoài panel (vd. xóa bảng) để refetch thống kê */
+  refreshStatsNonce?: number;
 }
 
-const ProductDatabaseToolsPanel: React.FC<ProductDatabaseToolsPanelProps> = ({ onMutate }) => {
+const ProductDatabaseToolsPanel: React.FC<ProductDatabaseToolsPanelProps> = ({
+  onMutate,
+  refreshStatsNonce = 0,
+}) => {
   const [statsLoading, setStatsLoading] = useState(false);
   const [stats, setStats] = useState<{ total: number; active: number; inactive: number } | null>(null);
 
@@ -151,7 +156,7 @@ const ProductDatabaseToolsPanel: React.FC<ProductDatabaseToolsPanelProps> = ({ o
 
   useEffect(() => {
     void loadStats();
-  }, [loadStats]);
+  }, [loadStats, refreshStatsNonce]);
 
   const runBulkSet = async () => {
     const path = setFieldPath.trim();

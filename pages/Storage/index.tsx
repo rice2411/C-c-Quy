@@ -1,11 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { Product, Ingredient } from '@/types';
+import { Product } from '@/types';
 import { fetchProducts, addProduct, updateProduct } from '@/services/productService';
-import { fetchIngredients, addIngredient, updateIngredient } from '@/services/ingredientService';
 import TabsHeader from '@/pages/Storage/TabsHeader';
 import { ProductForm, ProductToolbar, ProductGrid } from '@/pages/Storage/product';
-import { IngredientForm, IngredientToolbar, IngredientGrid } from '@/pages/Storage/ingredient';
 import { getAccessibleStorageTabs } from '@/config/routes';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
@@ -15,24 +12,17 @@ import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 
 const InventoryPage: React.FC = () => {
-  const { t } = useLanguage();
   const { userData } = useAuth();
   const { screenVisibility } = useScreenConfig();
   const storedUser = React.useMemo(() => getUserFromLocalStorage(), []);
   const userRole = userData?.role || storedUser?.role;
   const [products, setProducts] = useState<Product[]>([]);
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingIngredients, setLoadingIngredients] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [ingredientSearch, setIngredientSearch] = useState('');
   const [activeTab, setActiveTab] = useState<string>('products');
-  
-  // Form State
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
-  const [isIngredientFormOpen, setIsIngredientFormOpen] = useState(false);
-  const [editingIngredient, setEditingIngredient] = useState<Ingredient | undefined>(undefined);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -43,17 +33,6 @@ const InventoryPage: React.FC = () => {
 
   useEffect(() => {
     loadProducts();
-  }, []);
-
-  const loadIngredients = async () => {
-    setLoadingIngredients(true);
-    const data = await fetchIngredients();
-    setIngredients(data);
-    setLoadingIngredients(false);
-  };
-
-  useEffect(() => {
-    loadIngredients();
   }, []);
 
   const handleCreate = () => {
@@ -70,7 +49,6 @@ const InventoryPage: React.FC = () => {
     if (data.id) {
       await updateProduct(data.id, data);
     } else {
-      // Destructure to remove 'id' which is undefined for new products
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id, ...productData } = data;
       await addProduct(productData);
@@ -79,45 +57,13 @@ const InventoryPage: React.FC = () => {
     setIsFormOpen(false);
   };
 
-  // Ingredient handlers
-  const handleCreateIngredient = () => {
-    setEditingIngredient(undefined);
-    setIsIngredientFormOpen(true);
-  };
-
-  const handleEditIngredient = (ingredient: Ingredient) => {
-    setEditingIngredient(ingredient);
-    setIsIngredientFormOpen(true);
-  };
-
-  const handleSaveIngredient = async (data: any) => {
-    const { _isHistoryUpdate, ...cleanData } = data;
-    if (cleanData.id) {
-      await updateIngredient(cleanData.id, cleanData);
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { id, ...payload } = cleanData;
-      await addIngredient(payload);
-    }
-    await loadIngredients();
-    if (!_isHistoryUpdate) {
-      setIsIngredientFormOpen(false);
-    }
-  };
-
   const filteredProducts = useMemo(() => {
-    return products.filter(p => 
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      p.category.toLowerCase().includes(searchTerm.toLowerCase())
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [products, searchTerm]);
-
-  const filteredIngredients = useMemo(() => {
-    return ingredients.filter((ing) =>
-      ing.name.toLowerCase().includes(ingredientSearch.toLowerCase()) ||
-      t(`ingredients.form.types.${ing.type}`).toLowerCase().includes(ingredientSearch.toLowerCase())
-    );
-  }, [ingredients, ingredientSearch, t]);
 
   const accessibleTabs = useMemo(() => {
     return getAccessibleStorageTabs(userRole, screenVisibility);
@@ -163,11 +109,7 @@ const InventoryPage: React.FC = () => {
     if (activeTab === 'products') {
       return (
         <>
-          <ProductToolbar
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            onCreate={handleCreate}
-          />
+          <ProductToolbar searchTerm={searchTerm} onSearchChange={setSearchTerm} onCreate={handleCreate} />
 
           <ProductGrid
             products={filteredProducts}
@@ -179,49 +121,19 @@ const InventoryPage: React.FC = () => {
       );
     }
 
-    if (activeTab === 'ingredients') {
-      return (
-        <>
-          <IngredientToolbar
-            searchTerm={ingredientSearch}
-            onSearchChange={setIngredientSearch}
-            onCreate={handleCreateIngredient}
-          />
-          <IngredientGrid
-            ingredients={filteredIngredients}
-            loading={loadingIngredients}
-            onEdit={handleEditIngredient}
-            onCreate={handleCreateIngredient}
-          />
-        </>
-      );
-    }
-
     return null;
   };
 
   return (
     <Box layoutClassName="relative flex h-full flex-col space-y-6">
-      <TabsHeader tabs={accessibleTabs} activeTab={activeTab} onChange={setActiveTab} />
+      {accessibleTabs.length > 1 ? (
+        <TabsHeader tabs={accessibleTabs} activeTab={activeTab} onChange={setActiveTab} />
+      ) : null}
 
       {renderTabContent()}
 
       {isFormOpen && (
-        <ProductForm 
-           initialData={editingProduct}
-           ingredients={ingredients}
-           onSave={handleSave}
-           onCancel={() => setIsFormOpen(false)}
-        />
-      )}
-
-      {isIngredientFormOpen && (
-        <IngredientForm
-          isOpen={isIngredientFormOpen}
-          initialData={editingIngredient}
-          onSave={handleSaveIngredient}
-          onClose={() => setIsIngredientFormOpen(false)}
-        />
+        <ProductForm initialData={editingProduct} onSave={handleSave} onCancel={() => setIsFormOpen(false)} />
       )}
     </Box>
   );

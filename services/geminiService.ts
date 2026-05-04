@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
-import { Order } from '@types';
+import { Order } from '@/types';
+import type { StockReceiptStructured } from '@/types/billReceipt';
 
 const getClient = () => {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -74,7 +75,7 @@ export const generateOrderAnalysis = async (order: Order, promptType: 'email' | 
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2-flash',
       contents: prompt,
     });
     const defaultError = language === 'vi' ? "Không có phản hồi." : "No response generated.";
@@ -130,4 +131,120 @@ export const generateDashboardInsights = async (orders: Order[], language: 'en' 
     const failError = language === 'vi' ? "Không thể tạo thông tin chi tiết lúc này." : "Unable to generate insights at this time.";
     return failError;
   }
+}
+
+function parseValidationJson(raw: string): {
+  isLikelyReceipt: boolean;
+  confidence: number;
+  reasonVi: string;
+} {
+  let s = raw.trim();
+  const fence = s.match(/^```(?:json)?\s*([\s\S]*?)```$/i);
+  if (fence) s = fence[1].trim();
+
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(s) as Record<string, unknown>;
+  } catch {
+    throw new Error('Gemini trả lời kiểm tra bill không phải JSON hợp lệ. Thử lại.');
+  }
+  const isLikelyReceipt = Boolean(parsed.isLikelyReceipt ?? parsed.isLikelyPurchaseReceipt);
+  const confidence = typeof parsed.confidence === 'number' ? Math.max(0, Math.min(1, parsed.confidence)) : 0;
+  const reasonVi = typeof parsed.reasonVi === 'string' ? parsed.reasonVi : String(parsed.reason ?? '');
+  return { isLikelyReceipt, confidence, reasonVi };
+}
+
+function parseStructuredJson(raw: string): StockReceiptStructured {
+  let s = raw.trim();
+  const fence = s.match(/^```(?:json)?\s*([\s\S]*?)```$/i);
+  if (fence) s = fence[1].trim();
+
+  const parsed = JSON.parse(s) as StockReceiptStructured;
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Gemini không trả về object JSON hợp lệ.');
+  }
+  if (!Array.isArray(parsed.lineItems)) parsed.lineItems = [];
+  return parsed;
+}
+
+export async function validateReceiptWithGemini(ocrText: string): Promise<{
+  isLikelyReceipt: boolean;
+  confidence: number;
+  reasonVi: string;
+}> {
+  const ai = getClient();
+  if (!ai) throw new Error('Thiếu GEMINI_API_KEY trong môi trường.');
+
+  const snippet = ocrText.slice(0, 8000);
+  const prompt = `Bạn kiểm tra nội dung OCR có phải chứng từ MUA HÀNG / BÁN HÀNG (hoá đơn, phiếu tính tiền, biên lai siêu thị, phiếu NCC…) hay không.
+
+Trả về DUY NHẤT JSON (không markdown):
+{"isLikelyReceipt": boolean, "confidence": number từ 0 đến 1, "reasonVi": string ngắn (tối đa 2 câu, tiếng Việt)}
+
+HỢP LỆ: có mặt hàng/dịch vụ + giá hoặc tổng tiền, hoặc hoá đơn điện tử, phiếu thu tiền.
+
+KHÔNG HỢP LỆ: ảnh chân dung/selfie, menu nhà hàng không giá, screenshot chat, bài báo, danh thiếp, slide, meme, màn hình app không liên quan thanh toán.
+
+OCR:
+"""
+${snippet}
+"""`;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: prompt,
+  });
+
+  const text = response.text?.trim();
+  if (!text) throw new Error('Gemini không trả lời khi kiểm tra bill.');
+  return parseValidationJson(text);
+}
+
+const STRUCTURE_PROMPT_VI = `Bạn là trợ lý kế toán kho. Nhiệm vụ: làm sạch và cấu trúc hoá dữ liệu từ chữ đã OCR của một hoá đơn/phiếu mua hàng (nhập hàng).
+
+Quy tắc:
+- Trả về DUY NHẤT một JSON hợp lệ, không markdown, không giải thích.
+- Số tiền: số thuần (number), không chuỗi. Nếu không chắc thì null.
+- Ngày: ưu tiên yyyy-mm-dd; nếu chỉ có dd/mm/yyyy hãy chuyển sang yyyy-mm-dd; không đoán bừa thì null.
+- productLineCount = số dòng mặt hàng (sản phẩm) bạn trích được.
+- currency: mặc định "VND" nếu bill VN.
+- lineItems: mỗi phần tử có name (bắt buộc), quantity, unit (kg, thùng, chai...), unitPrice, lineTotal.
+
+Schema JSON (bám sát các key sau):
+{
+  "supplierName": string | null,
+  "storeOrBranch": string | null,
+  "receiptDate": string | null,
+  "receiptTime": string | null,
+  "lineItems": [{ "name": string, "quantity": number | null, "unit": string | null, "unitPrice": number | null, "lineTotal": number | null }],
+  "productLineCount": number,
+  "subtotal": number | null,
+  "tax": number | null,
+  "discount": number | null,
+  "totalAmount": number | null,
+  "currency": string,
+  "paymentMethod": string | null,
+  "notes": string | null
+}
+
+Nội dung OCR:
+`;
+
+export async function structureStockReceiptWithGemini(ocrText: string): Promise<StockReceiptStructured> {
+  const ai = getClient();
+  if (!ai) throw new Error('Thiếu GEMINI_API_KEY trong môi trường.');
+
+  const prompt = `${STRUCTURE_PROMPT_VI}
+"""
+${ocrText.slice(0, 12000)}
+"""`;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: prompt,
+  });
+
+  const text = response.text?.trim();
+  if (!text) throw new Error('Gemini không trả lời nội dung.');
+  return parseStructuredJson(text);
 }

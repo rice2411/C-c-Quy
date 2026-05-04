@@ -3,19 +3,18 @@ import { Save, Image, Tag, DollarSign, AlignLeft, AlertCircle, Upload, Loader2, 
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Badge from '@/components/ui/Badge';
 import Textarea from '@/components/ui/Textarea';
-import { Product, Ingredient } from '@/types';
+import { Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { uploadImage, getProductImagePath } from '@/services/imageService';
 import { getTagPalette } from '@/utils/productTagPalette';
 
 interface ProductFormProps {
   initialData?: Product | null;
-  ingredients: Ingredient[];
   onSave: (data: any) => Promise<void>;
   onCancel: () => void;
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ initialData, ingredients: _ingredients, onSave, onCancel }) => {
+const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel }) => {
   const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
