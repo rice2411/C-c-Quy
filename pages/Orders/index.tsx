@@ -6,6 +6,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/contexts/OrderContext';
 import { Order } from '@/types';
 import { UserRole } from '@/types/user';
+import { ORDER_EDIT_DENIED } from '@/services/orderService';
+import { userCanEditOrder } from '@/utils/orderUtils';
 import ConfirmModal from '@/components/ConfirmModal';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -45,6 +47,10 @@ const OrdersPage: React.FC = () => {
   };
 
   const handleEditOrder = (order: Order) => {
+    if (!userCanEditOrder(userData, order)) {
+      toast.error(t('orders.editDeniedCollaborator'));
+      return;
+    }
     setEditingOrder(order);
     setSelectedOrder(null);
     setIsOrderFormOpen(true);
@@ -75,12 +81,23 @@ const OrdersPage: React.FC = () => {
   };
 
   const handleSaveOrder = async (data: any) => {
-    if (data.id) {
-      await modifyOrder(data.id, data);
-    } else {
-      await createNewOrder(data);
+    try {
+      if (data.id) {
+        await modifyOrder(data.id, data);
+      } else {
+        await createNewOrder(data);
+      }
+      setIsOrderFormOpen(false);
+      setEditingOrder(undefined);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '';
+      if (msg === ORDER_EDIT_DENIED) {
+        toast.error(t('orders.editDeniedCollaborator'));
+      } else {
+        console.error(e);
+        toast.error(t('orders.refreshError'));
+      }
     }
-    setIsOrderFormOpen(false);
   };
 
   const handleRefresh = async () => {
@@ -209,7 +226,12 @@ const OrdersPage: React.FC = () => {
         isOpen={!!selectedOrder}
         order={selectedOrder}
         onClose={() => setSelectedOrder(null)}
-        onEdit={() => selectedOrder && handleEditOrder(selectedOrder)}
+        canEdit={selectedOrder ? userCanEditOrder(userData, selectedOrder) : false}
+        onEdit={
+          selectedOrder && userCanEditOrder(userData, selectedOrder)
+            ? () => handleEditOrder(selectedOrder)
+            : undefined
+        }
         onDelete={() => selectedOrder && handleDeleteClick(selectedOrder.id)}
         canDelete={canPermanentDelete}
         onUpdateOrder={modifyOrder}

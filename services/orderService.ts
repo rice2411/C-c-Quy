@@ -1,6 +1,7 @@
 import {
   collection,
   getDocs,
+  getDoc,
   query,
   orderBy,
   addDoc,
@@ -11,7 +12,11 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
-import { Order, PaymentMethod, PaymentStatus } from "@/types"; 
+import { Order, PaymentMethod, PaymentStatus } from "@/types";
+import { UserRole } from "@/types/user";
+
+/** Ném khi CTV cố cập nhật đơn không phải do họ tạo */
+export const ORDER_EDIT_DENIED = "ORDER_EDIT_DENIED";
 import { resolveZaloGroupIdsForNewOrder } from "./configurationService";
 import { sendNewOrderZaloNotifications } from "./zaloService";
 import { getUserByUid } from "./userService";
@@ -25,13 +30,16 @@ export const fetchOrders = async (): Promise<Order[]> => {
     const ordersRef = collection(db, "orders");
     const q = query(ordersRef);
     const snapshot = await getDocs(q);
-    const result = snapshot.docs.map(async (doc) => {
-      const data = doc.data();
-      const user = await getUserByUid(data.createdBy as string);
+    const result = snapshot.docs.map(async (docSnap) => {
+      const data = docSnap.data();
+      const creatorUid =
+        typeof data.createdBy === "string" && data.createdBy.length > 0 ? data.createdBy : undefined;
+      const user = creatorUid ? await getUserByUid(creatorUid) : null;
       return {
         ...data,
-        id: doc.id,
-        createdBy: user?.customName || user?.displayName || user?.email || data.createdBy as string,
+        id: docSnap.id,
+        createdByUid: creatorUid,
+        createdBy: user?.customName || user?.displayName || user?.email || creatorUid || "",
       } as Order;
     });
     return (await Promise.all(result)).sort((a, b) => b.orderNumber.localeCompare(a.orderNumber));
@@ -125,6 +133,11 @@ export const addOrder = async (orderData: Order): Promise<void> => {
   }
 };
 
+export interface OrderUpdateEditor {
+  uid: string;
+  role: UserRole | undefined;
+}
+
 /**
  * Cập nhật đơn hàng trong Firebase
  * @param {string} orderId - Mã đơn hàng
@@ -133,10 +146,23 @@ export const addOrder = async (orderData: Order): Promise<void> => {
  */
 export const updateOrder = async (
   orderId: string,
-  orderData: any
+  orderData: any,
+  editor?: OrderUpdateEditor
 ): Promise<void> => {
   try {
     const orderRef = doc(db, "orders", orderId);
+    const existingSnap = await getDoc(orderRef);
+    if (!existingSnap.exists()) {
+      throw new Error("ORDER_NOT_FOUND");
+    }
+    const existing = existingSnap.data();
+    const creatorUid = existing.createdBy as string | undefined;
+
+    if (editor?.role === UserRole.COLABORATOR) {
+      if (!editor.uid || !creatorUid || creatorUid !== editor.uid) {
+        throw new Error(ORDER_EDIT_DENIED);
+      }
+    }
 
     // Clean customer data to ensure no undefined values
     const safeCustomer = {

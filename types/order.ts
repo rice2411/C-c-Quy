@@ -27,7 +27,9 @@ export interface Order {
   deliveryTime?: string; // Optional receiving time (HH:mm)
   trackingNumber?: string;
   note?: string;
-  createdBy?: string; // Tên người tạo đơn (customName hoặc email)
+  /** UID Firebase của người tạo (đồng bộ với field `createdBy` trên Firestore trước khi resolve tên) */
+  createdByUid?: string;
+  createdBy?: string; // Tên hiển thị người tạo đơn (customName hoặc email)
   updatedBy?: string; // Người chỉnh sửa gần nhất
   createdAt?: any;
   updatedAt?: any;

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Order, PaymentStatus } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 import { fetchOrders, addOrder, updateOrder, deleteOrder } from '@/services/orderService';
 
 interface OrderContextType {
@@ -14,6 +15,7 @@ interface OrderContextType {
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { currentUser, userData } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -39,7 +41,8 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const modifyOrder = async (id: string, data: any) => {
-    await updateOrder(id, data);
+    const uid = currentUser?.uid ?? userData?.uid ?? '';
+    await updateOrder(id, data, { uid, role: userData?.role });
     await refreshOrders();
   };
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import {
   AlertTriangle,
   Copy,
@@ -20,6 +21,7 @@ import {
 import { STATUS_COLORS } from '@/constant/order';
 import { generateOrderAnalysis } from '@/services/geminiService';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { ORDER_EDIT_DENIED } from '@/services/orderService';
 import { Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus } from '@/types';
 import { formatVND } from '@/utils/currencyUtil';
 import { generateQRCodeImage, getOrderTotal } from '@/utils/orderUtils';
@@ -34,13 +36,24 @@ interface OrderDetailProps {
   isOpen: boolean;
   order: Order | null;
   onClose: () => void;
+  /** CTV chỉ được sửa đơn do họ tạo; false => ẩn chỉnh nhanh trạng thái / thanh toán */
+  canEdit?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
   canDelete?: boolean;
   onUpdateOrder?: (id: string, data: Partial<Order>) => Promise<void>;
 }
 
-const OrderDetail: React.FC<OrderDetailProps> = ({ isOpen, order, onClose, onEdit, onDelete, canDelete = false, onUpdateOrder }) => {
+const OrderDetail: React.FC<OrderDetailProps> = ({
+  isOpen,
+  order,
+  onClose,
+  canEdit = true,
+  onEdit,
+  onDelete,
+  canDelete = false,
+  onUpdateOrder,
+}) => {
   const { t, language } = useLanguage();
   const [activeTab, setActiveTab] = useState<'details' | 'ai'>('details');
   const [aiResponse, setAiResponse] = useState<string>('');
@@ -85,12 +98,19 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ isOpen, order, onClose, onEdi
   };
 
   const handleUpdateField = async (patch: Partial<Order>, setLoading: (v: boolean) => void) => {
-    if (!currentOrder?.id || !onUpdateOrder) return;
+    if (!canEdit || !currentOrder?.id || !onUpdateOrder) return;
     setLoading(true);
     try {
       await onUpdateOrder(currentOrder.id, { ...currentOrder, ...patch });
-      setLocalOrder(prev => prev ? { ...prev, ...patch } : prev);
+      setLocalOrder((prev) => (prev ? { ...prev, ...patch } : prev));
       setIsStatusOpen(false);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : '';
+      if (msg === ORDER_EDIT_DENIED) {
+        toast.error(t('orders.editDeniedCollaborator'));
+      } else {
+        console.error(e);
+      }
     } finally {
       setLoading(false);
     }
@@ -375,18 +395,18 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ isOpen, order, onClose, onEdi
                         <div className="relative flex items-center gap-2">
                           <button
                             type="button"
-                            disabled={updatingStatus}
-                            onClick={() => setIsStatusOpen((v) => !v)}
+                            disabled={!canEdit || updatingStatus}
+                            onClick={() => canEdit && setIsStatusOpen((v) => !v)}
                             className="w-full b text-left px-3 py-2 text-xs font-semibold flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                           >
                             <span
-                              className={`${updatingStatus ? 'opacity-60 cursor-not-allowed' : ''} px-2 w-full text-center py-0.5 rounded-full text-[10px] border border-transparent ${STATUS_COLORS[currentOrder.status]}`}
+                              className={`${!canEdit || updatingStatus ? 'opacity-60 cursor-not-allowed' : ''} px-2 w-full text-center py-0.5 rounded-full text-[10px] border border-transparent ${STATUS_COLORS[currentOrder.status]}`}
                             >
                             { t(`orders.statusLabels.${currentOrder.status}`)}
                             </span>
-                            <span className={`${updatingStatus ? 'opacity-60 cursor-not-allowed' : ''} text-[10px] text-slate-700/70 dark:text-slate-200/70 ml-2`}>▼</span>
+                            <span className={`${!canEdit || updatingStatus ? 'opacity-60 cursor-not-allowed' : ''} text-[10px] text-slate-700/70 dark:text-slate-200/70 ml-2`}>▼</span>
                           </button>
-                          {isStatusOpen && !updatingStatus && (
+                          {isStatusOpen && canEdit && !updatingStatus && (
                             <div className="absolute right-0 top-full mt-2  bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-20">
                               <div className="py-2 max-h-64 overflow-y-auto">
                                 {Object.values(OrderStatus).map((status) => (
@@ -422,12 +442,12 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ isOpen, order, onClose, onEdi
                               key={status}
                               type="button"
                               onClick={() => handleUpdateField({ paymentStatus: status }, setUpdatingPayment)}
-                              disabled={updatingPayment}
+                              disabled={!canEdit || updatingPayment}
                               className={`px-3 py-1 rounded-full text-xs font-bold uppercase border transition-all ${
                                 currentOrder.paymentStatus === status
                                   ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
                                   : 'bg-white text-slate-500 border-slate-200 hover:border-emerald-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600'
-                              } ${updatingPayment ? 'opacity-60 cursor-not-allowed' : ''}`}
+                              } ${!canEdit || updatingPayment ? 'opacity-60 cursor-not-allowed' : ''}`}
                             >
                               {status}
                             </button>
@@ -445,12 +465,12 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ isOpen, order, onClose, onEdi
                               key={method}
                               type="button"
                               onClick={() => handleUpdateField({ paymentMethod: method }, setUpdatingPayment)}
-                              disabled={updatingPayment}
+                              disabled={!canEdit || updatingPayment}
                               className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
                                 currentOrder.paymentMethod === method
                                   ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
                                   : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600'
-                              } ${updatingPayment ? 'opacity-60 cursor-not-allowed' : ''}`}
+                              } ${!canEdit || updatingPayment ? 'opacity-60 cursor-not-allowed' : ''}`}
                             >
                               {method === PaymentMethod.BANKING ? t('paymentMethod.banking') : t('paymentMethod.cash')}
                             </button>

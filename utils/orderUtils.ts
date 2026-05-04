@@ -2,6 +2,7 @@
 
 import * as XLSX from 'xlsx-js-style';
 import { Order, OrderItem } from '@/types/order';
+import { UserData, UserRole } from '@/types/user';
 import { parseDateValue } from './dateUtil';
 
 /**
@@ -26,6 +27,20 @@ export const getOrderTotal = (order: Order): number => {
   }
   return calculateOrderTotal(order.items || [], order.shippingCost || 0);
 };
+
+/** Admin / Super Admin: sửa mọi đơn. CTV (COLABORATOR): chỉ đơn do chính UID đó tạo (`createdByUid`). */
+export function userCanEditOrder(
+  user: UserData | null | undefined,
+  order: Order | null | undefined,
+): boolean {
+  if (!user || !order) return false;
+  if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN) return true;
+  if (user.role === UserRole.COLABORATOR) {
+    if (!order.createdByUid) return false;
+    return order.createdByUid === user.uid;
+  }
+  return false;
+}
 
 /**
  * Tạo URL ảnh QR code thanh toán
