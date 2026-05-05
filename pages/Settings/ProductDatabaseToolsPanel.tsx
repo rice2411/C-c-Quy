@@ -22,6 +22,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Checkbox from '@/components/ui/Checkbox';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import Spinner from '@/components/ui/Spinner';
 import Textarea from '@/components/ui/Textarea';
 import Typography from '@/components/ui/Typography';
@@ -133,6 +134,10 @@ const ProductDatabaseToolsPanel: React.FC<ProductDatabaseToolsPanelProps> = ({
   const [auditBusy, setAuditBusy] = useState(false);
 
   const [exportBusy, setExportBusy] = useState(false);
+  const [simpleSearchField, setSimpleSearchField] = useState('name');
+  const [simpleSearchKeyword, setSimpleSearchKeyword] = useState('');
+  const [simpleSearchResult, setSimpleSearchResult] = useState('');
+  const [simpleSearchBusy, setSimpleSearchBusy] = useState(false);
 
   const loadStats = useCallback(async () => {
     setStatsLoading(true);
@@ -426,6 +431,47 @@ const ProductDatabaseToolsPanel: React.FC<ProductDatabaseToolsPanelProps> = ({
     }
   };
 
+  const runSimpleSearch = async () => {
+    const field = simpleSearchField.trim();
+    const keyword = simpleSearchKeyword.trim().toLowerCase();
+    if (!field) {
+      toast.error('Vui lòng chọn field');
+      return;
+    }
+    if (!keyword) {
+      toast.error('Vui lòng nhập từ khóa');
+      return;
+    }
+
+    setSimpleSearchBusy(true);
+    setSimpleSearchResult('');
+    try {
+      const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
+      const hits: string[] = [];
+
+      snap.docs.forEach((d) => {
+        const value = getAtPath(d.data() as FirestoreDocData, field);
+        const text = toComparable(value, true);
+        if (text.includes(keyword)) {
+          const name = String((d.data() as FirestoreDocData).name ?? '(no name)');
+          hits.push(`${d.id} | ${name} | ${text}`);
+        }
+      });
+
+      setSimpleSearchResult(
+        hits.length > 0
+          ? `Tìm thấy ${hits.length} kết quả\n\n${hits.join('\n')}`
+          : 'Không tìm thấy kết quả phù hợp.'
+      );
+      toast.success('Đã tìm xong');
+    } catch (e) {
+      console.error(e);
+      toast.error('Không thể tìm kiếm dữ liệu');
+    } finally {
+      setSimpleSearchBusy(false);
+    }
+  };
+
   const busyIcon = (busy: boolean) =>
     busy ? <Spinner size="sm" textClassName="text-white" borderClassName="border-white" /> : undefined;
 
@@ -437,281 +483,70 @@ const ProductDatabaseToolsPanel: React.FC<ProductDatabaseToolsPanelProps> = ({
         borderClassName="border-slate-200 dark:border-slate-700"
         backgroundClassName="bg-violet-50/70 dark:bg-violet-950/25"
       >
-        <Box layoutClassName="flex flex-wrap items-center justify-between gap-3">
-          <Box layoutClassName="flex items-center gap-2">
-            <Package className="h-5 w-5 text-violet-600 dark:text-violet-300" />
-            <Typography size="sm" layoutClassName="font-semibold text-violet-900 dark:text-violet-100">
-              Công cụ collection products
-            </Typography>
-          </Box>
-          <Button
-            type="button"
-            variant="secondary"
-            sizeClassName="px-3 py-1.5 text-sm"
-            onClick={() => void loadStats()}
-            disabled={statsLoading}
-            leftIcon={statsLoading ? busyIcon(true) : <RefreshCw className="h-4 w-4" />}
-            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-            layoutClassName="inline-flex items-center gap-2"
-          >
-            Làm mới thống kê
-          </Button>
+        <Box layoutClassName="flex items-center gap-2">
+          <Package className="h-5 w-5 text-violet-600 dark:text-violet-300" />
+          <Typography size="sm" layoutClassName="font-semibold text-violet-900 dark:text-violet-100">
+            Công cụ database đơn giản
+          </Typography>
         </Box>
         <Typography size="xs" variant="muted" layoutClassName="mt-2 text-violet-900/80 dark:text-violet-200/80">
-          Gán field, xóa field, đổi tên field, kiểm tra trùng / thiếu field, audit tên, xuất JSON — chỉ cho collection{' '}
-          <span className="font-mono text-[11px]">products</span>.
+          Chọn field và tìm kiếm trong collection <span className="font-mono text-[11px]">products</span>.
         </Typography>
-        {stats && (
-          <Box layoutClassName="mt-3 flex flex-wrap gap-3">
-            <BadgeStat label="Tổng" value={String(stats.total)} />
-            <BadgeStat label="active" value={String(stats.active)} />
-            <BadgeStat label="inactive" value={String(stats.inactive)} />
-          </Box>
-        )}
       </Card>
 
       <Card padding="md" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700">
-        <Typography size="sm" layoutClassName="font-semibold">Gán / cập nhật field đồng loạt</Typography>
-        <Typography size="xs" variant="muted" layoutClassName="mt-1">
-          Giá trị nhập JSON hợp lệ (số, chuỗi trong dấu ngoặc kép, true/false, mảng, object). Nếu không parse được JSON thì lưu nguyên chuỗi.
-        </Typography>
+        <Typography size="sm" layoutClassName="font-semibold">Tìm kiếm theo field</Typography>
         <Box layoutClassName="mt-3 grid gap-3 md:grid-cols-2">
           <Box>
             <Typography size="xs" layoutClassName="mb-1 font-medium">Field</Typography>
+            <Select fullWidth value={simpleSearchField} onChange={(e) => setSimpleSearchField(e.target.value)}>
+              <option value="name">name</option>
+              <option value="category">category</option>
+              <option value="status">status</option>
+              <option value="price">price</option>
+              <option value="image">image</option>
+              <option value="description">description</option>
+              <option value="tags">tags</option>
+              <option value="createdAt">createdAt</option>
+            </Select>
+          </Box>
+          <Box>
+            <Typography size="xs" layoutClassName="mb-1 font-medium">Từ khóa</Typography>
             <Input
-              value={setFieldPath}
-              onChange={(e) => setSetFieldPath(e.target.value)}
-              placeholder="vd: status hoặc meta.flag"
-              disabled={setBusy}
+              value={simpleSearchKeyword}
+              onChange={(e) => setSimpleSearchKeyword(e.target.value)}
+              placeholder="Nhập từ khóa..."
+              disabled={simpleSearchBusy}
               size="sm"
               containerClassName="w-full"
             />
           </Box>
-          <Box layoutClassName="flex items-end">
-            <Checkbox
-              label="Chỉ bản ghi chưa có field này"
-              checked={setOnlyIfMissing}
-              onChange={(e) => setSetOnlyIfMissing(e.target.checked)}
-              disabled={setBusy}
-            />
-          </Box>
-        </Box>
-        <Box layoutClassName="mt-2">
-          <Typography size="xs" layoutClassName="mb-1 font-medium">Giá trị</Typography>
-          <Textarea
-            value={setFieldValueRaw}
-            onChange={(e) => setSetFieldValueRaw(e.target.value)}
-            placeholder='vd: "active" hoặc 0 hoặc ["a","b"]'
-            disabled={setBusy}
-            size="sm"
-            resize="vertical"
-            rows={3}
-            containerClassName="w-full"
-          />
         </Box>
         <Button
           type="button"
           variant="primary"
           className="mt-3"
-          onClick={() => void runBulkSet()}
-          disabled={setBusy}
-          leftIcon={setBusy ? busyIcon(true) : <Wand2 className="h-4 w-4" />}
+          onClick={() => void runSimpleSearch()}
+          disabled={simpleSearchBusy}
+          leftIcon={simpleSearchBusy ? busyIcon(true) : <Search className="h-4 w-4" />}
           iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
           sizeClassName="px-4 py-2"
           roundedClassName="rounded-lg"
           layoutClassName="inline-flex items-center gap-2"
         >
-          {setBusy ? 'Đang ghi...' : 'Áp dụng cho mọi product (theo điều kiện)'}
+          {simpleSearchBusy ? 'Đang tìm...' : 'Tìm kiếm'}
         </Button>
-      </Card>
 
-      <Card padding="md" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700">
-        <Typography size="sm" layoutClassName="font-semibold">Xóa field đồng loạt</Typography>
-        <Typography size="xs" variant="muted" layoutClassName="mt-1">
-          Xóa một field trên mọi product (path lồng nhau: dấu chấm, ví dụ <span className="font-mono text-[11px]">metadata.temp</span>).
-        </Typography>
-        <Box layoutClassName="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
-          <Box layoutClassName="min-w-0 flex-1">
-            <Typography size="xs" layoutClassName="mb-1 font-medium">Tên field</Typography>
-            <Input
-              value={delFieldPath}
-              onChange={(e) => setDelFieldPath(e.target.value)}
-              placeholder="vd: legacyCode hoặc extra.oldFlag"
-              disabled={delBusy}
-              size="sm"
-              containerClassName="w-full"
-            />
-          </Box>
-          <Button
-            type="button"
-            variant="danger"
-            onClick={() => void runBulkDelete()}
-            disabled={delBusy || !delFieldPath.trim()}
-            leftIcon={delBusy ? busyIcon(true) : <Trash2 className="h-4 w-4" />}
-            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-            sizeClassName="px-4 py-2"
-            roundedClassName="rounded-lg"
-            layoutClassName="inline-flex shrink-0 items-center gap-2"
-            stateClassName="disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {delBusy ? 'Đang xử lý...' : 'Xóa field trên mọi product'}
-          </Button>
-        </Box>
-      </Card>
-
-      <Card padding="md" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700">
-        <Typography size="sm" layoutClassName="font-semibold">Đổi tên field (copy giá trị rồi xóa field cũ)</Typography>
-        <Typography size="xs" variant="muted" layoutClassName="mt-1">
-          Chỉ xử lý product đang có field nguồn. Field đích sẽ bị ghi đè nếu đã tồn tại.
-        </Typography>
-        <Box layoutClassName="mt-3 grid gap-3 sm:grid-cols-2">
-          <Box>
-            <Typography size="xs" layoutClassName="mb-1 font-medium">Field cũ</Typography>
-            <Input value={renameFrom} onChange={(e) => setRenameFrom(e.target.value)} disabled={renameBusy} size="sm" containerClassName="w-full" />
-          </Box>
-          <Box>
-            <Typography size="xs" layoutClassName="mb-1 font-medium">Field mới</Typography>
-            <Input value={renameTo} onChange={(e) => setRenameTo(e.target.value)} disabled={renameBusy} size="sm" containerClassName="w-full" />
-          </Box>
-        </Box>
-        <Button
-          type="button"
-          variant="secondary"
-          className="mt-3"
-          onClick={() => void runRename()}
-          disabled={renameBusy}
-          leftIcon={renameBusy ? busyIcon(true) : <Copy className="h-4 w-4" />}
-          iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-          sizeClassName="px-4 py-2"
-          roundedClassName="rounded-lg"
-          layoutClassName="inline-flex items-center gap-2"
-        >
-          Đổi tên field
-        </Button>
-      </Card>
-
-      <Box layoutClassName="grid gap-4 lg:grid-cols-2">
-        <Card padding="md" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700">
-          <Typography size="sm" layoutClassName="font-semibold">Kiểm tra trùng theo field</Typography>
-          <Box layoutClassName="mt-3">
-            <Typography size="xs" layoutClassName="mb-1 font-medium">Field</Typography>
-            <Input value={dupFieldPath} onChange={(e) => setDupFieldPath(e.target.value)} disabled={dupBusy} size="sm" containerClassName="w-full" />
-          </Box>
-          <Box layoutClassName="mt-2 flex flex-col gap-2">
-            <Checkbox
-              label="Chuẩn hóa chuỗi (trim + lowercase) khi so sánh"
-              checked={dupNormalize}
-              onChange={(e) => setDupNormalize(e.target.checked)}
-              disabled={dupBusy}
-            />
-            <Checkbox label="Bỏ qua giá trị rỗng" checked={dupSkipEmpty} onChange={(e) => setDupSkipEmpty(e.target.checked)} disabled={dupBusy} />
-          </Box>
-          <Button
-            type="button"
-            variant="secondary"
-            className="mt-3"
-            onClick={() => void runDupCheck()}
-            disabled={dupBusy}
-            leftIcon={dupBusy ? busyIcon(true) : <Search className="h-4 w-4" />}
-            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-            sizeClassName="px-4 py-2"
-            roundedClassName="rounded-lg"
-            layoutClassName="inline-flex items-center gap-2"
-          >
-            Quét trùng
-          </Button>
-          {dupResult ? (
-            <Box
-              layoutClassName="mt-3 max-h-48 overflow-auto p-3 font-mono text-xs"
-              roundedClassName="rounded-lg"
-              backgroundClassName="bg-slate-900"
-              textClassName="text-slate-100 whitespace-pre-wrap"
-            >
-              {dupResult}
-            </Box>
-          ) : null}
-        </Card>
-
-        <Card padding="md" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700">
-          <Typography size="sm" layoutClassName="font-semibold">Product thiếu field</Typography>
-          <Box layoutClassName="mt-3">
-            <Typography size="xs" layoutClassName="mb-1 font-medium">Field bắt buộc</Typography>
-            <Input value={missFieldPath} onChange={(e) => setMissFieldPath(e.target.value)} disabled={missBusy} size="sm" containerClassName="w-full" />
-          </Box>
-          <Button
-            type="button"
-            variant="secondary"
-            className="mt-3"
-            onClick={() => void runMissingCheck()}
-            disabled={missBusy}
-            leftIcon={missBusy ? busyIcon(true) : <Search className="h-4 w-4" />}
-            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-            sizeClassName="px-4 py-2"
-            roundedClassName="rounded-lg"
-            layoutClassName="inline-flex items-center gap-2"
-          >
-            Kiểm tra
-          </Button>
-          {missResult ? (
-            <Box
-              layoutClassName="mt-3 max-h-48 overflow-auto p-3 font-mono text-xs"
-              roundedClassName="rounded-lg"
-              backgroundClassName="bg-slate-900"
-              textClassName="text-slate-100 whitespace-pre-wrap"
-            >
-              {missResult}
-            </Box>
-          ) : null}
-        </Card>
-      </Box>
-
-      <Card padding="md" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700">
-        <Typography size="sm" layoutClassName="font-semibold">Audit nhanh: name rỗng</Typography>
-        <Typography size="xs" variant="muted" layoutClassName="mt-1">
-          Liệt kê document không có tên hiển thị hợp lệ (field <Typography as="span" size="xs" layoutClassName="font-mono">name</Typography>).
-        </Typography>
-        <Button
-          type="button"
-          variant="secondary"
-          className="mt-3"
-          onClick={() => void runAuditNames()}
-          disabled={auditBusy}
-          leftIcon={auditBusy ? busyIcon(true) : <Search className="h-4 w-4" />}
-          iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-          sizeClassName="px-4 py-2"
-          roundedClassName="rounded-lg"
-          layoutClassName="inline-flex items-center gap-2"
-        >
-          Chạy audit
-        </Button>
-        {auditResult ? (
+        {simpleSearchResult ? (
           <Box
-            layoutClassName="mt-3 max-h-40 overflow-auto p-3 font-mono text-xs"
+            layoutClassName="mt-3 max-h-72 overflow-auto p-3 font-mono text-xs"
             roundedClassName="rounded-lg"
             backgroundClassName="bg-slate-900"
             textClassName="text-slate-100 whitespace-pre-wrap"
           >
-            {auditResult}
+            {simpleSearchResult}
           </Box>
         ) : null}
-      </Card>
-
-      <Card padding="md" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700">
-        <Typography size="sm" layoutClassName="font-semibold">Xuất JSON (backup / chỉnh sửa ngoài)</Typography>
-        <Button
-          type="button"
-          variant="secondary"
-          className="mt-3"
-          onClick={() => void runExport()}
-          disabled={exportBusy}
-          leftIcon={exportBusy ? busyIcon(true) : <Download className="h-4 w-4" />}
-          iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-          sizeClassName="px-4 py-2"
-          roundedClassName="rounded-lg"
-          layoutClassName="inline-flex items-center gap-2"
-        >
-          Tải products.json
-        </Button>
       </Card>
     </Box>
   );
