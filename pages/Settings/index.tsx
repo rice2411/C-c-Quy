@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, Database, MessageCircle, Save, Settings, Trash2 } from 'lucide-react';
+import { DATABASE_COLLECTIONS } from '@/config/databaseCollections';
 import { getRouteConfigKey, routes, storageTabRoutes } from '@/config/routes';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
@@ -18,25 +19,10 @@ import Typography from '@/components/ui/Typography';
 import ZaloSettingsTab from '@/pages/Settings/ZaloSettingsTab';
 import ProductDatabaseToolsPanel from '@/pages/Settings/ProductDatabaseToolsPanel';
 
-interface DbCollectionConfig {
-  id: string;
-  label: string;
-}
-
 interface DbRecord {
   id: string;
   data: Record<string, any>;
 }
-
-const DATABASE_COLLECTIONS: DbCollectionConfig[] = [
-  { id: 'orders', label: 'Orders' },
-  { id: 'products', label: 'Products' },
-  { id: 'stock_receipts', label: 'Stock Receipts' },
-  { id: 'customers', label: 'Customers' },
-  { id: 'users', label: 'Users' },
-  { id: 'transactions', label: 'Transactions' },
-  { id: 'configurations', label: 'Configurations' },
-];
 
 const FIRESTORE_BATCH_MAX = 500;
 

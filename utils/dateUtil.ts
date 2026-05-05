@@ -56,3 +56,19 @@ export const parseDateValue = (value: any) => {
   }
   return null;
 };
+
+/**
+ * Thời điểm nhập phiếu từ chuỗi ISO (map từ Firestore Timestamp.toDate()).
+ */
+export function formatImportedAt(iso: string | undefined): string {
+  if (!iso) return '—';
+  const date = parseDateValue(iso);
+  if (!date) return '—';
+  return date.toLocaleString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}

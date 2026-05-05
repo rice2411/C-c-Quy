@@ -60,7 +60,7 @@ const Layout: React.FC = () => {
     if (location.pathname === '/orders') return t('header.ordersTitle');
     if (location.pathname === '/transactions') return t('header.transactionsTitle');
     if (location.pathname === '/storage') return t('header.inventoryTitle');
-    if (location.pathname === '/bill-import' || location.pathname === '/bill-import/receipts') {
+    if (location.pathname === '/bill-import') {
       return t('header.billImportTitle');
     }
     if (location.pathname === '/customers') return t('header.customersTitle');

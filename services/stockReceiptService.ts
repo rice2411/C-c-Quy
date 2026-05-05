@@ -225,6 +225,9 @@ export async function fetchStockReceiptSummaries(): Promise<SavedStockReceiptSum
   const snap = await getDocs(q);
   return snap.docs.map((d) => {
     const raw = d.data();
+    const createdTs = raw.createdAt instanceof Timestamp ? raw.createdAt : null;
+    const updatedTs = raw.updatedAt instanceof Timestamp ? raw.updatedAt : null;
+    const importedAt = createdTs ?? updatedTs;
     return {
       id: d.id,
       supplierNameRaw: toStringOrNull(raw.supplierNameRaw),
@@ -233,7 +236,7 @@ export async function fetchStockReceiptSummaries(): Promise<SavedStockReceiptSum
       totalAmount: toNumberOrNull(raw.totalAmount),
       currency: toStringOrNull(raw.currency) || 'VND',
       productLineCount: typeof raw.productLineCount === 'number' ? raw.productLineCount : 0,
-      createdAt: raw.createdAt instanceof Timestamp ? raw.createdAt.toDate().toISOString() : undefined,
+      createdAt: importedAt ? importedAt.toDate().toISOString() : undefined,
     };
   });
 }
