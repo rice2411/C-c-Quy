@@ -15,3 +15,13 @@ export interface Product {
   materials?: ProductMaterial[];
   createdAt?: string;
 }
+
+export interface ProductVersion {
+  id: string;
+  productId: string;
+  action: 'update' | string;
+  editedAt?: string;
+  before?: Record<string, unknown>;
+  changes?: Record<string, unknown>;
+  after?: Record<string, unknown>;
+}

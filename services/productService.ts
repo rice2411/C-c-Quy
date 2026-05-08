@@ -1,6 +1,18 @@
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp, query, orderBy } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  Timestamp,
+  query,
+  orderBy,
+  runTransaction,
+  where,
+} from 'firebase/firestore';
 import { db } from '@/config/firebase';
-import { Product } from '@/types';
+import { Product, ProductVersion } from '@/types';
 
 export const fetchProducts = async (): Promise<Product[]> => {
   try {
@@ -61,9 +73,35 @@ export const addProduct = async (productData: Omit<Product, 'id'>): Promise<void
 
 export const updateProduct = async (id: string, productData: Partial<Product>): Promise<void> => {
   try {
-    const productRef = doc(db, 'products', id);
     const { id: _, ...rest } = productData as Record<string, unknown>;
-    await updateDoc(productRef, omitUndefined(rest));
+    const updates = omitUndefined(rest);
+    if (Object.keys(updates).length === 0) return;
+
+    const productRef = doc(db, 'products', id);
+    const versionsRef = collection(db, 'product_versions');
+
+    await runTransaction(db, async (tx) => {
+      const currentSnap = await tx.get(productRef);
+      if (!currentSnap.exists()) {
+        throw new Error('PRODUCT_NOT_FOUND');
+      }
+
+      const before = currentSnap.data();
+      const after = {
+        ...before,
+        ...updates,
+      };
+
+      tx.update(productRef, updates);
+      tx.set(doc(versionsRef), {
+        productId: id,
+        editedAt: Timestamp.now(),
+        action: 'update',
+        before,
+        changes: updates,
+        after,
+      });
+    });
   } catch (error) {
     console.error("Error updating product:", error);
     throw error;
@@ -77,5 +115,49 @@ export const deleteProduct = async (id: string): Promise<void> => {
   } catch (error) {
     console.error("Error deleting product:", error);
     throw error;
+  }
+};
+
+export const fetchProductVersions = async (productId: string): Promise<ProductVersion[]> => {
+  const mapVersion = (docSnap: any): ProductVersion => {
+    const data = docSnap.data();
+    const editedAtDate =
+      data.editedAt?.toDate && typeof data.editedAt.toDate === 'function'
+        ? data.editedAt.toDate()
+        : null;
+    return {
+      id: docSnap.id,
+      productId: String(data.productId || ''),
+      action: String(data.action || 'update'),
+      editedAt: editedAtDate ? editedAtDate.toISOString() : undefined,
+      before: (data.before || {}) as Record<string, unknown>,
+      changes: (data.changes || {}) as Record<string, unknown>,
+      after: (data.after || {}) as Record<string, unknown>,
+    };
+  };
+
+  try {
+    const versionsRef = collection(db, 'product_versions');
+    const q = query(versionsRef, where('productId', '==', productId), orderBy('editedAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(mapVersion);
+  } catch (error) {
+    console.error('Error fetching product versions:', error);
+    // Fallback when composite index (productId + editedAt) is missing
+    try {
+      const versionsRef = collection(db, 'product_versions');
+      const fallbackQ = query(versionsRef, where('productId', '==', productId));
+      const fallbackSnapshot = await getDocs(fallbackQ);
+      return fallbackSnapshot.docs
+        .map(mapVersion)
+        .sort((a, b) => {
+          const at = a.editedAt ? new Date(a.editedAt).getTime() : 0;
+          const bt = b.editedAt ? new Date(b.editedAt).getTime() : 0;
+          return bt - at;
+        });
+    } catch (fallbackError) {
+      console.error('Fallback fetch product versions failed:', fallbackError);
+      return [];
+    }
   }
 };

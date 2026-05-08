@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Save, Image, Tag, DollarSign, AlignLeft, AlertCircle, Upload, Loader2, Plus, X } from 'lucide-react';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Badge from '@/components/ui/Badge';
+import Tabs from '@/components/ui/Tabs';
 import Textarea from '@/components/ui/Textarea';
-import { Product } from '@/types';
+import { Product, ProductVersion } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { uploadImage, getProductImagePath } from '@/services/imageService';
+import { fetchProductVersions } from '@/services/productService';
 import { getTagPalette } from '@/utils/productTagPalette';
 
 interface ProductFormProps {
@@ -29,6 +31,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
   const [tagSearch, setTagSearch] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
+  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
+  const [versions, setVersions] = useState<ProductVersion[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const TAG_SUGGESTIONS = useMemo(
     () => ['Bánh kem', 'Bánh quy', 'Set quà', 'Sinh nhật', 'Lễ tết', 'Bán chạy', 'Mới', 'Theo mùa'],
     []
@@ -53,6 +58,21 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
       setTags([]);
     }
   }, [initialData]);
+
+  useEffect(() => {
+    setActiveTab('details');
+  }, [initialData?.id]);
+
+  useEffect(() => {
+    if (!initialData?.id || activeTab !== 'history') return;
+    const load = async () => {
+      setHistoryLoading(true);
+      const data = await fetchProductVersions(initialData.id);
+      setVersions(data);
+      setHistoryLoading(false);
+    };
+    void load();
+  }, [activeTab, initialData?.id]);
 
   const handleImageUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -174,6 +194,48 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
       footer={footerContent}
     >
       <form id="product-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <Tabs
+          items={[
+            { id: 'details', label: 'Thông tin' },
+            { id: 'history', label: 'Lịch sử', disabled: !initialData?.id },
+          ]}
+          value={activeTab}
+          onChange={(value) => setActiveTab(value as 'details' | 'history')}
+        />
+
+        {activeTab === 'history' ? (
+          <div className="space-y-3">
+            {!initialData?.id ? (
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                Lưu sản phẩm trước khi xem lịch sử.
+              </div>
+            ) : historyLoading ? (
+              <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Đang tải lịch sử...
+              </div>
+            ) : versions.length === 0 ? (
+              <div className="text-sm text-slate-500 dark:text-slate-400">
+                Chưa có bản ghi lịch sử chỉnh sửa.
+              </div>
+            ) : (
+              versions.map((version) => (
+                <div
+                  key={version.id}
+                  className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800"
+                >
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    {version.editedAt ? new Date(version.editedAt).toLocaleString('vi-VN') : 'Không rõ thời gian'}
+                  </div>
+                  <div className="rounded bg-slate-900 p-2 font-mono text-xs text-slate-100 whitespace-pre-wrap">
+                    {JSON.stringify(version.changes || {}, null, 2)}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <>
         {error && (
               <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg flex items-center gap-2">
                 <AlertCircle className="w-4 h-4" />
@@ -377,6 +439,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
                 />
               </div>
             </div>
+          </>
+        )}
 
           </form>
 
