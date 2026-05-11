@@ -1,4 +1,4 @@
-/** Kết quả kiểm tra “có phải bill/phiếu mua hàng” sau OCR. */
+/** Kết quả kiểm tra "có phải bill/phiếu mua hàng" sau OCR. */
 export interface BillValidationResult {
   isLikelyReceipt: boolean;
   /** 0–1 */
@@ -22,6 +22,12 @@ export interface BillLineItem {
 export interface StockReceiptStructured {
   /** Tên NCC / cửa hàng / siêu thị trên bill */
   supplierName: string | null;
+  /** Số điện thoại NCC trích từ bill (ĐT/SĐT/Hotline). */
+  supplierPhone: string | null;
+  /** Địa chỉ NCC trích từ bill (Địa chỉ / Đ/C / Address). */
+  supplierAddress: string | null;
+  /** Mã / Số hoá đơn trên bill (HĐGTGT, Số HĐ, Mã HĐ, "Hoá đơn số:"). */
+  invoiceNumber: string | null;
   /** Địa chỉ hoặc chi nhánh nếu có */
   storeOrBranch: string | null;
   /** Ngày trên bill, ưu tiên ISO yyyy-mm-dd */
@@ -49,11 +55,32 @@ export interface StockReceiptValidationSnapshot {
   heuristicNoteVi: string;
 }
 
+/**
+ * Thông tin liên hệ + phân loại NCC để thống kê / quản lý.
+ * Tất cả optional vì có thể fill dần qua nhiều lần nhập bill.
+ */
+export interface SupplierContactInfo {
+  /** Số điện thoại chính */
+  phone?: string | null;
+  /** Địa chỉ đầy đủ */
+  address?: string | null;
+  /** Người liên hệ (sale, chủ shop…) */
+  contactPerson?: string | null;
+  email?: string | null;
+  /** Mã số thuế (cho hoá đơn VAT) */
+  taxCode?: string | null;
+  /** Danh mục: "Bột & ngũ cốc", "Sữa & bơ", "Bao bì", … */
+  category?: string | null;
+  /** Ghi chú nội bộ (giá tốt, giao nhanh, hay hết hàng…) */
+  notes?: string | null;
+}
+
 export interface SavedStockReceiptSummary {
   id: string;
   supplierNameRaw: string | null;
   storeOrBranch: string | null;
   receiptDate: string | null;
+  invoiceNumber: string | null;
   totalAmount: number | null;
   currency: string;
   productLineCount: number;
@@ -73,7 +100,7 @@ export interface SavedStockReceiptDetail extends SavedStockReceiptSummary {
   validation: StockReceiptValidationSnapshot;
 }
 
-export interface ImportedSupplierSummary {
+export interface ImportedSupplierSummary extends SupplierContactInfo {
   id: string;
   name: string;
   normalizedName: string;

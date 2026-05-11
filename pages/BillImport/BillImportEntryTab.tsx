@@ -1,7 +1,22 @@
-import React, { type RefObject } from 'react';
-import { Camera, Check, Circle, Loader2, ScanLine } from 'lucide-react';
+import React, { useMemo } from 'react';
+import {
+  Check,
+  Circle,
+  CreditCard,
+  Loader2,
+  Receipt,
+  Store,
+  Tag,
+  Wallet,
+} from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import type { BillLineItem, BillValidationResult, StockReceiptStructured } from '@/types/billReceipt';
+import type {
+  BillLineItem,
+  BillValidationResult,
+  ImportedSupplierSummary,
+  StockReceiptStructured,
+  SupplierContactInfo,
+} from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -17,11 +32,9 @@ import {
   TableRow,
 } from '@/components/ui/Table';
 import { PIPELINE_STAGES, type UiProgressStage } from '@/pages/BillImport/constants';
+import SupplierPicker from '@/pages/BillImport/SupplierPicker';
 
 export interface BillImportEntryTabProps {
-  inputRef: RefObject<HTMLInputElement | null>;
-  cameraInputRef: RefObject<HTMLInputElement | null>;
-  onFile: (file: File | undefined) => void | Promise<void>;
   busy: boolean;
   previewUrl: string | null;
   progressStage: UiProgressStage | null;
@@ -32,12 +45,37 @@ export interface BillImportEntryTabProps {
   onSaveDraft: () => void;
   updateDraftField: <K extends keyof StockReceiptStructured>(key: K, value: StockReceiptStructured[K]) => void;
   updateDraftLine: (idx: number, patch: Partial<BillLineItem>) => void;
+  supplierList: ImportedSupplierSummary[];
+  selectedSupplierId: string | null;
+  supplierContact: SupplierContactInfo;
+  onSupplierSelect: (next: {
+    id: string | null;
+    name: string;
+    supplier?: ImportedSupplierSummary;
+  }) => void;
+  onSupplierContactChange: (patch: Partial<SupplierContactInfo>) => void;
 }
 
+const ContactField: React.FC<{
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  layoutClassName?: string;
+}> = ({ label, value, onChange, placeholder, layoutClassName }) => (
+  <Box layoutClassName={layoutClassName ?? 'space-y-1'}>
+    <Typography size="xs" variant="muted" layoutClassName="font-medium uppercase tracking-wide">
+      {label}
+    </Typography>
+    <Input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+    />
+  </Box>
+);
+
 const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
-  inputRef,
-  cameraInputRef,
-  onFile,
   busy,
   previewUrl,
   progressStage,
@@ -48,8 +86,30 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
   onSaveDraft,
   updateDraftField,
   updateDraftLine,
+  supplierList,
+  selectedSupplierId,
+  supplierContact,
+  onSupplierSelect,
+  onSupplierContactChange,
 }) => {
   const { t } = useLanguage();
+
+  const moneyFmt = useMemo(
+    () => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }),
+    [],
+  );
+
+  const computedTotal = useMemo(() => {
+    if (!draftStructured) return 0;
+    const lineSum = (draftStructured.lineItems || []).reduce(
+      (s, l) => s + (typeof l.lineTotal === 'number' ? l.lineTotal : 0),
+      0,
+    );
+    const tax = typeof draftStructured.tax === 'number' ? draftStructured.tax : 0;
+    const discount =
+      typeof draftStructured.discount === 'number' ? draftStructured.discount : 0;
+    return lineSum + tax - discount;
+  }, [draftStructured]);
 
   const activeStepIndex =
     progressStage === 'vision' ? 0 : progressStage === 'validate' ? 1 : progressStage === 'structure' ? 2 : -1;
@@ -64,71 +124,23 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
             ? 96
             : 0;
 
+  const contact = supplierContact || {};
+
   return (
     <>
-      <Card
-        padding="md"
-        borderClassName="border-slate-200 dark:border-slate-700"
-        layoutClassName="space-y-4"
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            void onFile(e.target.files?.[0]);
-            e.target.value = '';
-          }}
-        />
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={(e) => {
-            void onFile(e.target.files?.[0]);
-            e.target.value = '';
-          }}
-        />
-        <Box layoutClassName="flex flex-wrap items-center gap-3">
-          <Button
-            type="button"
-            variant="primary"
-            onClick={() => cameraInputRef.current?.click()}
-            disabled={busy}
-            leftIcon={busy ? <Spinner size="sm" textClassName="text-white" borderClassName="border-white" /> : <Camera />}
-            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-            sizeClassName="px-4 py-2"
-            layoutClassName="inline-flex items-center gap-2"
-            disableVariantHover
-            disableVariantTextColor
-          >
-            {busy ? t('billImport.processing') : t('billImport.captureImage')}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => inputRef.current?.click()}
-            disabled={busy}
-            leftIcon={busy ? <Spinner size="sm" /> : <ScanLine />}
-            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-            sizeClassName="px-4 py-2"
-            layoutClassName="inline-flex items-center gap-2"
-            disableVariantHover
-            disableVariantTextColor
-          >
-            {busy ? t('billImport.processing') : t('billImport.uploadImage')}
-          </Button>
-        </Box>
-
-        {previewUrl && (
-          <Box layoutClassName="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-600">
-            <img src={previewUrl} alt="" className="max-h-80 w-full object-contain bg-slate-50 dark:bg-slate-900" />
-          </Box>
-        )}
-      </Card>
+      {previewUrl ? (
+        <Card
+          padding="none"
+          borderClassName="border-slate-200 dark:border-slate-700"
+          layoutClassName="overflow-hidden"
+        >
+          <img
+            src={previewUrl}
+            alt="Bill"
+            className="max-h-80 w-full object-contain bg-slate-50 dark:bg-slate-900"
+          />
+        </Card>
+      ) : null}
 
       {busy && progressStage ? (
         <Card
@@ -227,157 +239,249 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
         </Card>
       ) : null}
 
-      {ocrText ? (
-        <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-2">
-          <Typography size="sm" layoutClassName="font-semibold">
-            {t('billImport.ocrSection')}
-          </Typography>
-          <Box
-            layoutClassName="max-h-64 overflow-auto rounded-lg p-3"
-            backgroundClassName="bg-slate-900"
-            textClassName="whitespace-pre-wrap font-mono text-xs text-slate-100"
-          >
-            {ocrText}
-          </Box>
-        </Card>
+      {(ocrText || draftStructured) ? (
+        <Box layoutClassName="grid gap-4 md:grid-cols-2">
+          {ocrText ? (
+            <Card
+              padding="md"
+              borderClassName="border-slate-200 dark:border-slate-700"
+              layoutClassName="space-y-2"
+            >
+              <Typography size="sm" layoutClassName="font-semibold">
+                {t('billImport.ocrSection')}
+              </Typography>
+              <Box
+                layoutClassName="max-h-72 overflow-auto rounded-lg p-3"
+                backgroundClassName="bg-slate-900"
+                textClassName="whitespace-pre-wrap font-mono text-xs text-slate-100"
+              >
+                {ocrText}
+              </Box>
+            </Card>
+          ) : null}
+          {draftStructured ? (
+            <Card
+              padding="md"
+              borderClassName="border-slate-200 dark:border-slate-700"
+              layoutClassName="space-y-2"
+            >
+              <Typography size="sm" layoutClassName="font-semibold">
+                {t('billImport.jsonSection')}
+              </Typography>
+              <Box
+                layoutClassName="max-h-72 overflow-auto rounded-lg p-3"
+                backgroundClassName="bg-slate-900"
+                textClassName="font-mono text-xs text-slate-100"
+              >
+                <pre className="m-0">{JSON.stringify(draftStructured, null, 2)}</pre>
+              </Box>
+            </Card>
+          ) : null}
+        </Box>
       ) : null}
 
       {draftStructured ? (
         <>
-          <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-2">
-            <Typography size="sm" layoutClassName="font-semibold">
-              {t('billImport.jsonSection')}
-            </Typography>
-            <Box
-              layoutClassName="max-h-56 overflow-auto rounded-lg p-3"
-              backgroundClassName="bg-slate-900"
-              textClassName="font-mono text-xs text-slate-100"
-            >
-              <pre className="m-0">{JSON.stringify(draftStructured, null, 2)}</pre>
+          <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-4">
+            <Box layoutClassName="flex items-center gap-2">
+              <Store className="h-5 w-5 text-orange-500" />
+              <Typography size="sm" layoutClassName="font-semibold">
+                Nhà cung cấp
+              </Typography>
+              <Typography size="xs" variant="muted">
+                — chọn NCC đã có (kể cả đã đổi tên) hoặc tạo NCC mới
+              </Typography>
             </Box>
+
+            <SupplierPicker
+              rawName={draftStructured.supplierName ?? ''}
+              selectedId={selectedSupplierId}
+              suppliers={supplierList}
+              onChange={(next) => {
+                updateDraftField('supplierName', next.name || null);
+                onSupplierSelect(next);
+              }}
+            />
+
+            <Box layoutClassName="grid gap-3 sm:grid-cols-2">
+              <ContactField
+                label="Số điện thoại"
+                value={contact.phone ?? ''}
+                onChange={(v) => onSupplierContactChange({ phone: v })}
+                placeholder="VD: 0901234567"
+              />
+              <ContactField
+                label="Người liên hệ"
+                value={contact.contactPerson ?? ''}
+                onChange={(v) => onSupplierContactChange({ contactPerson: v })}
+                placeholder="Tên sale / chủ shop"
+              />
+              <ContactField
+                label="Email"
+                value={contact.email ?? ''}
+                onChange={(v) => onSupplierContactChange({ email: v })}
+                placeholder="contact@example.com"
+              />
+              <ContactField
+                label="MST"
+                value={contact.taxCode ?? ''}
+                onChange={(v) => onSupplierContactChange({ taxCode: v })}
+                placeholder="Mã số thuế"
+              />
+              <ContactField
+                label="Địa chỉ"
+                value={contact.address ?? ''}
+                onChange={(v) => onSupplierContactChange({ address: v })}
+                placeholder="Số nhà, đường, quận, TP"
+                layoutClassName="space-y-1 sm:col-span-2"
+              />
+              <ContactField
+                label="Danh mục"
+                value={contact.category ?? ''}
+                onChange={(v) => onSupplierContactChange({ category: v })}
+                placeholder="VD: Bột & ngũ cốc"
+              />
+              <ContactField
+                label="Ghi chú NCC"
+                value={contact.notes ?? ''}
+                onChange={(v) => onSupplierContactChange({ notes: v })}
+                placeholder="Giá tốt, giao nhanh…"
+              />
+            </Box>
+            <Typography size="xs" variant="muted">
+              SĐT / địa chỉ được tự điền từ OCR. Trường trống sẽ không ghi đè dữ liệu cũ của NCC.
+            </Typography>
           </Card>
 
-          <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-4">
-            <Typography size="sm" layoutClassName="font-semibold">
-              {t('billImport.summarySection')}
-            </Typography>
-            <Box layoutClassName="overflow-x-auto">
-              <Table>
-                <TableBody>
-                  <TableRow>
-                    <TableHeaderCell layoutClassName="w-48">{t('billImport.supplier')}</TableHeaderCell>
-                    <TableCell>
-                      <Input
-                        value={draftStructured.supplierName ?? ''}
-                        onChange={(e) => updateDraftField('supplierName', e.target.value)}
-                        placeholder="Nhà cung cấp"
-                      />
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableHeaderCell>{t('billImport.branch')}</TableHeaderCell>
-                    <TableCell>
-                      <Input
-                        value={draftStructured.storeOrBranch ?? ''}
-                        onChange={(e) => updateDraftField('storeOrBranch', e.target.value)}
-                        placeholder="Chi nhánh / địa điểm"
-                      />
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableHeaderCell>{t('billImport.dateOnBill')}</TableHeaderCell>
-                    <TableCell>
-                      <Box layoutClassName="grid gap-2 md:grid-cols-2">
-                        <Input
-                          value={draftStructured.receiptDate ?? ''}
-                          onChange={(e) => updateDraftField('receiptDate', e.target.value)}
-                          placeholder="YYYY-MM-DD"
-                        />
-                        <Input
-                          value={draftStructured.receiptTime ?? ''}
-                          onChange={(e) => updateDraftField('receiptTime', e.target.value)}
-                          placeholder="HH:mm"
-                        />
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableHeaderCell>{t('billImport.lineCount')}</TableHeaderCell>
-                    <TableCell>
-                      <strong>{draftStructured.productLineCount}</strong>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableHeaderCell>{t('billImport.subtotal')}</TableHeaderCell>
-                    <TableCell>
-                      <Input
-                        value={String(draftStructured.subtotal ?? '')}
-                        onChange={(e) => updateDraftField('subtotal', Number(e.target.value || 0))}
-                        placeholder="Tạm tính"
-                      />
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableHeaderCell>{t('billImport.tax')}</TableHeaderCell>
-                    <TableCell>
-                      <Input
-                        value={String(draftStructured.tax ?? '')}
-                        onChange={(e) => updateDraftField('tax', Number(e.target.value || 0))}
-                        placeholder="Thuế"
-                      />
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableHeaderCell>{t('billImport.discount')}</TableHeaderCell>
-                    <TableCell>
-                      <Input
-                        value={String(draftStructured.discount ?? '')}
-                        onChange={(e) => updateDraftField('discount', Number(e.target.value || 0))}
-                        placeholder="Giảm giá"
-                      />
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableHeaderCell>{t('billImport.total')}</TableHeaderCell>
-                    <TableCell>
-                      <Box layoutClassName="grid gap-2 md:grid-cols-2">
-                        <Input
-                          value={String(draftStructured.totalAmount ?? '')}
-                          onChange={(e) => updateDraftField('totalAmount', Number(e.target.value || 0))}
-                          placeholder="Tổng tiền"
-                        />
-                        <Input
-                          value={draftStructured.currency ?? ''}
-                          onChange={(e) => updateDraftField('currency', e.target.value)}
-                          placeholder="Đơn vị tiền tệ"
-                        />
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableHeaderCell>{t('billImport.payment')}</TableHeaderCell>
-                    <TableCell>
-                      <Input
-                        value={draftStructured.paymentMethod ?? ''}
-                        onChange={(e) => updateDraftField('paymentMethod', e.target.value)}
-                        placeholder="Phương thức thanh toán"
-                      />
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableHeaderCell>{t('billImport.notes')}</TableHeaderCell>
-                    <TableCell>
-                      <Input
-                        value={draftStructured.notes ?? ''}
-                        onChange={(e) => updateDraftField('notes', e.target.value)}
-                        placeholder="Ghi chú"
-                      />
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </Box>
+          <Box layoutClassName="grid gap-4 lg:grid-cols-2">
+            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+              <Box layoutClassName="flex items-center gap-2">
+                <Receipt className="h-5 w-5 text-orange-500" />
+                <Typography size="sm" layoutClassName="font-semibold">
+                  Thông tin phiếu
+                </Typography>
+              </Box>
+              <Box layoutClassName="grid gap-3 sm:grid-cols-2">
+                <ContactField
+                  label="Mã / Số HĐ"
+                  value={draftStructured.invoiceNumber ?? ''}
+                  onChange={(v) => updateDraftField('invoiceNumber', v || null)}
+                  placeholder="VD: HĐGTGT 00012345"
+                  layoutClassName="space-y-1 sm:col-span-2"
+                />
+                <ContactField
+                  label="Ngày trên bill"
+                  value={draftStructured.receiptDate ?? ''}
+                  onChange={(v) => updateDraftField('receiptDate', v || null)}
+                  placeholder="YYYY-MM-DD (mặc định hôm nay)"
+                />
+                <ContactField
+                  label="Giờ"
+                  value={draftStructured.receiptTime ?? ''}
+                  onChange={(v) => updateDraftField('receiptTime', v || null)}
+                  placeholder="HH:mm"
+                />
+                <ContactField
+                  label="Chi nhánh / địa điểm"
+                  value={draftStructured.storeOrBranch ?? ''}
+                  onChange={(v) => updateDraftField('storeOrBranch', v || null)}
+                  placeholder="Tên chi nhánh nếu có"
+                  layoutClassName="space-y-1 sm:col-span-2"
+                />
+                <ContactField
+                  label="Phương thức thanh toán"
+                  value={draftStructured.paymentMethod ?? ''}
+                  onChange={(v) => updateDraftField('paymentMethod', v || null)}
+                  placeholder="Tiền mặt / Chuyển khoản / Pos"
+                  layoutClassName="space-y-1 sm:col-span-2"
+                />
+                <ContactField
+                  label="Ghi chú bill"
+                  value={draftStructured.notes ?? ''}
+                  onChange={(v) => updateDraftField('notes', v || null)}
+                  placeholder="Ghi chú riêng cho phiếu này"
+                  layoutClassName="space-y-1 sm:col-span-2"
+                />
+              </Box>
+              <Box
+                layoutClassName="flex items-center gap-2 rounded-md p-2 text-xs"
+                backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
+              >
+                <Tag className="h-3.5 w-3.5 text-slate-400" />
+                <Typography size="xs" variant="muted">
+                  Số dòng mặt hàng:{' '}
+                  <strong className="text-slate-700 dark:text-slate-100">
+                    {draftStructured.productLineCount}
+                  </strong>
+                </Typography>
+              </Box>
+            </Card>
 
+            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+              <Box layoutClassName="flex items-center gap-2">
+                <Wallet className="h-5 w-5 text-orange-500" />
+                <Typography size="sm" layoutClassName="font-semibold">
+                  Tài chính
+                </Typography>
+              </Box>
+
+              <Box layoutClassName="grid gap-3 sm:grid-cols-2">
+                <ContactField
+                  label="Tạm tính"
+                  value={String(draftStructured.subtotal ?? '')}
+                  onChange={(v) => updateDraftField('subtotal', v === '' ? null : Number(v))}
+                  placeholder="0"
+                />
+                <ContactField
+                  label="Thuế"
+                  value={String(draftStructured.tax ?? '')}
+                  onChange={(v) => updateDraftField('tax', v === '' ? null : Number(v))}
+                  placeholder="0"
+                />
+                <ContactField
+                  label="Giảm giá"
+                  value={String(draftStructured.discount ?? '')}
+                  onChange={(v) => updateDraftField('discount', v === '' ? null : Number(v))}
+                  placeholder="0"
+                />
+                <ContactField
+                  label="Đơn vị tiền"
+                  value={draftStructured.currency ?? ''}
+                  onChange={(v) => updateDraftField('currency', v)}
+                  placeholder="VND"
+                />
+              </Box>
+
+              <Box
+                layoutClassName="flex items-center justify-between gap-3 rounded-lg border p-3"
+                borderClassName="border-orange-200 dark:border-orange-800"
+                backgroundClassName="bg-orange-50 dark:bg-orange-950/40"
+              >
+                <Box layoutClassName="flex flex-col gap-0.5">
+                  <Box layoutClassName="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                    <Typography size="sm" layoutClassName="font-semibold text-orange-900 dark:text-orange-100">
+                      Tổng tiền
+                    </Typography>
+                  </Box>
+                  <Typography size="xs" textClassName="text-orange-800/70 dark:text-orange-200/70">
+                    = Σ mặt hàng + thuế − giảm giá
+                  </Typography>
+                </Box>
+                <Typography
+                  size="sm"
+                  layoutClassName="text-right font-bold tabular-nums text-orange-900 dark:text-orange-100"
+                >
+                  {moneyFmt.format(computedTotal)}{' '}
+                  <span className="text-xs font-medium opacity-70">
+                    {draftStructured.currency || 'VND'}
+                  </span>
+                </Typography>
+              </Box>
+            </Card>
+          </Box>
+
+          <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
             <Typography size="sm" layoutClassName="font-semibold">
               {t('billImport.items')}
             </Typography>
@@ -414,7 +518,11 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                         <TableCell>
                           <Input
                             value={String(it.quantity ?? '')}
-                            onChange={(e) => updateDraftLine(idx, { quantity: Number(e.target.value || 0) })}
+                            onChange={(e) =>
+                              updateDraftLine(idx, {
+                                quantity: e.target.value === '' ? null : Number(e.target.value),
+                              })
+                            }
                             placeholder="SL"
                           />
                         </TableCell>
@@ -428,14 +536,22 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                         <TableCell>
                           <Input
                             value={String(it.unitPrice ?? '')}
-                            onChange={(e) => updateDraftLine(idx, { unitPrice: Number(e.target.value || 0) })}
+                            onChange={(e) =>
+                              updateDraftLine(idx, {
+                                unitPrice: e.target.value === '' ? null : Number(e.target.value),
+                              })
+                            }
                             placeholder="Đơn giá"
                           />
                         </TableCell>
                         <TableCell>
                           <Input
                             value={String(it.lineTotal ?? '')}
-                            onChange={(e) => updateDraftLine(idx, { lineTotal: Number(e.target.value || 0) })}
+                            onChange={(e) =>
+                              updateDraftLine(idx, {
+                                lineTotal: e.target.value === '' ? null : Number(e.target.value),
+                              })
+                            }
                             placeholder="Thành tiền"
                           />
                         </TableCell>
@@ -448,7 +564,12 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
           </Card>
 
           <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700">
-            <Box layoutClassName="flex flex-wrap items-center gap-3">
+            <Box layoutClassName="flex flex-wrap items-center justify-between gap-3">
+              <Typography size="xs" variant="muted">
+                {selectedSupplierId
+                  ? 'Phiếu sẽ được gộp vào NCC đã chọn (counter & lịch sử + 1).'
+                  : 'NCC mới sẽ được tạo từ tên hiện tại.'}
+              </Typography>
               <Button
                 type="button"
                 onClick={() => void onSaveDraft()}

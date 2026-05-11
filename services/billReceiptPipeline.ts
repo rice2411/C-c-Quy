@@ -52,6 +52,59 @@ const RECEIPT_KEYWORDS_EN = [
 ];
 
 /**
+ * Các cụm từ "chắc chắn là bill" trong OCR — đã strip dấu, lowercase.
+ * Nếu OCR text chứa 1 trong các cụm này + heuristic không hard-reject,
+ * pipeline sẽ pass dù Gemini có verdict thấp / lỗi.
+ */
+const STRONG_RECEIPT_PHRASES = [
+  'hoa don ban hang',
+  'hoa don gia tri gia tang',
+  'hoa don gtgt',
+  'hdgtgt',
+  'hoa don do',
+  'hoa don dien tu',
+  'phieu tinh tien',
+  'phieu thanh toan',
+  'phieu thu',
+  'phieu chi',
+  'phieu xuat',
+  'phieu nhap',
+  'phieu giao hang',
+  'bien lai',
+  'khach phai tra',
+  'tong tien hang',
+  'tong tien thanh toan',
+  'thanh tien',
+  'tong cong',
+  'ngay ban',
+  'ngay lap',
+  'invoice no',
+  'receipt no',
+];
+
+function stripVi(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd');
+}
+
+/** Phát hiện cụm từ "chắc chắn là bill" trong OCR text. */
+export function detectStrongReceiptSignal(ocrText: string): {
+  strong: boolean;
+  matchedPhrase: string | null;
+} {
+  const stripped = stripVi(ocrText);
+  for (const phrase of STRONG_RECEIPT_PHRASES) {
+    if (stripped.includes(phrase)) {
+      return { strong: true, matchedPhrase: phrase };
+    }
+  }
+  return { strong: false, matchedPhrase: null };
+}
+
+/**
  * Heuristic nhanh: không thay LLM nhưng loại bớt ảnh quá lệch (menu, chữ quảng cáo…).
  */
 export function quickReceiptHeuristic(ocrText: string): {
@@ -120,28 +173,74 @@ export async function runBillImportPipeline(
   }
 
   const heuristic = quickReceiptHeuristic(ocrText);
-  if (heuristic.hardReject) {
+  const signal = detectStrongReceiptSignal(ocrText);
+
+  // Hard reject CHỈ khi heuristic chặn cứng VÀ không có cụm từ đặc trưng.
+  // Đảm bảo bill rõ ràng (chỉ thiếu nhiều chữ vì cắt ảnh) vẫn được xử lý.
+  if (heuristic.hardReject && !signal.strong) {
     throw new Error(`Ảnh có vẻ không phải bill nhập hàng: ${heuristic.noteVi}`);
   }
 
   onProgress?.('validate');
-  const llmCheck = await validateReceiptWithGemini(ocrText);
-  if (!llmCheck.isLikelyReceipt || llmCheck.confidence < MIN_LLM_CONFIDENCE) {
+
+  // Strong signal → bỏ qua LLM gate luôn (Gemini đôi khi reject sai do ảnh bị
+  // cắt phần dưới, đèn flash, hoặc chữ "HÓA ĐƠN BÁN HÀNG" không khớp template).
+  let llmCheck: { isLikelyReceipt: boolean; confidence: number; reasonVi: string };
+  try {
+    llmCheck = await validateReceiptWithGemini(ocrText);
+  } catch (e) {
+    if (signal.strong) {
+      // AI lỗi nhưng OCR có cụm từ chắc chắn → vẫn tiếp tục
+      llmCheck = {
+        isLikelyReceipt: true,
+        confidence: 0.55,
+        reasonVi: `AI lỗi, nhưng OCR có cụm "${signal.matchedPhrase}" — vẫn xử lý.`,
+      };
+    } else {
+      throw e;
+    }
+  }
+
+  const llmPasses = llmCheck.isLikelyReceipt && llmCheck.confidence >= MIN_LLM_CONFIDENCE;
+  const strongPasses = signal.strong && heuristic.score >= 0.45;
+
+  if (!llmPasses && !strongPasses) {
     const pct = Math.round(llmCheck.confidence * 100);
     throw new Error(
-      `Không xác định là bill hợp lệ (độ tin cậy ${pct}%). ${llmCheck.reasonVi || 'Thử ảnh rõ hơn hoặc toàn trang hoá đơn.'}`
+      `Không xác định là bill hợp lệ (độ tin cậy ${pct}%). ${llmCheck.reasonVi || 'Thử ảnh rõ hơn hoặc toàn trang hoá đơn.'}`,
     );
+  }
+
+  // Pass nhờ strong signal nhưng Gemini reject → ghi đè reason để UI hiển thị rõ
+  if (!llmPasses && strongPasses) {
+    llmCheck = {
+      isLikelyReceipt: true,
+      confidence: Math.max(llmCheck.confidence, 0.55),
+      reasonVi: `Có cụm "${signal.matchedPhrase}" — bỏ qua phân loại thấp của AI và xử lý tiếp.`,
+    };
   }
 
   onProgress?.('structure');
   const structured = await structureStockReceiptWithGemini(ocrText);
+
+  // Mặc định ngày bill = hôm nay nếu Gemini không trích được — luôn có ngày
+  // để sort / filter / hiển thị trong list phiếu.
+  if (!structured.receiptDate || !/^\d{4}-\d{2}-\d{2}$/.test(structured.receiptDate)) {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    structured.receiptDate = `${y}-${m}-${d}`;
+  }
 
   const validation: BillValidationResult = {
     isLikelyReceipt: llmCheck.isLikelyReceipt,
     confidence: llmCheck.confidence,
     reasonVi: llmCheck.reasonVi,
     heuristicScore: heuristic.score,
-    heuristicNoteVi: heuristic.noteVi,
+    heuristicNoteVi: signal.strong
+      ? `${heuristic.noteVi} (Phát hiện cụm: "${signal.matchedPhrase}")`
+      : heuristic.noteVi,
   };
 
   return { ocrText, structured, validation };

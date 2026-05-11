@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ScanLine } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -10,6 +10,7 @@ import type {
   SavedStockReceiptDetail,
   SavedStockReceiptSummary,
   StockReceiptStructured,
+  SupplierContactInfo,
 } from '@/types/billReceipt';
 import {
   fetchImportedMaterials,
@@ -29,16 +30,17 @@ import BillImportReceiptListTab from '@/pages/BillImport/BillImportReceiptListTa
 import BillImportSuppliersTab from '@/pages/BillImport/BillImportSuppliersTab';
 import BillImportMaterialsTab from '@/pages/BillImport/BillImportMaterialsTab';
 import ReceiptDetailModal from '@/pages/BillImport/ReceiptDetailModal';
+import BillImportModal from '@/pages/BillImport/BillImportModal';
 import type { BillImportTabId, UiProgressStage } from '@/pages/BillImport/constants';
 import { fileToBase64NoPrefix } from '@/utils/fileUtil';
 import { formatImportedAt } from '@/utils/dateUtil';
 import { normalizeSearchText } from '@/utils/stringUtil';
 
+const EMPTY_CONTACT: SupplierContactInfo = {};
+
 const BillImportPage: React.FC = () => {
   const { t } = useLanguage();
   const { currentUser } = useAuth();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploadedImageBase64, setUploadedImageBase64] = useState<string | null>(null);
   const [uploadedImageMimeType, setUploadedImageMimeType] = useState<string | null>(null);
@@ -48,7 +50,8 @@ const BillImportPage: React.FC = () => {
   const [draftStructured, setDraftStructured] = useState<StockReceiptStructured | null>(null);
   const [validation, setValidation] = useState<BillValidationResult | null>(null);
   const [progressStage, setProgressStage] = useState<UiProgressStage | null>(null);
-  const [activeTab, setActiveTab] = useState<BillImportTabId>('bills');
+  const [activeTab, setActiveTab] = useState<BillImportTabId>('receipts');
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [masterLoading, setMasterLoading] = useState(false);
   const [receiptLoading, setReceiptLoading] = useState(false);
   const [receiptRows, setReceiptRows] = useState<SavedStockReceiptSummary[]>([]);
@@ -61,48 +64,77 @@ const BillImportPage: React.FC = () => {
   const [supplierSearch, setSupplierSearch] = useState('');
   const [materialSearch, setMaterialSearch] = useState('');
 
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
+  const [supplierContact, setSupplierContact] = useState<SupplierContactInfo>(EMPTY_CONTACT);
+
   const resetOutput = useCallback(() => {
     setOcrText('');
     setDraftStructured(null);
     setValidation(null);
     setUploadedImageBase64(null);
     setUploadedImageMimeType(null);
+    setSelectedSupplierId(null);
+    setSupplierContact(EMPTY_CONTACT);
   }, []);
 
-  const onFile = async (file: File | undefined) => {
-    if (!file || !file.type.startsWith('image/')) {
-      if (file) toast.error(t('billImport.invalidFile'));
-      return;
-    }
+  const resetAndClosePreview = useCallback(() => {
     resetOutput();
-    const url = URL.createObjectURL(file);
     setPreviewUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev);
-      return url;
+      return null;
     });
+  }, [resetOutput]);
 
-    setBusy(true);
-    setProgressStage('prepare');
-    try {
-      const b64 = await fileToBase64NoPrefix(file);
-      setUploadedImageBase64(b64);
-      setUploadedImageMimeType(file.type || null);
-      const result = await runBillImportPipeline(b64, {
-        onProgress: (stage) => setProgressStage(stage),
+  const runPipelineForFile = useCallback(
+    async (file: File) => {
+      resetOutput();
+      const url = URL.createObjectURL(file);
+      setPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
       });
-      setOcrText(result.ocrText);
-      setDraftStructured(result.structured);
-      setValidation(result.validation);
-      toast.success(t('billImport.done'));
-    } catch (e) {
-      console.error(e);
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error(msg);
-    } finally {
-      setBusy(false);
-      setProgressStage(null);
-    }
-  };
+      setBusy(true);
+      setProgressStage('prepare');
+      try {
+        const b64 = await fileToBase64NoPrefix(file);
+        setUploadedImageBase64(b64);
+        setUploadedImageMimeType(file.type || null);
+        const result = await runBillImportPipeline(b64, {
+          onProgress: (stage) => setProgressStage(stage),
+        });
+        setOcrText(result.ocrText);
+        setDraftStructured(result.structured);
+        setValidation(result.validation);
+        // Pre-fill supplier contact form từ SĐT / địa chỉ Gemini trích được.
+        setSupplierContact({
+          phone: result.structured.supplierPhone ?? null,
+          address: result.structured.supplierAddress ?? null,
+        });
+        toast.success(t('billImport.done'));
+      } catch (e) {
+        console.error(e);
+        const msg = e instanceof Error ? e.message : String(e);
+        toast.error(msg);
+      } finally {
+        setBusy(false);
+        setProgressStage(null);
+      }
+    },
+    [resetOutput, t],
+  );
+
+  const handleFileSelected = useCallback(
+    (file: File | undefined) => {
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        toast.error(t('billImport.invalidFile'));
+        return;
+      }
+      setImportModalOpen(true);
+      void runPipelineForFile(file);
+    },
+    [runPipelineForFile, t],
+  );
 
   const loadMasters = useCallback(async () => {
     setMasterLoading(true);
@@ -135,21 +167,46 @@ const BillImportPage: React.FC = () => {
     }
     setSavingDraft(true);
     try {
+      const lineSum = (draftStructured.lineItems || []).reduce(
+        (s, l) => s + (typeof l.lineTotal === 'number' ? l.lineTotal : 0),
+        0,
+      );
+      const taxV = typeof draftStructured.tax === 'number' ? draftStructured.tax : 0;
+      const discountV =
+        typeof draftStructured.discount === 'number' ? draftStructured.discount : 0;
+      const structuredForSave: StockReceiptStructured = {
+        ...draftStructured,
+        totalAmount: lineSum + taxV - discountV,
+      };
       await saveStockReceiptDraft({
-        structured: draftStructured,
+        structured: structuredForSave,
         validation,
         ocrText,
         receiptImageBase64: uploadedImageBase64,
         receiptImageMimeType: uploadedImageMimeType,
         createdByUid: currentUser?.uid ?? null,
+        targetSupplierId: selectedSupplierId,
+        supplierContact,
       });
       toast.success(t('billImport.saved'));
       void loadReceipts();
       void loadMasters();
+      setImportModalOpen(false);
+      resetAndClosePreview();
     } catch (error) {
       console.error(error);
-      const msg = error instanceof Error ? error.message : String(error);
-      toast.error(msg);
+      const rawMsg = error instanceof Error ? error.message : String(error);
+      if (rawMsg.startsWith('DUPLICATE_BILL:')) {
+        const existingId = rawMsg.split(':')[1];
+        toast.error(
+          `Bill này đã được nhập trước đó (id: ${existingId}). Mở danh sách phiếu để xem.`,
+          { duration: 6000 },
+        );
+      } else if (rawMsg === 'TOO_MANY_LINES') {
+        toast.error('Bill có quá nhiều dòng (>240). Chia làm nhiều lần nhập.');
+      } else {
+        toast.error(rawMsg);
+      }
     } finally {
       setSavingDraft(false);
     }
@@ -186,9 +243,36 @@ const BillImportPage: React.FC = () => {
     });
   };
 
+  const handleSupplierSelect = useCallback(
+    (next: { id: string | null; name: string; supplier?: ImportedSupplierSummary }) => {
+      setSelectedSupplierId(next.id);
+      if (next.supplier) {
+        setSupplierContact({
+          phone: next.supplier.phone ?? null,
+          address: next.supplier.address ?? null,
+          contactPerson: next.supplier.contactPerson ?? null,
+          email: next.supplier.email ?? null,
+          taxCode: next.supplier.taxCode ?? null,
+          category: next.supplier.category ?? null,
+          notes: next.supplier.notes ?? null,
+        });
+      }
+    },
+    [],
+  );
+
+  const handleSupplierContactChange = useCallback((patch: Partial<SupplierContactInfo>) => {
+    setSupplierContact((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const closeImportModal = useCallback(() => {
+    setImportModalOpen(false);
+  }, []);
+
   useEffect(() => {
     void loadReceipts();
-  }, [loadReceipts]);
+    void loadMasters();
+  }, [loadReceipts, loadMasters]);
 
   const filteredReceipts = receiptRows.filter((row) => {
     const q = normalizeSearchText(receiptSearch);
@@ -199,7 +283,8 @@ const BillImportPage: React.FC = () => {
       normalizeSearchText(row.receiptDate).includes(q) ||
       normalizeSearchText(row.createdAt).includes(q) ||
       normalizeSearchText(importedLabel).includes(q) ||
-      normalizeSearchText(row.id).includes(q)
+      normalizeSearchText(row.id).includes(q) ||
+      normalizeSearchText(row.invoiceNumber).includes(q)
     );
   });
 
@@ -229,15 +314,11 @@ const BillImportPage: React.FC = () => {
         <Typography size="sm" variant="muted" layoutClassName="mt-1">
           {t('billImport.subtitle')}
         </Typography>
-        <Typography size="xs" variant="muted" layoutClassName="mt-1">
-          {t('billImport.validationHint')}
-        </Typography>
       </Box>
 
       <Tabs
         items={[
-          { id: 'bills', label: 'Nhập bill' },
-          { id: 'receiptList', label: 'List bill' },
+          { id: 'receipts', label: 'Phiếu nhập' },
           { id: 'suppliers', label: 'Nhà cung cấp' },
           { id: 'materials', label: 'Nguyên vật liệu' },
         ]}
@@ -248,27 +329,11 @@ const BillImportPage: React.FC = () => {
           if (next === 'suppliers' || next === 'materials') {
             void loadMasters();
           }
-          if (next === 'receiptList') void loadReceipts();
+          if (next === 'receipts') void loadReceipts();
         }}
       />
 
-      {activeTab === 'bills' ? (
-        <BillImportEntryTab
-          inputRef={inputRef}
-          cameraInputRef={cameraInputRef}
-          onFile={onFile}
-          busy={busy}
-          previewUrl={previewUrl}
-          progressStage={progressStage}
-          validation={validation}
-          ocrText={ocrText}
-          draftStructured={draftStructured}
-          savingDraft={savingDraft}
-          onSaveDraft={handleSaveDraft}
-          updateDraftField={updateDraftField}
-          updateDraftLine={updateDraftLine}
-        />
-      ) : activeTab === 'receiptList' ? (
+      {activeTab === 'receipts' ? (
         <BillImportReceiptListTab
           receiptSearch={receiptSearch}
           onReceiptSearchChange={setReceiptSearch}
@@ -276,6 +341,7 @@ const BillImportPage: React.FC = () => {
           onRefresh={loadReceipts}
           filteredReceipts={filteredReceipts}
           onRowClick={openReceiptDetail}
+          onFileSelected={handleFileSelected}
         />
       ) : activeTab === 'suppliers' ? (
         <BillImportSuppliersTab
@@ -294,6 +360,30 @@ const BillImportPage: React.FC = () => {
           filteredMaterials={filteredMaterials}
         />
       )}
+
+      <BillImportModal
+        open={importModalOpen}
+        onClose={closeImportModal}
+        title="Nhập bill mới"
+      >
+        <BillImportEntryTab
+          busy={busy}
+          previewUrl={previewUrl}
+          progressStage={progressStage}
+          validation={validation}
+          ocrText={ocrText}
+          draftStructured={draftStructured}
+          savingDraft={savingDraft}
+          onSaveDraft={handleSaveDraft}
+          updateDraftField={updateDraftField}
+          updateDraftLine={updateDraftLine}
+          supplierList={supplierRows}
+          selectedSupplierId={selectedSupplierId}
+          supplierContact={supplierContact}
+          onSupplierSelect={handleSupplierSelect}
+          onSupplierContactChange={handleSupplierContactChange}
+        />
+      </BillImportModal>
 
       <ReceiptDetailModal
         open={detailOpen}
