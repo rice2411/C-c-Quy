@@ -377,8 +377,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         maxWidth="xl"
         footer={footer}
       >
-        <form onSubmit={handleSubmit}>
-          <Box layoutClassName="space-y-6 p-6">
+        <form onSubmit={handleSubmit} className="min-w-0">
+          <Box layoutClassName="space-y-6 p-4 sm:p-6 min-w-0 overflow-x-hidden">
             {error ? (
               <Box
                 layoutClassName="flex items-center gap-2 rounded-lg p-3 text-sm"
@@ -417,8 +417,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               phone={phone} setPhone={setPhone}
               address={address} setAddress={setAddress}
             />
-            <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <Field label="Ngày nhận hàng" htmlFor="order-form-delivery-date">
+            <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2 min-w-0">
+              <Field label="Ngày nhận hàng" htmlFor="order-form-delivery-date" className="min-w-0 overflow-hidden">
                 <Input
                   id="order-form-delivery-date"
                   type="date"
@@ -428,7 +428,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
                   leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
                 />
               </Field>
-              <Box layoutClassName="space-y-2">
+              <Box layoutClassName="space-y-2 min-w-0 overflow-hidden">
                 <Box layoutClassName="flex items-center justify-between">
                   <Label htmlFor="order-form-delivery-time" className="mb-0">
                     Giờ nhận (tùy chọn)
@@ -500,5 +500,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
     </>
   );
 };
+
 
 export default OrderForm;

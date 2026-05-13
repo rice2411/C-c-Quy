@@ -9,6 +9,61 @@ body {
     /* Ngăn zoom tự động trên iOS khi focus vào input - font-size tối thiểu 16px */
     font-size: 16px !important;
   }
+
+  /*
+   * iOS Safari: <input type="date"|"time"> có shadow DOM (::-webkit-date-and-time-value
+   * và ::-webkit-calendar-picker-indicator) với intrinsic min-width / padding bên
+   * trong, gây overflow ra ngoài rounded border của box. Phải đè !important +
+   * style cả pseudo-element để chặn triệt để.
+   */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="week"] {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    /* Match height của Input md thường (font 16px + py-2 + border-2) ≈ 42px */
+    min-height: 42px;
+    line-height: 1.25;
+  }
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value,
+  input[type="datetime-local"]::-webkit-date-and-time-value {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    width: 18px;
+    height: 18px;
+    margin-left: auto;
+    margin-right: 0;
+    padding: 0;
+    flex-shrink: 0;
+    opacity: 0.55;
+  }
+  /* Spinner buttons trên Firefox / Chrome desktop — ẩn để không đẩy width */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
 
 /* Custom scrollbar for webkit */

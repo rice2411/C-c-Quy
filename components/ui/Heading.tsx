@@ -26,7 +26,7 @@ const Heading = React.forwardRef<HTMLHeadingElement, HeadingProps>(
         .filter(Boolean)
         .join(' ')
     );
-    const tagName = `h${level}` as keyof JSX.IntrinsicElements;
+    const tagName = `h${level}` as keyof React.JSX.IntrinsicElements;
     return React.createElement(tagName, { ref, className: classes, ...props }, children);
   }
 );
