@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import {
   Copy,
   Download,
+  Image as ImageIcon,
   Package,
   RefreshCw,
   Search,
@@ -26,6 +27,7 @@ import Select from '@/components/ui/Select';
 import Spinner from '@/components/ui/Spinner';
 import Textarea from '@/components/ui/Textarea';
 import Typography from '@/components/ui/Typography';
+import { syncAllProductImagesToOrders } from '@/services/productService';
 
 const PRODUCTS_COLLECTION = 'products';
 const FIRESTORE_BATCH_MAX = 500;
@@ -97,7 +99,6 @@ const toComparable = (value: unknown, normalizeString: boolean): string => {
 
 export interface ProductDatabaseToolsPanelProps {
   onMutate: () => void;
-  /** Tăng khi collection `products` thay đổi bên ngoài panel (vd. xóa bảng) để refetch thống kê */
   refreshStatsNonce?: number;
 }
 
@@ -105,39 +106,46 @@ const ProductDatabaseToolsPanel: React.FC<ProductDatabaseToolsPanelProps> = ({
   onMutate,
   refreshStatsNonce = 0,
 }) => {
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [stats, setStats] = useState<{ total: number; active: number; inactive: number } | null>(null);
+  const [, setStatsLoading] = useState(false);
+  const [, setStats] = useState<{ total: number; active: number; inactive: number } | null>(null);
 
-  const [setFieldPath, setSetFieldPath] = useState('');
-  const [setFieldValueRaw, setSetFieldValueRaw] = useState('');
-  const [setOnlyIfMissing, setSetOnlyIfMissing] = useState(false);
-  const [setBusy, setSetBusy] = useState(false);
-
-  const [delFieldPath, setDelFieldPath] = useState('');
-  const [delBusy, setDelBusy] = useState(false);
-
-  const [renameFrom, setRenameFrom] = useState('');
-  const [renameTo, setRenameTo] = useState('');
-  const [renameBusy, setRenameBusy] = useState(false);
-
-  const [dupFieldPath, setDupFieldPath] = useState('name');
-  const [dupNormalize, setDupNormalize] = useState(true);
-  const [dupSkipEmpty, setDupSkipEmpty] = useState(true);
-  const [dupResult, setDupResult] = useState<string>('');
-  const [dupBusy, setDupBusy] = useState(false);
-
-  const [missFieldPath, setMissFieldPath] = useState('name');
-  const [missResult, setMissResult] = useState<string>('');
-  const [missBusy, setMissBusy] = useState(false);
-
-  const [auditResult, setAuditResult] = useState<string>('');
-  const [auditBusy, setAuditBusy] = useState(false);
-
-  const [exportBusy, setExportBusy] = useState(false);
   const [simpleSearchField, setSimpleSearchField] = useState('name');
   const [simpleSearchKeyword, setSimpleSearchKeyword] = useState('');
   const [simpleSearchResult, setSimpleSearchResult] = useState('');
   const [simpleSearchBusy, setSimpleSearchBusy] = useState(false);
+
+  const [imageSyncBusy, setImageSyncBusy] = useState(false);
+  const [imageSyncResult, setImageSyncResult] = useState<string>('');
+  const [imageSyncIncludeName, setImageSyncIncludeName] = useState(true);
+
+  const runImageSync = async () => {
+    const labelExtra = imageSyncIncludeName ? '(và tên)' : '';
+    if (
+      !window.confirm(
+        `Quét tất cả đơn hàng và đồng bộ ảnh sản phẩm ${labelExtra} từ collection products?\n\nThao tác này ghi đè item.image (và item.name nếu chọn) trên các order có sản phẩm tương ứng. Không ảnh hưởng giá / số lượng / lịch sử thanh toán.`,
+      )
+    ) {
+      return;
+    }
+    setImageSyncBusy(true);
+    setImageSyncResult('');
+    try {
+      const res = await syncAllProductImagesToOrders({ includeName: imageSyncIncludeName });
+      const msg =
+        `Quét ${res.ordersScanned} đơn hàng\n` +
+        `→ Cập nhật ${res.ordersUpdated} đơn\n` +
+        `→ Sửa ${res.itemsFixed} item`;
+      setImageSyncResult(msg);
+      toast.success(`Đã đồng bộ ${res.ordersUpdated} đơn (${res.itemsFixed} item)`);
+    } catch (e) {
+      console.error(e);
+      const errMsg = e instanceof Error ? e.message : String(e);
+      setImageSyncResult(`Lỗi: ${errMsg}`);
+      toast.error('Đồng bộ thất bại — xem console để biết chi tiết');
+    } finally {
+      setImageSyncBusy(false);
+    }
+  };
 
   const loadStats = useCallback(async () => {
     setStatsLoading(true);
@@ -162,274 +170,6 @@ const ProductDatabaseToolsPanel: React.FC<ProductDatabaseToolsPanelProps> = ({
   useEffect(() => {
     void loadStats();
   }, [loadStats, refreshStatsNonce]);
-
-  const runBulkSet = async () => {
-    const path = setFieldPath.trim();
-    if (!path) {
-      toast.error('Nhập tên field');
-      return;
-    }
-    const parsed = stripUndefinedDeep(parseBulkValue(setFieldValueRaw));
-    if (parsed === undefined) {
-      toast.error('Giá trị không hợp lệ');
-      return;
-    }
-    const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
-    if (snap.empty) {
-      toast.error('Không có product');
-      return;
-    }
-    let targets = snap.docs;
-    if (setOnlyIfMissing) {
-      targets = snap.docs.filter((d) => !pathExists(d.data() as FirestoreDocData, path));
-    }
-    if (targets.length === 0) {
-      toast.error('Không có document nào khớp điều kiện');
-      return;
-    }
-    const ok = window.confirm(
-      `Gán field "${path}" cho ${targets.length} product?${setOnlyIfMissing ? ' (chỉ bản ghi chưa có field)' : ''}`
-    );
-    if (!ok) return;
-
-    setSetBusy(true);
-    try {
-      const ids = targets.map((d) => d.id);
-      for (let i = 0; i < ids.length; i += FIRESTORE_BATCH_MAX) {
-        const chunk = ids.slice(i, i + FIRESTORE_BATCH_MAX);
-        const batch = writeBatch(db);
-        chunk.forEach((id) => {
-          batch.update(doc(db, PRODUCTS_COLLECTION, id), { [path]: parsed } as Record<string, unknown>);
-        });
-        await batch.commit();
-      }
-      toast.success(`Đã cập nhật ${targets.length} product`);
-      setSetFieldValueRaw('');
-      onMutate();
-      void loadStats();
-    } catch (e) {
-      console.error(e);
-      toast.error('Không thể gán field (kiểm tra kiểu dữ liệu / quyền Firestore)');
-    } finally {
-      setSetBusy(false);
-    }
-  };
-
-  const runBulkDelete = async () => {
-    const path = delFieldPath.trim();
-    if (!path) {
-      toast.error('Nhập tên field');
-      return;
-    }
-    const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
-    if (snap.empty) {
-      toast.error('Không có product');
-      return;
-    }
-    const ids = snap.docs.map((d) => d.id);
-    if (!window.confirm(`Xóa field "${path}" trên ${ids.length} product? Field lồng nhau dùng dấu chấm (vd: meta.old).`)) return;
-
-    setDelBusy(true);
-    try {
-      for (let i = 0; i < ids.length; i += FIRESTORE_BATCH_MAX) {
-        const chunk = ids.slice(i, i + FIRESTORE_BATCH_MAX);
-        const batch = writeBatch(db);
-        chunk.forEach((id) => {
-          batch.update(doc(db, PRODUCTS_COLLECTION, id), { [path]: deleteField() });
-        });
-        await batch.commit();
-      }
-      toast.success(`Đã cập nhật ${ids.length} product`);
-      setDelFieldPath('');
-      onMutate();
-      void loadStats();
-    } catch (e) {
-      console.error(e);
-      toast.error('Không thể xóa field');
-    } finally {
-      setDelBusy(false);
-    }
-  };
-
-  const runRename = async () => {
-    const from = renameFrom.trim();
-    const to = renameTo.trim();
-    if (!from || !to) {
-      toast.error('Nhập field nguồn và field đích');
-      return;
-    }
-    if (from === to) {
-      toast.error('Hai field phải khác nhau');
-      return;
-    }
-    const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
-    const withOld = snap.docs.filter((d) => pathExists(d.data() as FirestoreDocData, from));
-    if (withOld.length === 0) {
-      toast.error('Không có product nào có field nguồn');
-      return;
-    }
-    if (
-      !window.confirm(
-        `Đổi tên (copy) "${from}" → "${to}" trên ${withOld.length} product? Field nguồn sẽ bị xóa sau khi copy.`
-      )
-    ) {
-      return;
-    }
-
-    setRenameBusy(true);
-    try {
-      for (let offset = 0; offset < withOld.length; offset += FIRESTORE_BATCH_MAX) {
-        const chunk = withOld.slice(offset, offset + FIRESTORE_BATCH_MAX);
-        const batch = writeBatch(db);
-        chunk.forEach((snap) => {
-          const data = snap.data() as FirestoreDocData;
-          const val = getAtPath(data, from);
-          batch.update(doc(db, PRODUCTS_COLLECTION, snap.id), {
-            [to]: val as never,
-            [from]: deleteField(),
-          });
-        });
-        await batch.commit();
-      }
-      toast.success(`Đã đổi tên field trên ${withOld.length} product`);
-      setRenameFrom('');
-      setRenameTo('');
-      onMutate();
-      void loadStats();
-    } catch (e) {
-      console.error(e);
-      toast.error('Không thể đổi tên field');
-    } finally {
-      setRenameBusy(false);
-    }
-  };
-
-  const runDupCheck = async () => {
-    const path = dupFieldPath.trim();
-    if (!path) {
-      toast.error('Nhập field cần so trùng');
-      return;
-    }
-    setDupBusy(true);
-    setDupResult('');
-    try {
-      const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
-      const map = new Map<string, string[]>();
-      snap.docs.forEach((d) => {
-        const raw = getAtPath(d.data() as FirestoreDocData, path);
-        const key = toComparable(raw, dupNormalize);
-        if (dupSkipEmpty && key === '') return;
-        const list = map.get(key) ?? [];
-        list.push(d.id);
-        map.set(key, list);
-      });
-      const lines: string[] = [];
-      map.forEach((ids, key) => {
-        if (ids.length > 1) {
-          lines.push(`Giá trị: ${key || '(rỗng)'}\n  → ${ids.length} product: ${ids.join(', ')}`);
-        }
-      });
-      setDupResult(
-        lines.length
-          ? lines.join('\n\n')
-          : dupSkipEmpty
-            ? 'Không phát hiện trùng (hoặc mọi giá trị đều rỗng và đã bỏ qua).'
-            : 'Không phát hiện trùng.'
-      );
-      toast.success('Đã quét xong');
-    } catch (e) {
-      console.error(e);
-      toast.error('Không thể quét trùng');
-    } finally {
-      setDupBusy(false);
-    }
-  };
-
-  const runMissingCheck = async () => {
-    const path = missFieldPath.trim();
-    if (!path) {
-      toast.error('Nhập field');
-      return;
-    }
-    setMissBusy(true);
-    setMissResult('');
-    try {
-      const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
-      const missing = snap.docs
-        .filter((d) => !pathExists(d.data() as FirestoreDocData, path))
-        .map((d) => d.id);
-      setMissResult(
-        missing.length ? `${missing.length} product thiếu "${path}":\n${missing.join(', ')}` : `Mọi product đều có "${path}".`
-      );
-      toast.success('Đã kiểm tra');
-    } catch (e) {
-      console.error(e);
-      toast.error('Không thể kiểm tra');
-    } finally {
-      setMissBusy(false);
-    }
-  };
-
-  const runAuditNames = async () => {
-    setAuditBusy(true);
-    setAuditResult('');
-    try {
-      const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
-      const bad: string[] = [];
-      snap.docs.forEach((d) => {
-        const name = d.data().name;
-        const s = name == null ? '' : String(name).trim();
-        if (!s) bad.push(d.id);
-      });
-      setAuditResult(
-        bad.length
-          ? `${bad.length} product có name rỗng / thiếu:\n${bad.join(', ')}`
-          : 'Mọi product đều có name không rỗng.'
-      );
-      toast.success('Đã kiểm tra');
-    } catch (e) {
-      console.error(e);
-      toast.error('Không thể kiểm tra');
-    } finally {
-      setAuditBusy(false);
-    }
-  };
-
-  const runExport = async () => {
-    setExportBusy(true);
-    try {
-      const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
-      const rows = snap.docs.map((d) => {
-        const data = d.data();
-        const plain: Record<string, unknown> = { id: d.id };
-        for (const [k, v] of Object.entries(data)) {
-          if (v && typeof v === 'object' && 'toDate' in v && typeof (v as { toDate?: () => Date }).toDate === 'function') {
-            try {
-              plain[k] = (v as { toDate: () => Date }).toDate().toISOString();
-            } catch {
-              plain[k] = String(v);
-            }
-          } else {
-            plain[k] = v as unknown;
-          }
-        }
-        return plain;
-      });
-      const blob = new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `products-export-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success(`Đã xuất ${rows.length} product`);
-    } catch (e) {
-      console.error(e);
-      toast.error('Không thể xuất file');
-    } finally {
-      setExportBusy(false);
-    }
-  };
 
   const runSimpleSearch = async () => {
     const field = simpleSearchField.trim();
@@ -461,7 +201,7 @@ const ProductDatabaseToolsPanel: React.FC<ProductDatabaseToolsPanelProps> = ({
       setSimpleSearchResult(
         hits.length > 0
           ? `Tìm thấy ${hits.length} kết quả\n\n${hits.join('\n')}`
-          : 'Không tìm thấy kết quả phù hợp.'
+          : 'Không tìm thấy kết quả phù hợp.',
       );
       toast.success('Đã tìm xong');
     } catch (e) {
@@ -548,23 +288,56 @@ const ProductDatabaseToolsPanel: React.FC<ProductDatabaseToolsPanelProps> = ({
           </Box>
         ) : null}
       </Card>
+
+      <Card padding="md" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700">
+        <Box layoutClassName="flex items-center gap-2">
+          <ImageIcon className="h-4 w-4 text-orange-500" />
+          <Typography size="sm" layoutClassName="font-semibold">
+            Đồng bộ ảnh sản phẩm với đơn hàng
+          </Typography>
+        </Box>
+        <Typography size="xs" variant="muted" layoutClassName="mt-1.5">
+          Quét toàn bộ đơn hàng → đối chiếu <span className="font-mono text-[11px]">item.id</span> với
+          collection <span className="font-mono text-[11px]">products</span> → ghi đè
+          <span className="font-mono text-[11px]"> item.image</span> nếu đã đổi.
+          Không thay đổi giá / số lượng / trạng thái.
+        </Typography>
+        <Box layoutClassName="mt-3 flex flex-wrap items-center gap-3">
+          <Checkbox
+            checked={imageSyncIncludeName}
+            onChange={(e) => setImageSyncIncludeName(e.target.checked)}
+            label="Đồng bộ luôn cả tên sản phẩm"
+            containerClassName="text-sm text-slate-600 dark:text-slate-400"
+          />
+        </Box>
+        <Button
+          type="button"
+          variant="primary"
+          className="mt-3"
+          onClick={() => void runImageSync()}
+          disabled={imageSyncBusy}
+          leftIcon={imageSyncBusy ? busyIcon(true) : <ImageIcon className="h-4 w-4" />}
+          iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+          sizeClassName="px-4 py-2"
+          roundedClassName="rounded-lg"
+          layoutClassName="inline-flex items-center gap-2"
+        >
+          {imageSyncBusy ? 'Đang đồng bộ...' : 'Đồng bộ ngay'}
+        </Button>
+
+        {imageSyncResult ? (
+          <Box
+            layoutClassName="mt-3 max-h-72 overflow-auto p-3 font-mono text-xs"
+            roundedClassName="rounded-lg"
+            backgroundClassName="bg-slate-900"
+            textClassName="text-slate-100 whitespace-pre-wrap"
+          >
+            {imageSyncResult}
+          </Box>
+        ) : null}
+      </Card>
     </Box>
   );
 };
-
-const BadgeStat: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <Box
-    layoutClassName="rounded-lg px-3 py-2"
-    borderClassName="border border-violet-200 dark:border-violet-800"
-    backgroundClassName="bg-white/80 dark:bg-slate-900/40"
-  >
-    <Typography size="xs" variant="muted">
-      {label}
-    </Typography>
-    <Typography size="sm" layoutClassName="font-semibold">
-      {value}
-    </Typography>
-  </Box>
-);
 
 export default ProductDatabaseToolsPanel;

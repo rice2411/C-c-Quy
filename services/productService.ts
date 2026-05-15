@@ -9,17 +9,83 @@ import {
   query,
   orderBy,
   runTransaction,
+  serverTimestamp,
   where,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { Product, ProductVersion } from '@/types';
+
+const ORDERS_COLLECTION = 'orders';
+const BATCH_LIMIT_SAFE = 450;
+
+/**
+ * Cascade: khi 1 sản phẩm đổi ảnh, đồng bộ ảnh đó vào mọi đơn hàng
+ * có chứa sản phẩm này (matching `items[].id === productId`).
+ */
+async function cascadeProductChangeToOrders(
+  productId: string,
+  patch: { image?: string; name?: string },
+): Promise<number> {
+  if (patch.image === undefined && patch.name === undefined) return 0;
+
+  try {
+    const ordersSnap = await getDocs(collection(db, ORDERS_COLLECTION));
+    type ItemLike = { id?: unknown; name?: unknown; image?: unknown };
+
+    interface OrderToUpdate {
+      ref: ReturnType<typeof doc>;
+      items: ItemLike[];
+    }
+    const toUpdate: OrderToUpdate[] = [];
+
+    for (const orderDoc of ordersSnap.docs) {
+      const data = orderDoc.data() as { items?: ItemLike[] };
+      const items: ItemLike[] = Array.isArray(data.items) ? data.items : [];
+      if (items.length === 0) continue;
+
+      let dirty = false;
+      const nextItems = items.map((it) => {
+        if (it && it.id === productId) {
+          const updated: ItemLike = { ...it };
+          if (patch.image !== undefined && it.image !== patch.image) {
+            updated.image = patch.image;
+            dirty = true;
+          }
+          if (patch.name !== undefined && it.name !== patch.name) {
+            updated.name = patch.name;
+            dirty = true;
+          }
+          return updated;
+        }
+        return it;
+      });
+      if (dirty) {
+        toUpdate.push({ ref: orderDoc.ref, items: nextItems });
+      }
+    }
+
+    for (let i = 0; i < toUpdate.length; i += BATCH_LIMIT_SAFE) {
+      const batch = writeBatch(db);
+      for (const { ref, items } of toUpdate.slice(i, i + BATCH_LIMIT_SAFE)) {
+        batch.update(ref, { items, updatedAt: serverTimestamp() });
+      }
+      await batch.commit();
+    }
+
+    return toUpdate.length;
+  } catch (error) {
+    console.error('cascadeProductChangeToOrders failed:', error);
+    return 0;
+  }
+}
 
 export const fetchProducts = async (): Promise<Product[]> => {
   try {
     const productsRef = collection(db, 'products');
     const q = query(productsRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
-    
+
     return snapshot.docs.map(doc => {
       const data = doc.data();
       let materials = data.materials || [];
@@ -27,7 +93,7 @@ export const fetchProducts = async (): Promise<Product[]> => {
       if (data.materialIds && materials.length === 0) {
         materials = (data.materialIds as string[]).map(id => ({ materialId: id, quantity: 1 }));
       }
-      
+
       return {
         id: doc.id,
         name: data.name,
@@ -43,7 +109,6 @@ export const fetchProducts = async (): Promise<Product[]> => {
     });
   } catch (error) {
     console.error("Error fetching products:", error);
-    // Fallback if query fails (e.g. missing index), try basic fetch
     try {
         const productsRef = collection(db, 'products');
         const snapshot = await getDocs(productsRef);
@@ -80,6 +145,9 @@ export const updateProduct = async (id: string, productData: Partial<Product>): 
     const productRef = doc(db, 'products', id);
     const versionsRef = collection(db, 'product_versions');
 
+    let beforeImage: string | undefined;
+    let beforeName: string | undefined;
+
     await runTransaction(db, async (tx) => {
       const currentSnap = await tx.get(productRef);
       if (!currentSnap.exists()) {
@@ -87,6 +155,8 @@ export const updateProduct = async (id: string, productData: Partial<Product>): 
       }
 
       const before = currentSnap.data();
+      beforeImage = typeof before.image === 'string' ? before.image : undefined;
+      beforeName = typeof before.name === 'string' ? before.name : undefined;
       const after = {
         ...before,
         ...updates,
@@ -102,11 +172,99 @@ export const updateProduct = async (id: string, productData: Partial<Product>): 
         after,
       });
     });
+
+    const newImage =
+      typeof updates.image === 'string' ? (updates.image as string) : undefined;
+    const newName =
+      typeof updates.name === 'string' ? (updates.name as string) : undefined;
+    const cascadePatch: { image?: string; name?: string } = {};
+    if (newImage !== undefined && newImage !== beforeImage) cascadePatch.image = newImage;
+    if (newName !== undefined && newName !== beforeName) cascadePatch.name = newName;
+    if (cascadePatch.image !== undefined || cascadePatch.name !== undefined) {
+      void cascadeProductChangeToOrders(id, cascadePatch);
+    }
   } catch (error) {
     console.error("Error updating product:", error);
     throw error;
   }
 };
+
+/**
+ * Đồng bộ thủ công: với mọi đơn hàng, ghi đè item.image (và optionally item.name)
+ * bằng giá trị hiện tại của product nếu khác.
+ *
+ * Trả về thống kê: số order quét, số order được update, số item được sửa.
+ */
+export async function syncAllProductImagesToOrders(options?: {
+  includeName?: boolean;
+}): Promise<{ ordersScanned: number; ordersUpdated: number; itemsFixed: number }> {
+  const includeName = options?.includeName ?? true;
+
+  const productsSnap = await getDocs(collection(db, 'products'));
+  const productMap = new Map<string, { image?: string; name?: string }>();
+  productsSnap.docs.forEach((d) => {
+    const data = d.data() as Record<string, unknown>;
+    productMap.set(d.id, {
+      image: typeof data.image === 'string' ? data.image : undefined,
+      name: typeof data.name === 'string' ? data.name : undefined,
+    });
+  });
+
+  const ordersSnap = await getDocs(collection(db, ORDERS_COLLECTION));
+  type ItemLike = { id?: unknown; name?: unknown; image?: unknown };
+  interface OrderToUpdate {
+    ref: ReturnType<typeof doc>;
+    items: ItemLike[];
+  }
+  const toUpdate: OrderToUpdate[] = [];
+  let itemsFixed = 0;
+
+  for (const orderDoc of ordersSnap.docs) {
+    const data = orderDoc.data() as { items?: ItemLike[] };
+    const items: ItemLike[] = Array.isArray(data.items) ? data.items : [];
+    if (items.length === 0) continue;
+
+    let dirty = false;
+    const nextItems = items.map((it) => {
+      if (!it || typeof it.id !== 'string') return it;
+      const p = productMap.get(it.id);
+      if (!p) return it;
+      const updated: ItemLike = { ...it };
+      let changed = false;
+      if (p.image !== undefined && it.image !== p.image) {
+        updated.image = p.image;
+        changed = true;
+      }
+      if (includeName && p.name !== undefined && it.name !== p.name) {
+        updated.name = p.name;
+        changed = true;
+      }
+      if (changed) {
+        dirty = true;
+        itemsFixed += 1;
+      }
+      return updated;
+    });
+
+    if (dirty) {
+      toUpdate.push({ ref: orderDoc.ref, items: nextItems });
+    }
+  }
+
+  for (let i = 0; i < toUpdate.length; i += BATCH_LIMIT_SAFE) {
+    const batch = writeBatch(db);
+    for (const { ref, items } of toUpdate.slice(i, i + BATCH_LIMIT_SAFE)) {
+      batch.update(ref, { items, updatedAt: serverTimestamp() });
+    }
+    await batch.commit();
+  }
+
+  return {
+    ordersScanned: ordersSnap.size,
+    ordersUpdated: toUpdate.length,
+    itemsFixed,
+  };
+}
 
 export const deleteProduct = async (id: string): Promise<void> => {
   try {
@@ -143,7 +301,6 @@ export const fetchProductVersions = async (productId: string): Promise<ProductVe
     return snapshot.docs.map(mapVersion);
   } catch (error) {
     console.error('Error fetching product versions:', error);
-    // Fallback when composite index (productId + editedAt) is missing
     try {
       const versionsRef = collection(db, 'product_versions');
       const fallbackQ = query(versionsRef, where('productId', '==', productId));
