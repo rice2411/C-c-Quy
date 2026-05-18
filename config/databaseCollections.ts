@@ -13,6 +13,7 @@ export const DATABASE_COLLECTIONS: DatabaseCollectionConfig[] = [
   { id: 'customers', label: 'Customers' },
   { id: 'users', label: 'Users' },
   { id: 'transactions', label: 'Transactions' },
+  { id: 'facebook_messages', label: 'Tin nhắn Facebook' },
   { id: 'stock_receipts', label: 'Phiếu nhập kho' },
   { id: 'suppliers', label: 'Nhà cung cấp' },
   { id: 'materials', label: 'Nguyên vật liệu' },
