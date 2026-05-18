@@ -49,6 +49,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
 
   const [orderNumber, setOrderNumber] = useState('');
   const [loadingOrderNumber, setLoadingOrderNumber] = useState(false);
+  const [recentlyAddedId, setRecentlyAddedId] = useState<string | null>(null);
+
+  // Helper: flash highlight 1 item trong list trong ~1.4s rồi tự clear.
+  const flashHighlight = (itemId: string) => {
+    setRecentlyAddedId(itemId);
+    setTimeout(() => {
+      setRecentlyAddedId((prev) => (prev === itemId ? null : prev));
+    }, 1400);
+  };
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -110,7 +119,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         setItems(loadedItems);
       } else if (products.length > 0) {
         setItems([{
-          id: `item-${Date.now()}-0`,
+          id: genItemId(),
           productId: products[0]?.id || '',
           productName: products[0]?.name || '',
           quantity: 1,
@@ -146,24 +155,24 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
     }
   }, [initialData, isOpen]);
 
-  // Default to one item when opening for new order and products are loaded
-  useEffect(() => {
-    if (isOpen && !initialData && products.length > 0 && items.length === 0) {
-      setItems([{
-        id: `item-${Date.now()}-0`,
-        productId: products[0]?.id || '',
-        productName: products[0]?.name || '',
-        quantity: 1,
-        unitPrice: products[0]?.price || 0,
-        image: products[0]?.image
-      }]);
+  // Đơn mới mở → để rỗng; user search trong ProductSearchBar và click để add.
+  // Không auto-add product đầu tiên nữa.
+
+
+  // Sinh id duy nhất cho 1 form item — KHÔNG dùng Date.now()+items.length vì
+  // khi bulk add (forEach trong cùng tick) sẽ ra cùng id, gây React key trùng
+  // → quantity input của 2 row chia sẻ cùng state.
+  const genItemId = (): string => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return `item-${crypto.randomUUID()}`;
     }
-  }, [isOpen, initialData, products, items.length]);
+    return `item-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  };
 
   const handleAddItem = () => {
     const first = products[0];
     setItems([...items, {
-      id: `item-${Date.now()}-${items.length}`,
+      id: genItemId(),
       productId: first?.id || '',
       productName: first?.name || '',
       quantity: 1,
@@ -172,12 +181,58 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
     }]);
   };
 
+  /**
+   * Thêm 1 sản phẩm vào đơn qua ProductSearchBar.
+   * Nếu sản phẩm đã có trong đơn → tự tăng quantity +1 (POS-style).
+   * Ngược lại → tạo line item mới.
+   */
+  const handleAddItemWithProduct = (product: Product) => {
+    const newId = genItemId();
+    let resolvedId = newId;
+    setItems(prev => {
+      const existingIdx = prev.findIndex(i => i.productId === product.id);
+      if (existingIdx >= 0) {
+        resolvedId = prev[existingIdx].id;
+        return prev.map((item, idx) =>
+          idx === existingIdx ? { ...item, quantity: (item.quantity || 0) + 1 } : item,
+        );
+      }
+      return [...prev, {
+        id: newId,
+        productId: product.id,
+        productName: product.name,
+        quantity: 1,
+        unitPrice: product.price,
+        image: product.image,
+      }];
+    });
+    flashHighlight(resolvedId);
+  };
+
+  /** Thêm item tuỳ chỉnh (không gắn product) — user gõ tên + click "Tạo item tuỳ chỉnh". */
+  const handleAddCustomItem = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const newId = genItemId();
+    setItems(prev => [...prev, {
+      id: newId,
+      productId: '',
+      productName: trimmed,
+      quantity: 1,
+      unitPrice: 0,
+      image: undefined,
+    }]);
+    flashHighlight(newId);
+  };
+
   const handleRemoveItem = (itemId: string) => {
     setItems(items.filter(i => i.id !== itemId));
   };
 
   const handleUpdateItem = (itemId: string, field: keyof FormItem, value: any) => {
-    setItems(items.map(item => {
+    // Functional setState để cho phép multiple sequential calls (vd. ProductPicker
+    // gọi clear productId rồi set productName trong cùng tick).
+    setItems(prev => prev.map(item => {
       if (item.id === itemId) {
         // If selecting a product
         if (field === 'productId') {
@@ -458,15 +513,18 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
             </Box>
             <hr className="border-slate-100 dark:border-slate-700" />
 
-            <OrderFormItemsSection 
+            <OrderFormItemsSection
               items={items}
               onAddItem={handleAddItem}
+              onAddItemWithProduct={handleAddItemWithProduct}
+              onAddCustomItem={handleAddCustomItem}
               onRemoveItem={handleRemoveItem}
               onUpdateItem={handleUpdateItem}
               shippingCost={shippingCost}
               setShippingCost={setShippingCost}
               total={total}
               products={products}
+              recentlyAddedId={recentlyAddedId}
             />
 
             <hr className="border-slate-100 dark:border-slate-700" />
