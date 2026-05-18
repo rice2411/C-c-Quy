@@ -1,21 +1,7 @@
 /**
  * Facebook / Fanpage inbox Webhook API
  * POST /api/facebook/webhook
- *
- * Vercel serverless function. Firestore client init dùng chung từ
- * `../_lib/firebase` — không init inline để tận dụng warm container.
  */
-
-import { db } from '../_lib/firebase';
-import {
-  addDoc,
-  collection,
-  getDocs,
-  limit,
-  query,
-  Timestamp,
-  where,
-} from 'firebase/firestore';
 
 interface ApiRequest {
   method?: string;
@@ -43,16 +29,37 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
         : '';
 
     if (!webhookData || !idNewMessage) {
-      return res
-        .status(400)
-        .json({ error: 'Invalid webhook data: id_new_message is required' });
+      return res.status(400).json({ error: 'Invalid webhook data: id_new_message is required' });
     }
+
+    const firebaseApp = await import('firebase/app');
+    const firebaseFirestore = await import('firebase/firestore');
+
+    const firebaseConfig = {
+      apiKey: process.env.FIREBASE_API_KEY,
+      authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.FIREBASE_APP_ID,
+      measurementId: process.env.FIREBASE_MEASUREMENT_ID,
+    };
+
+    let app;
+    try {
+      app = firebaseApp.getApp();
+    } catch {
+      app = firebaseApp.initializeApp(firebaseConfig);
+    }
+
+    const db = firebaseFirestore.getFirestore(app);
+    const { collection, addDoc, Timestamp, query, where, getDocs, limit } = firebaseFirestore;
 
     const messagesRef = collection(db, COLLECTION);
     const dupQuery = query(
       messagesRef,
       where('idNewMessage', '==', idNewMessage),
-      limit(1),
+      limit(1)
     );
     const existing = await getDocs(dupQuery);
 
@@ -109,10 +116,10 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       docId: docRef.id,
     });
   } catch (error: any) {
-    console.error('Facebook webhook error:', error);
+    console.error('❌ Facebook webhook error:', error);
     return res.status(500).json({
       success: false,
-      error: error?.message ?? String(error),
+      error: error.message,
     });
   }
 }
