@@ -1,6 +1,5 @@
 import axios from "axios";
 import { Order } from "@/types";
-import { PaymentMethod } from "@/types/enums";
 import { generateQRCodeImage, getOrderTotal } from "@/utils/orderUtils";
 import {
   formatDeliveryDueMessage,
@@ -77,7 +76,9 @@ export const sendZaloMessage = async (message: string) => {
   }
 };
 
-/** New order: send to explicit group ids (from order routing). */
+/** New order: send to explicit group ids (from order routing).
+ *  Luôn cố gắng đính kèm QR — không còn phụ thuộc paymentMethod. Nếu không build được
+ *  QR (thiếu orderNumber/amount/url) thì fallback gửi text-only. */
 export const sendNewOrderZaloNotifications = async (
   order: any,
   groupIds: string[],
@@ -85,12 +86,6 @@ export const sendNewOrderZaloNotifications = async (
   if (groupIds.length === 0) return;
 
   const message = formatOrderMessage(order);
-  const isBankingOrder = order?.paymentMethod === PaymentMethod.BANKING;
-
-  if (!isBankingOrder) {
-    await postTextToGroups(groupIds, message);
-    return;
-  }
 
   const shopCode = process.env.ZALO_SHOP_CODE;
   const token = process.env.ZALO_TOKEN;
@@ -100,8 +95,10 @@ export const sendNewOrderZaloNotifications = async (
 
   const orderNumber = order?.orderNumber || order?.id;
   const amount = getOrderTotal(order);
-  const qrUrl = generateQRCodeImage(orderNumber, amount);
-  if (!orderNumber || !amount || !qrUrl) {
+  const qrUrl = orderNumber && amount ? generateQRCodeImage(orderNumber, amount) : '';
+
+  // Không build được QR → fallback text
+  if (!qrUrl) {
     await postTextToGroups(groupIds, message);
     return;
   }
@@ -117,6 +114,12 @@ export const sendNewOrderZaloNotifications = async (
       "Lỗi khi gửi tin nhắn kèm QR đơn hàng:",
       error.response?.data || error.message,
     );
+    // Best-effort fallback: nếu gửi ảnh fail, vẫn gửi text để khỏi mất noti
+    try {
+      await postTextToGroups(groupIds, message);
+    } catch {
+      // ignore
+    }
     throw error;
   }
 };

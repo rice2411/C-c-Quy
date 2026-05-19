@@ -676,8 +676,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                    </div>
                 </div>
 
-                {/* Payment QR Section - Show ONLY if Banking is selected */}
-                {currentOrder.paymentMethod === PaymentMethod.BANKING && (
+                {/* Payment QR Section — luôn hiển thị (kể cả khi đơn thanh toán tiền mặt) */}
+                {(
                   <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors animate-fade-in">
                      <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('qr.sectionTitle')}</h3>
                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
