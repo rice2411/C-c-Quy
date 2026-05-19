@@ -15,7 +15,7 @@ import Heading from "@/components/ui/Heading";
 import IconButton from "@/components/ui/IconButton";
 import Typography from "@/components/ui/Typography";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { formatVND } from "@/utils/currencyUtil";
+import { formatVND } from "@/utils/format/currencyUtil";
 
 type TimeRange = "week" | "month" | "year";
 

@@ -5,7 +5,7 @@ import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { formatVND } from '@/utils/currencyUtil';
+import { formatVND } from '@/utils/format/currencyUtil';
 interface DashboardMetricsProps {
   metrics: {
     revenue: number;

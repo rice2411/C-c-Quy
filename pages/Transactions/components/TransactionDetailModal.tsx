@@ -11,7 +11,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { Transaction } from '@/types';
-import { formatVND } from '@/utils/currencyUtil';
+import { formatVND } from '@/utils/format/currencyUtil';
 import BaseModal from '@/components/BaseModal';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';

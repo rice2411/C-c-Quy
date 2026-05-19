@@ -21,7 +21,7 @@ import {
   sendUnpaidOrdersNotification,
 } from '@/services/zaloService';
 import { OrderStatus, PaymentStatus } from '@/types';
-import { parseDateValue } from '@/utils/dateUtil';
+import { parseDateValue } from '@/utils/format/dateUtil';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';

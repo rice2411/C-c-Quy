@@ -22,7 +22,7 @@ import CreateCustomerModal from '@/pages/Orders/components/modals/CreateCustomer
 import OrderFormCustomerSection from '@/pages/Orders/components/OrderFormCustomerSection';
 import OrderFormItemsSection from '@/pages/Orders/components/OrderFormItemsSection';
 import OrderFormStatusSection from '@/pages/Orders/components/OrderFormStatusSection';
-import { pushRecentProductId } from '@/utils/recentProducts';
+import { pushRecentProductId } from '@/utils/product/recentProducts';
 
 interface OrderFormProps {
   isOpen: boolean;

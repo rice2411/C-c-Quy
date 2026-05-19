@@ -12,8 +12,8 @@ import Image from '@/components/ui/Image';
 import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
 import ProductPickerModal from '@/pages/Orders/components/ProductPickerModal';
-import { formatVNDOrDash } from '@/utils/currencyUtil';
-import { getRecentProductIds } from '@/utils/recentProducts';
+import { formatVNDOrDash } from '@/utils/format/currencyUtil';
+import { getRecentProductIds } from '@/utils/product/recentProducts';
 
 interface OrderItemsSectionProps {
   items: FormItem[];

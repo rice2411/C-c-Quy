@@ -5,7 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
 import { getAccessibleRoutes } from '@/config/routes';
-import { getUserFromLocalStorage } from '@/utils/userUtil';
+import { getUserFromLocalStorage } from '@/utils/user/userUtil';
 import ThemeToggle from './ThemeToggle';
 import toast from 'react-hot-toast';
 import MobileFooterNav from './MobileFooterNav';

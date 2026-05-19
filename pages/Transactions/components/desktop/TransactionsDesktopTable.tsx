@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, Building2, CreditCard, TrendingUp, TrendingDown } from 'lucide-react';
 import { Transaction } from '@/types';
-import { formatVND } from '@/utils/currencyUtil';
+import { formatVND } from '@/utils/format/currencyUtil';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';

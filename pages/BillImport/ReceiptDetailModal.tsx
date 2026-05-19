@@ -5,7 +5,7 @@ import type { SavedStockReceiptDetail } from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
-import { formatVNDOrDash } from '@/utils/currencyUtil';
+import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 
 const ZOOM_MIN = 0.5;
 const ZOOM_MAX = 4;

@@ -8,7 +8,7 @@ import { Product, ProductVersion } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { uploadImage, getProductImagePath } from '@/services/imageService';
 import { fetchProductVersions } from '@/services/productService';
-import { getTagPalette } from '@/utils/productTagPalette';
+import { getTagPalette } from '@/utils/product/productTagPalette';
 
 interface ProductFormProps {
   initialData?: Product | null;

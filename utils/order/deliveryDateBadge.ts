@@ -1,4 +1,4 @@
-import { parseDateValue } from './dateUtil';
+import { parseDateValue } from '../format/dateUtil';
 
 export type DeliveryTone = 'urgent' | 'warning' | 'ok' | 'done' | 'none';
 

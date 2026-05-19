@@ -1,7 +1,7 @@
 import React from 'react';
 import Badge from '@/components/ui/Badge';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { classifyVietnameseMobile, type VietMobileCarrier } from '@/utils/vietnameseMobilePhone';
+import { classifyVietnameseMobile, type VietMobileCarrier } from '@/utils/validation/vietnameseMobilePhone';
 
 interface PhoneCarrierBadgeProps {
   phone: string;

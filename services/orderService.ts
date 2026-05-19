@@ -15,7 +15,7 @@ import {
 import { db } from "@/config/firebase";
 import { Order, OrderHistoryEntry, PaymentMethod, PaymentStatus } from "@/types";
 import { UserRole } from "@/types/user";
-import { diffOrders } from "@/utils/orderHistoryDiff";
+import { diffOrders } from "@/utils/order/orderHistoryDiff";
 import { resolveZaloGroupIdsForNewOrder } from "./configurationService";
 import { sendNewOrderZaloNotifications } from "./zaloService";
 import { getUserByUid } from "./userService";

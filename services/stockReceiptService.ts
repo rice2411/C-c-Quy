@@ -28,7 +28,7 @@ import type {
   StockReceiptValidationSnapshot,
   SupplierContactInfo,
 } from '@/types/billReceipt';
-import { canonicalUnit, normalizeItem, normalizeSupplierKey, sha256Hex } from '@/utils/normalize';
+import { canonicalUnit, normalizeItem, normalizeSupplierKey, sha256Hex } from '@/utils/data/normalize';
 
 const RECEIPTS_COLLECTION = 'stock_receipts';
 const LINES_SUBCOLLECTION = 'lines';

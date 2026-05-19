@@ -1,12 +1,12 @@
 import axios from "axios";
 import { Order } from "@/types";
-import { generateQRCodeImage, getOrderTotal } from "@/utils/orderUtils";
+import { generateQRCodeImage, getOrderTotal } from "@/utils/order/orderUtils";
 import {
   formatDeliveryDueMessage,
   formatOrderMessage,
   formatPendingOrdersMessage,
   formatUnpaidOrdersMessage,
-} from "@/utils/zaloUtil";
+} from "@/utils/zalo/zaloUtil";
 
 const ZALO_ENDPOINT = {
   sendImageToGroup: "https://new.abitstore.vn/zalo/sendImageToGroupZalo/2",

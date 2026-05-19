@@ -7,8 +7,8 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
 import type { Product } from '@/types';
-import { normalizeSearchText } from '@/utils/stringUtil';
-import { formatVNDOrDash } from '@/utils/currencyUtil';
+import { normalizeSearchText } from '@/utils/format/stringUtil';
+import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 
 export interface ProductPickerModalProps {
   open: boolean;

@@ -10,9 +10,9 @@ import PhoneCarrierBadge from './PhoneCarrierBadge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Customer, Order } from '@/types';
 import { PaymentStatus } from '@/types/enums';
-import { formatDateOnly, formatDateTime } from '@/utils/dateUtil';
-import { formatVND } from '@/utils/currencyUtil';
-import { getOrderTotal } from '@/utils/orderUtils';
+import { formatDateOnly, formatDateTime } from '@/utils/format/dateUtil';
+import { formatVND } from '@/utils/format/currencyUtil';
+import { getOrderTotal } from '@/utils/order/orderUtils';
 
 interface CustomerDetailPanelProps {
   customer: Customer;

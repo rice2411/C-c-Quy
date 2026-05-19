@@ -14,7 +14,7 @@ import {
   TableHeaderCell,
   TableRow,
 } from '@/components/ui/Table';
-import { formatVNDOrDash } from '@/utils/currencyUtil';
+import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import SupplierEditModal from '@/pages/BillImport/SupplierEditModal';
 
 export interface BillImportSuppliersTabProps {

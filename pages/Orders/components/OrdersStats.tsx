@@ -3,8 +3,8 @@ import { AlertCircle, DollarSign, Package, Wallet, XCircle } from 'lucide-react'
 import { Order } from '@/types';
 import { OrderStatus, PaymentStatus } from '@/types/enums';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { formatVND } from '@/utils/currencyUtil';
-import { getOrderTotal } from '@/utils/orderUtils';
+import { formatVND } from '@/utils/format/currencyUtil';
+import { getOrderTotal } from '@/utils/order/orderUtils';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';

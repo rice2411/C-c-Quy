@@ -32,9 +32,9 @@ import BillImportMaterialsTab from '@/pages/BillImport/BillImportMaterialsTab';
 import ReceiptDetailModal from '@/pages/BillImport/ReceiptDetailModal';
 import BillImportModal from '@/pages/BillImport/BillImportModal';
 import type { BillImportTabId, UiProgressStage } from '@/pages/BillImport/constants';
-import { fileToBase64NoPrefix } from '@/utils/fileUtil';
-import { formatImportedAt } from '@/utils/dateUtil';
-import { normalizeSearchText } from '@/utils/stringUtil';
+import { fileToBase64NoPrefix } from '@/utils/io/fileUtil';
+import { formatImportedAt } from '@/utils/format/dateUtil';
+import { normalizeSearchText } from '@/utils/format/stringUtil';
 
 const EMPTY_CONTACT: SupplierContactInfo = {};
 

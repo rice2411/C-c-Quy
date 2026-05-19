@@ -2,8 +2,8 @@ import React from 'react';
 import { Package, Tag, Loader2, Image as ImageIcon, DollarSign, Boxes } from 'lucide-react';
 import { Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { formatVND } from '@/utils/currencyUtil';
-import { getTagPalette } from '@/utils/productTagPalette';
+import { formatVND } from '@/utils/format/currencyUtil';
+import { getTagPalette } from '@/utils/product/productTagPalette';
 import Badge from '@/components/ui/Badge';
 
 interface ProductGridProps {

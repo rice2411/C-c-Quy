@@ -15,7 +15,7 @@ import Spinner from '@/components/ui/Spinner';
 import AvatarImage from '@/components/ui/AvatarImage';
 import Typography from '@/components/ui/Typography';
 import ThemeToggle from '@/components/ThemeToggle';
-import { getAccountsHistory, removeAccountFromHistory } from '@/utils/userUtil';
+import { getAccountsHistory, removeAccountFromHistory } from '@/utils/user/userUtil';
 import toast from 'react-hot-toast';
 
 const LoginPage: React.FC = () => {

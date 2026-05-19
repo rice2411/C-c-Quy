@@ -11,8 +11,8 @@ import {
 import { PAYMENT_METHOD_COLORS, PAYMENT_STATUS_COLORS, STATUS_COLORS } from '@/constant/order';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Order } from '@/types';
-import { formatVND } from '@/utils/currencyUtil';
-import { buildDeliveryBadge } from '@/utils/deliveryDateBadge';
+import { formatVND } from '@/utils/format/currencyUtil';
+import { buildDeliveryBadge } from '@/utils/order/deliveryDateBadge';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';

@@ -6,7 +6,7 @@ import { ProductForm, ProductToolbar, ProductGrid } from '@/pages/Storage/produc
 import { getAccessibleStorageTabs } from '@/config/routes';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
-import { getUserFromLocalStorage } from '@/utils/userUtil';
+import { getUserFromLocalStorage } from '@/utils/user/userUtil';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';

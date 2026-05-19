@@ -7,7 +7,7 @@ import Typography from '@/components/ui/Typography';
 import { Transaction } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { fetchTransactions } from '@/services/transactionService';
-import { formatVND } from '@/utils/currencyUtil';
+import { formatVND } from '@/utils/format/currencyUtil';
 
 const DashboardRecentTransactions: React.FC = () => {
   const { t } = useLanguage();

@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
 import type { ImportedSupplierSummary } from '@/types/billReceipt';
-import { normalizeSearchText } from '@/utils/stringUtil';
+import { normalizeSearchText } from '@/utils/format/stringUtil';
 
 const MAX_RESULTS = 8;
 const moneyFmt = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });

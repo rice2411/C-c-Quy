@@ -9,7 +9,7 @@ import IconButton from '@/components/ui/IconButton';
 import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
 import PhoneCarrierBadge from '../PhoneCarrierBadge';
-import { classifyVietnameseMobile } from '@/utils/vietnameseMobilePhone';
+import { classifyVietnameseMobile } from '@/utils/validation/vietnameseMobilePhone';
 
 interface CustomerCardProps {
   customer: Customer;

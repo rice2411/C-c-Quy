@@ -5,9 +5,9 @@ import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
 import Badge from '@/components/ui/Badge';
 import type { Product } from '@/types';
-import { normalizeSearchText } from '@/utils/stringUtil';
-import { formatVNDOrDash } from '@/utils/currencyUtil';
-import { getTagPalette } from '@/utils/productTagPalette';
+import { normalizeSearchText } from '@/utils/format/stringUtil';
+import { formatVNDOrDash } from '@/utils/format/currencyUtil';
+import { getTagPalette } from '@/utils/product/productTagPalette';
 
 const MAX_RESULTS = 12;
 

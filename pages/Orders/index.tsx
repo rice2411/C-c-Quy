@@ -7,7 +7,7 @@ import { useOrders } from '@/contexts/OrderContext';
 import { Order } from '@/types';
 import { UserRole } from '@/types/user';
 import { ORDER_EDIT_DENIED } from '@/services/orderService';
-import { userCanEditOrder } from '@/utils/orderUtils';
+import { userCanEditOrder } from '@/utils/order/orderUtils';
 import ConfirmModal from '@/components/ConfirmModal';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';

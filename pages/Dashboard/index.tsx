@@ -4,7 +4,7 @@ import Box from '@/components/ui/Box';
 import { generateDashboardInsights } from '@/services/geminiService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/contexts/OrderContext';
-import { getOrderTotal } from '@/utils/orderUtils';
+import { getOrderTotal } from '@/utils/order/orderUtils';
 import DashboardMetrics from '@/pages/Dashboard/components/DashboardMetrics';
 import DashboardChart from '@/pages/Dashboard/components/DashboardChart';
 import DashboardInsights from '@/pages/Dashboard/components/DashboardInsights';

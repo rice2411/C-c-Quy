@@ -14,8 +14,8 @@ import {
   TableHeaderCell,
   TableRow,
 } from '@/components/ui/Table';
-import { formatImportedAt } from '@/utils/dateUtil';
-import { formatVNDOrDash } from '@/utils/currencyUtil';
+import { formatImportedAt } from '@/utils/format/dateUtil';
+import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 
 export interface BillImportReceiptListTabProps {
   receiptSearch: string;

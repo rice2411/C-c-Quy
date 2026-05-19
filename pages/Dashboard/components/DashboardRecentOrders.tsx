@@ -7,7 +7,7 @@ import Typography from '@/components/ui/Typography';
 import { Order } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { STATUS_COLORS } from '@/constant/order';
-import { formatVND } from '@/utils/currencyUtil';
+import { formatVND } from '@/utils/format/currencyUtil';
 
 interface DashboardRecentOrdersProps {
   orders: Order[];
