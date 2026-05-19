@@ -9,6 +9,29 @@ export interface OrderItem {
   image: string;
 }
 
+/** Mot thay doi cua 1 field cu the trong 1 lan edit */
+export interface OrderFieldChange {
+  field: string;
+  /** Label hien thi (vd: "Trang thai", "Tong tien") */
+  label?: string;
+  /** Gia tri cu — da stringify de de render */
+  oldValue: string | number | null;
+  /** Gia tri moi — da stringify */
+  newValue: string | number | null;
+}
+
+/** 1 lan chinh sua don = 1 entry trong history array */
+export interface OrderHistoryEntry {
+  /** ISO string hoac Firestore Timestamp */
+  at: any;
+  /** Ten hien thi nguoi chinh */
+  by?: string;
+  /** UID cua nguoi chinh */
+  byUid?: string;
+  /** Danh sach cac field da doi */
+  changes: OrderFieldChange[];
+}
+
 export interface Order {
   id: string;
   orderNumber?: string; // New human-readable ID (ORD-XXXXXX)
@@ -21,16 +44,18 @@ export interface Order {
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   date: string;
-  // Firestore timestamps are stored as Timestamp but may be serialized as string; keep union loose for compatibility
   orderDate?: any;
-  deliveryDate?: string; // Expected delivery/receiving date
-  deliveryTime?: string; // Optional receiving time (HH:mm)
+  deliveryDate?: string;
+  deliveryTime?: string;
   trackingNumber?: string;
   note?: string;
-  /** UID Firebase của người tạo (đồng bộ với field `createdBy` trên Firestore trước khi resolve tên) */
   createdByUid?: string;
-  createdBy?: string; // Tên hiển thị người tạo đơn (customName hoặc email)
-  updatedBy?: string; // Người chỉnh sửa gần nhất
+  createdBy?: string;
+  updatedBy?: string;
   createdAt?: any;
   updatedAt?: any;
+  /** Lich su cac lan chinh sua don (moi nhat o cuoi array) */
+  history?: OrderHistoryEntry[];
+  /** Don tao de test tinh nang — Zalo message se prepend banner ĐƠN HÀNG TEST */
+  isTest?: boolean;
 }

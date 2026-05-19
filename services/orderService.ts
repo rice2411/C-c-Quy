@@ -10,21 +10,19 @@ import {
   doc,
   limit,
   Timestamp,
+  arrayUnion,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
-import { Order, PaymentMethod, PaymentStatus } from "@/types";
+import { Order, OrderHistoryEntry, PaymentMethod, PaymentStatus } from "@/types";
 import { UserRole } from "@/types/user";
-
-/** Ném khi CTV cố cập nhật đơn không phải do họ tạo */
-export const ORDER_EDIT_DENIED = "ORDER_EDIT_DENIED";
+import { diffOrders } from "@/utils/orderHistoryDiff";
 import { resolveZaloGroupIdsForNewOrder } from "./configurationService";
 import { sendNewOrderZaloNotifications } from "./zaloService";
 import { getUserByUid } from "./userService";
 
-/**
- * Lấy toàn bộ đơn hàng từ Firebase
- * @returns {Promise<Order[]>} Array of orders
- */
+/** Nem khi CTV co cap nhat don khong phai do ho tao */
+export const ORDER_EDIT_DENIED = "ORDER_EDIT_DENIED";
+
 export const fetchOrders = async (): Promise<Order[]> => {
   try {
     const ordersRef = collection(db, "orders");
@@ -49,10 +47,6 @@ export const fetchOrders = async (): Promise<Order[]> => {
   }
 };
 
-/**
- * Lấy mã đơn hàng tiếp theo
- * @returns {Promise<string>} Mã đơn hàng tiếp theo
- */
 export const getNextOrderNumber = async (): Promise<string> => {
   try {
     const ordersRef = collection(db, "orders");
@@ -81,11 +75,6 @@ export const getNextOrderNumber = async (): Promise<string> => {
   }
 };
 
-/**
- * Thêm đơn hàng mới vào Firebase
- * @param {Order} orderData - Thông tin đơn hàng
- * @returns {Promise<void>} Không trả về
- */
 export const addOrder = async (orderData: Order): Promise<void> => {
   try {
     const ordersRef = collection(db, "orders");
@@ -113,13 +102,14 @@ export const addOrder = async (orderData: Order): Promise<void> => {
       shippingCost: orderData.shippingCost || 0,
       total: orderData.total || 0,
       note: orderData.note || "",
-      status: orderData.status ,
+      status: orderData.status,
       deliveryDate: orderData.deliveryDate || null,
       deliveryTime: orderData.deliveryTime || null,
       orderDate: Timestamp.now(),
       createdAt: Timestamp.now(),
       paymentStatus: orderData.paymentStatus || PaymentStatus.UNPAID,
       paymentMethod: orderData.paymentMethod || PaymentMethod.CASH,
+      isTest: !!orderData.isTest,
       createdBy: orderData.createdBy || undefined,
     };
     const zaloGroupIds = await resolveZaloGroupIdsForNewOrder(
@@ -136,14 +126,10 @@ export const addOrder = async (orderData: Order): Promise<void> => {
 export interface OrderUpdateEditor {
   uid: string;
   role: UserRole | undefined;
+  displayName?: string;
+  email?: string;
 }
 
-/**
- * Cập nhật đơn hàng trong Firebase
- * @param {string} orderId - Mã đơn hàng
- * @param {Order} orderData - Thông tin đơn hàng
- * @returns {Promise<void>} Không trả về
- */
 export const updateOrder = async (
   orderId: string,
   orderData: any,
@@ -164,7 +150,6 @@ export const updateOrder = async (
       }
     }
 
-    // Clean customer data to ensure no undefined values
     const safeCustomer = {
       id: orderData.customer?.id || "",
       name: orderData.customer?.name || "",
@@ -175,7 +160,7 @@ export const updateOrder = async (
       country: orderData.customer?.country || "",
     };
 
-    const payload = {
+    const payload: any = {
       customerName: safeCustomer.name,
       phone: safeCustomer.phone,
       address: safeCustomer.address,
@@ -195,8 +180,41 @@ export const updateOrder = async (
       paymentStatus: orderData.paymentStatus || PaymentStatus.UNPAID,
       paymentMethod: orderData.paymentMethod || PaymentMethod.CASH,
       ...(orderData.sepayId !== undefined && { sepayId: orderData.sepayId }),
-       updatedAt: Timestamp.now(),
+      ...(orderData.isTest !== undefined && { isTest: !!orderData.isTest }),
+      updatedAt: Timestamp.now(),
     };
+
+    // Tinh diff giua existing va payload moi -> append history entry
+    const changes = diffOrders(existing, {
+      ...existing,
+      ...payload,
+      customer: safeCustomer,
+    });
+    if (changes.length > 0) {
+      const uidShort = editor?.uid ? ("User-" + editor.uid.slice(0, 6)) : null;
+      const editorName =
+        editor?.displayName ||
+        editor?.email ||
+        uidShort ||
+        "Unknown";
+      // Build entry — KHÔNG để bất kỳ field nào là undefined (Firestore reject)
+      const newEntry = {
+        at: Timestamp.now(),
+        by: editorName || "Unknown",
+        byUid: editor?.uid || "",
+        changes: changes.map((c: any) => ({
+          field: c.field || "",
+          label: c.label || "",
+          oldValue: c.oldValue ?? "—",
+          newValue: c.newValue ?? "—",
+        })),
+      };
+      // Dùng arrayUnion để append ở server-side — tránh đọc-spread-ghi-lại gây fail
+      // khi entry cũ trong array có field undefined.
+      payload.history = arrayUnion(newEntry);
+      payload.updatedBy = editorName || "Unknown";
+    }
+
     await updateDoc(orderRef, payload);
   } catch (error) {
     console.error("Error updating order:", error);

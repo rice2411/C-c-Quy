@@ -1,4 +1,4 @@
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { Transaction } from '@/types';
 
@@ -49,5 +49,46 @@ export const fetchTransactions = async (): Promise<Transaction[]> => {
     } catch (e) {
         return [];
     }
+  }
+};
+
+export const fetchTransactionsByOrderNumber = async (orderNumber: string): Promise<Transaction[]> => {
+  try {
+    const transactionsRef = collection(db, 'transactions');
+    const q = query(transactionsRef, where('orderNumber', '==', orderNumber));
+    const snapshot = await getDocs(q);
+
+    const getDateStr = (val: any) => {
+      if (!val) return new Date().toISOString();
+      if (val.toDate && typeof val.toDate === 'function') {
+        return val.toDate().toISOString();
+      }
+      return String(val);
+    };
+
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        accountNumber: data.accountNumber || '',
+        accumulated: Number(data.accumulated) || 0,
+        code: data.code || null,
+        content: data.content || '',
+        createdAt: getDateStr(data.createdAt),
+        description: data.description || '',
+        gateway: data.gateway || '',
+        orderNumber: data.orderNumber || '',
+        receivedAt: getDateStr(data.receivedAt),
+        referenceCode: data.referenceCode || '',
+        sepayId: Number(data.sepayId) || 0,
+        subAccount: data.subAccount || '',
+        transactionDate: getDateStr(data.transactionDate),
+        transferAmount: Number(data.transferAmount) || 0,
+        transferType: data.transferType || 'in'
+      } as Transaction;
+    });
+  } catch (error) {
+    console.error("Error fetching transactions by orderNumber:", error);
+    return [];
   }
 };

@@ -38,8 +38,9 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [creatorOptions, setCreatorOptions] = useState<string[]>([]);
 
-  const [sortField, setSortField] = useState<keyof Order>('deliveryDate' as keyof Order);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  // Mặc định: sort theo ngày tạo (date) giảm dần — đơn mới nhất lên đầu
+  const [sortField, setSortField] = useState<keyof Order>('date' as keyof Order);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 

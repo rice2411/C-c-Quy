@@ -81,11 +81,19 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
             <Card
               key={order.id}
               padding="none"
-              layoutClassName={`relative cursor-pointer overflow-hidden transition-all active:scale-[0.99] ${dlv.cardClass}`}
+              layoutClassName={`relative cursor-pointer overflow-hidden transition-all active:scale-[0.99] ${dlv.cardClass} ${order.isTest ? 'ring-2 ring-amber-400 ring-offset-1 dark:ring-amber-500 dark:ring-offset-slate-900' : ''}`}
               borderClassName=""
               backgroundClassName=""
               onClick={() => onSelectOrder(order)}
             >
+              {/* TEST RIBBON — chỉ hiện với đơn test */}
+              {order.isTest ? (
+                <Box
+                  layoutClassName="flex items-center justify-center gap-1 border-b border-amber-200 bg-amber-100 px-3 py-1 text-amber-900 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-100"
+                >
+                  <span className="text-[10px] font-bold uppercase tracking-widest">🧪 Đơn hàng test</span>
+                </Box>
+              ) : null}
               {/* HERO STRIP — delivery date countdown, màu theo độ khẩn */}
               <Box
                 layoutClassName={`flex items-center justify-between gap-2 border-b px-4 py-2.5 ${dlv.stripClass}`}

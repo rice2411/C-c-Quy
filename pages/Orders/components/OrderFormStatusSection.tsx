@@ -136,9 +136,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             </Box>
 
             <Box layoutClassName="space-y-1 text-sm text-slate-600 dark:text-slate-400">
-              <Box
-                layoutClassName="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800 sm:justify-start sm:gap-4"
-              >
+              <Box layoutClassName="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800 sm:justify-start sm:gap-4">
                 <Typography as="span" size="xs" layoutClassName="min-w-[60px] font-medium uppercase text-slate-500">
                   {t('qr.bank')}
                 </Typography>
@@ -160,9 +158,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
                   <Copy className="h-3 w-3 text-slate-400 group-hover:text-blue-500" />
                 </Box>
               </Box>
-              <Box
-                layoutClassName="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800 sm:justify-start sm:gap-4"
-              >
+              <Box layoutClassName="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800 sm:justify-start sm:gap-4">
                 <Typography as="span" size="xs" layoutClassName="min-w-[60px] font-medium uppercase text-slate-500">
                   {t('qr.accountName')}
                 </Typography>
@@ -170,9 +166,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
                   TON THAT ANH MINH
                 </Typography>
               </Box>
-              <Box
-                layoutClassName="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800 sm:justify-start sm:gap-4"
-              >
+              <Box layoutClassName="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800 sm:justify-start sm:gap-4">
                 <Typography as="span" size="xs" layoutClassName="min-w-[60px] font-medium uppercase text-slate-500">
                   {t('qr.amount')}
                 </Typography>
@@ -180,9 +174,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
                   {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}
                 </Typography>
               </Box>
-              <Box
-                layoutClassName="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800 sm:justify-start sm:gap-4"
-              >
+              <Box layoutClassName="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800 sm:justify-start sm:gap-4">
                 <Typography as="span" size="xs" layoutClassName="min-w-[60px] font-medium uppercase text-slate-500">
                   {t('qr.content')}
                 </Typography>

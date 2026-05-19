@@ -75,6 +75,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const [deliveryDate, setDeliveryDate] = useState<string>('');
   const [deliveryTime, setDeliveryTime] = useState<string>('');
   const [isDeliveryTimeEnabled, setIsDeliveryTimeEnabled] = useState<boolean>(false);
+  // Đơn hàng test — dùng để test tính năng. Khi bật, Zalo message sẽ có banner === ĐƠN HÀNG TEST ===
+  const [isTest, setIsTest] = useState<boolean>(false);
 
   // Load products from inventory
   useEffect(() => {
@@ -108,6 +110,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPaymentStatus(initialData.paymentStatus || PaymentStatus.UNPAID);
       setPaymentMethod(initialData.paymentMethod || PaymentMethod.CASH);
       setShippingCost(initialData.shippingCost || 0);
+      setIsTest(!!initialData.isTest);
       if (initialData.items && initialData.items.length > 0) {
         const loadedItems = initialData.items.map((item, index) => ({
           id: `item-${Date.now()}-${index}`,
@@ -153,6 +156,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPaymentStatus(PaymentStatus.UNPAID);
       setPaymentMethod(PaymentMethod.CASH);
       setItems([]);
+      setIsTest(false);
     }
   }, [initialData, isOpen]);
 
@@ -386,6 +390,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         status: status,
         paymentStatus: paymentStatus,
         paymentMethod: paymentMethod,
+        isTest: isTest,
         createdBy: currentUser.uid
       };
 
@@ -488,7 +493,13 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               </Box>
             </Field>
 
-            <OrderFormCustomerSection 
+            <Checkbox
+              checked={isTest}
+              onChange={(e) => setIsTest(e.target.checked)}
+              label="Đơn hàng test"
+            />
+
+            <OrderFormCustomerSection
               customerName={customerName} setCustomerName={setCustomerName}
               phone={phone} setPhone={setPhone}
               address={address} setAddress={setAddress}

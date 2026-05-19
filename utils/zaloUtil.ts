@@ -22,7 +22,11 @@ export const formatOrderMessage = (order: any): string => {
   const currentYear = new Date().getFullYear();
   const totalItems = order.items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0;
 
-  let message = `
+  let message = ``;
+  if (order.isTest) {
+    message += `=== ĐƠN HÀNG TEST ===\n`;
+  }
+  message += `
 📦 == ĐƠN HÀNG MỚI ${currentMonth}/${currentYear} == \n
 🆔 Mã đơn: ${order.orderNumber || order.id}
 🕒 Ngày đặt: ${formatDate(orderDate)}`;
@@ -172,4 +176,3 @@ export const formatPaymentReceivedMessage = (orderNumber: string | null, transac
 
   return message;
 };
-

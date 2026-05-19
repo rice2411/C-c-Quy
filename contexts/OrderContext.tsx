@@ -42,7 +42,18 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const modifyOrder = async (id: string, data: any) => {
     const uid = currentUser?.uid ?? userData?.uid ?? '';
-    await updateOrder(id, data, { uid, role: userData?.role });
+    const displayName =
+      (userData as any)?.customName ||
+      (userData as any)?.displayName ||
+      (currentUser as any)?.displayName ||
+      '';
+    const email = (currentUser as any)?.email || (userData as any)?.email || '';
+    await updateOrder(id, data, {
+      uid,
+      role: userData?.role,
+      displayName,
+      email,
+    });
     await refreshOrders();
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Download, Package, Plus, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,6 +40,15 @@ const OrdersPage: React.FC = () => {
   const handleOrderSelect = (order: Order) => {
     setSelectedOrder(order);
   };
+
+  // Auto-sync selectedOrder khi orders list refresh (sau update)
+  useEffect(() => {
+    if (!selectedOrder) return;
+    const fresh = orders.find((o) => o.id === selectedOrder.id);
+    if (fresh && fresh !== selectedOrder) {
+      setSelectedOrder(fresh);
+    }
+  }, [orders]);
 
   const handleCreateNewOrder = () => {
     setEditingOrder(undefined);

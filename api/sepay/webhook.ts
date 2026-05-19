@@ -1,8 +1,14 @@
 /**
  * SePay Webhook API
  * POST /api/sepay/webhook
+ *
+ * Job duy nhất của webhook:
+ *   1. Lưu transaction vào collection `transactions`.
+ *   2. Mark order tương ứng paymentStatus = PAID + lưu sepayId.
+ *
+ * KHÔNG ghi history nữa — phần "Lịch sử nhận tiền" trong OrderDetail
+ * được derive ở client bằng cách query `transactions where orderNumber == ...`.
  */
-
 
 interface ApiRequest {
   method?: string;
@@ -27,14 +33,10 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       return res.status(400).json({ error: 'Invalid webhook data' });
     }
 
-    // Lưu vào Firebase
     // Import trực tiếp để tránh lỗi đường dẫn trên Vercel
     const firebaseApp = await import('firebase/app');
     const firebaseFirestore = await import('firebase/firestore');
 
-  
-
-    // Khởi tạo Firebase trực tiếp trong webhook (vì import tương đối không hoạt động trên Vercel)
     const firebaseConfig = {
       apiKey: process.env.FIREBASE_API_KEY,
       authDomain: process.env.FIREBASE_AUTH_DOMAIN,
@@ -42,10 +44,9 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
       messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
       appId: process.env.FIREBASE_APP_ID,
-      measurementId: process.env.FIREBASE_MEASUREMENT_ID
+      measurementId: process.env.FIREBASE_MEASUREMENT_ID,
     };
 
-    // Khởi tạo Firebase app (chỉ khởi tạo nếu chưa có)
     let app;
     try {
       app = firebaseApp.getApp();
@@ -55,11 +56,15 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
     const db = firebaseFirestore.getFirestore(app);
     const { collection, addDoc, Timestamp, doc, updateDoc, query, where, getDocs } = firebaseFirestore;
+
     const extractFormattedOrderCode = (str: string) => {
       const match = str.match(/ORD\d+/);
-      return match ? match[0].replace(/ORD(\d+)/, "ORD-$1") : null;
-    }
+      return match ? match[0].replace(/ORD(\d+)/, 'ORD-$1') : null;
+    };
 
+    const orderNumber = extractFormattedOrderCode(webhookData.description);
+
+    // 1. Lưu transaction
     const transactionData = {
       sepayId: webhookData.id,
       gateway: webhookData.gateway || '',
@@ -75,35 +80,32 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       description: webhookData.description || '',
       receivedAt: Timestamp.now(),
       createdAt: Timestamp.now(),
-      orderNumber: extractFormattedOrderCode(webhookData.description)
-
+      orderNumber,
     };
-    const transactionsRef = collection(db, 'transactions');
-    await addDoc(transactionsRef, transactionData);
+    await addDoc(collection(db, 'transactions'), transactionData);
 
-    const orderNumber = extractFormattedOrderCode(webhookData.description);
+    // 2. Update order paymentStatus = PAID
+    const ordersRef = collection(db, 'orders');
+    const q = query(ordersRef, where('orderNumber', '==', orderNumber));
+    const snapshot = await getDocs(q);
 
-   // 1. Query tìm order có field orderNumber = "ORD-1234"
-  const ordersRef = collection(db, "orders");
-  const q = query(ordersRef, where("orderNumber", "==", orderNumber));
+    if (snapshot.empty) {
+      // Không tìm thấy order — transaction đã lưu, trả 200 để SePay không retry
+      return res.status(200).json({
+        success: true,
+        message: 'Transaction saved but no matching order',
+        transactionId: webhookData.id,
+      });
+    }
 
-  const snapshot = await getDocs(q);
+    const docSnap = snapshot.docs[0];
+    const orderRef = doc(db, 'orders', docSnap.id);
 
-  // 2. Check không tìm thấy
-  if (snapshot.empty) {
-    throw new Error(`Order with number "${orderNumber}" not found`);
-  }
-
-  // 3. Lấy document đầu tiên
-  const docSnap = snapshot.docs[0];
-  const orderRef = doc(db, "orders", docSnap.id);
-
-  // 4. Update thanh toán
-  await updateDoc(orderRef, {
-    paymentStatus: "PAID",
-    sepayId: webhookData.id,
-  });
-
+    await updateDoc(orderRef, {
+      paymentStatus: 'PAID',
+      sepayId: webhookData.id,
+      updatedAt: Timestamp.now(),
+    });
 
     return res.status(200).json({
       success: true,
@@ -111,7 +113,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       transactionId: webhookData.id,
     });
   } catch (error: any) {
-    console.error('❌ Webhook error:', error);
+    console.error('Webhook error:', error);
     return res.status(500).json({
       success: false,
       error: error.message,
