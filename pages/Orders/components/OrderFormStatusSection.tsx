@@ -1,7 +1,7 @@
 import React from 'react';
-import { Copy, CreditCard, QrCode, StickyNote, Wallet } from 'lucide-react';
+import { Copy, CreditCard, QrCode, StickyNote, Truck, Store, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { OrderStatus, PaymentMethod, PaymentStatus } from '@/types';
+import { DeliveryType, OrderStatus, PaymentMethod, PaymentStatus } from '@/types';
 import Box from '@/components/ui/Box';
 import Field from '@/components/ui/Field';
 import Image from '@/components/ui/Image';
@@ -18,6 +18,8 @@ interface OrderStatusSectionProps {
   setPaymentMethod: (val: PaymentMethod) => void;
   note: string;
   setNote: (val: string) => void;
+  deliveryType: DeliveryType;
+  setDeliveryType: (val: DeliveryType) => void;
   total: number;
   orderNumber: string;
 }
@@ -31,6 +33,8 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
   setPaymentMethod,
   note,
   setNote,
+  deliveryType,
+  setDeliveryType,
   total,
   orderNumber
 }) => {
@@ -94,6 +98,32 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             <option value={PaymentMethod.CASH}>{t('paymentMethod.cash')}</option>
             <option value={PaymentMethod.BANKING}>{t('paymentMethod.banking')}</option>
           </Select>
+        </Box>
+      </Field>
+
+      <Field label={t('deliveryType.label')} htmlFor="order-form-delivery-type">
+        <Box layoutClassName="grid grid-cols-2 gap-2">
+          {([DeliveryType.SHIP, DeliveryType.PICKUP] as DeliveryType[]).map((dt) => {
+            const active = deliveryType === dt;
+            return (
+              <button
+                key={dt}
+                type="button"
+                onClick={() => setDeliveryType(dt)}
+                className={[
+                  'flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors',
+                  active
+                    ? 'border-orange-400 bg-orange-50 text-orange-700 dark:border-orange-500 dark:bg-orange-900/30 dark:text-orange-200'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
+                ].join(' ')}
+              >
+                {dt === DeliveryType.SHIP
+                  ? <Truck className="h-4 w-4 shrink-0" />
+                  : <Store className="h-4 w-4 shrink-0" />}
+                {dt === DeliveryType.SHIP ? t('deliveryType.ship') : t('deliveryType.pickup')}
+              </button>
+            );
+          })}
         </Box>
       </Field>
 

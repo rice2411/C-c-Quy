@@ -13,6 +13,7 @@ import {
   Receipt,
   Sparkles,
   StickyNote,
+  Store,
   Trash2,
   Truck,
   User,
@@ -24,7 +25,7 @@ import { generateOrderAnalysis } from '@/services/geminiService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ORDER_EDIT_DENIED } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber } from '@/services/transactionService';
-import { Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction } from '@/types';
+import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { generateQRCodeImage, getOrderTotal } from '@/utils/order/orderUtils';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
@@ -146,6 +147,10 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     if (field === 'paymentMethod') {
       if (s === 'BANKING') return t('paymentMethod.banking');
       if (s === 'CASH') return t('paymentMethod.cash');
+    }
+    if (field === 'deliveryType') {
+      if (s === 'SHIP') return t('deliveryType.ship');
+      if (s === 'PICKUP') return t('deliveryType.pickup');
     }
     if (field === 'total' || field === 'shippingCost') {
       const n = Number(value);
@@ -664,6 +669,33 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                           ))}
                         </div>
                       </div>
+                      {/* Delivery type row */}
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center gap-3">
+                          {currentOrder.deliveryType === DeliveryType.PICKUP
+                            ? <Store className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                            : <Truck className="w-4 h-4 text-slate-500 dark:text-slate-400" />}
+                          <span className="text-sm text-slate-600 dark:text-slate-300">{t('deliveryType.label')}</span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {([DeliveryType.SHIP, DeliveryType.PICKUP] as DeliveryType[]).map((dt) => (
+                            <button
+                              key={dt}
+                              type="button"
+                              onClick={() => handleUpdateField({ deliveryType: dt }, setUpdatingPayment)}
+                              disabled={!canEdit || updatingPayment}
+                              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border transition-all ${
+                                (currentOrder.deliveryType ?? DeliveryType.SHIP) === dt
+                                  ? 'bg-orange-50 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-200 dark:border-orange-700'
+                                  : 'bg-white text-slate-500 border-slate-200 hover:border-orange-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600'
+                              } ${!canEdit || updatingPayment ? 'opacity-60 cursor-not-allowed' : ''}`}
+                            >
+                              {dt === DeliveryType.SHIP ? t('deliveryType.ship') : t('deliveryType.pickup')}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-3">
                           <Receipt className="w-4 h-4 text-slate-500 dark:text-slate-400" />

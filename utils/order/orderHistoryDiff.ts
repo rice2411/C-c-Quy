@@ -38,6 +38,7 @@ const TRACKED_FIELDS: Array<{
   { key: 'status', label: 'Trạng thái' },
   { key: 'paymentStatus', label: 'Thanh toán' },
   { key: 'paymentMethod', label: 'Phương thức TT' },
+  { key: 'deliveryType', label: 'Hình thức nhận hàng' },
   { key: 'total', label: 'Tổng tiền' },
   { key: 'shippingCost', label: 'Phí ship' },
   { key: 'deliveryDate', label: 'Ngày giao' },

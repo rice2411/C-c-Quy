@@ -1,4 +1,4 @@
-import { OrderStatus, PaymentStatus, PaymentMethod } from './enums';
+import { OrderStatus, PaymentStatus, PaymentMethod, DeliveryType } from './enums';
 import { Customer } from './customer';
 
 export interface OrderItem {
@@ -43,6 +43,7 @@ export interface Order {
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
+  deliveryType?: DeliveryType;
   date: string;
   orderDate?: any;
   deliveryDate?: string;

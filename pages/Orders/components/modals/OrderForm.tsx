@@ -9,7 +9,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { getNextOrderNumber } from '@/services/orderService';
 import { fetchProducts } from '@/services/productService';
 import { getUserByUid } from '@/services/userService';
-import { Order, OrderStatus, PaymentMethod, PaymentStatus, Product } from '@/types/index';
+import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product } from '@/types/index';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -75,6 +75,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const [deliveryDate, setDeliveryDate] = useState<string>('');
   const [deliveryTime, setDeliveryTime] = useState<string>('');
   const [isDeliveryTimeEnabled, setIsDeliveryTimeEnabled] = useState<boolean>(false);
+  const [deliveryType, setDeliveryType] = useState<DeliveryType>(DeliveryType.SHIP);
   // Đơn hàng test — dùng để test tính năng. Khi bật, Zalo message sẽ có banner === ĐƠN HÀNG TEST ===
   const [isTest, setIsTest] = useState<boolean>(false);
 
@@ -109,6 +110,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setStatus(initialData.status);
       setPaymentStatus(initialData.paymentStatus || PaymentStatus.UNPAID);
       setPaymentMethod(initialData.paymentMethod || PaymentMethod.CASH);
+      setDeliveryType(initialData.deliveryType || DeliveryType.SHIP);
       setShippingCost(initialData.shippingCost || 0);
       setIsTest(!!initialData.isTest);
       if (initialData.items && initialData.items.length > 0) {
@@ -155,6 +157,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setStatus(OrderStatus.PENDING);
       setPaymentStatus(PaymentStatus.UNPAID);
       setPaymentMethod(PaymentMethod.CASH);
+      setDeliveryType(DeliveryType.SHIP);
       setItems([]);
       setIsTest(false);
     }
@@ -390,6 +393,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         status: status,
         paymentStatus: paymentStatus,
         paymentMethod: paymentMethod,
+        deliveryType: deliveryType,
         isTest: isTest,
         createdBy: currentUser.uid
       };
@@ -568,6 +572,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               setPaymentStatus={setPaymentStatus}
               paymentMethod={paymentMethod}
               setPaymentMethod={setPaymentMethod}
+              deliveryType={deliveryType}
+              setDeliveryType={setDeliveryType}
               note={note}
               setNote={setNote}
               total={total}

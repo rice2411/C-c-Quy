@@ -423,6 +423,11 @@ export const translations = {
       cash: "Cash",
       banking: "Banking"
     },
+    deliveryType: {
+      label: "Delivery Method",
+      ship: "Ship to address",
+      pickup: "Customer pickup"
+    },
     qr: {
       sectionTitle: "Payment QR",
       title: "Bank Transfer (VietQR)",
@@ -867,6 +872,11 @@ export const translations = {
       label: "Phương thức",
       cash: "Tiền mặt",
       banking: "Chuyển khoản"
+    },
+    deliveryType: {
+      label: "Hình thức nhận hàng",
+      ship: "Giao tận nơi",
+      pickup: "Khách tới lấy"
     },
     qr: {
       sectionTitle: "Mã thanh toán",

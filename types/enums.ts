@@ -17,4 +17,9 @@ export enum PaymentMethod {
   BANKING = 'BANKING'
 }
 
+export enum DeliveryType {
+  SHIP = 'SHIP',
+  PICKUP = 'PICKUP'
+}
+
 
