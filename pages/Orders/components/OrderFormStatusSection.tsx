@@ -110,7 +110,8 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
         />
       </Field>
 
-      {total > 0 && paymentMethod === PaymentMethod.BANKING ? (
+      {/* QR luôn hiện khi total > 0 — không phụ thuộc paymentMethod */}
+      {total > 0 ? (
         <Box
           layoutClassName="flex animate-fade-in flex-col items-center gap-4 rounded-xl border p-4 sm:flex-row sm:items-start"
           borderClassName="border-blue-100 dark:border-blue-800"
