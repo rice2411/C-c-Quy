@@ -22,6 +22,7 @@ import CreateCustomerModal from '@/pages/Orders/components/modals/CreateCustomer
 import OrderFormCustomerSection from '@/pages/Orders/components/OrderFormCustomerSection';
 import OrderFormItemsSection from '@/pages/Orders/components/OrderFormItemsSection';
 import OrderFormStatusSection from '@/pages/Orders/components/OrderFormStatusSection';
+import { pushRecentProductId } from '@/utils/recentProducts';
 
 interface OrderFormProps {
   isOpen: boolean;
@@ -207,6 +208,26 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       }];
     });
     flashHighlight(resolvedId);
+    // Lưu lên localStorage để hiện trong "Hay dùng" lần sau.
+    pushRecentProductId(product.id);
+  };
+
+  /**
+   * Giảm 1 quantity từ ProductSearchBar stepper. Nếu quantity về 0 → xoá item.
+   */
+  const handleDecrementProduct = (productId: string) => {
+    setItems(prev => {
+      const idx = prev.findIndex(i => i.productId === productId);
+      if (idx < 0) return prev;
+      const cur = prev[idx];
+      const newQty = (cur.quantity || 0) - 1;
+      if (newQty <= 0) {
+        return prev.filter((_, i) => i !== idx);
+      }
+      return prev.map((item, i) =>
+        i === idx ? { ...item, quantity: newQty } : item,
+      );
+    });
   };
 
   /** Thêm item tuỳ chỉnh (không gắn product) — user gõ tên + click "Tạo item tuỳ chỉnh". */
@@ -518,6 +539,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               onAddItem={handleAddItem}
               onAddItemWithProduct={handleAddItemWithProduct}
               onAddCustomItem={handleAddCustomItem}
+              onDecrementProduct={handleDecrementProduct}
               onRemoveItem={handleRemoveItem}
               onUpdateItem={handleUpdateItem}
               shippingCost={shippingCost}

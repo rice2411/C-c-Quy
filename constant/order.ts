@@ -2,7 +2,7 @@ import { OrderStatus, PaymentMethod, PaymentStatus } from '@/types/index';
 
 
 /**
- * Màu sắc của status
+ * Mau sac cua status
  */
 export const STATUS_COLORS: Record<OrderStatus, string> = {
   [OrderStatus.PENDING]: "bg-yellow-100 text-yellow-800",
@@ -13,7 +13,7 @@ export const STATUS_COLORS: Record<OrderStatus, string> = {
 };
 
 /**
- * Màu sắc của phương thức thanh toán
+ * Mau sac cua phuong thuc thanh toan
  */
 export const PAYMENT_METHOD_COLORS: Record<PaymentMethod, string> = {
   [PaymentMethod.BANKING]: "bg-blue-100 text-blue-800",
@@ -21,7 +21,7 @@ export const PAYMENT_METHOD_COLORS: Record<PaymentMethod, string> = {
 };
 
 /**
- * Màu sắc của trạng thái thanh toán
+ * Mau sac cua trang thai thanh toan
  */
 export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
   [PaymentStatus.PAID]: "bg-emerald-100 text-emerald-800",

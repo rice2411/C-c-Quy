@@ -4,6 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Order } from '@/types';
 import { getAllUsers } from '@/services/userService';
 import { parseDateValue } from '@/utils/dateUtil';
+import { buildDeliveryBadge } from '@/utils/deliveryDateBadge';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -20,11 +21,11 @@ interface OrderListProps {
   onUpdateOrder: (id: string, data: any) => Promise<void>;
 }
 
-const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOrder, onUpdateOrder }) => {
+const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
-  
+
   // New Filters
   const [productFilter, setProductFilter] = useState('');
   const [selectedMonth, setSelectedMonth] = useState(''); // Format: YYYY-MM
@@ -37,8 +38,8 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [creatorOptions, setCreatorOptions] = useState<string[]>([]);
 
-  const [sortField, setSortField] = useState<keyof Order>('date');
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [sortField, setSortField] = useState<keyof Order>('deliveryDate' as keyof Order);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -56,105 +57,164 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
   }, []);
 
   const filteredOrders = useMemo(() => {
-    return orders.filter(order => {
-      const normalizedSearch = searchTerm.toLowerCase().trim();
-      const matchesSearch = normalizedSearch === '' || 
-        (order.id && order.id.toLowerCase().includes(normalizedSearch)) ||
-        (order.orderNumber && order.orderNumber.toLowerCase().includes(normalizedSearch)) ||
-        (order.customer?.name && order.customer.name.toLowerCase().includes(normalizedSearch)) ||
-        (order.customer?.phone && order.customer.phone.toLowerCase().includes(normalizedSearch));
-      
-      const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
-      
-      const matchesProduct = !productFilter || 
-        (order.items && order.items.length > 0 && order.items.some(item => 
-          item?.name && item.name.toLowerCase().includes(productFilter.toLowerCase())
-        ));
+    return orders
+      .filter((order) => {
+        const normalizedSearch = searchTerm.toLowerCase().trim();
+        const matchesSearch =
+          normalizedSearch === '' ||
+          (order.id && order.id.toLowerCase().includes(normalizedSearch)) ||
+          (order.orderNumber && order.orderNumber.toLowerCase().includes(normalizedSearch)) ||
+          (order.customer?.name && order.customer.name.toLowerCase().includes(normalizedSearch)) ||
+          (order.customer?.phone && order.customer.phone.toLowerCase().includes(normalizedSearch));
 
-      let matchesDate = true;
-      if (selectedMonth) {
-        const monthParts = selectedMonth.split('-');
-        if (monthParts.length === 2) {
-          const filterYear = Number(monthParts[0]);
-          const filterMonth = Number(monthParts[1]);
-          if (!isNaN(filterYear) && !isNaN(filterMonth) && filterMonth >= 1 && filterMonth <= 12) {
-            const targetDate = dateType === 'deliveryDate' 
+        const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
+
+        const matchesProduct =
+          !productFilter ||
+          (order.items &&
+            order.items.length > 0 &&
+            order.items.some(
+              (item) => item?.name && item.name.toLowerCase().includes(productFilter.toLowerCase()),
+            ));
+
+        let matchesDate = true;
+        if (selectedMonth) {
+          const monthParts = selectedMonth.split('-');
+          if (monthParts.length === 2) {
+            const filterYear = Number(monthParts[0]);
+            const filterMonth = Number(monthParts[1]);
+            if (!isNaN(filterYear) && !isNaN(filterMonth) && filterMonth >= 1 && filterMonth <= 12) {
+              const targetDate =
+                dateType === 'deliveryDate'
+                  ? parseDateValue(order.deliveryDate)
+                  : parseDateValue(order.orderDate || order.date);
+              if (
+                !targetDate ||
+                targetDate.getFullYear() !== filterYear ||
+                targetDate.getMonth() + 1 !== filterMonth
+              ) {
+                matchesDate = false;
+              }
+            }
+          }
+        }
+
+        const matchesPaymentStatus =
+          paymentStatusFilter === 'All' || order.paymentStatus === paymentStatusFilter;
+        const matchesPaymentMethod =
+          paymentMethodFilter === 'All' || order.paymentMethod === paymentMethodFilter;
+        const matchesCreator =
+          !creatorFilter ||
+          (order.createdBy &&
+            order.createdBy.toLowerCase().includes(creatorFilter.toLowerCase().trim()));
+
+        let matchesRange = true;
+        if (dateFrom || dateTo) {
+          const targetDate =
+            dateType === 'deliveryDate'
               ? parseDateValue(order.deliveryDate)
               : parseDateValue(order.orderDate || order.date);
-            if (!targetDate || targetDate.getFullYear() !== filterYear || (targetDate.getMonth() + 1) !== filterMonth) {
-              matchesDate = false;
-            }
-          }
-        }
-      }
+          const fromDate = dateFrom ? parseDateValue(dateFrom) : null;
+          const toDate = dateTo ? parseDateValue(dateTo) : null;
 
-      const matchesPaymentStatus = paymentStatusFilter === 'All' || order.paymentStatus === paymentStatusFilter;
-      const matchesPaymentMethod = paymentMethodFilter === 'All' || order.paymentMethod === paymentMethodFilter;
-      const matchesCreator = !creatorFilter || (order.createdBy && order.createdBy.toLowerCase().includes(creatorFilter.toLowerCase().trim()));
-
-      let matchesRange = true;
-      if (dateFrom || dateTo) {
-        const targetDate = dateType === 'deliveryDate'
-          ? parseDateValue(order.deliveryDate)
-          : parseDateValue(order.orderDate || order.date);
-        const fromDate = dateFrom ? parseDateValue(dateFrom) : null;
-        const toDate = dateTo ? parseDateValue(dateTo) : null;
-        
-        if (!targetDate) {
-          matchesRange = false;
-        } else {
-          if (fromDate && targetDate < fromDate) {
+          if (!targetDate) {
             matchesRange = false;
-          }
-          if (toDate) {
-            const end = new Date(toDate);
-            end.setHours(23, 59, 59, 999);
-            if (targetDate > end) {
-              matchesRange = false;
+          } else {
+            if (fromDate && targetDate < fromDate) matchesRange = false;
+            if (toDate) {
+              const end = new Date(toDate);
+              end.setHours(23, 59, 59, 999);
+              if (targetDate > end) matchesRange = false;
             }
           }
         }
-      }
 
-      return matchesSearch && matchesStatus && matchesProduct && matchesDate && matchesPaymentStatus && matchesPaymentMethod && matchesCreator && matchesRange;
-    }).sort((a, b) => {
-      const aValue = a[sortField];
-      const bValue = b[sortField];
-      
-      if (aValue == null && bValue == null) return 0;
-      if (aValue == null) return sortDirection === 'asc' ? -1 : 1;
-      if (bValue == null) return sortDirection === 'asc' ? 1 : -1;
-      
-      const aDate = parseDateValue(aValue);
-      const bDate = parseDateValue(bValue);
-      
-      if (aDate && bDate) {
-        return sortDirection === 'asc' 
-          ? aDate.getTime() - bDate.getTime()
-          : bDate.getTime() - aDate.getTime();
-      }
-      
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-      }
-      
-      const aStr = String(aValue);
-      const bStr = String(bValue);
-      if (aStr < bStr) return sortDirection === 'asc' ? -1 : 1;
-      if (aStr > bStr) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, [orders, searchTerm, statusFilter, sortField, sortDirection, productFilter, selectedMonth, paymentStatusFilter, paymentMethodFilter, creatorFilter, dateFrom, dateTo, dateType]);
+        return (
+          matchesSearch &&
+          matchesStatus &&
+          matchesProduct &&
+          matchesDate &&
+          matchesPaymentStatus &&
+          matchesPaymentMethod &&
+          matchesCreator &&
+          matchesRange
+        );
+      })
+      .sort((a, b) => {
+        // Khi sort theo deliveryDate -> dung priority tier (do/vang/xanh/khong/done)
+        if ((sortField as string) === 'deliveryDate') {
+          const pa = buildDeliveryBadge(a.deliveryDate, { status: a.status }).priority;
+          const pb = buildDeliveryBadge(b.deliveryDate, { status: b.status }).priority;
+          if (pa !== pb) return pa - pb;
+          const aDate = parseDateValue(a.deliveryDate);
+          const bDate = parseDateValue(b.deliveryDate);
+          if (aDate && bDate) {
+            return sortDirection === 'asc'
+              ? aDate.getTime() - bDate.getTime()
+              : bDate.getTime() - aDate.getTime();
+          }
+          return 0;
+        }
 
-  // Reset to first page when filters change
+        const aValue = a[sortField];
+        const bValue = b[sortField];
+
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1;
+        if (bValue == null) return -1;
+
+        const aDate = parseDateValue(aValue);
+        const bDate = parseDateValue(bValue);
+
+        if (aDate && bDate) {
+          return sortDirection === 'asc'
+            ? aDate.getTime() - bDate.getTime()
+            : bDate.getTime() - aDate.getTime();
+        }
+
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+
+        const aStr = String(aValue);
+        const bStr = String(bValue);
+        if (aStr < bStr) return sortDirection === 'asc' ? -1 : 1;
+        if (aStr > bStr) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+  }, [
+    orders,
+    searchTerm,
+    statusFilter,
+    sortField,
+    sortDirection,
+    productFilter,
+    selectedMonth,
+    paymentStatusFilter,
+    paymentMethodFilter,
+    creatorFilter,
+    dateFrom,
+    dateTo,
+    dateType,
+  ]);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, productFilter, selectedMonth, paymentStatusFilter, paymentMethodFilter, creatorFilter, dateFrom, dateTo, dateType]);
+  }, [
+    searchTerm,
+    statusFilter,
+    productFilter,
+    selectedMonth,
+    paymentStatusFilter,
+    paymentMethodFilter,
+    creatorFilter,
+    dateFrom,
+    dateTo,
+    dateType,
+  ]);
 
-  // Pagination Logic
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
-  
-  // Adjust currentPage if it exceeds totalPages due to deletion or filtering
+
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(totalPages);
@@ -166,19 +226,19 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
   const currentOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
 
   const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(prev => prev - 1);
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
   };
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
   };
 
   const handleSort = (field: keyof Order) => {
     if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortField(field);
-      setSortDirection('desc');
+      setSortDirection((field as string) === 'deliveryDate' ? 'asc' : 'desc');
     }
   };
 
@@ -211,7 +271,6 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
     );
   };
 
-
   return (
     <Card
       padding="none"
@@ -228,6 +287,9 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
         orders={currentOrders}
         onSelectOrder={onSelectOrder}
         renderProductSummary={renderProductSummary}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSort={handleSort}
       />
 
       <OrderListDesktop
@@ -269,14 +331,19 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, onDeleteOr
           setIsAdvancedOpen(false);
         }}
       />
-      
+
       <Box
         layoutClassName="flex shrink-0 items-center justify-between p-4"
         borderClassName="border-t border-slate-100 dark:border-slate-700"
         backgroundClassName="bg-white dark:bg-slate-800"
         roundedClassName="rounded-b-xl"
       >
-        <Typography as="span" size="xs" variant="muted" textClassName="text-slate-500 dark:text-slate-400">
+        <Typography
+          as="span"
+          size="xs"
+          variant="muted"
+          textClassName="text-slate-500 dark:text-slate-400"
+        >
           {filteredOrders.length > 0
             ? `${t('orders.showing')} ${startIndex + 1}-${endIndex} ${t('orders.of')} ${filteredOrders.length}`
             : t('orders.noOrdersCriteria')}

@@ -431,42 +431,53 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                           )}
                         </div>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-3">
                           <CreditCard className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                           <span className="text-sm text-slate-600 dark:text-slate-300">{t('detail.payment')}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {[PaymentStatus.PAID, PaymentStatus.UNPAID].map((status) => (
-                            <button
-                              key={status}
-                              type="button"
-                              onClick={() => handleUpdateField({ paymentStatus: status }, setUpdatingPayment)}
-                              disabled={!canEdit || updatingPayment}
-                              className={`px-3 py-1 rounded-full text-xs font-bold uppercase border transition-all ${
-                                currentOrder.paymentStatus === status
-                                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
-                                  : 'bg-white text-slate-500 border-slate-200 hover:border-emerald-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600'
-                              } ${!canEdit || updatingPayment ? 'opacity-60 cursor-not-allowed' : ''}`}
-                            >
-                              {status}
-                            </button>
-                          ))}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {[PaymentStatus.PAID, PaymentStatus.UNPAID].map((status) => {
+                            const isActive = currentOrder.paymentStatus === status;
+                            const activeClass =
+                              status === PaymentStatus.PAID
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700'
+                                : 'bg-red-50 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-200 dark:border-red-700';
+                            const inactiveHover =
+                              status === PaymentStatus.PAID
+                                ? 'hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:border-emerald-700'
+                                : 'hover:border-red-300 hover:bg-red-50/50 dark:hover:border-red-700';
+                            return (
+                              <button
+                                key={status}
+                                type="button"
+                                onClick={() => handleUpdateField({ paymentStatus: status }, setUpdatingPayment)}
+                                disabled={!canEdit || updatingPayment}
+                                className={`px-3 py-1 rounded-full text-xs font-bold uppercase whitespace-nowrap border transition-all ${
+                                  isActive
+                                    ? activeClass
+                                    : `bg-white text-slate-500 border-slate-200 ${inactiveHover} dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600`
+                                } ${!canEdit || updatingPayment ? 'opacity-60 cursor-not-allowed' : ''}`}
+                              >
+                                {t(`orders.paymentStatusLabels.${status}`)}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
-                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-3">
                           <Wallet className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                           <span className="text-sm text-slate-600 dark:text-slate-300">{t('detail.paymentMethod')}</span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           {[PaymentMethod.BANKING, PaymentMethod.CASH].map((method) => (
                             <button
                               key={method}
                               type="button"
                               onClick={() => handleUpdateField({ paymentMethod: method }, setUpdatingPayment)}
                               disabled={!canEdit || updatingPayment}
-                              className={`px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border transition-all ${
                                 currentOrder.paymentMethod === method
                                   ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
                                   : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600'
