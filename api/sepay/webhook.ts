@@ -9,42 +9,19 @@
  *   - Type-only import (`import type ...`) → TS erase ở compile time, không
  *     ảnh hưởng runtime.
  */
-import { FirebaseApp, getApp, getApps, initializeApp } from 'firebase/app';
 import {
-  Firestore,
   Timestamp,
   addDoc,
   collection,
   doc,
   getDocs,
-  initializeFirestore,
   query,
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { db } from '../../config/firestore';
 import type { ApiRequest, ApiResponse } from '../../types/api';
 import type { PaymentStatus } from '../../types/enums';
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Firebase init (cache module-scope)
-// ──────────────────────────────────────────────────────────────────────────────
-let cachedDb: Firestore | null = null;
-const getDb = (): Firestore => {
-  if (cachedDb) return cachedDb;
-  const config = {
-    apiKey: process.env.FIREBASE_API_KEY || '',
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN || '',
-    projectId: process.env.FIREBASE_PROJECT_ID || '',
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || '',
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
-    appId: process.env.FIREBASE_APP_ID || '',
-    measurementId: process.env.FIREBASE_MEASUREMENT_ID || '',
-  };
-  const app: FirebaseApp =
-    getApps().length > 0 ? getApp() : initializeApp(config);
-  cachedDb = initializeFirestore(app, { experimentalForceLongPolling: true });
-  return cachedDb;
-};
 
 // Trích mã đơn dạng `ORD-XXXXXX` từ chuỗi tự do.
 const extractFormattedOrderCode = (str: string | null | undefined): string | null => {
@@ -68,7 +45,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       return res.status(400).json({ error: 'Invalid webhook data' });
     }
 
-    const db = getDb();
     const orderNumber = extractFormattedOrderCode(webhookData.description);
 
     // 1. Lưu transaction
