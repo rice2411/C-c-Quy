@@ -32,6 +32,7 @@ const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
       setName(customerName);
       setPhoneValue(phone);
       setError(null);
+      setIsSubmitting(false);
     }
   }, [isOpen, phone, customerName]);
 
