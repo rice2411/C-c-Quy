@@ -1,10 +1,8 @@
 import React, { useMemo } from 'react';
-import { AlertCircle, DollarSign, Package, Wallet, XCircle } from 'lucide-react';
+import { AlertCircle, Package, Wallet, XCircle } from 'lucide-react';
 import { Order } from '@/types';
 import { OrderStatus, PaymentStatus } from '@/types/enums';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { formatVND } from '@/utils/format/currencyUtil';
-import { getOrderTotal } from '@/utils/order/orderUtils';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
@@ -17,13 +15,11 @@ interface OrdersStatsProps {
 const OrdersStats: React.FC<OrdersStatsProps> = ({ orders }) => {
   const { t } = useLanguage();
 
-  const { totalRevenue, totalCount, pendingCount, cancelledCount, unpaidCount } = useMemo(() => {
-    let revenue = 0;
+  const { totalCount, pendingCount, cancelledCount, unpaidCount } = useMemo(() => {
     let pending = 0;
     let cancelled = 0;
     let unpaid = 0;
     for (const o of orders) {
-      revenue += getOrderTotal(o);
       if (o.status === OrderStatus.CANCELLED) {
         cancelled += 1;
       }
@@ -35,7 +31,6 @@ const OrdersStats: React.FC<OrdersStatsProps> = ({ orders }) => {
       }
     }
     return {
-      totalRevenue: revenue,
       totalCount: orders.length,
       pendingCount: pending,
       cancelledCount: cancelled,
@@ -44,31 +39,7 @@ const OrdersStats: React.FC<OrdersStatsProps> = ({ orders }) => {
   }, [orders]);
 
   return (
-    <Box layoutClassName="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-      <Card layoutClassName="flex flex-col justify-between p-5 sm:p-6" stateClassName="transition-colors">
-        <Box layoutClassName="flex items-start justify-between gap-3">
-          <Box layoutClassName="min-w-0">
-            <Typography size="sm" variant="muted" textClassName="font-medium">
-              {t('dashboard.totalRevenue')}
-            </Typography>
-            <Heading level={3} layoutClassName="mt-1 break-words" textClassName="text-2xl font-bold tabular-nums">
-              {formatVND(totalRevenue)}
-            </Heading>
-          </Box>
-          <Box
-            layoutClassName="shrink-0 p-2"
-            roundedClassName="rounded-lg"
-            backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20"
-            textClassName="text-emerald-600 dark:text-emerald-400"
-          >
-            <DollarSign size={20} aria-hidden />
-          </Box>
-        </Box>
-        <Typography size="xs" layoutClassName="mt-4 font-medium tracking-wide text-slate-400 dark:text-slate-500">
-          {t('orders.stats.scopeHint')}
-        </Typography>
-      </Card>
-
+    <Box layoutClassName="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <Card layoutClassName="flex flex-col justify-between p-5 sm:p-6" stateClassName="transition-colors">
         <Box layoutClassName="flex items-start justify-between gap-3">
           <Box>

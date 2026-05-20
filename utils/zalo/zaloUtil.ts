@@ -38,6 +38,11 @@ export const formatOrderMessage = (order: any): string => {
     }
   }
 
+  // Hình thức nhận hàng — PICKUP / SHIP
+  const deliveryTypeLabel =
+    order.deliveryType === 'PICKUP' ? '🏬 Khách qua lấy' : '🚚 Ship đến địa chỉ';
+  message += `\n${deliveryTypeLabel}`;
+
   message += `\n👤 Khách hàng: ${order.customer?.name || '(không có)'}
 📞 SĐT: ${order.customer?.phone || '(không có)'}
 🏠 Địa chỉ: ${order.customer?.address || '(không có)'}

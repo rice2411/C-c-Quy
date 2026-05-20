@@ -237,21 +237,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
     });
   };
 
-  /** Thêm item tuỳ chỉnh (không gắn product) — user gõ tên + click "Tạo item tuỳ chỉnh". */
-  const handleAddCustomItem = (name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    const newId = genItemId();
-    setItems(prev => [...prev, {
-      id: newId,
-      productId: '',
-      productName: trimmed,
-      quantity: 1,
-      unitPrice: 0,
-      image: undefined,
-    }]);
-    flashHighlight(newId);
-  };
+  // Đã bỏ tính năng "Tạo item tuỳ chỉnh" — đơn chỉ được thêm sản phẩm có sẵn
+  // trong inventory. Nếu tìm không thấy → empty state, không cho tạo mới.
 
   const handleRemoveItem = (itemId: string) => {
     setItems(items.filter(i => i.id !== itemId));
@@ -553,7 +540,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               items={items}
               onAddItem={handleAddItem}
               onAddItemWithProduct={handleAddItemWithProduct}
-              onAddCustomItem={handleAddCustomItem}
               onDecrementProduct={handleDecrementProduct}
               onRemoveItem={handleRemoveItem}
               onUpdateItem={handleUpdateItem}
