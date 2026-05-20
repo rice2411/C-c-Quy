@@ -2,27 +2,59 @@
  * SePay Webhook API
  * POST /api/sepay/webhook
  *
- * Job duy nhất của webhook:
- *   1. Lưu transaction vào collection `transactions`.
- *   2. Mark order tương ứng paymentStatus = PAID + lưu sepayId.
- *
- * KHÔNG ghi history nữa — phần "Lịch sử nhận tiền" trong OrderDetail
- * được derive ở client bằng cách query `transactions where orderNumber == ...`.
+ * Self-contained — KHÔNG value-import file relative ngoài `api/` (vì Vercel ESM
+ * resolution không kéo theo file ngoài function root → `ERR_MODULE_NOT_FOUND`).
+ * Chỉ dùng:
+ *   - Bare specifier (`firebase/app`, `firebase/firestore`) → Vercel auto-bundle.
+ *   - Type-only import (`import type ...`) → TS erase ở compile time, không
+ *     ảnh hưởng runtime.
  */
+import { FirebaseApp, getApp, getApps, initializeApp } from 'firebase/app';
 import {
+  Firestore,
   Timestamp,
   addDoc,
   collection,
   doc,
   getDocs,
+  initializeFirestore,
   query,
   updateDoc,
   where,
 } from 'firebase/firestore';
-import { db } from '../../config/firebase';
-import { PaymentStatus } from '../../types/enums';
-import { extractFormattedOrderCode } from '../../utils/order/orderNumberUtil';
 import type { ApiRequest, ApiResponse } from '../../types/api';
+import type { PaymentStatus } from '../../types/enums';
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Firebase init (cache module-scope)
+// ──────────────────────────────────────────────────────────────────────────────
+let cachedDb: Firestore | null = null;
+const getDb = (): Firestore => {
+  if (cachedDb) return cachedDb;
+  const config = {
+    apiKey: process.env.FIREBASE_API_KEY || '',
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || '',
+    projectId: process.env.FIREBASE_PROJECT_ID || '',
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || '',
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
+    appId: process.env.FIREBASE_APP_ID || '',
+    measurementId: process.env.FIREBASE_MEASUREMENT_ID || '',
+  };
+  const app: FirebaseApp =
+    getApps().length > 0 ? getApp() : initializeApp(config);
+  cachedDb = initializeFirestore(app, { experimentalForceLongPolling: true });
+  return cachedDb;
+};
+
+// Trích mã đơn dạng `ORD-XXXXXX` từ chuỗi tự do.
+const extractFormattedOrderCode = (str: string | null | undefined): string | null => {
+  const match = (str || '').match(/ORD\d+/);
+  return match ? match[0].replace(/ORD(\d+)/, 'ORD-$1') : null;
+};
+
+// PaymentStatus.PAID literal — must duplicate value here vì runtime enum import
+// không khả dụng. Type vẫn check khớp với enum thật ở types/enums.ts.
+const PAYMENT_STATUS_PAID: PaymentStatus = 'PAID' as PaymentStatus;
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   if (req.method !== 'POST') {
@@ -32,11 +64,11 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   try {
     const webhookData = req.body;
 
-    // Validate
     if (!webhookData || !webhookData.id) {
       return res.status(400).json({ error: 'Invalid webhook data' });
     }
 
+    const db = getDb();
     const orderNumber = extractFormattedOrderCode(webhookData.description);
 
     // 1. Lưu transaction
@@ -65,7 +97,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-      // Không tìm thấy order — transaction đã lưu, trả 200 để SePay không retry
       return res.status(200).json({
         success: true,
         message: 'Transaction saved but no matching order',
@@ -77,7 +108,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     const orderRef = doc(db, 'orders', docSnap.id);
 
     await updateDoc(orderRef, {
-      paymentStatus: PaymentStatus.PAID,
+      paymentStatus: PAYMENT_STATUS_PAID,
       sepayId: webhookData.id,
       updatedAt: Timestamp.now(),
     });
@@ -88,7 +119,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       transactionId: webhookData.id,
     });
   } catch (error: any) {
-    console.error('[sepay/webhook] error:', error);
+    console.error('Webhook error:', error);
     return res.status(500).json({
       success: false,
       error: error.message,
