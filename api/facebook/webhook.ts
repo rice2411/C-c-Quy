@@ -2,16 +2,17 @@
  * Facebook / Fanpage inbox Webhook API
  * POST /api/facebook/webhook
  */
-
-interface ApiRequest {
-  method?: string;
-  body?: any;
-}
-
-interface ApiResponse {
-  status: (code: number) => { json: (data: any) => void };
-  json: (data: any) => void;
-}
+import {
+  Timestamp,
+  addDoc,
+  collection,
+  getDocs,
+  limit,
+  query,
+  where,
+} from 'firebase/firestore';
+import { db } from '../../config/firebase';
+import type { ApiRequest, ApiResponse } from '../../types/api';
 
 const COLLECTION = 'facebook_messages';
 
@@ -31,29 +32,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     if (!webhookData || !idNewMessage) {
       return res.status(400).json({ error: 'Invalid webhook data: id_new_message is required' });
     }
-
-    const firebaseApp = await import('firebase/app');
-    const firebaseFirestore = await import('firebase/firestore');
-
-    const firebaseConfig = {
-      apiKey: process.env.FIREBASE_API_KEY,
-      authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.FIREBASE_APP_ID,
-      measurementId: process.env.FIREBASE_MEASUREMENT_ID,
-    };
-
-    let app;
-    try {
-      app = firebaseApp.getApp();
-    } catch {
-      app = firebaseApp.initializeApp(firebaseConfig);
-    }
-
-    const db = firebaseFirestore.getFirestore(app);
-    const { collection, addDoc, Timestamp, query, where, getDocs, limit } = firebaseFirestore;
 
     const messagesRef = collection(db, COLLECTION);
     const dupQuery = query(
@@ -116,7 +94,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       docId: docRef.id,
     });
   } catch (error: any) {
-    console.error('❌ Facebook webhook error:', error);
+    console.error('[facebook/webhook] error:', error);
     return res.status(500).json({
       success: false,
       error: error.message,

@@ -9,16 +9,20 @@
  * KHÔNG ghi history nữa — phần "Lịch sử nhận tiền" trong OrderDetail
  * được derive ở client bằng cách query `transactions where orderNumber == ...`.
  */
-
-interface ApiRequest {
-  method?: string;
-  body?: any;
-}
-
-interface ApiResponse {
-  status: (code: number) => { json: (data: any) => void };
-  json: (data: any) => void;
-}
+import {
+  Timestamp,
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
+import { db } from '../../config/firebase';
+import { PaymentStatus } from '../../types/enums';
+import { extractFormattedOrderCode } from '../../utils/order/orderNumberUtil';
+import type { ApiRequest, ApiResponse } from '../../types/api';
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   if (req.method !== 'POST') {
@@ -32,35 +36,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     if (!webhookData || !webhookData.id) {
       return res.status(400).json({ error: 'Invalid webhook data' });
     }
-
-    // Import trực tiếp để tránh lỗi đường dẫn trên Vercel
-    const firebaseApp = await import('firebase/app');
-    const firebaseFirestore = await import('firebase/firestore');
-
-    const firebaseConfig = {
-      apiKey: process.env.FIREBASE_API_KEY,
-      authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-      appId: process.env.FIREBASE_APP_ID,
-      measurementId: process.env.FIREBASE_MEASUREMENT_ID,
-    };
-
-    let app;
-    try {
-      app = firebaseApp.getApp();
-    } catch {
-      app = firebaseApp.initializeApp(firebaseConfig);
-    }
-
-    const db = firebaseFirestore.getFirestore(app);
-    const { collection, addDoc, Timestamp, doc, updateDoc, query, where, getDocs } = firebaseFirestore;
-
-    const extractFormattedOrderCode = (str: string) => {
-      const match = str.match(/ORD\d+/);
-      return match ? match[0].replace(/ORD(\d+)/, 'ORD-$1') : null;
-    };
 
     const orderNumber = extractFormattedOrderCode(webhookData.description);
 
@@ -102,7 +77,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     const orderRef = doc(db, 'orders', docSnap.id);
 
     await updateDoc(orderRef, {
-      paymentStatus: 'PAID',
+      paymentStatus: PaymentStatus.PAID,
       sepayId: webhookData.id,
       updatedAt: Timestamp.now(),
     });
@@ -113,7 +88,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       transactionId: webhookData.id,
     });
   } catch (error: any) {
-    console.error('Webhook error:', error);
+    console.error('[sepay/webhook] error:', error);
     return res.status(500).json({
       success: false,
       error: error.message,
