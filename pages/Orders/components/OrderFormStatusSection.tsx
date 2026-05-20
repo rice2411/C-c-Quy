@@ -3,6 +3,7 @@ import { Copy, CreditCard, QrCode, StickyNote, Truck, Store, Wallet } from 'luci
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DeliveryType, OrderStatus, PaymentMethod, PaymentStatus } from '@/types';
 import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
 import Field from '@/components/ui/Field';
 import Image from '@/components/ui/Image';
 import Select from '@/components/ui/Select';
@@ -106,22 +107,33 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
           {([DeliveryType.SHIP, DeliveryType.PICKUP] as DeliveryType[]).map((dt) => {
             const active = deliveryType === dt;
             return (
-              <button
+              <Button
                 key={dt}
                 type="button"
+                variant="ghost"
+                disableVariantHover
+                disableVariantTextColor
                 onClick={() => setDeliveryType(dt)}
-                className={[
-                  'flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors',
-                  active
-                    ? 'border-orange-400 bg-orange-50 text-orange-700 dark:border-orange-500 dark:bg-orange-900/30 dark:text-orange-200'
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
-                ].join(' ')}
-              >
-                {dt === DeliveryType.SHIP
+                leftIcon={dt === DeliveryType.SHIP
                   ? <Truck className="h-4 w-4 shrink-0" />
                   : <Store className="h-4 w-4 shrink-0" />}
+                sizeClassName="px-3 py-2.5"
+                textClassName={active
+                  ? 'text-sm font-medium text-orange-700 dark:text-orange-200'
+                  : 'text-sm font-medium text-slate-600 dark:text-slate-300'}
+                backgroundClassName={active
+                  ? 'bg-orange-50 dark:bg-orange-900/30'
+                  : 'bg-white dark:bg-slate-800'}
+                borderClassName={active
+                  ? 'border border-orange-400 dark:border-orange-500'
+                  : 'border border-slate-200 dark:border-slate-600'}
+                hoverClassName={active ? '' : 'hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}
+                roundedClassName="rounded-lg"
+                shadowClassName=""
+                stateClassName="transition-colors"
+              >
                 {dt === DeliveryType.SHIP ? t('deliveryType.ship') : t('deliveryType.pickup')}
-              </button>
+              </Button>
             );
           })}
         </Box>

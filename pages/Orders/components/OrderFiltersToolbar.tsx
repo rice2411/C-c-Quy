@@ -16,7 +16,7 @@ interface OrderFiltersToolbarProps {
 const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
   searchTerm,
   onSearchChange,
-  onOpenAdvanced
+  onOpenAdvanced,
 }) => {
   const { t } = useLanguage();
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
@@ -54,6 +54,7 @@ const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
               leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
             />
           </Box>
+
           <Button
             type="button"
             onClick={onOpenAdvanced}

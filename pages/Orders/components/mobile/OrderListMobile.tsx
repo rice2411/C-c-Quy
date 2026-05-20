@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowDownWideNarrow, ArrowUpWideNarrow, CalendarDays, ChevronRight, MapPin, Package, Phone, User } from 'lucide-react';
+import { CalendarDays, ChevronRight, MapPin, Package, Phone, User } from 'lucide-react';
 import { PAYMENT_STATUS_COLORS, STATUS_COLORS } from '@/constant/order';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Order } from '@/types';
@@ -14,12 +14,9 @@ interface OrderListMobileProps {
   orders: Order[];
   onSelectOrder: (order: Order) => void;
   renderProductSummary: (order: Order) => React.ReactNode;
-  sortField: keyof Order;
-  sortDirection: 'asc' | 'desc';
-  onSort: (field: keyof Order) => void;
 }
 
-const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder, sortField, sortDirection, onSort }) => {
+const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder }) => {
   const { t } = useLanguage();
 
   const getItemCount = (order: Order) =>
@@ -36,43 +33,11 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
     order.items?.[0]?.image ||
     `https://placehold.co/200x200?text=${encodeURIComponent(order.items?.[0]?.name || 'Order')}`;
 
-  const SortChip: React.FC<{ field: keyof Order; label: string }> = ({ field, label }) => {
-    const active = sortField === field;
-    const arrow = active ? (sortDirection === 'asc' ? <ArrowUpWideNarrow className="h-3 w-3" /> : <ArrowDownWideNarrow className="h-3 w-3" />) : null;
-    return (
-      <button
-        type="button"
-        onClick={() => onSort(field)}
-        className={
-          'flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ' +
-          (active
-            ? 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-600 dark:bg-orange-900/30 dark:text-orange-200'
-            : 'border-slate-200 bg-white text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300')
-        }
-      >
-        {label}
-        {arrow}
-      </button>
-    );
-  };
-
   return (
     <Box
       layoutClassName="flex-1 overflow-y-auto lg:hidden"
       backgroundClassName="bg-slate-50/50 dark:bg-slate-900/50"
     >
-      {/* Sort chip bar - sticky */}
-      <Box
-        layoutClassName="sticky top-0 z-10 flex gap-1.5 overflow-x-auto border-b px-3 py-2"
-        borderClassName="border-slate-200 dark:border-slate-700"
-        backgroundClassName="bg-white/95 backdrop-blur dark:bg-slate-900/95"
-      >
-        <SortChip field={'deliveryDate' as keyof Order} label="Ngày giao" />
-        <SortChip field="date" label="Ngày tạo" />
-        <SortChip field="total" label="Tổng tiền" />
-        <SortChip field="status" label="Trạng thái" />
-      </Box>
-
       <Box layoutClassName="space-y-3 p-3">
       {orders.length > 0 ? (
         orders.map((order) => {

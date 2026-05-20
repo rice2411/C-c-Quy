@@ -35,6 +35,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
   const [dateType, setDateType] = useState<'orderDate' | 'deliveryDate'>('orderDate');
+  const [hideCompleted, setHideCompleted] = useState<boolean>(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [creatorOptions, setCreatorOptions] = useState<string[]>([]);
 
@@ -69,6 +70,11 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
           (order.customer?.phone && order.customer.phone.toLowerCase().includes(normalizedSearch));
 
         const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
+
+        // Toggle "Ẩn đơn đã hoàn thành" — loại bỏ DELIVERED/CANCELLED/RETURNED
+        const COMPLETED_STATUSES = ['DELIVERED', 'CANCELLED', 'RETURNED'];
+        const matchesHideCompleted =
+          !hideCompleted || !COMPLETED_STATUSES.includes(order.status as any);
 
         const matchesProduct =
           !productFilter ||
@@ -133,6 +139,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
         return (
           matchesSearch &&
           matchesStatus &&
+          matchesHideCompleted &&
           matchesProduct &&
           matchesDate &&
           matchesPaymentStatus &&
@@ -142,7 +149,24 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
         );
       })
       .sort((a, b) => {
-        // Khi sort theo deliveryDate -> dung priority tier (do/vang/xanh/khong/done)
+        // ─────────────────────────────────────────────────────────────────────
+        // Tier ưu tiên TOÀN CỤC (áp dụng cho MỌI sort field):
+        //   0 — đơn đang xử lý (PENDING / PROCESSING) → luôn lên trên
+        //   1 — đơn đã giao thành công (DELIVERED) → dồn xuống dưới
+        //   2 — đơn đã huỷ / trả hàng (CANCELLED / RETURNED) → cuối cùng
+        // Trong cùng 1 tier mới so theo field chọn.
+        // ─────────────────────────────────────────────────────────────────────
+        const tierOf = (status: string | undefined): number => {
+          if (status === 'DELIVERED') return 1;
+          if (status === 'CANCELLED' || status === 'RETURNED') return 2;
+          return 0; // PENDING / PROCESSING / khác
+        };
+        const ta = tierOf(a.status as any);
+        const tb = tierOf(b.status as any);
+        if (ta !== tb) return ta - tb;
+
+        // Khi sort theo deliveryDate -> dùng priority tier chi tiết (đỏ/vàng/xanh/không/done)
+        // ngay TRONG cùng completion tier.
         if ((sortField as string) === 'deliveryDate') {
           const pa = buildDeliveryBadge(a.deliveryDate, { status: a.status }).priority;
           const pb = buildDeliveryBadge(b.deliveryDate, { status: b.status }).priority;
@@ -187,6 +211,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
     orders,
     searchTerm,
     statusFilter,
+    hideCompleted,
     sortField,
     sortDirection,
     productFilter,
@@ -204,6 +229,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
   }, [
     searchTerm,
     statusFilter,
+    hideCompleted,
     productFilter,
     selectedMonth,
     paymentStatusFilter,
@@ -232,15 +258,6 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-  };
-
-  const handleSort = (field: keyof Order) => {
-    if (sortField === field) {
-      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortField(field);
-      setSortDirection((field as string) === 'deliveryDate' ? 'asc' : 'desc');
-    }
   };
 
   const renderProductSummary = (order: Order) => {
@@ -288,18 +305,12 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
         orders={currentOrders}
         onSelectOrder={onSelectOrder}
         renderProductSummary={renderProductSummary}
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSort={handleSort}
       />
 
       <OrderListDesktop
         orders={currentOrders}
         onSelectOrder={onSelectOrder}
         renderProductSummary={renderProductSummary}
-        sortField={sortField}
-        sortDirection={sortDirection}
-        onSort={handleSort}
       />
 
       <OrderFiltersModal
@@ -317,6 +328,9 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
           dateFrom,
           dateTo,
           dateType,
+          sortField: sortField as any,
+          sortDirection,
+          hideCompleted,
         }}
         onApply={(values: OrderFiltersState) => {
           setSearchTerm(values.searchTerm);
@@ -329,6 +343,9 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
           setDateFrom(values.dateFrom);
           setDateTo(values.dateTo);
           setDateType(values.dateType);
+          setSortField(values.sortField as keyof Order);
+          setSortDirection(values.sortDirection);
+          setHideCompleted(values.hideCompleted);
           setIsAdvancedOpen(false);
         }}
       />

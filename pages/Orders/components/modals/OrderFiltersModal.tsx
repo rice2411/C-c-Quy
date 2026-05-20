@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar, Package, RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowDownWideNarrow, ArrowUpWideNarrow, Calendar, Filter, Package, RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { OrderStatus, PaymentStatus } from '@/types';
 import { useFadeAnimation } from '@/hooks/useFadeAnimation';
@@ -12,6 +12,8 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Typography from '@/components/ui/Typography';
 
+export type SortFieldKey = 'date' | 'deliveryDate' | 'total' | 'status' | 'orderNumber';
+
 export interface OrderFiltersState {
   searchTerm: string;
   statusFilter: string;
@@ -23,6 +25,10 @@ export interface OrderFiltersState {
   dateFrom: string;
   dateTo: string;
   dateType: 'orderDate' | 'deliveryDate';
+  sortField: SortFieldKey;
+  sortDirection: 'asc' | 'desc';
+  /** Ẩn các đơn DELIVERED / CANCELLED / RETURNED — chỉ hiện đơn đang xử lý */
+  hideCompleted: boolean;
 }
 
 interface OrderFiltersModalProps {
@@ -32,6 +38,14 @@ interface OrderFiltersModalProps {
   onClose: () => void;
   onApply: (values: OrderFiltersState) => void;
 }
+
+const SORT_FIELD_OPTIONS: { value: SortFieldKey; label: string }[] = [
+  { value: 'date', label: 'Ngày tạo' },
+  { value: 'deliveryDate', label: 'Ngày giao (gấp nhất)' },
+  { value: 'total', label: 'Tổng tiền' },
+  { value: 'status', label: 'Trạng thái' },
+  { value: 'orderNumber', label: 'Mã đơn' },
+];
 
 const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialValues, creatorOptions, onClose, onApply }) => {
   const { t, language } = useLanguage();
@@ -84,7 +98,11 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
   }, [isOpen, initialValues]);
 
   const handleChange = (key: keyof OrderFiltersState, value: string) => {
-    setValues((prev) => ({ ...prev, [key]: value }));
+    setValues((prev) => ({ ...prev, [key]: value as any }));
+  };
+
+  const toggleHideCompleted = () => {
+    setValues((prev) => ({ ...prev, hideCompleted: !prev.hideCompleted }));
   };
 
   const handleApply = () => {
@@ -102,7 +120,10 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
       creatorFilter: '',
       dateFrom: '',
       dateTo: '',
-      dateType: 'orderDate'
+      dateType: 'orderDate',
+      sortField: 'date',
+      sortDirection: 'desc',
+      hideCompleted: false,
     };
     setValues(defaultValues);
     onApply(defaultValues);
@@ -145,92 +166,212 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
           </IconButton>
         </Box>
 
-        <Box layoutClassName="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
-          <Field label={t('orders.searchPlaceholder')} htmlFor="order-filters-search">
-            <Input
-              id="order-filters-search"
-              type="text"
-              value={values.searchTerm}
-              onChange={(e) => handleChange('searchTerm', e.target.value)}
-              leftIcon={<Search />}
-              leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
-            />
-          </Field>
+        <Box layoutClassName="min-h-0 flex-1 space-y-6 overflow-y-auto p-5">
+          {/* ─── SECTION 1: SẮP XẾP ─────────────────────────────────────────── */}
+          <Box layoutClassName="space-y-3">
+            <Box layoutClassName="flex items-center gap-2 border-b border-slate-100 pb-2 dark:border-slate-700">
+              <ArrowDownWideNarrow className="h-4 w-4 text-orange-500" />
+              <Heading level={4} textClassName="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+                Sắp xếp
+              </Heading>
+            </Box>
+            <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Sắp xếp theo" htmlFor="order-filters-sort-field">
+                <Select
+                  id="order-filters-sort-field"
+                  fullWidth
+                  sizeClassName="h-[42px] py-0"
+                  value={values.sortField}
+                  onChange={(e) => handleChange('sortField', e.target.value)}
+                >
+                  {SORT_FIELD_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Hướng">
+                <Box layoutClassName="flex h-[42px] gap-2">
+                  {([
+                    { value: 'desc', label: 'Giảm dần', icon: <ArrowDownWideNarrow className="h-3.5 w-3.5" /> },
+                    { value: 'asc',  label: 'Tăng dần', icon: <ArrowUpWideNarrow   className="h-3.5 w-3.5" /> },
+                  ] as const).map(({ value, label, icon }) => {
+                    const active = values.sortDirection === value;
+                    return (
+                      <Button
+                        key={value}
+                        type="button"
+                        variant="ghost"
+                        disableVariantHover
+                        disableVariantTextColor
+                        leftIcon={icon}
+                        onClick={() => handleChange('sortDirection', value)}
+                        layoutClassName="flex flex-1 h-full"
+                        sizeClassName="px-3"
+                        roundedClassName="rounded-lg"
+                        shadowClassName=""
+                        textClassName={`text-sm font-medium ${active ? 'text-orange-700 dark:text-orange-200' : 'text-slate-600 dark:text-slate-300'}`}
+                        backgroundClassName={active ? 'bg-orange-50 dark:bg-orange-900/30' : 'bg-white dark:bg-slate-800'}
+                        borderClassName={active ? 'border border-orange-300 dark:border-orange-600' : 'border border-slate-200 dark:border-slate-600'}
+                        hoverClassName={active ? '' : 'hover:border-orange-300'}
+                        stateClassName="transition-colors"
+                      >
+                        {label}
+                      </Button>
+                    );
+                  })}
+                </Box>
+              </Field>
+            </Box>
+          </Box>
 
-          <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label={t('orders.allStatus')} htmlFor="order-filters-status">
-              <Select
-                id="order-filters-status"
-                fullWidth
-                value={values.statusFilter}
-                onChange={(e) => handleChange('statusFilter', e.target.value)}
+          {/* ─── SECTION 2: TÌM KIẾM ────────────────────────────────────────── */}
+          <Box layoutClassName="space-y-4">
+            <Box layoutClassName="flex items-center gap-2 border-b border-slate-100 pb-2 dark:border-slate-700">
+              <Filter className="h-4 w-4 text-orange-500" />
+              <Heading level={4} textClassName="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+                Tìm kiếm
+              </Heading>
+            </Box>
+
+            {/* Quick toggle — Ẩn đơn đã hoàn thành */}
+            <Button
+              type="button"
+              variant="ghost"
+              disableVariantHover
+              disableVariantTextColor
+              onClick={toggleHideCompleted}
+              layoutClassName="flex w-full items-center justify-between gap-3"
+              sizeClassName="px-4 py-3"
+              roundedClassName="rounded-lg"
+              shadowClassName=""
+              backgroundClassName={values.hideCompleted ? 'bg-orange-50 dark:bg-orange-900/30' : 'bg-slate-50 dark:bg-slate-700/30'}
+              borderClassName={values.hideCompleted ? 'border border-orange-300 dark:border-orange-600' : 'border border-slate-200 dark:border-slate-600'}
+              hoverClassName={values.hideCompleted ? '' : 'hover:border-orange-300'}
+              stateClassName="text-left transition-colors"
+            >
+              <Box layoutClassName="flex flex-col">
+                <Typography as="span" size="sm" textClassName={values.hideCompleted ? 'font-semibold text-orange-700 dark:text-orange-200' : 'font-semibold text-slate-700 dark:text-slate-200'}>
+                  Ẩn đơn đã hoàn thành
+                </Typography>
+                <Typography as="span" size="xs" variant="muted">
+                  Bỏ qua đơn đã giao, đã huỷ và đã trả hàng
+                </Typography>
+              </Box>
+              <span
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+                  values.hideCompleted ? 'bg-orange-500' : 'bg-slate-300 dark:bg-slate-600'
+                }`}
               >
-                <option value="All">{t('orders.allStatus')}</option>
-                {Object.values(OrderStatus).map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </Select>
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                    values.hideCompleted ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </span>
+            </Button>
+
+            {/* Tìm theo từ khoá */}
+            <Field label={t('orders.searchPlaceholder')} htmlFor="order-filters-search">
+              <Input
+                id="order-filters-search"
+                type="text"
+                value={values.searchTerm}
+                onChange={(e) => handleChange('searchTerm', e.target.value)}
+                leftIcon={<Search />}
+                leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+              />
             </Field>
 
-            <Field label={t('detail.payment')} htmlFor="order-filters-payment-status">
-              <Select
-                id="order-filters-payment-status"
-                fullWidth
-                value={values.paymentStatusFilter}
-                onChange={(e) => handleChange('paymentStatusFilter', e.target.value)}
-              >
-                <option value="All">{t('orders.allStatus')}</option>
-                {Object.values(PaymentStatus).map((s) => (
-                  <option key={s} value={s}>
-                    {t(`orders.paymentStatusLabels.${s}`)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+            {/* Group: trạng thái đơn + thanh toán */}
+            <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="Trạng thái đơn" htmlFor="order-filters-status">
+                <Select
+                  id="order-filters-status"
+                  fullWidth
+                  value={values.statusFilter}
+                  onChange={(e) => handleChange('statusFilter', e.target.value)}
+                >
+                  <option value="All">Tất cả</option>
+                  {Object.values(OrderStatus).map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
 
-            <Field label={t('orders.filterProductPlaceholder')} htmlFor="order-filters-product">
+              <Field label="Tình trạng thanh toán" htmlFor="order-filters-payment-status">
+                <Select
+                  id="order-filters-payment-status"
+                  fullWidth
+                  value={values.paymentStatusFilter}
+                  onChange={(e) => handleChange('paymentStatusFilter', e.target.value)}
+                >
+                  <option value="All">Tất cả</option>
+                  {Object.values(PaymentStatus).map((s) => (
+                    <option key={s} value={s}>
+                      {t(`orders.paymentStatusLabels.${s}`)}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+
+              <Field label="Phương thức thanh toán" htmlFor="order-filters-payment-method">
+                <Select
+                  id="order-filters-payment-method"
+                  fullWidth
+                  value={values.paymentMethodFilter}
+                  onChange={(e) => handleChange('paymentMethodFilter', e.target.value)}
+                >
+                  <option value="All">Tất cả</option>
+                  <option value="CASH">{t('paymentMethod.cash')}</option>
+                  <option value="BANKING">{t('paymentMethod.banking')}</option>
+                </Select>
+              </Field>
+
+              <Field label="Người tạo đơn" htmlFor="order-filters-creator">
+                <Select
+                  id="order-filters-creator"
+                  fullWidth
+                  value={values.creatorFilter}
+                  onChange={(e) => handleChange('creatorFilter', e.target.value)}
+                >
+                  <option value="">Tất cả</option>
+                  {creatorOptions.map((creator) => (
+                    <option key={creator} value={creator}>
+                      {creator}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </Box>
+
+            {/* Sản phẩm — full width */}
+            <Field label="Lọc theo tên sản phẩm" htmlFor="order-filters-product">
               <Input
                 id="order-filters-product"
                 type="text"
                 value={values.productFilter}
                 onChange={(e) => handleChange('productFilter', e.target.value)}
+                placeholder="VD: matcha, combo, bánh mì..."
                 leftIcon={<Package />}
                 leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
               />
             </Field>
 
-            <Field label={t('detail.paymentMethod')} htmlFor="order-filters-payment-method">
-              <Select
-                id="order-filters-payment-method"
-                fullWidth
-                value={values.paymentMethodFilter}
-                onChange={(e) => handleChange('paymentMethodFilter', e.target.value)}
-              >
-                <option value="All">{t('orders.allStatus')}</option>
-                <option value="CASH">{t('paymentMethod.cash')}</option>
-                <option value="BANKING">{t('paymentMethod.banking')}</option>
-              </Select>
-            </Field>
+            {/* Sub-group: Theo ngày */}
+            <Box
+              layoutClassName="space-y-3 rounded-lg border border-slate-100 bg-slate-50/50 p-3 dark:border-slate-700 dark:bg-slate-700/20"
+            >
+              <Box layoutClassName="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-slate-500" />
+                <Typography as="span" size="xs" layoutClassName="font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                  Lọc theo ngày
+                </Typography>
+              </Box>
 
-            <Field label="Người tạo đơn" htmlFor="order-filters-creator">
-              <Select
-                id="order-filters-creator"
-                fullWidth
-                value={values.creatorFilter}
-                onChange={(e) => handleChange('creatorFilter', e.target.value)}
-              >
-                <option value="">Tất cả người tạo</option>
-                {creatorOptions.map((creator) => (
-                  <option key={creator} value={creator}>
-                    {creator}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-
-            <Field label={t('orders.dateType')}>
               <Box layoutClassName="flex gap-4">
                 <label className="flex cursor-pointer items-center gap-2">
                   <input
@@ -259,50 +400,52 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
                   </Typography>
                 </label>
               </Box>
-            </Field>
 
-            <Field label={t('orders.fromDate') ?? 'From date'} htmlFor="order-filters-date-from">
-              <Input
-                id="order-filters-date-from"
-                type="date"
-                value={values.dateFrom}
-                onChange={(e) => handleChange('dateFrom', e.target.value)}
-                leftIcon={<Calendar />}
-                leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
-              />
-            </Field>
+              <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label={t('orders.fromDate') ?? 'Từ ngày'} htmlFor="order-filters-date-from">
+                  <Input
+                    id="order-filters-date-from"
+                    type="date"
+                    value={values.dateFrom}
+                    onChange={(e) => handleChange('dateFrom', e.target.value)}
+                    leftIcon={<Calendar />}
+                    leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+                  />
+                </Field>
 
-            <Field label={t('orders.toDate') ?? 'To date'} htmlFor="order-filters-date-to">
-              <Input
-                id="order-filters-date-to"
-                type="date"
-                value={values.dateTo}
-                onChange={(e) => handleChange('dateTo', e.target.value)}
-                leftIcon={<Calendar />}
-                leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
-              />
-            </Field>
+                <Field label={t('orders.toDate') ?? 'Đến ngày'} htmlFor="order-filters-date-to">
+                  <Input
+                    id="order-filters-date-to"
+                    type="date"
+                    value={values.dateTo}
+                    onChange={(e) => handleChange('dateTo', e.target.value)}
+                    leftIcon={<Calendar />}
+                    leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+                  />
+                </Field>
+              </Box>
 
-            <Field label={t('orders.allMonths')} htmlFor="order-filters-month">
-              <Select
-                id="order-filters-month"
-                fullWidth
-                value={values.selectedMonth}
-                onChange={(e) => handleChange('selectedMonth', e.target.value)}
-              >
-                <option value="">{t('orders.allMonths')}</option>
-                {monthOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+              <Field label="Hoặc chọn tháng" htmlFor="order-filters-month">
+                <Select
+                  id="order-filters-month"
+                  fullWidth
+                  value={values.selectedMonth}
+                  onChange={(e) => handleChange('selectedMonth', e.target.value)}
+                >
+                  <option value="">{t('orders.allMonths')}</option>
+                  {monthOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </Box>
           </Box>
         </Box>
 
         <Box
-          layoutClassName="flex flex-shrink-0 justify-between gap-3 border-t border-slate-200 bg-white px-5 py-4 shadow-lg dark:border-slate-700 dark:bg-slate-800"
+          layoutClassName="flex flex-shrink-0 items-center justify-between gap-2 border-t border-slate-200 px-5 py-4 dark:border-slate-700 sm:gap-3"
         >
           <Button
             type="button"

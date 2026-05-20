@@ -1,7 +1,5 @@
 import React from 'react';
 import {
-  ArrowDownWideNarrow,
-  ArrowUpWideNarrow,
   CalendarDays,
   MapPin,
   Package,
@@ -15,7 +13,6 @@ import { formatVND } from '@/utils/format/currencyUtil';
 import { buildDeliveryBadge } from '@/utils/order/deliveryDateBadge';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
-import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 
@@ -23,24 +20,13 @@ interface OrderListDesktopProps {
   orders: Order[];
   onSelectOrder: (order: Order) => void;
   renderProductSummary: (order: Order) => React.ReactNode;
-  sortField: keyof Order;
-  sortDirection: 'asc' | 'desc';
-  onSort: (field: keyof Order) => void;
 }
 
 const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
   orders,
   onSelectOrder,
-  sortField,
-  sortDirection,
-  onSort,
 }) => {
   const { t } = useLanguage();
-
-  const sortButtonClass = (field: keyof Order) =>
-    sortField === field
-      ? 'border-orange-200 bg-orange-50 text-orange-600 dark:border-orange-500/50 dark:bg-orange-900/20 dark:text-orange-300'
-      : 'border-slate-200 bg-white text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300';
 
   const getItemsPreview = (order: Order) => {
     if (!order.items || order.items.length === 0) return '';
@@ -55,105 +41,6 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
 
   return (
     <Box layoutClassName="hidden flex-1 overflow-auto lg:block">
-      {/* Sort toolbar */}
-      <Box
-        layoutClassName="sticky top-0 z-10 mb-3 flex items-center gap-2 border-b p-3"
-        borderClassName="border-slate-200 dark:border-slate-700"
-        backgroundClassName="bg-slate-50/95 dark:bg-slate-900/95"
-      >
-        <Typography
-          size="xs"
-          variant="muted"
-          layoutClassName="mr-1 font-semibold uppercase tracking-wide"
-        >
-          Sắp xếp:
-        </Typography>
-        <Button
-          type="button"
-          onClick={() => onSort('deliveryDate' as keyof Order)}
-          variant="secondary"
-          disableVariantHover
-          disableVariantTextColor
-          borderClassName={`border ${sortButtonClass('deliveryDate' as keyof Order)}`}
-          roundedClassName="rounded-lg"
-          sizeClassName="px-3 py-1.5"
-          textClassName="text-xs font-semibold"
-          leftIcon={
-            sortField === ('deliveryDate' as keyof Order) && sortDirection === 'asc' ? (
-              <ArrowUpWideNarrow />
-            ) : (
-              <ArrowDownWideNarrow />
-            )
-          }
-          iconClassName="inline-flex [&_svg]:h-3.5 [&_svg]:w-3.5"
-        >
-          Ngày giao (gấp nhất)
-        </Button>
-        <Button
-          type="button"
-          onClick={() => onSort('date')}
-          variant="secondary"
-          disableVariantHover
-          disableVariantTextColor
-          borderClassName={`border ${sortButtonClass('date')}`}
-          roundedClassName="rounded-lg"
-          sizeClassName="px-3 py-1.5"
-          textClassName="text-xs font-semibold"
-          leftIcon={
-            sortField === 'date' && sortDirection === 'asc' ? (
-              <ArrowUpWideNarrow />
-            ) : (
-              <ArrowDownWideNarrow />
-            )
-          }
-          iconClassName="inline-flex [&_svg]:h-3.5 [&_svg]:w-3.5"
-        >
-          {t('orders.tableDate')}
-        </Button>
-        <Button
-          type="button"
-          onClick={() => onSort('total')}
-          variant="secondary"
-          disableVariantHover
-          disableVariantTextColor
-          borderClassName={`border ${sortButtonClass('total')}`}
-          roundedClassName="rounded-lg"
-          sizeClassName="px-3 py-1.5"
-          textClassName="text-xs font-semibold"
-          leftIcon={
-            sortField === 'total' && sortDirection === 'asc' ? (
-              <ArrowUpWideNarrow />
-            ) : (
-              <ArrowDownWideNarrow />
-            )
-          }
-          iconClassName="inline-flex [&_svg]:h-3.5 [&_svg]:w-3.5"
-        >
-          {t('orders.tableTotal')}
-        </Button>
-        <Button
-          type="button"
-          onClick={() => onSort('status')}
-          variant="secondary"
-          disableVariantHover
-          disableVariantTextColor
-          borderClassName={`border ${sortButtonClass('status')}`}
-          roundedClassName="rounded-lg"
-          sizeClassName="px-3 py-1.5"
-          textClassName="text-xs font-semibold"
-          leftIcon={
-            sortField === 'status' && sortDirection === 'asc' ? (
-              <ArrowUpWideNarrow />
-            ) : (
-              <ArrowDownWideNarrow />
-            )
-          }
-          iconClassName="inline-flex [&_svg]:h-3.5 [&_svg]:w-3.5"
-        >
-          {t('orders.tableStatus')}
-        </Button>
-      </Box>
-
       <Box layoutClassName="space-y-3 px-3 pb-3">
         {orders.length > 0 ? (
           orders.map((order) => {

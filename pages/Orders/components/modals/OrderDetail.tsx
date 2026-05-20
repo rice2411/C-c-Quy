@@ -503,14 +503,24 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                           : 'Đơn này đã được trả hàng. Bấm "Khôi phục" để đưa về trạng thái Chờ xử lý.'}
                       </span>
                       {canEdit ? (
-                        <button
+                        <Button
                           type="button"
+                          variant="secondary"
+                          disableVariantHover
+                          disableVariantTextColor
                           onClick={() => handleUpdateField({ status: OrderStatus.PENDING }, setUpdatingStatus)}
                           disabled={updatingStatus}
-                          className="mt-1 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
+                          sizeClassName="px-4 py-2"
+                          textClassName="text-sm font-semibold text-slate-700 dark:text-slate-200"
+                          backgroundClassName="bg-white dark:bg-slate-800"
+                          borderClassName="border border-slate-300 dark:border-slate-600"
+                          hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+                          roundedClassName="rounded-lg"
+                          shadowClassName=""
+                          stateClassName="mt-1 transition-colors"
                         >
                           Khôi phục đơn
-                        </button>
+                        </Button>
                       ) : null}
                     </div>
                   ) : (
@@ -537,11 +547,20 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                   : 'text-slate-400 dark:text-slate-500';
                               return (
                                 <React.Fragment key={step}>
-                                  <button
+                                  <Button
                                     type="button"
+                                    variant="ghost"
+                                    disableVariantHover
+                                    disableVariantTextColor
                                     disabled={!canEdit || updatingStatus}
                                     onClick={() => handleUpdateField({ status: step }, setUpdatingStatus)}
-                                    className={`group flex flex-col items-center gap-1.5 ${!canEdit || updatingStatus ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                                    layoutClassName="group flex flex-col items-center gap-1.5"
+                                    sizeClassName=""
+                                    shadowClassName=""
+                                    backgroundClassName=""
+                                    borderClassName=""
+                                    roundedClassName=""
+                                    stateClassName={!canEdit || updatingStatus ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
                                   >
                                     <span className={`${baseCircle} ${circleCls}`}>
                                       {idx + 1}
@@ -549,7 +568,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                     <span className={`text-[11px] sm:text-xs text-center whitespace-nowrap ${labelCls}`}>
                                       {t(`orders.statusLabels.${step}`)}
                                     </span>
-                                  </button>
+                                  </Button>
                                   {idx < arr.length - 1 ? (
                                     <span className={`mb-5 h-1 flex-1 rounded-full ${isPast ? 'bg-orange-500 dark:bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
                                   ) : null}
@@ -561,34 +580,62 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                           {canEdit ? (
                             <div className="mt-5 flex flex-col-reverse gap-2 border-t border-slate-100 dark:border-slate-700 pt-4 sm:flex-row sm:items-center sm:justify-between">
                               <div className="flex flex-wrap items-center gap-2">
-                                <button
+                                <Button
                                   type="button"
+                                  variant="ghost"
+                                  disableVariantHover
+                                  disableVariantTextColor
+                                  leftIcon={<Trash2 className="h-3.5 w-3.5" />}
                                   onClick={() => handleUpdateField({ status: OrderStatus.CANCELLED }, setUpdatingStatus)}
                                   disabled={updatingStatus}
-                                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60 disabled:cursor-not-allowed dark:border-red-800 dark:bg-red-900/20 dark:text-red-200 dark:hover:bg-red-900/30 transition-colors"
+                                  sizeClassName="px-3 py-1.5"
+                                  textClassName="text-xs font-semibold text-red-700 dark:text-red-200"
+                                  backgroundClassName="bg-red-50 dark:bg-red-900/20"
+                                  borderClassName="border border-red-200 dark:border-red-800"
+                                  hoverClassName="hover:bg-red-100 dark:hover:bg-red-900/30"
+                                  roundedClassName="rounded-lg"
+                                  shadowClassName=""
+                                  stateClassName="transition-colors"
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" />
                                   Huỷ đơn
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                   type="button"
+                                  variant="secondary"
+                                  disableVariantHover
+                                  disableVariantTextColor
                                   onClick={() => handleUpdateField({ status: OrderStatus.RETURNED }, setUpdatingStatus)}
                                   disabled={updatingStatus}
-                                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+                                  sizeClassName="px-3 py-1.5"
+                                  textClassName="text-xs font-semibold text-slate-600 dark:text-slate-300"
+                                  backgroundClassName="bg-white dark:bg-slate-800"
+                                  borderClassName="border border-slate-200 dark:border-slate-600"
+                                  hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+                                  roundedClassName="rounded-lg"
+                                  shadowClassName=""
+                                  stateClassName="transition-colors"
                                 >
                                   Trả hàng
-                                </button>
+                                </Button>
                               </div>
                               {nextStatus ? (
-                                <button
+                                <Button
                                   type="button"
+                                  variant="primary"
+                                  disableVariantHover
                                   onClick={() => handleUpdateField({ status: nextStatus }, setUpdatingStatus)}
                                   disabled={updatingStatus}
-                                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-orange-300 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-orange-500 dark:shadow-none dark:hover:bg-orange-600 transition-colors"
+                                  sizeClassName="px-4 py-2"
+                                  textClassName="text-sm font-semibold text-white"
+                                  backgroundClassName="bg-orange-500 dark:bg-orange-500"
+                                  hoverClassName="hover:bg-orange-600 dark:hover:bg-orange-600"
+                                  shadowClassName="shadow-sm shadow-orange-300 dark:shadow-none"
+                                  roundedClassName="rounded-lg"
+                                  stateClassName="transition-colors"
                                 >
                                   Chuyển sang {t(`orders.statusLabels.${nextStatus}`)}
                                   <span aria-hidden="true">→</span>
-                                </button>
+                                </Button>
                               ) : (
                                 <span className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
                                   ✓ Đơn đã hoàn tất
@@ -620,28 +667,40 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                         <div className="flex items-center gap-2 flex-wrap">
                           {[PaymentStatus.PAID, PaymentStatus.UNPAID].map((status) => {
                             const isActive = currentOrder.paymentStatus === status;
-                            const activeClass =
-                              status === PaymentStatus.PAID
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700'
-                                : 'bg-red-50 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-200 dark:border-red-700';
-                            const inactiveHover =
-                              status === PaymentStatus.PAID
-                                ? 'hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:border-emerald-700'
-                                : 'hover:border-red-300 hover:bg-red-50/50 dark:hover:border-red-700';
                             return (
-                              <button
+                              <Button
                                 key={status}
                                 type="button"
+                                variant="ghost"
+                                disableVariantHover
+                                disableVariantTextColor
                                 onClick={() => handleUpdateField({ paymentStatus: status }, setUpdatingPayment)}
                                 disabled={!canEdit || updatingPayment}
-                                className={`px-3 py-1 rounded-full text-xs font-bold uppercase whitespace-nowrap border transition-all ${
-                                  isActive
-                                    ? activeClass
-                                    : `bg-white text-slate-500 border-slate-200 ${inactiveHover} dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600`
-                                } ${!canEdit || updatingPayment ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                sizeClassName="px-3 py-1"
+                                roundedClassName="rounded-full"
+                                shadowClassName=""
+                                stateClassName="transition-all whitespace-nowrap"
+                                textClassName={isActive
+                                  ? (status === PaymentStatus.PAID
+                                      ? 'text-xs font-bold uppercase text-emerald-700 dark:text-emerald-200'
+                                      : 'text-xs font-bold uppercase text-red-700 dark:text-red-200')
+                                  : 'text-xs font-bold uppercase text-slate-500 dark:text-slate-300'}
+                                backgroundClassName={isActive
+                                  ? (status === PaymentStatus.PAID
+                                      ? 'bg-emerald-50 dark:bg-emerald-900/30'
+                                      : 'bg-red-50 dark:bg-red-900/30')
+                                  : 'bg-white dark:bg-slate-800'}
+                                borderClassName={isActive
+                                  ? (status === PaymentStatus.PAID
+                                      ? 'border border-emerald-300 dark:border-emerald-700'
+                                      : 'border border-red-300 dark:border-red-700')
+                                  : 'border border-slate-200 dark:border-slate-600'}
+                                hoverClassName={isActive ? '' : (status === PaymentStatus.PAID
+                                  ? 'hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:border-emerald-700'
+                                  : 'hover:border-red-300 hover:bg-red-50/50 dark:hover:border-red-700')}
                               >
                                 {t(`orders.paymentStatusLabels.${status}`)}
-                              </button>
+                              </Button>
                             );
                           })}
                         </div>
@@ -652,21 +711,36 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                           <span className="text-sm text-slate-600 dark:text-slate-300">{t('detail.paymentMethod')}</span>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          {[PaymentMethod.BANKING, PaymentMethod.CASH].map((method) => (
-                            <button
-                              key={method}
-                              type="button"
-                              onClick={() => handleUpdateField({ paymentMethod: method }, setUpdatingPayment)}
-                              disabled={!canEdit || updatingPayment}
-                              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border transition-all ${
-                                currentOrder.paymentMethod === method
-                                  ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
-                                  : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600'
-                              } ${!canEdit || updatingPayment ? 'opacity-60 cursor-not-allowed' : ''}`}
-                            >
-                              {method === PaymentMethod.BANKING ? t('paymentMethod.banking') : t('paymentMethod.cash')}
-                            </button>
-                          ))}
+                          {[PaymentMethod.BANKING, PaymentMethod.CASH].map((method) => {
+                            const isActive = currentOrder.paymentMethod === method;
+                            return (
+                              <Button
+                                key={method}
+                                type="button"
+                                variant="ghost"
+                                disableVariantHover
+                                disableVariantTextColor
+                                onClick={() => handleUpdateField({ paymentMethod: method }, setUpdatingPayment)}
+                                disabled={!canEdit || updatingPayment}
+                                sizeClassName="px-3 py-1"
+                                roundedClassName="rounded-full"
+                                shadowClassName=""
+                                stateClassName="transition-all whitespace-nowrap"
+                                textClassName={isActive
+                                  ? 'text-xs font-semibold text-blue-600 dark:text-blue-300'
+                                  : 'text-xs font-semibold text-slate-500 dark:text-slate-300'}
+                                backgroundClassName={isActive
+                                  ? 'bg-blue-50 dark:bg-blue-900/20'
+                                  : 'bg-white dark:bg-slate-800'}
+                                borderClassName={isActive
+                                  ? 'border border-blue-200 dark:border-blue-800'
+                                  : 'border border-slate-200 dark:border-slate-600'}
+                                hoverClassName={isActive ? '' : 'hover:border-blue-300'}
+                              >
+                                {method === PaymentMethod.BANKING ? t('paymentMethod.banking') : t('paymentMethod.cash')}
+                              </Button>
+                            );
+                          })}
                         </div>
                       </div>
                       {/* Delivery type row */}
@@ -678,21 +752,36 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                           <span className="text-sm text-slate-600 dark:text-slate-300">{t('deliveryType.label')}</span>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          {([DeliveryType.SHIP, DeliveryType.PICKUP] as DeliveryType[]).map((dt) => (
-                            <button
-                              key={dt}
-                              type="button"
-                              onClick={() => handleUpdateField({ deliveryType: dt }, setUpdatingPayment)}
-                              disabled={!canEdit || updatingPayment}
-                              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border transition-all ${
-                                (currentOrder.deliveryType ?? DeliveryType.SHIP) === dt
-                                  ? 'bg-orange-50 text-orange-700 border-orange-300 dark:bg-orange-900/30 dark:text-orange-200 dark:border-orange-700'
-                                  : 'bg-white text-slate-500 border-slate-200 hover:border-orange-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600'
-                              } ${!canEdit || updatingPayment ? 'opacity-60 cursor-not-allowed' : ''}`}
-                            >
-                              {dt === DeliveryType.SHIP ? t('deliveryType.ship') : t('deliveryType.pickup')}
-                            </button>
-                          ))}
+                          {([DeliveryType.SHIP, DeliveryType.PICKUP] as DeliveryType[]).map((dt) => {
+                            const isActive = (currentOrder.deliveryType ?? DeliveryType.SHIP) === dt;
+                            return (
+                              <Button
+                                key={dt}
+                                type="button"
+                                variant="ghost"
+                                disableVariantHover
+                                disableVariantTextColor
+                                onClick={() => handleUpdateField({ deliveryType: dt }, setUpdatingPayment)}
+                                disabled={!canEdit || updatingPayment}
+                                sizeClassName="px-3 py-1"
+                                roundedClassName="rounded-full"
+                                shadowClassName=""
+                                stateClassName="transition-all whitespace-nowrap"
+                                textClassName={isActive
+                                  ? 'text-xs font-semibold text-orange-700 dark:text-orange-200'
+                                  : 'text-xs font-semibold text-slate-500 dark:text-slate-300'}
+                                backgroundClassName={isActive
+                                  ? 'bg-orange-50 dark:bg-orange-900/30'
+                                  : 'bg-white dark:bg-slate-800'}
+                                borderClassName={isActive
+                                  ? 'border border-orange-300 dark:border-orange-700'
+                                  : 'border border-slate-200 dark:border-slate-600'}
+                                hoverClassName={isActive ? '' : 'hover:border-orange-300'}
+                              >
+                                {dt === DeliveryType.SHIP ? t('deliveryType.ship') : t('deliveryType.pickup')}
+                              </Button>
+                            );
+                          })}
                         </div>
                       </div>
 
@@ -922,32 +1011,62 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-                  <button 
+                  <Button
+                    variant="ghost"
+                    disableVariantHover
+                    disableVariantTextColor
                     onClick={() => handleAiAction('email')}
-                    className={`p-4 rounded-xl border text-left transition-all ${selectedPrompt === 'email' ? 'bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-700 ring-2 ring-orange-500 ring-opacity-50' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md'}`}
+                    layoutClassName="flex flex-col items-start"
+                    sizeClassName="p-4"
+                    roundedClassName="rounded-xl"
+                    shadowClassName=""
+                    backgroundClassName={selectedPrompt === 'email' ? 'bg-orange-50 dark:bg-orange-900/30' : 'bg-white dark:bg-slate-800'}
+                    borderClassName={selectedPrompt === 'email' ? 'border border-orange-200 dark:border-orange-700 ring-2 ring-orange-500 ring-opacity-50' : 'border border-slate-200 dark:border-slate-700'}
+                    hoverClassName={selectedPrompt === 'email' ? '' : 'hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md'}
+                    stateClassName="text-left transition-all"
                   >
                     <Mail className="w-5 h-5 text-orange-500 dark:text-orange-400 mb-2" />
                     <span className="block font-medium text-slate-900 dark:text-white text-sm">{t('detail.draftEmail')}</span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">Apology or update for {currentOrder.customer.name.split(' ')[0]}</span>
-                  </button>
+                  </Button>
 
-                  <button 
-                     onClick={() => handleAiAction('risk')}
-                     className={`p-4 rounded-xl border text-left transition-all ${selectedPrompt === 'risk' ? 'bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-700 ring-2 ring-orange-500 ring-opacity-50' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md'}`}
+                  <Button
+                    variant="ghost"
+                    disableVariantHover
+                    disableVariantTextColor
+                    onClick={() => handleAiAction('risk')}
+                    layoutClassName="flex flex-col items-start"
+                    sizeClassName="p-4"
+                    roundedClassName="rounded-xl"
+                    shadowClassName=""
+                    backgroundClassName={selectedPrompt === 'risk' ? 'bg-orange-50 dark:bg-orange-900/30' : 'bg-white dark:bg-slate-800'}
+                    borderClassName={selectedPrompt === 'risk' ? 'border border-orange-200 dark:border-orange-700 ring-2 ring-orange-500 ring-opacity-50' : 'border border-slate-200 dark:border-slate-700'}
+                    hoverClassName={selectedPrompt === 'risk' ? '' : 'hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md'}
+                    stateClassName="text-left transition-all"
                   >
                     <AlertTriangle className="w-5 h-5 text-orange-500 dark:text-orange-400 mb-2" />
                     <span className="block font-medium text-slate-900 dark:text-white text-sm">{t('detail.riskCheck')}</span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">Analyze fraud & fulfillment risks</span>
-                  </button>
+                  </Button>
 
-                  <button 
-                     onClick={() => handleAiAction('summary')}
-                     className={`p-4 rounded-xl border text-left transition-all ${selectedPrompt === 'summary' ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 ring-2 ring-blue-500 ring-opacity-50' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'}`}
+                  <Button
+                    variant="ghost"
+                    disableVariantHover
+                    disableVariantTextColor
+                    onClick={() => handleAiAction('summary')}
+                    layoutClassName="flex flex-col items-start"
+                    sizeClassName="p-4"
+                    roundedClassName="rounded-xl"
+                    shadowClassName=""
+                    backgroundClassName={selectedPrompt === 'summary' ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-white dark:bg-slate-800'}
+                    borderClassName={selectedPrompt === 'summary' ? 'border border-blue-200 dark:border-blue-700 ring-2 ring-blue-500 ring-opacity-50' : 'border border-slate-200 dark:border-slate-700'}
+                    hoverClassName={selectedPrompt === 'summary' ? '' : 'hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'}
+                    stateClassName="text-left transition-all"
                   >
                     <FileText className="w-5 h-5 text-blue-500 dark:text-blue-400 mb-2" />
                     <span className="block font-medium text-slate-900 dark:text-white text-sm">{t('detail.summarize')}</span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">Internal briefing for ops team</span>
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="flex-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm overflow-hidden flex flex-col transition-colors">
@@ -964,12 +1083,22 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                      <div className="flex-1 overflow-y-auto">
                        <p className="whitespace-pre-wrap text-slate-700 dark:text-slate-300 text-sm leading-relaxed">{aiResponse}</p>
                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-end">
-                         <button 
+                         <Button
+                           variant="ghost"
+                           disableVariantHover
+                           disableVariantTextColor
                            onClick={() => navigator.clipboard.writeText(aiResponse)}
-                           className="text-xs font-medium text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300 transition-colors"
+                           sizeClassName=""
+                           shadowClassName=""
+                           backgroundClassName=""
+                           borderClassName=""
+                           roundedClassName=""
+                           textClassName="text-xs font-medium text-orange-600 dark:text-orange-400"
+                           hoverClassName="hover:text-orange-800 dark:hover:text-orange-300"
+                           stateClassName="transition-colors"
                          >
                            {t('detail.copyClipboard')}
-                         </button>
+                         </Button>
                        </div>
                      </div>
                   ) : (
