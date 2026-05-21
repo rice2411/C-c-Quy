@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Order } from '@/types';
 import { getAllUsers } from '@/services/userService';
@@ -36,8 +36,16 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
   const [dateTo, setDateTo] = useState<string>('');
   const [dateType, setDateType] = useState<'orderDate' | 'deliveryDate'>('orderDate');
   const [hideCompleted, setHideCompleted] = useState<boolean>(false);
+  // Synthetic filter: đơn quá hạn = deliveryDate < today AND status in {PENDING, PROCESSING}
+  const [isOverdueFilter, setIsOverdueFilter] = useState<boolean>(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [creatorOptions, setCreatorOptions] = useState<string[]>([]);
+
+  // Helper: YYYY-MM-DD string của hôm nay (dùng cho pill "Ship hôm nay")
+  const todayStr = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, []);
 
   // Mặc định: sort theo ngày tạo (date) giảm dần — đơn mới nhất lên đầu
   const [sortField, setSortField] = useState<keyof Order>('date' as keyof Order);
@@ -75,6 +83,24 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
         const COMPLETED_STATUSES = ['DELIVERED', 'CANCELLED', 'RETURNED'];
         const matchesHideCompleted =
           !hideCompleted || !COMPLETED_STATUSES.includes(order.status as any);
+
+        // Filter Quá hạn: deliveryDate < hôm nay AND status đang xử lý
+        let matchesOverdue = true;
+        if (isOverdueFilter) {
+          const isProcessing = order.status === 'PENDING' || order.status === 'PROCESSING';
+          if (!isProcessing) {
+            matchesOverdue = false;
+          } else {
+            const dd = parseDateValue(order.deliveryDate);
+            if (!dd) {
+              matchesOverdue = false;
+            } else {
+              const startOfToday = new Date();
+              startOfToday.setHours(0, 0, 0, 0);
+              matchesOverdue = dd.getTime() < startOfToday.getTime();
+            }
+          }
+        }
 
         const matchesProduct =
           !productFilter ||
@@ -140,6 +166,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
           matchesSearch &&
           matchesStatus &&
           matchesHideCompleted &&
+          matchesOverdue &&
           matchesProduct &&
           matchesDate &&
           matchesPaymentStatus &&
@@ -212,6 +239,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
     searchTerm,
     statusFilter,
     hideCompleted,
+    isOverdueFilter,
     sortField,
     sortDirection,
     productFilter,
@@ -230,6 +258,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
     searchTerm,
     statusFilter,
     hideCompleted,
+    isOverdueFilter,
     productFilter,
     selectedMonth,
     paymentStatusFilter,
@@ -259,6 +288,130 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
   };
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Quick filter pills state + handlers
+  // ─────────────────────────────────────────────────────────────────────────────
+  const quickPills = {
+    pending: hideCompleted,
+    unpaid: paymentStatusFilter === 'UNPAID',
+    today:
+      dateType === 'deliveryDate' && dateFrom === todayStr && dateTo === todayStr,
+    overdue: isOverdueFilter,
+  };
+
+  const togglePill_pending = () => setHideCompleted((p) => !p);
+  const togglePill_unpaid = () =>
+    setPaymentStatusFilter((p) => (p === 'UNPAID' ? 'All' : 'UNPAID'));
+  const togglePill_today = () => {
+    if (quickPills.today) {
+      setDateFrom('');
+      setDateTo('');
+    } else {
+      setDateType('deliveryDate');
+      setDateFrom(todayStr);
+      setDateTo(todayStr);
+      setSelectedMonth('');
+    }
+  };
+  const togglePill_overdue = () => setIsOverdueFilter((p) => !p);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Active filter chips — list các filter đang bật để render chip bar có thể × bỏ
+  // ─────────────────────────────────────────────────────────────────────────────
+  const activeChips = useMemo(() => {
+    const chips: { key: string; label: string; onClear: () => void }[] = [];
+    if (searchTerm.trim()) {
+      chips.push({
+        key: 'search',
+        label: `Tìm: "${searchTerm}"`,
+        onClear: () => setSearchTerm(''),
+      });
+    }
+    if (statusFilter !== 'All') {
+      chips.push({
+        key: 'status',
+        label: `Trạng thái: ${statusFilter}`,
+        onClear: () => setStatusFilter('All'),
+      });
+    }
+    if (paymentStatusFilter !== 'All') {
+      chips.push({
+        key: 'paymentStatus',
+        label: `Thanh toán: ${paymentStatusFilter}`,
+        onClear: () => setPaymentStatusFilter('All'),
+      });
+    }
+    if (paymentMethodFilter !== 'All') {
+      chips.push({
+        key: 'paymentMethod',
+        label: `Phương thức: ${paymentMethodFilter}`,
+        onClear: () => setPaymentMethodFilter('All'),
+      });
+    }
+    if (productFilter.trim()) {
+      chips.push({
+        key: 'product',
+        label: `SP: ${productFilter}`,
+        onClear: () => setProductFilter(''),
+      });
+    }
+    if (creatorFilter) {
+      chips.push({
+        key: 'creator',
+        label: `Người tạo: ${creatorFilter}`,
+        onClear: () => setCreatorFilter(''),
+      });
+    }
+    if (dateFrom || dateTo) {
+      const dtLabel = dateType === 'deliveryDate' ? 'Ngày giao' : 'Ngày tạo';
+      chips.push({
+        key: 'dateRange',
+        label: `${dtLabel}: ${dateFrom || '...'} → ${dateTo || '...'}`,
+        onClear: () => {
+          setDateFrom('');
+          setDateTo('');
+        },
+      });
+    }
+    if (selectedMonth) {
+      chips.push({
+        key: 'month',
+        label: `Tháng: ${selectedMonth}`,
+        onClear: () => setSelectedMonth(''),
+      });
+    }
+    if (hideCompleted) {
+      chips.push({
+        key: 'hideCompleted',
+        label: 'Cần xử lý',
+        onClear: () => setHideCompleted(false),
+      });
+    }
+    if (isOverdueFilter) {
+      chips.push({
+        key: 'overdue',
+        label: 'Quá hạn',
+        onClear: () => setIsOverdueFilter(false),
+      });
+    }
+    return chips;
+  }, [
+    searchTerm,
+    statusFilter,
+    paymentStatusFilter,
+    paymentMethodFilter,
+    productFilter,
+    creatorFilter,
+    dateFrom,
+    dateTo,
+    dateType,
+    selectedMonth,
+    hideCompleted,
+    isOverdueFilter,
+  ]);
+
+  const activeFiltersCount = activeChips.length;
 
   const renderProductSummary = (order: Order) => {
     if (!order.items || order.items.length === 0) {

@@ -105,6 +105,29 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
     setValues((prev) => ({ ...prev, hideCompleted: !prev.hideCompleted }));
   };
 
+  // Date preset helpers — set dateFrom/dateTo theo các khoảng thường dùng
+  const toYMD = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const applyDatePreset = (preset: 'today' | 'last7' | 'thisMonth' | 'last30') => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let from: Date;
+    let to: Date = new Date(today);
+    if (preset === 'today') {
+      from = new Date(today);
+    } else if (preset === 'last7') {
+      from = new Date(today);
+      from.setDate(from.getDate() - 6);
+    } else if (preset === 'thisMonth') {
+      from = new Date(today.getFullYear(), today.getMonth(), 1);
+    } else {
+      from = new Date(today);
+      from.setDate(from.getDate() - 29);
+    }
+    setValues((prev) => ({ ...prev, dateFrom: toYMD(from), dateTo: toYMD(to), selectedMonth: '' }));
+  };
+
   const handleApply = () => {
     onApply(values);
   };
@@ -370,6 +393,25 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
                 <Typography as="span" size="xs" layoutClassName="font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
                   Lọc theo ngày
                 </Typography>
+              </Box>
+
+              {/* Date presets — 1-click set khoảng thường dùng */}
+              <Box layoutClassName="flex flex-wrap gap-1.5">
+                {([
+                  { key: 'today', label: 'Hôm nay' },
+                  { key: 'last7', label: '7 ngày qua' },
+                  { key: 'thisMonth', label: 'Tháng này' },
+                  { key: 'last30', label: '30 ngày qua' },
+                ] as const).map((p) => (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => applyDatePreset(p.key)}
+                    className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-orange-600 dark:hover:bg-orange-900/30 dark:hover:text-orange-200"
+                  >
+                    {p.label}
+                  </button>
+                ))}
               </Box>
 
               <Box layoutClassName="flex gap-4">
