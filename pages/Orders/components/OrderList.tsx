@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Order } from '@/types';
@@ -46,6 +47,28 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }, []);
+
+  // Đọc query param `?quick=...` để pre-apply filter từ Dashboard alerts/metrics
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const quick = params.get('quick');
+    if (!quick) return;
+    if (quick === 'pending') {
+      setHideCompleted(true);
+    } else if (quick === 'overdue') {
+      setIsOverdueFilter(true);
+    } else if (quick === 'unpaid') {
+      setPaymentStatusFilter('UNPAID');
+    } else if (quick === 'today') {
+      setDateType('deliveryDate');
+      setDateFrom(todayStr);
+      setDateTo(todayStr);
+    } else if (quick === 'paid') {
+      setPaymentStatusFilter('PAID');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   // Mặc định: sort theo ngày tạo (date) giảm dần — đơn mới nhất lên đầu
   const [sortField, setSortField] = useState<keyof Order>('date' as keyof Order);

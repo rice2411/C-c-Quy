@@ -5,9 +5,14 @@ import { generateDashboardInsights } from '@/services/geminiService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/contexts/OrderContext';
 import { getOrderTotal } from '@/utils/order/orderUtils';
+import DashboardAlerts from '@/pages/Dashboard/components/DashboardAlerts';
+import DashboardToday from '@/pages/Dashboard/components/DashboardToday';
+import DashboardGoalProgress from '@/pages/Dashboard/components/DashboardGoalProgress';
 import DashboardMetrics from '@/pages/Dashboard/components/DashboardMetrics';
 import DashboardChart from '@/pages/Dashboard/components/DashboardChart';
 import DashboardInsights from '@/pages/Dashboard/components/DashboardInsights';
+import DashboardTopProducts from '@/pages/Dashboard/components/DashboardTopProducts';
+import DashboardTopCustomers from '@/pages/Dashboard/components/DashboardTopCustomers';
 import DashboardRecentOrders from '@/pages/Dashboard/components/DashboardRecentOrders';
 import DashboardRecentTransactions from '@/pages/Dashboard/components/DashboardRecentTransactions';
 import DashboardRecentUsers from '@/pages/Dashboard/components/DashboardRecentUsers';
@@ -211,7 +216,16 @@ const DashboardPage: React.FC = () => {
 
   return (
     <Box layoutClassName="space-y-6 animate-fade-in">
-      <DashboardMetrics 
+      {/* Critical alerts — morning glance cho chủ tiệm */}
+      <DashboardAlerts orders={orders} />
+
+      {/* Today's snapshot + Goal progress — focus hôm nay + động lực tháng */}
+      <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <DashboardToday orders={orders} />
+        <DashboardGoalProgress orders={orders} />
+      </Box>
+
+      <DashboardMetrics
         metrics={metrics}
         totalOrders={totalOrders}
         newOrdersToday={newOrdersToday}
@@ -222,7 +236,7 @@ const DashboardPage: React.FC = () => {
         isCurrentPeriod={isCurrentPeriod}
       />
       <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <DashboardChart 
+        <DashboardChart
           data={chartData}
           timeRange={timeRange}
           setTimeRange={setTimeRange}
@@ -232,11 +246,15 @@ const DashboardPage: React.FC = () => {
           isFuture={isFuture}
           isDarkMode={isDarkMode}
         />
-        <DashboardInsights 
+        <DashboardInsights
           insight={insight}
           loading={loadingInsight}
           onGenerate={handleGenerateInsight}
         />
+      </Box>
+      <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <DashboardTopProducts orders={orders} startDate={startDate} endDate={endDate} />
+        <DashboardTopCustomers orders={orders} startDate={startDate} endDate={endDate} />
       </Box>
       <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <DashboardRecentOrders orders={recentOrdersForDashboard} />

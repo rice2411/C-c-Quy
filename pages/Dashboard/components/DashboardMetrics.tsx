@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TrendingUp, TrendingDown, DollarSign, Package, AlertCircle } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
@@ -19,6 +20,11 @@ interface DashboardMetricsProps {
   prevRangeLabel: string;
   isCurrentPeriod: boolean;
 }
+
+// Helper: navigate sang Orders page kèm quick filter pre-applied qua query param
+const goToOrders = (navigate: (p: string) => void, quick?: string) => {
+  navigate(quick ? `/orders?quick=${quick}` : '/orders');
+};
 
 const DashboardMetrics: React.FC<DashboardMetricsProps> = ({ 
   metrics, 
@@ -58,11 +64,16 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
   };
 
   const revenueInfo = getTrendInfo(metrics.revenueChange);
+  const navigate = useNavigate();
 
   return (
     <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {/* Total Revenue */}
-      <Card layoutClassName="flex flex-col justify-between p-6" stateClassName="transition-colors">
+      <Card
+        onClick={() => goToOrders(navigate, 'paid')}
+        layoutClassName="flex flex-col justify-between p-6 cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
+        stateClassName="transition-all"
+      >
         <Box layoutClassName="flex items-start justify-between">
           <Box>
             <Typography size="sm" variant="muted" textClassName="font-medium">{t('dashboard.totalRevenue')}</Typography>
@@ -89,7 +100,11 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       </Card>
 
       {/* Total Orders */}
-      <Card layoutClassName="flex flex-col justify-between p-6" stateClassName="transition-colors">
+      <Card
+        onClick={() => goToOrders(navigate)}
+        layoutClassName="flex flex-col justify-between p-6 cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
+        stateClassName="transition-all"
+      >
         <Box layoutClassName="flex items-start justify-between">
           <Box>
             <Typography size="sm" variant="muted" textClassName="font-medium">{t('dashboard.totalOrders')}</Typography>
@@ -111,7 +126,11 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
       </Card>
 
       {/* Pending Orders */}
-      <Card layoutClassName="flex flex-col justify-between p-6" stateClassName="transition-colors">
+      <Card
+        onClick={() => goToOrders(navigate, 'pending')}
+        layoutClassName="flex flex-col justify-between p-6 cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
+        stateClassName="transition-all"
+      >
         <Box layoutClassName="flex items-start justify-between">
           <Box>
             <Typography size="sm" variant="muted" textClassName="font-medium">{t('dashboard.pending')}</Typography>
@@ -135,3 +154,4 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
 };
 
 export default DashboardMetrics;
+
