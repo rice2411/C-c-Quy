@@ -180,7 +180,7 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
                 <Select
                   id="order-filters-sort-field"
                   fullWidth
-                  sizeClassName="h-[42px] py-0"
+                  sizeClassName="!h-[42px] !py-0 !my-0"
                   value={values.sortField}
                   onChange={(e) => handleChange('sortField', e.target.value)}
                 >
