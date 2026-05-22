@@ -6,7 +6,7 @@ import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import { Order, OrderStatus, PaymentStatus } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
-import { getOrderTotal } from '@/utils/order/orderUtils';
+import { getOrderRevenueDate, getOrderTotal } from '@/utils/order/orderUtils';
 
 interface DashboardGoalProgressProps {
   orders: Order[];
@@ -61,8 +61,9 @@ const DashboardGoalProgress: React.FC<DashboardGoalProgressProps> = ({ orders })
     let sum = 0;
     for (const o of orders) {
       if (o.paymentStatus !== PaymentStatus.PAID || o.status !== OrderStatus.DELIVERED) continue;
-      const created = o.createdAt?.toDate ? o.createdAt.toDate() : new Date(o.createdAt as any);
-      if (created < start || created > end) continue;
+      // Mốc doanh thu: ưu tiên deliveryDate, fallback createdAt
+      const revDate = getOrderRevenueDate(o);
+      if (!revDate || revDate < start || revDate > end) continue;
       sum += getOrderTotal(o);
     }
 

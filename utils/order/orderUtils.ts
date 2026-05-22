@@ -28,6 +28,25 @@ export const getOrderTotal = (order: Order): number => {
   return calculateOrderTotal(order.items || [], order.shippingCost || 0);
 };
 
+/**
+ * Mốc thời gian "doanh thu" của 1 đơn — dùng cho mọi tính toán revenue/period
+ * trên Dashboard (Today / Chart / Goal / TopProducts / TopCustomers).
+ *
+ * Ưu tiên `deliveryDate` (ngày bán/giao thực tế) → phản ánh đúng output của
+ * bakery (sản xuất + giao trong ngày). Fallback `createdAt` cho đơn walk-in
+ * không có deliveryDate.
+ */
+export const getOrderRevenueDate = (order: any): Date | null => {
+  const delivery = parseDateValue(order?.deliveryDate);
+  if (delivery) return delivery;
+  const created = order?.createdAt?.toDate
+    ? order.createdAt.toDate()
+    : order?.createdAt
+      ? new Date(order.createdAt)
+      : null;
+  return created instanceof Date && !isNaN(created.getTime()) ? created : null;
+};
+
 /** Admin / Super Admin: sửa mọi đơn. CTV (COLABORATOR): chỉ đơn do chính UID đó tạo (`createdByUid`). */
 export function userCanEditOrder(
   user: UserData | null | undefined,

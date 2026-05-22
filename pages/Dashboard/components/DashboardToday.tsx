@@ -7,7 +7,7 @@ import Typography from '@/components/ui/Typography';
 import { Order, OrderStatus, PaymentStatus } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { parseDateValue } from '@/utils/format/dateUtil';
-import { getOrderTotal } from '@/utils/order/orderUtils';
+import { getOrderRevenueDate, getOrderTotal } from '@/utils/order/orderUtils';
 
 interface DashboardTodayProps {
   orders: Order[];
@@ -42,17 +42,19 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
 
     for (const o of orders) {
       const created = o.createdAt?.toDate ? o.createdAt.toDate() : new Date(o.createdAt as any);
+      // Mốc doanh thu: ưu tiên deliveryDate, fallback createdAt
+      const revDate = getOrderRevenueDate(o);
       const isPaidDelivered =
         o.paymentStatus === PaymentStatus.PAID && o.status === OrderStatus.DELIVERED;
 
-      // Đơn mới (theo ngày tạo)
+      // Đơn mới (theo ngày TẠO — không đổi)
       if (created >= startToday && created <= endToday) newToday++;
       else if (created >= startYesterday && created <= endYesterday) newYesterday++;
 
-      // Doanh thu (PAID+DELIVERED, theo createdAt)
-      if (isPaidDelivered) {
-        if (created >= startToday && created <= endToday) revenueToday += getOrderTotal(o);
-        else if (created >= startYesterday && created <= endYesterday)
+      // Doanh thu (PAID+DELIVERED, theo deliveryDate || createdAt)
+      if (isPaidDelivered && revDate) {
+        if (revDate >= startToday && revDate <= endToday) revenueToday += getOrderTotal(o);
+        else if (revDate >= startYesterday && revDate <= endYesterday)
           revenueYesterday += getOrderTotal(o);
       }
 

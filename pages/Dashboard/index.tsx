@@ -4,7 +4,7 @@ import Box from '@/components/ui/Box';
 import { generateDashboardInsights } from '@/services/geminiService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/contexts/OrderContext';
-import { getOrderTotal } from '@/utils/order/orderUtils';
+import { getOrderRevenueDate, getOrderTotal } from '@/utils/order/orderUtils';
 import DashboardAlerts from '@/pages/Dashboard/components/DashboardAlerts';
 import DashboardToday from '@/pages/Dashboard/components/DashboardToday';
 import DashboardGoalProgress from '@/pages/Dashboard/components/DashboardGoalProgress';
@@ -35,7 +35,7 @@ const DashboardPage: React.FC = () => {
   const { startDate, endDate, prevStartDate, prevEndDate } = useMemo(() => {
     const end = new Date(referenceDate);
     end.setHours(23, 59, 59, 999);
-    
+
     const start = new Date(referenceDate);
     start.setHours(0, 0, 0, 0);
 
@@ -59,7 +59,7 @@ const DashboardPage: React.FC = () => {
       // Previous month
       prevStart.setTime(start.getTime());
       prevStart.setMonth(prevStart.getMonth() - 1);
-      
+
       prevEnd.setTime(prevStart.getTime());
       prevEnd.setMonth(prevEnd.getMonth() + 1);
       prevEnd.setDate(0);
@@ -67,14 +67,14 @@ const DashboardPage: React.FC = () => {
     } else if (timeRange === 'year') {
       start.setMonth(0, 1);
       end.setMonth(11, 31);
-      
+
       prevStart.setTime(start.getTime());
       prevStart.setFullYear(prevStart.getFullYear() - 1);
-      
+
       prevEnd.setTime(end.getTime());
       prevEnd.setFullYear(prevEnd.getFullYear() - 1);
     }
-    
+
     return { startDate: start, endDate: end, prevStartDate: prevStart, prevEndDate: prevEnd };
   }, [referenceDate, timeRange]);
 
@@ -85,14 +85,15 @@ const DashboardPage: React.FC = () => {
   }, [startDate, endDate]);
 
   const metrics = useMemo(() => {
+    // Mốc doanh thu: ưu tiên deliveryDate (ngày giao thực tế), fallback createdAt
     const currentOrders = orders.filter(o => {
-      const d = new Date(o.createdAt.toDate());
-      return d >= startDate && d <= endDate;
+      const d = getOrderRevenueDate(o);
+      return d != null && d >= startDate && d <= endDate;
     }).filter(o => o.paymentStatus === PaymentStatus.PAID && o.status === OrderStatus.DELIVERED);
 
     const prevOrders = orders.filter(o => {
-      const d = new Date(o.createdAt.toDate());
-      return d >= prevStartDate && d <= prevEndDate;
+      const d = getOrderRevenueDate(o);
+      return d != null && d >= prevStartDate && d <= prevEndDate;
     }).filter(o => o.paymentStatus === PaymentStatus.PAID && o.status === OrderStatus.DELIVERED);
 
     const currentRevenue = currentOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
@@ -107,15 +108,15 @@ const DashboardPage: React.FC = () => {
 
   const { currentRangeLabel, prevRangeLabel } = useMemo(() => {
     const locale = language === 'vi' ? 'vi-VN' : 'en-US';
-    
+
     const fmt = (s: Date, e: Date) => {
       if (timeRange === 'year') return s.toLocaleDateString(locale, { year: 'numeric' });
       if (timeRange === 'month') return s.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
-      
+
       const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
       return `${s.toLocaleDateString(locale, opts)} - ${e.toLocaleDateString(locale, opts)}`;
     };
-    
+
     return {
       currentRangeLabel: fmt(startDate, endDate),
       prevRangeLabel: fmt(prevStartDate, prevEndDate)
@@ -179,14 +180,16 @@ const DashboardPage: React.FC = () => {
       safeGuard++;
     }
 
+    // Mốc doanh thu: ưu tiên deliveryDate, fallback createdAt
     const filtered = orders.filter(order => {
-      const d = new Date(order.createdAt.toDate());
-      return d >= startDate && d <= endDate;
+      const d = getOrderRevenueDate(order);
+      return d != null && d >= startDate && d <= endDate;
     });
 
     filtered.forEach(order => {
       if (order.paymentStatus === PaymentStatus.PAID && order.status === OrderStatus.DELIVERED) {
-        const date = new Date(order.createdAt.toDate());
+        const date = getOrderRevenueDate(order);
+        if (!date) return;
         let key = '';
         if (timeRange === 'year') {
           key = date.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', year: 'numeric' });

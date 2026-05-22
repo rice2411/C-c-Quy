@@ -344,7 +344,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       if (!customerName.trim()) {
         throw new Error("Customer name is required");
       }
-      
+
+      // Bắt buộc deliveryDate — cần cho tính doanh thu theo ngày giao
+      if (!deliveryDate || !deliveryDate.trim()) {
+        throw new Error("Ngày nhận hàng là bắt buộc");
+      }
+
       if (items.length === 0) {
         throw new Error("At least one product is required");
       }
@@ -375,7 +380,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         shippingCost: Number(shippingCost),
         total: total,
         note: note,
-        deliveryDate: deliveryDate || undefined,
+        deliveryDate: deliveryDate,
         deliveryTime: isDeliveryTimeEnabled && deliveryTime ? deliveryTime : undefined,
         status: status,
         paymentStatus: paymentStatus,
@@ -496,10 +501,11 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               address={address} setAddress={setAddress}
             />
             <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2 min-w-0">
-              <Field label="Ngày nhận hàng" htmlFor="order-form-delivery-date" className="min-w-0 overflow-hidden">
+              <Field label="Ngày nhận hàng" htmlFor="order-form-delivery-date" required className="min-w-0 overflow-hidden">
                 <Input
                   id="order-form-delivery-date"
                   type="date"
+                  required
                   value={deliveryDate}
                   onChange={(e) => setDeliveryDate(e.target.value)}
                   leftIcon={<Calendar />}

@@ -20,12 +20,19 @@ const Field: React.FC<FieldProps> = ({ label, htmlFor, required = false, hint, e
       {label ? (
         <Label htmlFor={htmlFor}>
           {label}
-          {required ? ' *' : ''}
+          {required ? (
+            <span
+              aria-hidden="true"
+              className="ml-0.5 text-red-500 dark:text-red-400"
+            >
+              *
+            </span>
+          ) : null}
         </Label>
       ) : null}
       {children}
       {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-      {!error && hint ? <p className="text-xs text-slate-500 dark:text-slate-400">{hint}</p> : null}
+      {hint && !error ? <p className="text-sm text-gray-500 dark:text-gray-400">{hint}</p> : null}
     </div>
   );
 };

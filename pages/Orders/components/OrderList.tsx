@@ -475,6 +475,12 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         onOpenAdvanced={() => setIsAdvancedOpen(true)}
+        activeFiltersCount={activeFiltersCount}
+        quickPills={quickPills}
+        onTogglePending={togglePill_pending}
+        onToggleUnpaid={togglePill_unpaid}
+        onToggleToday={togglePill_today}
+        onToggleOverdue={togglePill_overdue}
       />
 
       <OrderListMobile

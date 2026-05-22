@@ -6,7 +6,7 @@ import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import { Order, OrderStatus, PaymentStatus } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
-import { getOrderTotal } from '@/utils/order/orderUtils';
+import { getOrderRevenueDate, getOrderTotal } from '@/utils/order/orderUtils';
 
 interface DashboardTopCustomersProps {
   orders: Order[];
@@ -34,8 +34,9 @@ const DashboardTopCustomers: React.FC<DashboardTopCustomersProps> = ({
 
     for (const o of orders) {
       if (o.paymentStatus !== PaymentStatus.PAID || o.status !== OrderStatus.DELIVERED) continue;
-      const created = o.createdAt?.toDate ? o.createdAt.toDate() : new Date(o.createdAt as any);
-      if (created < startDate || created > endDate) continue;
+      // Mốc doanh thu: ưu tiên deliveryDate, fallback createdAt
+      const revDate = getOrderRevenueDate(o);
+      if (!revDate || revDate < startDate || revDate > endDate) continue;
 
       const phone = (o.customer?.phone || '').trim();
       const name = (o.customer?.name || '').trim();
