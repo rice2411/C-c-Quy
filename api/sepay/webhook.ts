@@ -2,35 +2,49 @@
  * SePay Webhook API
  * POST /api/sepay/webhook
  *
- * Self-contained — KHÔNG value-import file relative ngoài `api/` (vì Vercel ESM
- * resolution không kéo theo file ngoài function root → `ERR_MODULE_NOT_FOUND`).
+ * Self-contained — KHÔNG value-import file relative ngoài `api/` (Vercel ESM
+ * resolution không kéo file ngoài function root → ERR_MODULE_NOT_FOUND /
+ * FUNCTION_INVOCATION_FAILED).
  * Chỉ dùng:
- *   - Bare specifier (`firebase/app`, `firebase/firestore`) → Vercel auto-bundle.
- *   - Type-only import (`import type ...`) → TS erase ở compile time, không
- *     ảnh hưởng runtime.
+ *   - Bare specifier (firebase/app, firebase/firestore) → Vercel auto-bundle.
+ *   - Type-only import → TS erase ở compile time.
  */
+import { FirebaseApp, getApp, getApps, initializeApp } from 'firebase/app';
 import {
+  Firestore,
   Timestamp,
   addDoc,
   collection,
   doc,
   getDocs,
+  initializeFirestore,
   query,
   updateDoc,
   where,
 } from 'firebase/firestore';
-import { db } from '../../config/firestore';
 import type { ApiRequest, ApiResponse } from '../../types/api';
 import type { PaymentStatus } from '../../types/enums';
 
-// Trích mã đơn dạng `ORD-XXXXXX` từ chuỗi tự do.
+// Firestore init inline
+const firebaseConfig = {
+  apiKey: process.env.FIREBASE_API_KEY || '',
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.FIREBASE_PROJECT_ID || '',
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: process.env.FIREBASE_APP_ID || '',
+  measurementId: process.env.FIREBASE_MEASUREMENT_ID || '',
+};
+const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+const db: Firestore = initializeFirestore(app, { experimentalForceLongPolling: true });
+
+// Trích mã đơn dạng ORD-XXXXXX từ chuỗi tự do.
 const extractFormattedOrderCode = (str: string | null | undefined): string | null => {
   const match = (str || '').match(/ORD\d+/);
   return match ? match[0].replace(/ORD(\d+)/, 'ORD-$1') : null;
 };
 
-// PaymentStatus.PAID literal — must duplicate value here vì runtime enum import
-// không khả dụng. Type vẫn check khớp với enum thật ở types/enums.ts.
+// PaymentStatus.PAID literal — must duplicate value here vì runtime enum import không khả dụng.
 const PAYMENT_STATUS_PAID: PaymentStatus = 'PAID' as PaymentStatus;
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
@@ -40,7 +54,6 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
   try {
     const webhookData = req.body;
-
     if (!webhookData || !webhookData.id) {
       return res.status(400).json({ error: 'Invalid webhook data' });
     }
