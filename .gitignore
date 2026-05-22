@@ -26,3 +26,4 @@ dev-dist
 .vercel
 .env*.local
 scripts
+.env*

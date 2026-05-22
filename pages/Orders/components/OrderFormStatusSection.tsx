@@ -1,9 +1,8 @@
 import React from 'react';
-import { Copy, CreditCard, QrCode, StickyNote, Truck, Store, Wallet } from 'lucide-react';
+import { Copy, CreditCard, QrCode, StickyNote, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { DeliveryType, OrderStatus, PaymentMethod, PaymentStatus } from '@/types';
+import { OrderStatus, PaymentMethod, PaymentStatus } from '@/types';
 import Box from '@/components/ui/Box';
-import Button from '@/components/ui/Button';
 import Field from '@/components/ui/Field';
 import Image from '@/components/ui/Image';
 import Select from '@/components/ui/Select';
@@ -19,8 +18,6 @@ interface OrderStatusSectionProps {
   setPaymentMethod: (val: PaymentMethod) => void;
   note: string;
   setNote: (val: string) => void;
-  deliveryType: DeliveryType;
-  setDeliveryType: (val: DeliveryType) => void;
   total: number;
   orderNumber: string;
 }
@@ -34,10 +31,8 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
   setPaymentMethod,
   note,
   setNote,
-  deliveryType,
-  setDeliveryType,
   total,
-  orderNumber
+  orderNumber,
 }) => {
   const { t } = useLanguage();
 
@@ -102,42 +97,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
         </Box>
       </Field>
 
-      <Field label={t('deliveryType.label')} htmlFor="order-form-delivery-type">
-        <Box layoutClassName="grid grid-cols-2 gap-2">
-          {([DeliveryType.SHIP, DeliveryType.PICKUP] as DeliveryType[]).map((dt) => {
-            const active = deliveryType === dt;
-            return (
-              <Button
-                key={dt}
-                type="button"
-                variant="ghost"
-                disableVariantHover
-                disableVariantTextColor
-                onClick={() => setDeliveryType(dt)}
-                leftIcon={dt === DeliveryType.SHIP
-                  ? <Truck className="h-4 w-4 shrink-0" />
-                  : <Store className="h-4 w-4 shrink-0" />}
-                sizeClassName="px-3 py-2.5"
-                textClassName={active
-                  ? 'text-sm font-medium text-orange-700 dark:text-orange-200'
-                  : 'text-sm font-medium text-slate-600 dark:text-slate-300'}
-                backgroundClassName={active
-                  ? 'bg-orange-50 dark:bg-orange-900/30'
-                  : 'bg-white dark:bg-slate-800'}
-                borderClassName={active
-                  ? 'border border-orange-400 dark:border-orange-500'
-                  : 'border border-slate-200 dark:border-slate-600'}
-                hoverClassName={active ? '' : 'hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}
-                roundedClassName="rounded-lg"
-                shadowClassName=""
-                stateClassName="transition-colors"
-              >
-                {dt === DeliveryType.SHIP ? t('deliveryType.ship') : t('deliveryType.pickup')}
-              </Button>
-            );
-          })}
-        </Box>
-      </Field>
+      {/* DeliveryType đã được chuyển lên OrderFormCustomerSection để gần ô địa chỉ */}
 
       <Field label={t('form.note')} htmlFor="order-form-note">
         <Textarea

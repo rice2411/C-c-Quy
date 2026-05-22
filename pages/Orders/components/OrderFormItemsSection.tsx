@@ -297,36 +297,9 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
         </Box>
       )}
 
-      <Field label={t('form.shippingCost')} htmlFor="order-form-shipping">
-        <Box layoutClassName="relative">
-          <Typography
-            as="span"
-            layoutClassName="absolute left-3 top-2.5 z-10 text-xs font-bold text-slate-400"
-          >
-            SHIP
-          </Typography>
-          <Input
-            id="order-form-shipping"
-            type="number"
-            sizeClassName="pl-12"
-            value={shippingInput}
-            onChange={(e) => {
-              const raw = e.target.value;
-              setShippingInput(raw);
-              if (raw === '') return;
-              const parsed = Number(raw);
-              if (!isNaN(parsed)) setShippingCost(Math.max(0, parsed));
-            }}
-            onBlur={() => {
-              const parsed = Number(shippingInput);
-              const normalized =
-                shippingInput.trim() === '' || isNaN(parsed) ? 0 : Math.max(0, parsed);
-              setShippingInput(String(normalized));
-              setShippingCost(normalized);
-            }}
-          />
-        </Box>
-      </Field>
+      {/* Input phí ship đã được xoá — phí ship tự tính từ AddressMapInput
+          (auto-fill qua onShipFeeChange khi user nhập địa chỉ + bấm Enter).
+          shippingCost vẫn được dùng để tính total nhưng không cho user sửa tay nữa. */}
 
       <Box
         layoutClassName="flex items-center justify-between rounded-lg border border-slate-100 p-3 dark:border-slate-700"

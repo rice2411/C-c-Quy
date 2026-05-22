@@ -499,6 +499,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               customerName={customerName} setCustomerName={setCustomerName}
               phone={phone} setPhone={setPhone}
               address={address} setAddress={setAddress}
+              deliveryType={deliveryType}
+              setDeliveryType={setDeliveryType}
+              onShipFeeChange={(fee) => { if (fee != null) setShippingCost(fee); }}
             />
             <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2 min-w-0">
               <Field label="Ngày nhận hàng" htmlFor="order-form-delivery-date" required className="min-w-0 overflow-hidden">
@@ -564,8 +567,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               setPaymentStatus={setPaymentStatus}
               paymentMethod={paymentMethod}
               setPaymentMethod={setPaymentMethod}
-              deliveryType={deliveryType}
-              setDeliveryType={setDeliveryType}
               note={note}
               setNote={setNote}
               total={total}

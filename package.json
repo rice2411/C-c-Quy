@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:vercel": "vercel dev",
+    "env:pull": "vercel env pull .env.local",
     "build": "vite build",
     "preview": "vite preview"
   },

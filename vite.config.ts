@@ -37,7 +37,9 @@ export default defineConfig(({ mode }) => {
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
         },
         devOptions: {
-          enabled: true,
+          // Tắt PWA Service Worker trong dev — SW cache có thể intercept request
+          // mới và trả về stale HTML, làm Vite import-analysis fail. Prod vẫn build PWA.
+          enabled: false,
           type: "module",
         },
       }),

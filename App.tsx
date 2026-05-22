@@ -125,7 +125,7 @@ const App: React.FC = () => {
           },
         }}
       />
-      </HashRouter>
+    </HashRouter>
   );
 };
 
