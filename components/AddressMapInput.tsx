@@ -3,29 +3,8 @@ import { Crosshair, Loader2, MapPin, Package, Route } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
+import { useShippingConfig } from '@/contexts/ShippingConfigContext';
 import { getDirections, searchGoogleMaps, SerpApiDirectionsTrip } from '@/services/serpApiService';
-
-const SHOP_ORIGIN = {
-  name: '30/10 Nguyễn Hữu Cảnh, An Cựu, Huế',
-  lat: 16.4474994,
-  lng: 107.6065567,
-  city: 'Huế',
-};
-
-const DEFAULT_MAP_URL = `https://maps.google.com/maps?q=${SHOP_ORIGIN.lat},${SHOP_ORIGIN.lng}&z=16&output=embed&hl=vi`;
-
-const SHIP_FEE_TIERS = [
-  { maxKm: 2, fee: 10000, label: '< 2 km' },
-  { maxKm: 4, fee: 15000, label: '2 - 4 km' },
-  { maxKm: 6, fee: 20000, label: '4 - 6 km' },
-];
-const OVER_FEE = 25000;
-const OVER_LABEL = '> 6 km';
-
-const calcShipFee = (km: number): { fee: number; label: string } => {
-  for (const t of SHIP_FEE_TIERS) if (km <= t.maxKm) return { fee: t.fee, label: t.label };
-  return { fee: OVER_FEE, label: OVER_LABEL };
-};
 
 const haversineKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }): number => {
   const R = 6371;
@@ -37,12 +16,6 @@ const haversineKm = (a: { lat: number; lng: number }, b: { lat: number; lng: num
 };
 
 const formatVnd = (n: number): string => `${n.toLocaleString('vi-VN')}đ`;
-
-const enrichAddress = (addr: string): string => {
-  const lower = addr.toLowerCase();
-  if (lower.includes('huế') || lower.includes('hue')) return addr;
-  return `${addr}, ${SHOP_ORIGIN.city}`;
-};
 
 const routeKm = (trip: SerpApiDirectionsTrip | undefined): number | null => {
   if (!trip) return null;
@@ -66,6 +39,13 @@ const AddressMapInput: React.FC<AddressMapInputProps> = ({
   placeholder = 'Nhập địa chỉ giao hàng... (Enter để xem map)',
   showMap = true, onShipFeeChange,
 }) => {
+  const { config, calcShipFee, enrichAddress } = useShippingConfig();
+  const SHOP_ORIGIN = config.shopOrigin;
+  const DEFAULT_MAP_URL = useMemo(
+    () => `https://maps.google.com/maps?q=${SHOP_ORIGIN.lat},${SHOP_ORIGIN.lng}&z=16&output=embed&hl=vi`,
+    [SHOP_ORIGIN.lat, SHOP_ORIGIN.lng],
+  );
+
   const [pickedCoords, setPickedCoords] = useState<LatLng | null>(null);
   const [pickedAddress, setPickedAddress] = useState<string>('');
   const [searching, setSearching] = useState(false);
@@ -110,7 +90,7 @@ const AddressMapInput: React.FC<AddressMapInputProps> = ({
     } finally {
       setDrivingLoading(false);
     }
-  }, []);
+  }, [SHOP_ORIGIN.lat, SHOP_ORIGIN.lng, enrichAddress]);
 
   const handleSearch = useCallback(async () => {
     const q = value.trim();
@@ -146,7 +126,7 @@ const AddressMapInput: React.FC<AddressMapInputProps> = ({
     } finally {
       setSearching(false);
     }
-  }, [value, fetchDirections]);
+  }, [value, fetchDirections, enrichAddress, SHOP_ORIGIN.lat, SHOP_ORIGIN.lng, SHOP_ORIGIN.name, DEFAULT_MAP_URL]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -162,11 +142,11 @@ const AddressMapInput: React.FC<AddressMapInputProps> = ({
       setDrivingKm(null); setDrivingDisplay(null); setDrivingError(null);
       setSearchError(null); setMapEmbedUrl(DEFAULT_MAP_URL);
     }
-  }, [value]);
+  }, [value, DEFAULT_MAP_URL]);
 
-  const straightKm = useMemo(() => pickedCoords ? haversineKm(SHOP_ORIGIN, pickedCoords) : null, [pickedCoords]);
+  const straightKm = useMemo(() => pickedCoords ? haversineKm(SHOP_ORIGIN, pickedCoords) : null, [pickedCoords, SHOP_ORIGIN]);
   const effectiveKm = drivingKm ?? (straightKm != null ? straightKm * 1.3 : null);
-  const shipFeeData = useMemo(() => effectiveKm != null ? calcShipFee(effectiveKm) : null, [effectiveKm]);
+  const shipFeeData = useMemo(() => effectiveKm != null ? calcShipFee(effectiveKm) : null, [effectiveKm, calcShipFee]);
   const shipFee = shipFeeData?.fee ?? null;
 
   useEffect(() => { if (onShipFeeChange) onShipFeeChange(shipFee); }, [shipFee, onShipFeeChange]);
