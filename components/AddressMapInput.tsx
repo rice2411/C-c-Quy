@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Crosshair, Loader2, MapPin, Package, Route } from 'lucide-react';
+import { Crosshair, Loader2, MapPin, Package, Route, Search } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
@@ -31,13 +31,15 @@ export interface AddressMapInputProps {
   id?: string;
   placeholder?: string;
   showMap?: boolean;
+  /** Khi false — ẩn panel Khoảng cách / Phí ship (dùng cho Ship tỉnh nhập tay) */
+  showFeePanel?: boolean;
   onShipFeeChange?: (fee: number | null) => void;
 }
 
 const AddressMapInput: React.FC<AddressMapInputProps> = ({
   value, onChange, id = 'address-map-input',
   placeholder = 'Nhập địa chỉ giao hàng... (Enter để xem map)',
-  showMap = true, onShipFeeChange,
+  showMap = true, showFeePanel = true, onShipFeeChange,
 }) => {
   const { config, calcShipFee, enrichAddress } = useShippingConfig();
   const SHOP_ORIGIN = config.shopOrigin;
@@ -154,14 +156,26 @@ const AddressMapInput: React.FC<AddressMapInputProps> = ({
 
   return (
     <Box layoutClassName="space-y-2">
-      <Box layoutClassName="relative">
-        <Input id={id} type="text" value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          leftIcon={<MapPin className="h-4 w-4" />}
-          leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
-          rightIcon={searching ? <Loader2 className="h-4 w-4 animate-spin" /> : undefined} />
+      <Box layoutClassName="flex gap-2 min-w-0">
+        <Box layoutClassName="flex-1 min-w-0">
+          <Input id={id} type="text" value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            leftIcon={<MapPin className="h-4 w-4" />}
+            leftIconClassName="[&_svg]:h-4 [&_svg]:w-4" />
+        </Box>
+        <button
+          type="button"
+          onClick={handleSearch}
+          disabled={searching}
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-orange-400 bg-orange-50 px-3 py-2 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-orange-500 dark:bg-orange-900/30 dark:text-orange-200 dark:hover:bg-orange-900/50"
+        >
+          {searching
+            ? <Loader2 className="h-4 w-4 animate-spin" />
+            : <Search className="h-4 w-4" />}
+          Xem map
+        </button>
       </Box>
 
       {showMap ? (
@@ -183,7 +197,7 @@ const AddressMapInput: React.FC<AddressMapInputProps> = ({
         </Box>
       ) : null}
 
-      {pickedAddress ? (
+      {showFeePanel && pickedAddress ? (
         <Box layoutClassName="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800/40">
           <Box layoutClassName="space-y-2 border-b border-slate-100 p-3 dark:border-slate-700">
             <Box layoutClassName="flex items-start gap-2.5">

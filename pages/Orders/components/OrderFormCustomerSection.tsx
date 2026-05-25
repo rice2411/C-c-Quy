@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Store, Truck, User } from 'lucide-react';
+import { Globe, Package, Store, Truck, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCustomers } from '@/contexts/CustomerContext';
 import AddressMapInput from '@/components/AddressMapInput';
@@ -7,6 +7,7 @@ import AutocompleteInput, { AutocompleteOption } from '@/components/Autocomplete
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Field from '@/components/ui/Field';
+import Input from '@/components/ui/Input';
 import Heading from '@/components/ui/Heading';
 import { DeliveryType } from '@/types';
 
@@ -19,6 +20,7 @@ interface CustomerSectionProps {
   setAddress: (val: string) => void;
   deliveryType: DeliveryType;
   setDeliveryType: (val: DeliveryType) => void;
+  shippingCost?: number;
   onShipFeeChange?: (fee: number | null) => void;
 }
 
@@ -31,6 +33,7 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
   setAddress,
   deliveryType,
   setDeliveryType,
+  shippingCost,
   onShipFeeChange,
 }) => {
   const { t } = useLanguage();
@@ -113,10 +116,14 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
           filterFn={phoneFilterFn}
         />
 
-        {/* Delivery type — moved here for better flow: chọn ship trước rồi mới hiện ô địa chỉ */}
+        {/* Delivery type */}
         <Field label={t('deliveryType.label')} htmlFor="order-form-delivery-type">
-          <Box layoutClassName="grid grid-cols-2 gap-2">
-            {([DeliveryType.SHIP, DeliveryType.PICKUP] as DeliveryType[]).map((dt) => {
+          <Box layoutClassName="grid grid-cols-3 gap-2">
+            {([
+              { dt: DeliveryType.SHIP,          icon: <Truck className="h-4 w-4 shrink-0" />,  label: t('deliveryType.ship') },
+              { dt: DeliveryType.SHIP_PROVINCE,  icon: <Globe className="h-4 w-4 shrink-0" />,  label: t('deliveryType.shipProvince') },
+              { dt: DeliveryType.PICKUP,         icon: <Store className="h-4 w-4 shrink-0" />,  label: t('deliveryType.pickup') },
+            ]).map(({ dt, icon, label }) => {
               const active = deliveryType === dt;
               return (
                 <Button
@@ -126,13 +133,11 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
                   disableVariantHover
                   disableVariantTextColor
                   onClick={() => setDeliveryType(dt)}
-                  leftIcon={dt === DeliveryType.SHIP
-                    ? <Truck className="h-4 w-4 shrink-0" />
-                    : <Store className="h-4 w-4 shrink-0" />}
-                  sizeClassName="px-3 py-2.5"
+                  leftIcon={icon}
+                  sizeClassName="px-2 py-2.5"
                   textClassName={active
-                    ? 'text-sm font-medium text-orange-700 dark:text-orange-200'
-                    : 'text-sm font-medium text-slate-600 dark:text-slate-300'}
+                    ? 'text-xs font-medium text-orange-700 dark:text-orange-200'
+                    : 'text-xs font-medium text-slate-600 dark:text-slate-300'}
                   backgroundClassName={active
                     ? 'bg-orange-50 dark:bg-orange-900/30'
                     : 'bg-white dark:bg-slate-800'}
@@ -144,25 +149,49 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
                   shadowClassName=""
                   stateClassName="transition-colors"
                 >
-                  {dt === DeliveryType.SHIP ? t('deliveryType.ship') : t('deliveryType.pickup')}
+                  {label}
                 </Button>
               );
             })}
           </Box>
         </Field>
 
-        {/* Address + map: chỉ hiển thị khi SHIP */}
-        {deliveryType === DeliveryType.SHIP ? (
-          <Field label={t('form.address')} htmlFor="order-form-address">
-            <AddressMapInput
-              id="order-form-address"
-              value={address}
-              onChange={setAddress}
-              placeholder="Nhập địa chỉ giao hàng..."
-              showMap
-              onShipFeeChange={onShipFeeChange}
-            />
-          </Field>
+        {/* Address + map: SHIP → tính phí ship tự động; SHIP_PROVINCE → chỉ map, phí nhập tay */}
+        {deliveryType === DeliveryType.SHIP || deliveryType === DeliveryType.SHIP_PROVINCE ? (
+          <>
+            <Field label={t('form.address')} htmlFor="order-form-address">
+              <AddressMapInput
+                id="order-form-address"
+                value={address}
+                onChange={setAddress}
+                placeholder={deliveryType === DeliveryType.SHIP_PROVINCE
+                  ? 'Nhập địa chỉ tỉnh thành...'
+                  : 'Nhập địa chỉ giao hàng...'}
+                showMap
+                showFeePanel={deliveryType !== DeliveryType.SHIP_PROVINCE}
+                onShipFeeChange={deliveryType === DeliveryType.SHIP ? onShipFeeChange : undefined}
+              />
+            </Field>
+
+            {deliveryType === DeliveryType.SHIP_PROVINCE ? (
+              <Field label="Phí ship tỉnh" htmlFor="order-form-province-ship-fee">
+                <Input
+                  id="order-form-province-ship-fee"
+                  type="number"
+                  min={0}
+                  step={1000}
+                  placeholder="0"
+                  value={shippingCost ?? ''}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    onShipFeeChange?.(raw === '' ? null : Number(raw));
+                  }}
+                  leftIcon={<Package className="h-4 w-4" />}
+                  leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+                />
+              </Field>
+            ) : null}
+          </>
         ) : null}
       </Box>
     </Box>

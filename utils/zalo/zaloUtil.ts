@@ -38,9 +38,13 @@ export const formatOrderMessage = (order: any): string => {
     }
   }
 
-  // Hình thức nhận hàng — PICKUP / SHIP
+  // Hình thức nhận hàng
   const deliveryTypeLabel =
-    order.deliveryType === 'PICKUP' ? '🏬 Khách qua lấy' : '🚚 Ship đến địa chỉ';
+    order.deliveryType === 'PICKUP'
+      ? '🏬 Khách qua lấy'
+      : order.deliveryType === 'SHIP_PROVINCE'
+        ? '📦 Ship tỉnh'
+        : '🚚 Ship đến địa chỉ';
   message += `\n${deliveryTypeLabel}`;
 
   message += `\n👤 Khách hàng: ${order.customer?.name || '(không có)'}

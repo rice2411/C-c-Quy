@@ -5,6 +5,7 @@ import {
   Copy,
   CreditCard,
   FileText,
+  Globe,
   History,
   Mail,
   MapPin,
@@ -151,6 +152,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     if (field === 'deliveryType') {
       if (s === 'SHIP') return t('deliveryType.ship');
       if (s === 'PICKUP') return t('deliveryType.pickup');
+      if (s === 'SHIP_PROVINCE') return t('deliveryType.shipProvince');
     }
     if (field === 'total' || field === 'shippingCost') {
       const n = Number(value);
@@ -748,11 +750,17 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                         <div className="flex items-center gap-3">
                           {currentOrder.deliveryType === DeliveryType.PICKUP
                             ? <Store className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                            : <Truck className="w-4 h-4 text-slate-500 dark:text-slate-400" />}
+                            : currentOrder.deliveryType === DeliveryType.SHIP_PROVINCE
+                              ? <Globe className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                              : <Truck className="w-4 h-4 text-slate-500 dark:text-slate-400" />}
                           <span className="text-sm text-slate-600 dark:text-slate-300">{t('deliveryType.label')}</span>
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          {([DeliveryType.SHIP, DeliveryType.PICKUP] as DeliveryType[]).map((dt) => {
+                          {([
+                            { dt: DeliveryType.SHIP,          label: t('deliveryType.ship') },
+                            { dt: DeliveryType.SHIP_PROVINCE,  label: t('deliveryType.shipProvince') },
+                            { dt: DeliveryType.PICKUP,         label: t('deliveryType.pickup') },
+                          ]).map(({ dt, label }) => {
                             const isActive = (currentOrder.deliveryType ?? DeliveryType.SHIP) === dt;
                             return (
                               <Button
@@ -778,7 +786,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                   : 'border border-slate-200 dark:border-slate-600'}
                                 hoverClassName={isActive ? '' : 'hover:border-orange-300'}
                               >
-                                {dt === DeliveryType.SHIP ? t('deliveryType.ship') : t('deliveryType.pickup')}
+                                {label}
                               </Button>
                             );
                           })}

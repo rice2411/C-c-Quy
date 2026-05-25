@@ -19,7 +19,8 @@ export enum PaymentMethod {
 
 export enum DeliveryType {
   SHIP = 'SHIP',
-  PICKUP = 'PICKUP'
+  PICKUP = 'PICKUP',
+  SHIP_PROVINCE = 'SHIP_PROVINCE',
 }
 
 
