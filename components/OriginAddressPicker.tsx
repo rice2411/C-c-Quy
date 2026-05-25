@@ -13,16 +13,11 @@ export interface OriginAddressPickerProps {
   onChange: (next: ShopOrigin) => void;
 }
 
-/**
- * Nhập địa chỉ điểm gốc → Enter để gọi SerpApi geocode → auto-fill lat/lng + show map.
- * Vẫn cho phép sửa tay lat/lng/city bên dưới nếu cần.
- */
 const OriginAddressPicker: React.FC<OriginAddressPickerProps> = ({ value, onChange }) => {
   const [addressDraft, setAddressDraft] = useState(value.name);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  // Sync external value → local draft khi parent reset
   useEffect(() => { setAddressDraft(value.name); }, [value.name]);
 
   const mapUrl = useMemo(
@@ -32,10 +27,7 @@ const OriginAddressPicker: React.FC<OriginAddressPickerProps> = ({ value, onChan
 
   const handleGeocode = useCallback(async () => {
     const q = addressDraft.trim();
-    if (q.length < 3) {
-      setSearchError('Địa chỉ quá ngắn');
-      return;
-    }
+    if (q.length < 3) { setSearchError('Địa chỉ quá ngắn'); return; }
     setSearching(true);
     setSearchError(null);
     try {
@@ -44,7 +36,8 @@ const OriginAddressPicker: React.FC<OriginAddressPickerProps> = ({ value, onChan
         ll: `@${value.lat},${value.lng},14z`,
         hl: 'vi',
       });
-      const top = r.local_results?.[0];
+      // SerpApi đôi khi auto-switch type "search" → "place" và trả place_results (object).
+      const top = r.local_results?.[0] ?? r.place_results;
       if (top?.gps_coordinates) {
         const newName = top.address || top.title || q;
         onChange({
@@ -56,7 +49,6 @@ const OriginAddressPicker: React.FC<OriginAddressPickerProps> = ({ value, onChan
         setAddressDraft(newName);
         toast.success('Đã tìm thấy toạ độ');
       } else {
-        // Fallback: chỉ update name, giữ lat/lng cũ
         onChange({ ...value, name: q });
         setSearchError('Không tìm thấy toạ độ chính xác — chỉ cập nhật tên địa chỉ');
       }
@@ -90,7 +82,6 @@ const OriginAddressPicker: React.FC<OriginAddressPickerProps> = ({ value, onChan
             onChange={(e) => setAddressDraft(e.target.value)}
             onKeyDown={handleKeyDown}
             onBlur={() => {
-              // Cập nhật name (không geocode) nếu user chỉ sửa text rồi blur
               if (addressDraft !== value.name) {
                 onChange({ ...value, name: addressDraft });
               }
@@ -152,7 +143,7 @@ const OriginAddressPicker: React.FC<OriginAddressPickerProps> = ({ value, onChan
       </Box>
 
       <Typography size="xs" variant="muted">
-        💡 Gõ địa chỉ rồi nhấn <kbd className="rounded border border-slate-300 bg-slate-100 px-1 dark:border-slate-600 dark:bg-slate-700">Enter</kbd> để tự động tìm toạ độ qua SerpApi. Hoặc nhập tay lat/lng nếu đã biết.
+        💡 Gõ địa chỉ rồi nhấn <kbd className="rounded border border-slate-300 bg-slate-100 px-1 dark:border-slate-600 dark:bg-slate-700">Enter</kbd> để tự động tìm toạ độ. Hoặc nhập tay lat/lng nếu đã biết.
       </Typography>
     </Box>
   );

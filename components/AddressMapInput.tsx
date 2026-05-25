@@ -103,7 +103,8 @@ const AddressMapInput: React.FC<AddressMapInputProps> = ({
     const enrichedQuery = enrichAddress(q);
     try {
       const r = await searchGoogleMaps(null, { q: enrichedQuery, ll: `@${SHOP_ORIGIN.lat},${SHOP_ORIGIN.lng},14z`, hl: 'vi' });
-      const top = r.local_results?.[0];
+      // SerpApi đôi khi auto-switch type "search" → "place" và trả place_results (object) thay vì local_results (array)
+      const top = r.local_results?.[0] ?? r.place_results;
       if (top?.gps_coordinates) {
         const dest: LatLng = { lat: top.gps_coordinates.latitude, lng: top.gps_coordinates.longitude };
         const addr = top.address || top.title;
