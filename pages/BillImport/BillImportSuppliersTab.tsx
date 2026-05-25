@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Mail, MapPin, Pencil, Phone, Tag, User } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  GitMerge,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  Tag,
+  User,
+  X,
+} from 'lucide-react';
 import type { ImportedSupplierSummary } from '@/types/billReceipt';
+import { mergeSuppliers } from '@/services/stockReceiptService';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -16,6 +28,7 @@ import {
 } from '@/components/ui/Table';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import SupplierEditModal from '@/pages/BillImport/SupplierEditModal';
+import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/BillImport/MergeItemsModal';
 
 export interface BillImportSuppliersTabProps {
   supplierSearch: string;
@@ -34,35 +47,221 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
 }) => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [editing, setEditing] = useState<ImportedSupplierSummary | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [mergeOpen, setMergeOpen] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const clearSelection = () => setSelected(new Set());
+
+  const selectedItems: MergeItemDescriptor[] = filteredSuppliers
+    .filter((sp) => selected.has(sp.id))
+    .map((sp) => ({
+      id: sp.id,
+      name: sp.name,
+      subtitle: `${sp.receiptCount} phiếu · ${formatVNDOrDash(sp.totalAmount)}${sp.phone ? ' · ' + sp.phone : ''}`,
+    }));
 
   return (
     <Box layoutClassName="grid gap-4">
       <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
-        <Box layoutClassName="flex items-center justify-between">
+        <Box layoutClassName="flex flex-wrap items-start justify-between gap-2">
           <Box>
             <Typography size="sm" layoutClassName="font-semibold">
               Nhà cung cấp
             </Typography>
             <Typography size="xs" variant="muted">
-              Bấm vào dòng để xem chi tiết, bấm "Sửa" để cập nhật liên hệ / phân loại.
+              Bấm chi tiết để xem đầy đủ, chọn nhiều để gộp NCC trùng.
             </Typography>
           </Box>
-          <Button
-            type="button"
-            variant="secondary"
-            sizeClassName="px-3 py-1.5 text-xs"
-            onClick={() => void onRefresh()}
-            disabled={masterLoading}
-          >
-            {masterLoading ? 'Đang tải...' : 'Làm mới'}
-          </Button>
+          <Box layoutClassName="flex flex-wrap items-center gap-2">
+            {selected.size >= 2 ? (
+              <Button
+                type="button"
+                onClick={() => setMergeOpen(true)}
+                leftIcon={<GitMerge />}
+                iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                sizeClassName="px-3 py-1.5 text-xs"
+                backgroundClassName="bg-gradient-to-r from-orange-600 to-amber-600"
+                textClassName="font-semibold text-white"
+                roundedClassName="rounded-lg"
+                layoutClassName="inline-flex items-center gap-1.5"
+                disableVariantHover
+                disableVariantTextColor
+              >
+                Gộp {selected.size}
+              </Button>
+            ) : null}
+            {selected.size > 0 ? (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={clearSelection}
+                leftIcon={<X />}
+                iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                sizeClassName="px-2 py-1.5 text-xs"
+              >
+                Bỏ chọn
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="secondary"
+              sizeClassName="px-3 py-1.5 text-xs"
+              onClick={() => void onRefresh()}
+              disabled={masterLoading}
+            >
+              {masterLoading ? 'Đang tải...' : 'Làm mới'}
+            </Button>
+          </Box>
         </Box>
         <Input
           value={supplierSearch}
           onChange={(e) => onSupplierSearchChange(e.target.value)}
           placeholder="Tìm nhà cung cấp..."
         />
-        <Box layoutClassName="max-h-[560px] overflow-auto rounded-lg border border-slate-100 dark:border-slate-800">
+        {selected.size >= 1 ? (
+          <Typography size="xs" variant="muted">
+            Đã chọn {selected.size} NCC.{' '}
+            {selected.size < 2 ? 'Chọn thêm để gộp.' : 'Bấm "Gộp" để hợp nhất.'}
+          </Typography>
+        ) : null}
+
+        {/* ===== MOBILE: card layout ===== */}
+        <Box layoutClassName="max-h-[60vh] space-y-2 overflow-auto md:hidden">
+          {filteredSuppliers.length === 0 ? (
+            <Typography size="sm" variant="muted" layoutClassName="p-3">
+              Không có nhà cung cấp phù hợp.
+            </Typography>
+          ) : (
+            filteredSuppliers.map((row) => {
+              const isChecked = selected.has(row.id);
+              const open = expanded === row.id;
+              return (
+                <Box
+                  key={`m-${row.id}`}
+                  layoutClassName={
+                    'rounded-xl border p-3 space-y-2 ' +
+                    (isChecked
+                      ? 'border-orange-300 bg-orange-50/60 dark:border-orange-700 dark:bg-orange-950/20'
+                      : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900')
+                  }
+                >
+                  <Box layoutClassName="flex gap-3">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleSelect(row.id)}
+                      className="mt-1 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                    />
+                    <Box layoutClassName="min-w-0 flex-1 space-y-1">
+                      <Typography size="sm" layoutClassName="font-semibold break-words">
+                        {row.name}
+                      </Typography>
+                      {row.category ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                          <Tag className="h-3 w-3" /> {row.category}
+                        </span>
+                      ) : null}
+                      {row.phone || row.contactPerson ? (
+                        <Box layoutClassName="flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+                          {row.phone ? <span>📞 {row.phone}</span> : null}
+                          {row.contactPerson ? <span>👤 {row.contactPerson}</span> : null}
+                        </Box>
+                      ) : null}
+                      <Box layoutClassName="flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+                        <Typography size="xs" variant="muted">
+                          Phiếu:{' '}
+                          <strong className="text-slate-700 dark:text-slate-100">{row.receiptCount}</strong>
+                        </Typography>
+                        <Typography size="xs" variant="muted">
+                          Tổng:{' '}
+                          <strong className="text-slate-700 dark:text-slate-100">
+                            {formatVNDOrDash(row.totalAmount)}
+                          </strong>
+                        </Typography>
+                        {row.lastReceiptDate ? (
+                          <Typography size="xs" variant="muted">
+                            🕒 {row.lastReceiptDate.slice(0, 10)}
+                          </Typography>
+                        ) : null}
+                      </Box>
+                    </Box>
+                  </Box>
+                  <Box layoutClassName="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      sizeClassName="px-2 py-1 text-xs"
+                      onClick={() => setExpanded(open ? null : row.id)}
+                      leftIcon={open ? <ChevronDown /> : <ChevronRight />}
+                      iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                      layoutClassName="inline-flex items-center gap-1"
+                    >
+                      {open ? 'Thu gọn' : 'Chi tiết'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      sizeClassName="px-2 py-1 text-xs"
+                      onClick={() => setEditing(row)}
+                      leftIcon={<Pencil />}
+                      iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                      layoutClassName="inline-flex items-center gap-1"
+                    >
+                      Sửa
+                    </Button>
+                  </Box>
+                  {open ? (
+                    <Box
+                      layoutClassName="grid gap-2 rounded-md p-2 text-xs"
+                      backgroundClassName="bg-slate-50 dark:bg-slate-800/50"
+                    >
+                      {row.email ? (
+                        <Box layoutClassName="flex items-center gap-1.5">
+                          <Mail className="h-3 w-3 text-slate-400" /> {row.email}
+                        </Box>
+                      ) : null}
+                      {row.taxCode ? (
+                        <Box layoutClassName="flex items-center gap-1.5">
+                          <Tag className="h-3 w-3 text-slate-400" /> MST: {row.taxCode}
+                        </Box>
+                      ) : null}
+                      {row.address ? (
+                        <Box layoutClassName="flex items-start gap-1.5">
+                          <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-slate-400" />
+                          <span className="break-words">{row.address}</span>
+                        </Box>
+                      ) : null}
+                      {row.notes ? (
+                        <Box
+                          layoutClassName="rounded p-1.5"
+                          backgroundClassName="bg-amber-50 dark:bg-amber-950/40"
+                        >
+                          💬 {row.notes}
+                        </Box>
+                      ) : null}
+                      {!row.email && !row.taxCode && !row.address && !row.notes ? (
+                        <Typography size="xs" variant="muted">
+                          — Không có thông tin bổ sung —
+                        </Typography>
+                      ) : null}
+                    </Box>
+                  ) : null}
+                </Box>
+              );
+            })
+          )}
+        </Box>
+
+        {/* ===== DESKTOP: table layout ===== */}
+        <Box layoutClassName="hidden max-h-[560px] overflow-auto rounded-lg border border-slate-100 dark:border-slate-800 md:block">
           {filteredSuppliers.length === 0 ? (
             <Typography size="sm" variant="muted" layoutClassName="p-3">
               Không có nhà cung cấp phù hợp.
@@ -71,6 +270,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
             <Table>
               <TableHead>
                 <TableRow>
+                  <TableHeaderCell layoutClassName="w-10"></TableHeaderCell>
                   <TableHeaderCell layoutClassName="w-8"></TableHeaderCell>
                   <TableHeaderCell>Tên</TableHeaderCell>
                   <TableHeaderCell>Danh mục</TableHeaderCell>
@@ -84,9 +284,20 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
               <TableBody>
                 {filteredSuppliers.map((row) => {
                   const open = expanded === row.id;
+                  const isChecked = selected.has(row.id);
                   return (
-                    <React.Fragment key={row.id}>
-                      <TableRow>
+                    <React.Fragment key={`d-${row.id}`}>
+                      <TableRow
+                        layoutClassName={isChecked ? 'bg-orange-50/60 dark:bg-orange-950/20' : undefined}
+                      >
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleSelect(row.id)}
+                            className="h-4 w-4 cursor-pointer rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                          />
+                        </TableCell>
                         <TableCell>
                           <button
                             type="button"
@@ -152,7 +363,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                       </TableRow>
                       {open ? (
                         <TableRow>
-                          <TableCell colSpan={8}>
+                          <TableCell colSpan={9}>
                             <Box
                               layoutClassName="grid gap-3 rounded-md p-3 sm:grid-cols-2 lg:grid-cols-3"
                               backgroundClassName="bg-slate-50 dark:bg-slate-800/50"
@@ -248,6 +459,18 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
         onClose={() => setEditing(null)}
         onSaved={() => {
           setEditing(null);
+          void onRefresh();
+        }}
+      />
+
+      <MergeItemsModal
+        open={mergeOpen}
+        itemTypeLabel="nhà cung cấp"
+        items={selectedItems}
+        onClose={() => setMergeOpen(false)}
+        onConfirm={mergeSuppliers}
+        onDone={() => {
+          clearSelection();
           void onRefresh();
         }}
       />

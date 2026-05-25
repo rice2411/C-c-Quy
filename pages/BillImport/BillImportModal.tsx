@@ -49,13 +49,11 @@ const BillImportModal: React.FC<BillImportModalProps> = ({
     <Box
       layoutClassName="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-3 sm:p-6"
       backgroundClassName="bg-slate-900/60"
-      onClick={onClose}
     >
       <Card
         padding="none"
         borderClassName="border-slate-200 dark:border-slate-700"
         layoutClassName="w-full max-w-5xl my-4"
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Sticky header */}
         <Box

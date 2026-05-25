@@ -137,7 +137,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
           <img
             src={previewUrl}
             alt="Bill"
-            className="max-h-80 w-full object-contain bg-slate-50 dark:bg-slate-900"
+            className="max-h-48 sm:max-h-80 w-full object-contain bg-slate-50 dark:bg-slate-900"
           />
         </Card>
       ) : null}
@@ -485,7 +485,65 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
             <Typography size="sm" layoutClassName="font-semibold">
               {t('billImport.items')}
             </Typography>
-            <Box layoutClassName="overflow-x-auto">
+
+            {/* ===== MOBILE: card layout (mỗi line = 1 card với labels) ===== */}
+            <Box layoutClassName="space-y-3 md:hidden">
+              {draftStructured.lineItems.length === 0 ? (
+                <Typography size="sm" variant="muted">
+                  {t('billImport.emptyLines')}
+                </Typography>
+              ) : (
+                draftStructured.lineItems.map((it, idx) => (
+                  <Box
+                    key={`m-${idx}-${it.name}`}
+                    layoutClassName="rounded-xl border p-3 space-y-2"
+                    borderClassName="border-slate-200 dark:border-slate-700"
+                    backgroundClassName="bg-slate-50/60 dark:bg-slate-900/40"
+                  >
+                    <Box layoutClassName="flex items-center justify-between">
+                      <Typography size="xs" variant="muted" layoutClassName="font-bold uppercase tracking-wider">
+                        #{idx + 1}
+                      </Typography>
+                    </Box>
+                    <ContactField
+                      label={t('billImport.colName')}
+                      value={it.name ?? ''}
+                      onChange={(v) => updateDraftLine(idx, { name: v })}
+                      placeholder="Tên nguyên vật liệu"
+                    />
+                    <Box layoutClassName="grid grid-cols-2 gap-2">
+                      <ContactField
+                        label={t('billImport.colQty')}
+                        value={String(it.quantity ?? '')}
+                        onChange={(v) => updateDraftLine(idx, { quantity: v === '' ? null : Number(v) })}
+                        placeholder="SL"
+                      />
+                      <ContactField
+                        label={t('billImport.colUnit')}
+                        value={it.unit ?? ''}
+                        onChange={(v) => updateDraftLine(idx, { unit: v })}
+                        placeholder="Đơn vị"
+                      />
+                      <ContactField
+                        label={t('billImport.colPrice')}
+                        value={String(it.unitPrice ?? '')}
+                        onChange={(v) => updateDraftLine(idx, { unitPrice: v === '' ? null : Number(v) })}
+                        placeholder="Đơn giá"
+                      />
+                      <ContactField
+                        label={t('billImport.colLineTotal')}
+                        value={String(it.lineTotal ?? '')}
+                        onChange={(v) => updateDraftLine(idx, { lineTotal: v === '' ? null : Number(v) })}
+                        placeholder="Thành tiền"
+                      />
+                    </Box>
+                  </Box>
+                ))
+              )}
+            </Box>
+
+            {/* ===== TABLET/DESKTOP: table layout ===== */}
+            <Box layoutClassName="hidden md:block overflow-x-auto">
               <Table>
                 <TableHead>
                   <TableRow>
@@ -506,7 +564,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                     </TableRow>
                   ) : (
                     draftStructured.lineItems.map((it, idx) => (
-                      <TableRow key={`${idx}-${it.name}`}>
+                      <TableRow key={`d-${idx}-${it.name}`}>
                         <TableCell>{idx + 1}</TableCell>
                         <TableCell>
                           <Input
@@ -563,8 +621,12 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
             </Box>
           </Card>
 
-          <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700">
-            <Box layoutClassName="flex flex-wrap items-center justify-between gap-3">
+          <Card
+            padding="md"
+            borderClassName="border-slate-200 dark:border-slate-700"
+            layoutClassName="sticky bottom-2 z-20 shadow-lg shadow-slate-900/10 dark:shadow-black/40 md:static md:shadow-none"
+          >
+            <Box layoutClassName="flex flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3">
               <Typography size="xs" variant="muted">
                 {selectedSupplierId
                   ? 'Phiếu sẽ được gộp vào NCC đã chọn (counter & lịch sử + 1).'
@@ -582,8 +644,8 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                   )
                 }
                 iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-                sizeClassName="px-4 py-2"
-                layoutClassName="inline-flex items-center gap-2"
+                sizeClassName="px-4 py-2.5 sm:py-2"
+                layoutClassName="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
                 disableVariantHover
                 disableVariantTextColor
               >

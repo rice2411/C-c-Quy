@@ -5,6 +5,7 @@
 import {
   Timestamp,
   collection,
+  collectionGroup,
   doc,
   getDoc,
   getDocs,
@@ -522,4 +523,190 @@ export async function fetchStockReceiptDetail(receiptId: string): Promise<SavedS
     lineItems,
     validation,
   };
+}
+
+// ==================== MERGE OPERATIONS ====================
+
+/**
+ * Chia mảng thành chunks size ≤ N (Firestore 'in' query max 10 values).
+ */
+const chunk = <T>(arr: T[], size: number): T[][] => {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+};
+
+/**
+ * Gộp nhiều suppliers (duplicates) vào 1 supplier root.
+ * - Cập nhật mọi stock_receipts có supplierId trong duplicateIds → set về rootId
+ * - Cộng dồn receiptCount + totalAmount vào root
+ * - Xoá các duplicate supplier docs
+ *
+ * @throws nếu root nằm trong duplicateIds hoặc root không tồn tại
+ */
+export async function mergeSuppliers(rootId: string, duplicateIds: string[]): Promise<void> {
+  const dupSet = new Set(duplicateIds.filter((id) => id && id !== rootId));
+  if (dupSet.size === 0) return;
+  const dups = Array.from(dupSet);
+
+  const rootRef = doc(db, SUPPLIERS_COLLECTION, rootId);
+  const rootSnap = await getDoc(rootRef);
+  if (!rootSnap.exists()) throw new Error('Root supplier không tồn tại');
+  const rootData = rootSnap.data();
+  const rootName = typeof rootData.name === 'string' ? rootData.name : '';
+
+  // Fetch + sum duplicates
+  const dupSnaps = await Promise.all(dups.map((id) => getDoc(doc(db, SUPPLIERS_COLLECTION, id))));
+  let receiptCountSum = 0;
+  let totalAmountSum = 0;
+  const existing: string[] = [];
+  dupSnaps.forEach((s, idx) => {
+    if (!s.exists()) return;
+    const d = s.data();
+    receiptCountSum += typeof d.receiptCount === 'number' ? d.receiptCount : 0;
+    totalAmountSum += typeof d.totalAmount === 'number' ? d.totalAmount : 0;
+    existing.push(dups[idx]);
+  });
+  if (existing.length === 0) return;
+
+  // Tìm stock_receipts (chunk vì Firestore 'in' giới hạn 10)
+  const receiptDocs: { id: string; ref: any }[] = [];
+  for (const grp of chunk(existing, 10)) {
+    const snap = await getDocs(
+      query(collection(db, RECEIPTS_COLLECTION), where('supplierId', 'in', grp)),
+    );
+    snap.docs.forEach((d) => receiptDocs.push({ id: d.id, ref: d.ref }));
+  }
+
+  // Tìm materials có lastSupplierId trong duplicates
+  const materialDocs: { ref: any }[] = [];
+  for (const grp of chunk(existing, 10)) {
+    const snap = await getDocs(
+      query(collection(db, MATERIALS_COLLECTION), where('lastSupplierId', 'in', grp)),
+    );
+    snap.docs.forEach((d) => materialDocs.push({ ref: d.ref }));
+  }
+
+  // Batch update (Firestore batch limit 500)
+  const allWrites = receiptDocs.length + materialDocs.length + existing.length + 1;
+  if (allWrites > 480) {
+    // Chia batch
+    const writeOps: Array<() => void> = [];
+    const batches: any[] = [writeBatch(db)];
+    let count = 0;
+    const enqueue = (fn: (b: any) => void) => {
+      if (count >= 450) { batches.push(writeBatch(db)); count = 0; }
+      fn(batches[batches.length - 1]);
+      count++;
+    };
+    receiptDocs.forEach((r) =>
+      enqueue((b) => b.update(r.ref, { supplierId: rootId, supplierNameCanonical: rootName, updatedAt: serverTimestamp() })),
+    );
+    materialDocs.forEach((m) =>
+      enqueue((b) => b.update(m.ref, { lastSupplierId: rootId, lastSupplierName: rootName, updatedAt: serverTimestamp() })),
+    );
+    enqueue((b) =>
+      b.update(rootRef, {
+        receiptCount: increment(receiptCountSum),
+        totalAmount: increment(totalAmountSum),
+        updatedAt: serverTimestamp(),
+      }),
+    );
+    existing.forEach((id) => enqueue((b) => b.delete(doc(db, SUPPLIERS_COLLECTION, id))));
+    for (const b of batches) await b.commit();
+    return;
+  }
+
+  const batch = writeBatch(db);
+  receiptDocs.forEach((r) =>
+    batch.update(r.ref, { supplierId: rootId, supplierNameCanonical: rootName, updatedAt: serverTimestamp() }),
+  );
+  materialDocs.forEach((m) =>
+    batch.update(m.ref, { lastSupplierId: rootId, lastSupplierName: rootName, updatedAt: serverTimestamp() }),
+  );
+  batch.update(rootRef, {
+    receiptCount: increment(receiptCountSum),
+    totalAmount: increment(totalAmountSum),
+    updatedAt: serverTimestamp(),
+  });
+  existing.forEach((id) => batch.delete(doc(db, SUPPLIERS_COLLECTION, id)));
+  await batch.commit();
+}
+
+/**
+ * Gộp nhiều materials (duplicates) vào 1 material root.
+ * - Cập nhật mọi line trong subcollection `lines` có materialId trong duplicateIds (via collectionGroup)
+ * - Cộng dồn importCount + totalQty + totalAmount vào root
+ * - Xoá các duplicate material docs
+ */
+export async function mergeMaterials(rootId: string, duplicateIds: string[]): Promise<void> {
+  const dupSet = new Set(duplicateIds.filter((id) => id && id !== rootId));
+  if (dupSet.size === 0) return;
+  const dups = Array.from(dupSet);
+
+  const rootRef = doc(db, MATERIALS_COLLECTION, rootId);
+  const rootSnap = await getDoc(rootRef);
+  if (!rootSnap.exists()) throw new Error('Root material không tồn tại');
+  const rootData = rootSnap.data();
+  const rootName = typeof rootData.name === 'string' ? rootData.name : '';
+
+  const dupSnaps = await Promise.all(dups.map((id) => getDoc(doc(db, MATERIALS_COLLECTION, id))));
+  let importCountSum = 0;
+  let totalQtySum = 0;
+  let totalAmountSum = 0;
+  const existing: string[] = [];
+  dupSnaps.forEach((s, idx) => {
+    if (!s.exists()) return;
+    const d = s.data();
+    importCountSum += typeof d.importCount === 'number' ? d.importCount : 0;
+    totalQtySum += typeof d.totalQty === 'number' ? d.totalQty : 0;
+    totalAmountSum += typeof d.totalAmount === 'number' ? d.totalAmount : 0;
+    existing.push(dups[idx]);
+  });
+  if (existing.length === 0) return;
+
+  // collectionGroup query — fetch lines có materialId trong duplicates
+  const lineDocs: { ref: any }[] = [];
+  for (const grp of chunk(existing, 10)) {
+    const snap = await getDocs(
+      query(collectionGroup(db, LINES_SUBCOLLECTION), where('materialId', 'in', grp)),
+    );
+    snap.docs.forEach((d) => lineDocs.push({ ref: d.ref }));
+  }
+
+  const allWrites = lineDocs.length + existing.length + 1;
+  if (allWrites > 480) {
+    const batches: any[] = [writeBatch(db)];
+    let count = 0;
+    const enqueue = (fn: (b: any) => void) => {
+      if (count >= 450) { batches.push(writeBatch(db)); count = 0; }
+      fn(batches[batches.length - 1]);
+      count++;
+    };
+    lineDocs.forEach((l) =>
+      enqueue((b) => b.update(l.ref, { materialId: rootId, materialNameRaw: rootName })),
+    );
+    enqueue((b) =>
+      b.update(rootRef, {
+        importCount: increment(importCountSum),
+        totalQty: increment(totalQtySum),
+        totalAmount: increment(totalAmountSum),
+        updatedAt: serverTimestamp(),
+      }),
+    );
+    existing.forEach((id) => enqueue((b) => b.delete(doc(db, MATERIALS_COLLECTION, id))));
+    for (const b of batches) await b.commit();
+    return;
+  }
+
+  const batch = writeBatch(db);
+  lineDocs.forEach((l) => batch.update(l.ref, { materialId: rootId, materialNameRaw: rootName }));
+  batch.update(rootRef, {
+    importCount: increment(importCountSum),
+    totalQty: increment(totalQtySum),
+    totalAmount: increment(totalAmountSum),
+    updatedAt: serverTimestamp(),
+  });
+  existing.forEach((id) => batch.delete(doc(db, MATERIALS_COLLECTION, id)));
+  await batch.commit();
 }
