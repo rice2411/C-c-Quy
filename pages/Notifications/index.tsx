@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  Activity,
+  BarChart3,
   Bell,
   Calendar,
+  ChefHat,
   Clock,
   DollarSign,
   MessageSquare,
@@ -9,6 +12,7 @@ import {
   Package,
   Receipt,
   Send,
+  TimerReset,
   Users,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -16,8 +20,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/contexts/OrderContext';
 import {
   sendCustomNotification,
+  sendDailySummaryNotification,
   sendDeliveryDueNotification,
+  sendHealthCheckNotification,
   sendPendingOrdersNotification,
+  sendProductionTomorrowNotification,
+  sendStuckPendingNotification,
   sendUnpaidOrdersNotification,
 } from '@/services/zaloService';
 import { OrderStatus, PaymentStatus } from '@/types';
@@ -34,7 +42,7 @@ import Textarea from '@/components/ui/Textarea';
 import Typography from '@/components/ui/Typography';
 import Tabs, { TabsItem } from '@/components/ui/Tabs';
 
-type NotificationType = 'unpaid' | 'pending' | 'delivery' | 'custom';
+type NotificationType = 'unpaid' | 'pending' | 'delivery' | 'custom' | 'production-tomorrow' | 'stuck-pending' | 'daily-summary' | 'health-check';
 
 type NotificationGroupId = 'zalo' | 'customers' | 'orders' | 'transactions';
 
@@ -76,16 +84,20 @@ const NotificationsPage: React.FC = () => {
   const [deliveryDate, setDeliveryDate] = useState('');
 
   const unpaidOrders = useMemo(() => {
-    return orders.filter(
-      (order) =>
-        order.paymentStatus === PaymentStatus.UNPAID && order.status !== OrderStatus.CANCELLED,
-    );
+    return orders.filter((order) => {
+      const pst = String(order.paymentStatus ?? '').toUpperCase();
+      if (pst !== 'UNPAID') return false;
+      const st = String(order.status ?? '').toUpperCase();
+      // Loại đơn đã huỷ / trả lại — không tính là "chưa thanh toán"
+      return st !== 'CANCELLED' && st !== 'RETURNED';
+    });
   }, [orders]);
 
   const pendingOrders = useMemo(() => {
-    return orders.filter(
-      (order) => order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.CANCELLED,
-    );
+    return orders.filter((order) => {
+      const st = String(order.status ?? '').toUpperCase();
+      return st !== 'DELIVERED' && st !== 'CANCELLED' && st !== 'RETURNED';
+    });
   }, [orders]);
 
   const deliveryDueOrders = useMemo(() => {
@@ -108,6 +120,44 @@ const NotificationsPage: React.FC = () => {
       );
     });
   }, [orders, deliveryDate]);
+
+  const productionTomorrowOrders = useMemo(() => {
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const start = tomorrow.getTime();
+    const end = start + 24 * 60 * 60 * 1000;
+    return orders.filter((o) => {
+      const st = String(o.status ?? '').toUpperCase();
+      if (st === 'CANCELLED' || st === 'DELIVERED' || st === 'RETURNED') return false;
+      const d = o.deliveryDate ? parseDateValue(o.deliveryDate) : null;
+      if (!d) return false;
+      const t = d.getTime();
+      return t >= start && t < end;
+    });
+  }, [orders]);
+
+  const STUCK_HOURS = 24;
+  const stuckPendingOrders = useMemo(() => {
+    const threshold = Date.now() - STUCK_HOURS * 3600 * 1000;
+    return orders.filter((o) => {
+      const st = String(o.status ?? '').toUpperCase();
+      if (st !== 'PENDING') return false;
+      const created = parseDateValue((o as any).orderDate || (o as any).createdAt);
+      return created != null && created.getTime() <= threshold;
+    });
+  }, [orders]);
+
+  const todayOrders = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const end = start + 24 * 60 * 60 * 1000;
+    return orders.filter((o) => {
+      const d = parseDateValue((o as any).orderDate || (o as any).createdAt);
+      if (!d) return false;
+      const t = d.getTime();
+      return t >= start && t < end;
+    });
+  }, [orders]);
 
   const notificationOptions = useMemo(
     () =>
@@ -151,6 +201,46 @@ const NotificationsPage: React.FC = () => {
           color: 'text-purple-600 dark:text-purple-400',
           bgColor: 'bg-purple-50 dark:bg-purple-900/20',
           borderColor: 'border-purple-200 dark:border-purple-800',
+        },
+        {
+          group: 'orders' as const,
+          type: 'production-tomorrow' as const,
+          icon: ChefHat,
+          title: 'Sản xuất ngày mai',
+          description: 'Tổng hợp số bánh cần làm cho ngày mai theo từng sản phẩm.',
+          color: 'text-amber-600 dark:text-amber-400',
+          bgColor: 'bg-amber-50 dark:bg-amber-900/20',
+          borderColor: 'border-amber-200 dark:border-amber-800',
+        },
+        {
+          group: 'orders' as const,
+          type: 'stuck-pending' as const,
+          icon: TimerReset,
+          title: 'Đơn pending quá 24h',
+          description: 'Cảnh báo đơn chưa xác nhận quá lâu — tránh khách bỏ đi.',
+          color: 'text-rose-600 dark:text-rose-400',
+          bgColor: 'bg-rose-50 dark:bg-rose-900/20',
+          borderColor: 'border-rose-200 dark:border-rose-800',
+        },
+        {
+          group: 'orders' as const,
+          type: 'daily-summary' as const,
+          icon: BarChart3,
+          title: 'Tổng kết hôm nay',
+          description: 'Số đơn / doanh thu / top sản phẩm trong ngày.',
+          color: 'text-emerald-600 dark:text-emerald-400',
+          bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+          borderColor: 'border-emerald-200 dark:border-emerald-800',
+        },
+        {
+          group: 'zalo' as const,
+          type: 'health-check' as const,
+          icon: Activity,
+          title: 'Health check',
+          description: 'Ping nhóm chính để kiểm tra hệ thống & token còn live.',
+          color: 'text-slate-600 dark:text-slate-300',
+          bgColor: 'bg-slate-50 dark:bg-slate-900/40',
+          borderColor: 'border-slate-200 dark:border-slate-700',
         },
       ] as const,
     [t],
@@ -225,6 +315,35 @@ const NotificationsPage: React.FC = () => {
           toast.success(t('notifications.sentSuccess'));
           break;
 
+        case 'production-tomorrow': {
+          const now = new Date();
+          const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+          await sendProductionTomorrowNotification(productionTomorrowOrders, tomorrow);
+          toast.success(t('notifications.sentSuccess'));
+          break;
+        }
+
+        case 'stuck-pending': {
+          if (stuckPendingOrders.length === 0) {
+            toast.error('Không có đơn PENDING quá 24h');
+            return;
+          }
+          await sendStuckPendingNotification(stuckPendingOrders, STUCK_HOURS);
+          toast.success(t('notifications.sentSuccess'));
+          break;
+        }
+
+        case 'daily-summary': {
+          await sendDailySummaryNotification({ orders: todayOrders }, new Date());
+          toast.success(t('notifications.sentSuccess'));
+          break;
+        }
+
+        case 'health-check': {
+          await sendHealthCheckNotification();
+          toast.success(t('notifications.sentSuccess'));
+          break;
+        }
         case 'custom':
           if (!customMessage.trim()) {
             toast.error(t('notifications.enterMessage'));
@@ -243,29 +362,17 @@ const NotificationsPage: React.FC = () => {
     }
   };
 
-  const getOrderCount = () => {
-    switch (selectedType) {
-      case 'unpaid':
-        return unpaidOrders.length;
-      case 'pending':
-        return pendingOrders.length;
-      case 'delivery':
-        return deliveryDueOrders.length;
-      default:
-        return 0;
-    }
-  };
+  const getOrderCount = () => getOrderCountByType(selectedType);
 
   const getOrderCountByType = (type: NotificationType) => {
     switch (type) {
-      case 'unpaid':
-        return unpaidOrders.length;
-      case 'pending':
-        return pendingOrders.length;
-      case 'delivery':
-        return deliveryDueOrders.length;
-      default:
-        return 0;
+      case 'unpaid': return unpaidOrders.length;
+      case 'pending': return pendingOrders.length;
+      case 'delivery': return deliveryDueOrders.length;
+      case 'production-tomorrow': return productionTomorrowOrders.length;
+      case 'stuck-pending': return stuckPendingOrders.length;
+      case 'daily-summary': return todayOrders.length;
+      default: return 0;
     }
   };
 

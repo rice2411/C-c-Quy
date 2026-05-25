@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
+  Bell,
   Check,
   ChevronDown,
   Eye,
@@ -10,16 +11,18 @@ import {
   MessageCircle,
   Pencil,
   Plus,
+  Send,
   Shield,
   Trash2,
   UserPlus,
   Users,
 } from 'lucide-react';
 import { fetchZaloGroupsConfiguration, saveZaloGroupsConfiguration } from '@/services/configurationService';
+import { sendZaloTestMessage } from '@/services/zaloService';
 import { getAllUsers, updateUserRole } from '@/services/userService';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserData, UserRole } from '@/types/user';
-import { ZaloGroupConfig } from '@/types';
+import { ZALO_TRACKABLE_FIELDS, ZaloGroupConfig } from '@/types';
 import toast from 'react-hot-toast';
 import BaseModal from '@/components/BaseModal';
 import Badge from '@/components/ui/Badge';
@@ -103,6 +106,12 @@ const ZaloSettingsTab: React.FC = () => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [mainGroupId, setMainGroupId] = useState('');
+  const [mainNotifyOnCreate, setMainNotifyOnCreate] = useState(true);
+  const [mainNotifyOnUpdate, setMainNotifyOnUpdate] = useState(true);
+  const [mainNotifyOnDelete, setMainNotifyOnDelete] = useState(true);
+  const [mainUpdateFieldWhitelist, setMainUpdateFieldWhitelist] = useState<string[]>([]);
+  const [testingGroupId, setTestingGroupId] = useState<string | null>(null);
   const [groupModalId, setGroupModalId] = useState<string | null>(null);
   const [pickUidsModal, setPickUidsModal] = useState<string[]>([]);
   const [editingZaloId, setEditingZaloId] = useState(false);
@@ -120,6 +129,11 @@ const ZaloSettingsTab: React.FC = () => {
     try {
       const [cfg, list] = await Promise.all([fetchZaloGroupsConfiguration(), getAllUsers()]);
       setGroups(cfg.groups);
+      setMainGroupId(cfg.mainGroupId ?? '');
+      setMainNotifyOnCreate(cfg.mainNotifyOnCreate !== false);
+      setMainNotifyOnUpdate(cfg.mainNotifyOnUpdate !== false);
+      setMainNotifyOnDelete(cfg.mainNotifyOnDelete !== false);
+      setMainUpdateFieldWhitelist(cfg.mainUpdateFieldWhitelist ?? []);
       setUsers(list);
     } catch (e) {
       console.error(e);
@@ -205,8 +219,33 @@ const ZaloSettingsTab: React.FC = () => {
   };
 
   const persistGroups = async (next: ZaloGroupConfig[]) => {
-    await saveZaloGroupsConfiguration(next, currentUser?.uid ?? null);
+    await saveZaloGroupsConfiguration(next, currentUser?.uid ?? null, {
+      mainGroupId,
+      mainNotifyOnCreate,
+      mainNotifyOnUpdate,
+      mainNotifyOnDelete,
+      mainUpdateFieldWhitelist,
+    });
     setGroups(next);
+  };
+
+  const handleTestGroup = async (groupId: string, groupName: string) => {
+    const id = groupId.trim();
+    if (!id) {
+      toast.error('Group ID trống');
+      return;
+    }
+    setTestingGroupId(id);
+    try {
+      const result = await sendZaloTestMessage(id);
+      if (result.ok) {
+        toast.success(`Đã gửi test tới "${groupName || id}"`);
+      } else {
+        toast.error(`Gửi test thất bại: ${result.error}`);
+      }
+    } finally {
+      setTestingGroupId(null);
+    }
   };
 
   const handleSaveAll = async () => {
@@ -404,6 +443,13 @@ const ZaloSettingsTab: React.FC = () => {
 
   return (
     <Box layoutClassName="space-y-6">
+      {/* ╭─────── SECTION: GROUP ───────╮ */}
+      <Box layoutClassName="flex items-center gap-2">
+        <Users className="h-5 w-5 text-orange-600" />
+        <Heading level={2} textClassName="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+          Nhóm CTV
+        </Heading>
+      </Box>
       <Box
         layoutClassName="relative overflow-hidden rounded-2xl border border-slate-200/90 p-6 dark:border-slate-600/80"
         backgroundClassName="bg-gradient-to-br from-orange-50 via-white to-sky-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800"
@@ -587,6 +633,120 @@ const ZaloSettingsTab: React.FC = () => {
         </Box>
       )}
 
+
+      {/* ╭─────── SECTION: THÔNG BÁO ───────╮ */}
+      <Box layoutClassName="flex items-center gap-2 pt-2">
+        <Bell className="h-5 w-5 text-orange-600" />
+        <Heading level={2} textClassName="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+          Thông báo
+        </Heading>
+      </Box>
+      <Box
+        layoutClassName="rounded-2xl border border-slate-200 p-5 dark:border-slate-700"
+        backgroundClassName="bg-white dark:bg-slate-900"
+      >
+        <Box layoutClassName="mb-4 flex items-center gap-2">
+          <Bell className="h-4 w-4 text-orange-600" />
+          <Typography size="sm" layoutClassName="font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+            Cài đặt chung — Group chính
+          </Typography>
+        </Box>
+
+        <Box layoutClassName="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Box>
+            <Typography size="xs" layoutClassName="mb-1.5 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              ID group chính
+            </Typography>
+            <Input
+              value={mainGroupId}
+              onChange={(e) => setMainGroupId(e.target.value)}
+              placeholder="VD: 4912345678901234567"
+              containerClassName="w-full"
+            />
+            <Typography size="xs" variant="muted" layoutClassName="mt-1">
+              Nhập ID group nhận thông báo chính (admin). Trống = dùng giá trị từ env.
+            </Typography>
+            <Box layoutClassName="mt-2 flex gap-2">
+              <Button
+                type="button"
+                onClick={() => handleTestGroup(mainGroupId, 'Group chính')}
+                disabled={!mainGroupId.trim() || testingGroupId === mainGroupId.trim()}
+                leftIcon={<Send className="h-3.5 w-3.5" />}
+                sizeClassName="px-3 py-1.5"
+                backgroundClassName="bg-slate-800 dark:bg-slate-700"
+                textClassName="text-xs font-semibold text-white"
+                roundedClassName="rounded-lg"
+                disableVariantHover
+                disableVariantTextColor
+              >
+                {testingGroupId === mainGroupId.trim() ? 'Đang gửi…' : 'Test gửi'}
+              </Button>
+            </Box>
+          </Box>
+
+          <Box>
+            <Typography size="xs" layoutClassName="mb-2 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Bắn thông báo khi
+            </Typography>
+            <Box layoutClassName="flex flex-wrap gap-2">
+              {([
+                ['Tạo đơn', mainNotifyOnCreate, setMainNotifyOnCreate],
+                ['Sửa đơn', mainNotifyOnUpdate, setMainNotifyOnUpdate],
+                ['Xoá đơn', mainNotifyOnDelete, setMainNotifyOnDelete],
+              ] as Array<[string, boolean, (v: boolean) => void]>).map(([label, val, setter]) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setter(!val)}
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                    val
+                      ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+                      : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                  }`}
+                >
+                  {val ? <Check className="h-3 w-3" /> : null}
+                  {label}
+                </button>
+              ))}
+            </Box>
+
+            {mainNotifyOnUpdate && (
+              <Box layoutClassName="mt-3">
+                <Typography size="xs" layoutClassName="mb-1.5 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Chỉ bắn khi field đổi (rỗng = tất cả)
+                </Typography>
+                <Box layoutClassName="flex flex-wrap gap-1.5">
+                  {ZALO_TRACKABLE_FIELDS.map((f) => {
+                    const active = mainUpdateFieldWhitelist.includes(f.key);
+                    return (
+                      <button
+                        key={f.key}
+                        type="button"
+                        onClick={() =>
+                          setMainUpdateFieldWhitelist(
+                            active
+                              ? mainUpdateFieldWhitelist.filter((x) => x !== f.key)
+                              : [...mainUpdateFieldWhitelist, f.key]
+                          )
+                        }
+                        className={`rounded-md border px-2 py-1 text-[11px] transition ${
+                          active
+                            ? 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-orange-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    );
+                  })}
+                </Box>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      </Box>
+
+
       <BaseModal
         isOpen={Boolean(activeGroup)}
         onClose={closeGroupModal}
@@ -703,6 +863,100 @@ const ZaloSettingsTab: React.FC = () => {
                         >
                           Sửa ID
                         </Button>
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+
+                <Box
+                  layoutClassName="rounded-xl border border-slate-100 p-4 dark:border-slate-700/80"
+                  backgroundClassName="bg-slate-50/70 dark:bg-slate-800/40"
+                >
+                  <Box layoutClassName="mb-3 flex items-center justify-between gap-2">
+                    <Box layoutClassName="flex items-center gap-2">
+                      <Bell className="h-3.5 w-3.5 text-orange-600" />
+                      <Typography
+                        size="xs"
+                        layoutClassName="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                      >
+                        Thông báo cho nhóm này
+                      </Typography>
+                    </Box>
+                    <Button
+                      type="button"
+                      onClick={() => handleTestGroup(activeGroup.zaloGroupId, activeGroup.name)}
+                      disabled={!activeGroup.zaloGroupId.trim() || testingGroupId === activeGroup.zaloGroupId.trim()}
+                      leftIcon={<Send className="h-3 w-3" />}
+                      sizeClassName="px-2.5 py-1"
+                      backgroundClassName="bg-slate-800 dark:bg-slate-700"
+                      textClassName="text-[11px] font-semibold text-white"
+                      roundedClassName="rounded-md"
+                      disableVariantHover
+                      disableVariantTextColor
+                    >
+                      {testingGroupId === activeGroup.zaloGroupId.trim() ? 'Đang gửi…' : 'Test'}
+                    </Button>
+                  </Box>
+
+                  <Box layoutClassName="flex flex-wrap gap-1.5">
+                    {([
+                      ['Tạo đơn', activeGroup.notifyOnCreate !== false, 'notifyOnCreate'],
+                      ['Sửa đơn', activeGroup.notifyOnUpdate !== false, 'notifyOnUpdate'],
+                      ['Xoá đơn', activeGroup.notifyOnDelete !== false, 'notifyOnDelete'],
+                    ] as Array<[string, boolean, 'notifyOnCreate' | 'notifyOnUpdate' | 'notifyOnDelete']>).map(
+                      ([label, val, key]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() =>
+                            updateGroup(activeGroup.id, { [key]: !val } as Partial<ZaloGroupConfig>)
+                          }
+                          className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
+                            val
+                              ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+                              : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                          }`}
+                        >
+                          {val ? <Check className="h-3 w-3" /> : null}
+                          {label}
+                        </button>
+                      ),
+                    )}
+                  </Box>
+
+                  {activeGroup.notifyOnUpdate !== false && (
+                    <Box layoutClassName="mt-3">
+                      <Typography
+                        size="xs"
+                        layoutClassName="mb-1.5 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                      >
+                        Chỉ bắn khi field đổi (rỗng = tất cả)
+                      </Typography>
+                      <Box layoutClassName="flex flex-wrap gap-1.5">
+                        {ZALO_TRACKABLE_FIELDS.map((f) => {
+                          const wl = activeGroup.updateFieldWhitelist ?? [];
+                          const active = wl.includes(f.key);
+                          return (
+                            <button
+                              key={f.key}
+                              type="button"
+                              onClick={() =>
+                                updateGroup(activeGroup.id, {
+                                  updateFieldWhitelist: active
+                                    ? wl.filter((x) => x !== f.key)
+                                    : [...wl, f.key],
+                                })
+                              }
+                              className={`rounded-md border px-2 py-1 text-[11px] transition ${
+                                active
+                                  ? 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300'
+                                  : 'border-slate-200 bg-white text-slate-500 hover:border-orange-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                              }`}
+                            >
+                              {f.label}
+                            </button>
+                          );
+                        })}
                       </Box>
                     </Box>
                   )}

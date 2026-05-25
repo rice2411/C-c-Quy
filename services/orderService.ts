@@ -16,8 +16,12 @@ import { db } from "@/config/firebase";
 import { DeliveryType, Order, OrderHistoryEntry, PaymentMethod, PaymentStatus } from "@/types";
 import { UserRole } from "@/types/user";
 import { diffOrders } from "@/utils/order/orderHistoryDiff";
-import { resolveZaloGroupIdsForNewOrder } from "./configurationService";
-import { sendNewOrderZaloNotifications } from "./zaloService";
+import { resolveZaloGroupIdsForOrderEvent } from "./configurationService";
+import {
+  sendNewOrderZaloNotifications,
+  sendOrderDeleteNotification,
+  sendOrderUpdateNotification,
+} from "./zaloService";
 import { getUserByUid } from "./userService";
 
 /** Nem khi CTV co cap nhat don khong phai do ho tao */
@@ -113,7 +117,8 @@ export const addOrder = async (orderData: Order): Promise<void> => {
       deliveryType: orderData.deliveryType || DeliveryType.SHIP,
       createdBy: orderData.createdBy || undefined,
     };
-    const zaloGroupIds = await resolveZaloGroupIdsForNewOrder(
+    const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
+      'create',
       orderData.createdBy as string | undefined,
     );
     await addDoc(ordersRef, payload);
@@ -218,6 +223,34 @@ export const updateOrder = async (
     }
 
     await updateDoc(orderRef, payload);
+
+    if (changes.length > 0) {
+      try {
+        const uidShort = editor?.uid ? "User-" + editor.uid.slice(0, 6) : null;
+        const editorName2 = editor?.displayName || editor?.email || uidShort || "Unknown";
+        const changedFieldIds = changes.map((c: any) => c.field).filter(Boolean);
+        const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
+          'update',
+          (existing.createdBy as string | undefined) ?? editor?.uid,
+          changedFieldIds,
+        );
+        const orderForMsg = {
+          ...existing,
+          ...payload,
+          id: orderId,
+          orderNumber: existing.orderNumber,
+          customer: safeCustomer,
+        };
+        await sendOrderUpdateNotification(
+          orderForMsg,
+          changes,
+          { name: editorName2, uid: editor?.uid },
+          zaloGroupIds,
+        );
+      } catch (notifErr) {
+        console.error("Update Zalo notify error (ignored):", notifErr);
+      }
+    }
   } catch (error) {
     console.error("Error updating order:", error);
     throw error;
@@ -230,11 +263,35 @@ export const updateOrder = async (
  * @param {string} orderId - Mã đơn hàng
  * @returns {Promise<void>} Không trả về
  */
-export const deleteOrder = async (orderId: string): Promise<void> => {
+export const deleteOrder = async (
+  orderId: string,
+  editor?: OrderUpdateEditor,
+): Promise<void> => {
   try {
     if (!orderId) throw new Error("Order ID is required");
     const orderRef = doc(db, "orders", orderId);
+    const snap = await getDoc(orderRef);
+    const existing = snap.exists() ? snap.data() : null;
+
     await deleteDoc(orderRef);
+
+    if (existing) {
+      try {
+        const uidShort = editor?.uid ? "User-" + editor.uid.slice(0, 6) : null;
+        const editorName = editor?.displayName || editor?.email || uidShort || "Unknown";
+        const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
+          'delete',
+          (existing.createdBy as string | undefined) ?? editor?.uid,
+        );
+        await sendOrderDeleteNotification(
+          { ...existing, id: orderId },
+          { name: editorName, uid: editor?.uid },
+          zaloGroupIds,
+        );
+      } catch (notifErr) {
+        console.error("Delete Zalo notify error (ignored):", notifErr);
+      }
+    }
   } catch (error) {
     console.error("Error deleting order:", error);
     throw error;

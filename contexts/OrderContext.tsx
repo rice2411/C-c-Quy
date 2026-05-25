@@ -35,12 +35,7 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setOrders(fetchedOrders);
   };
 
-  const createNewOrder = async (data: any) => {
-    await addOrder(data);
-    await refreshOrders();
-  };
-
-  const modifyOrder = async (id: string, data: any) => {
+  const buildEditor = () => {
     const uid = currentUser?.uid ?? userData?.uid ?? '';
     const displayName =
       (userData as any)?.customName ||
@@ -48,17 +43,21 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       (currentUser as any)?.displayName ||
       '';
     const email = (currentUser as any)?.email || (userData as any)?.email || '';
-    await updateOrder(id, data, {
-      uid,
-      role: userData?.role,
-      displayName,
-      email,
-    });
+    return { uid, role: userData?.role, displayName, email };
+  };
+
+  const createNewOrder = async (data: any) => {
+    await addOrder(data);
+    await refreshOrders();
+  };
+
+  const modifyOrder = async (id: string, data: any) => {
+    await updateOrder(id, data, buildEditor());
     await refreshOrders();
   };
 
   const removeOrder = async (id: string) => {
-    await deleteOrder(id);
+    await deleteOrder(id, buildEditor());
     await refreshOrders();
   };
 
