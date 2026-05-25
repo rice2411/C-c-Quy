@@ -6,7 +6,8 @@ import {
   FileText,
   Users,
   Settings,
-  ArrowRightLeft,
+  TrendingUp,
+  Coins,
   UserCog,
   Bell,
 } from "lucide-react";
@@ -55,7 +56,14 @@ export const routes: RouteConfig[] = [
     type: "page",
     path: "/transactions",
     labelKey: "nav.transactions",
-    icon: ArrowRightLeft,
+    icon: TrendingUp,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/commission",
+    labelKey: "nav.commission",
+    icon: Coins,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {

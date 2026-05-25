@@ -12,7 +12,8 @@ export const translations = {
       billImport: "Stock-in",
       customers: "Customers",
       users: "User Management",
-      transactions: "Transactions",
+      transactions: "Revenue",
+      commission: "Commission",
       notifications: "Notifications",
       settings: "Settings",
       signOut: "Sign Out",
@@ -27,7 +28,7 @@ export const translations = {
       billImportTitle: "Stock-in",
       customersTitle: "Customer Management",
       usersTitle: "User Management",
-      transactionsTitle: "Payment Transactions",
+      transactionsTitle: "Revenue & Transactions",
       systemOp: "System Operational"
     },
     dashboard: {
@@ -463,7 +464,8 @@ export const translations = {
       billImport: "Nhập kho",
       customers: "Khách hàng",
       users: "Quản lý người dùng",
-      transactions: "Giao dịch",
+      transactions: "Doanh thu",
+      commission: "Hoa hồng",
       notifications: "Quản lý thông báo",
       settings: "Cài đặt",
       signOut: "Đăng xuất",
@@ -477,7 +479,7 @@ export const translations = {
       inventoryTitle: "Kho sản phẩm",
       billImportTitle: "Nhập kho",
       customersTitle: "Quản lý khách hàng",
-      transactionsTitle: "Lịch sử giao dịch",
+      transactionsTitle: "Doanh thu & Giao dịch",
       usersTitle: "Quản lý người dùng",
       systemOp: "Hệ thống ổn định"
     },

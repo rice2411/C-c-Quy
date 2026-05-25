@@ -8,6 +8,8 @@ import { useCustomers } from '@/contexts/CustomerContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getNextOrderNumber } from '@/services/orderService';
 import { fetchProducts } from '@/services/productService';
+import { fetchCommissionGroups } from '@/services/commissionGroupService';
+import { calcItemCommission } from '@/types/commissionGroup';
 import { getUserByUid } from '@/services/userService';
 import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product } from '@/types/index';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
@@ -367,6 +369,26 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
          };
       });
 
+      // Tính hoa hồng nếu creator là CTV và đơn mới (không phải edit)
+      let commissionAmount: number | undefined;
+      let commissionStatus: 'pending' | undefined;
+      if (!initialData?.id && userData?.role === UserRole.COLABORATOR) {
+        const groups = await fetchCommissionGroups().catch(() => []);
+        commissionAmount = finalItems.reduce((sum, item) => {
+          const product = products.find(p => p.id === item.id);
+          if (!product) return sum;
+          if (groups.length > 0) {
+            // Margin-based commission
+            const perUnit = calcItemCommission(item.price, product.costPrice, groups);
+            return sum + perUnit * item.quantity;
+          }
+          // Legacy fallback: commissionRate cố định
+          const rate = product.commissionRate ?? 0;
+          return sum + item.price * item.quantity * rate;
+        }, 0);
+        if (commissionAmount > 0) commissionStatus = 'pending';
+      }
+
       const formData = {
         id: initialData?.id,
         orderNumber: orderNumber,
@@ -386,7 +408,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         paymentMethod: paymentMethod,
         deliveryType: deliveryType,
         isTest: isTest,
-        createdBy: currentUser.uid
+        createdBy: currentUser.uid,
+        ...(commissionAmount !== undefined && { commissionAmount }),
+        ...(commissionStatus && { commissionStatus }),
       };
 
       if (phone.trim() && !checkCustomerExists(phone)) {

@@ -104,7 +104,9 @@ export const fetchProducts = async (): Promise<Product[]> => {
         description: data.description || '',
         status: data.status || 'active',
         materials,
-        createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString()
+        createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+        costPrice: typeof data.costPrice === 'number' ? data.costPrice : undefined,
+        commissionRate: typeof data.commissionRate === 'number' ? data.commissionRate : undefined,
       } as Product;
     });
   } catch (error) {

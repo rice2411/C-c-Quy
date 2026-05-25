@@ -3,6 +3,14 @@ import { CalendarDays, ChevronRight, MapPin, Package, Phone, User } from 'lucide
 import { PAYMENT_STATUS_COLORS, STATUS_COLORS } from '@/constant/order';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Order } from '@/types';
+import { DeliveryType } from '@/types/enums';
+
+const isFreeShip = (order: Order) => {
+  if (order.shippingCost && order.shippingCost > 0) return false;
+  if (order.deliveryType === DeliveryType.PICKUP) return false;
+  if (order.deliveryType === DeliveryType.SHIP || order.deliveryType === DeliveryType.SHIP_PROVINCE) return true;
+  return !!order.customer?.address;
+};
 import { formatVND } from '@/utils/format/currencyUtil';
 import { buildDeliveryBadge } from '@/utils/order/deliveryDateBadge';
 import Badge from '@/components/ui/Badge';
@@ -155,6 +163,11 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                   >
                     {t(`orders.paymentStatusLabels.${order.paymentStatus}`)}
                   </Badge>
+                  {isFreeShip(order) && (
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-800">
+                      FREE SHIP
+                    </span>
+                  )}
                 </Box>
                 <Typography
                   as="div"

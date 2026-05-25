@@ -14,6 +14,10 @@ export interface Product {
   status: 'active' | 'inactive';
   materials?: ProductMaterial[];
   createdAt?: string;
+  /** Giá vốn / cost price (dùng để tính margin & hoa hồng nhóm) */
+  costPrice?: number;
+  /** Tỷ lệ hoa hồng cố định (legacy / override), VD: 0.1 = 10% trên giá bán */
+  commissionRate?: number;
 }
 
 export interface ProductVersion {

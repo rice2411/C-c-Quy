@@ -13,7 +13,7 @@ import {
   arrayUnion,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
-import { DeliveryType, Order, OrderHistoryEntry, PaymentMethod, PaymentStatus } from "@/types";
+import { DeliveryType, Order, OrderHistoryEntry, PaymentMethod, PaymentStatus, Product } from "@/types";
 import { UserRole } from "@/types/user";
 import { diffOrders } from "@/utils/order/orderHistoryDiff";
 import { resolveZaloGroupIdsForOrderEvent } from "./configurationService";
@@ -116,6 +116,8 @@ export const addOrder = async (orderData: Order): Promise<void> => {
       isTest: !!orderData.isTest,
       deliveryType: orderData.deliveryType || DeliveryType.SHIP,
       createdBy: orderData.createdBy || undefined,
+      ...(orderData.commissionAmount !== undefined && { commissionAmount: orderData.commissionAmount }),
+      ...(orderData.commissionStatus && { commissionStatus: orderData.commissionStatus }),
     };
     const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
       'create',

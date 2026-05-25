@@ -9,6 +9,16 @@ import {
 import { PAYMENT_METHOD_COLORS, PAYMENT_STATUS_COLORS, STATUS_COLORS } from '@/constant/order';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Order } from '@/types';
+import { DeliveryType } from '@/types/enums';
+
+/** FREE SHIP = ship cost 0 và là đơn giao (SHIP/SHIP_PROVINCE, hoặc đơn cũ có địa chỉ) */
+const isFreeShip = (order: Order) => {
+  if (order.shippingCost && order.shippingCost > 0) return false;
+  if (order.deliveryType === DeliveryType.PICKUP) return false;
+  if (order.deliveryType === DeliveryType.SHIP || order.deliveryType === DeliveryType.SHIP_PROVINCE) return true;
+  // Đơn cũ không có deliveryType → dùng address làm dấu hiệu giao hàng
+  return !!order.customer?.address;
+};
 import { formatVND } from '@/utils/format/currencyUtil';
 import { buildDeliveryBadge } from '@/utils/order/deliveryDateBadge';
 import Badge from '@/components/ui/Badge';
@@ -174,6 +184,11 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                           ? t('paymentMethod.banking')
                           : t('paymentMethod.cash')}
                       </Badge>
+                      {isFreeShip(order) && (
+                        <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-bold text-green-800">
+                          FREE SHIP
+                        </span>
+                      )}
                       {order.createdBy ? (
                         <Typography
                           as="span"

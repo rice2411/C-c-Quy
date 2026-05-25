@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   XCircle,
   RotateCcw,
+  BarChart2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -32,6 +33,16 @@ import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 
 type TabKey = 'all' | 'valid' | 'invalid' | 'external';
+type DatePreset = 'today' | '7d' | 'month' | 'last_month' | 'custom';
+
+const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+const DATE_PRESETS: { key: DatePreset; label: string }[] = [
+  { key: 'today', label: 'Hôm nay' },
+  { key: '7d', label: '7 ngày' },
+  { key: 'month', label: 'Tháng này' },
+  { key: 'last_month', label: 'Tháng trước' },
+];
 
 interface ExternalTransactionRowProps {
   transaction: Transaction;
@@ -76,6 +87,87 @@ const ExternalTransactionRow: React.FC<ExternalTransactionRowProps> = ({ transac
   );
 };
 
+/* ─── Mini bar chart ─── */
+interface RevenueChartProps {
+  transactions: Transaction[];
+  fromDate: string;
+  toDate: string;
+}
+
+const RevenueChart: React.FC<RevenueChartProps> = ({ transactions, fromDate, toDate }) => {
+  const bars = useMemo(() => {
+    const end = toDate ? new Date(toDate) : new Date();
+    end.setHours(23, 59, 59, 999);
+    const start = fromDate ? new Date(fromDate) : (() => { const d = new Date(end); d.setDate(d.getDate() - 29); return d; })();
+
+    const diffDays = Math.round((end.getTime() - start.getTime()) / 86_400_000) + 1;
+    const bucketDays = diffDays <= 31 ? 1 : diffDays <= 90 ? 7 : 30;
+
+    const map: Record<string, number> = {};
+    transactions.forEach(tr => {
+      const d = new Date(tr.transactionDate);
+      if (d < start || d > end) return;
+      // bucket by period start
+      const offset = Math.floor((d.getTime() - start.getTime()) / (bucketDays * 86_400_000));
+      const key = String(offset);
+      map[key] = (map[key] || 0) + tr.transferAmount;
+    });
+
+    const count = Math.ceil(diffDays / bucketDays);
+    return Array.from({ length: count }, (_, i) => {
+      const bucketStart = new Date(start.getTime() + i * bucketDays * 86_400_000);
+      return {
+        label: bucketDays === 1
+          ? `${bucketStart.getDate()}/${bucketStart.getMonth() + 1}`
+          : `${bucketStart.getDate()}/${bucketStart.getMonth() + 1}`,
+        amount: map[String(i)] || 0,
+      };
+    });
+  }, [transactions, fromDate, toDate]);
+
+  const max = useMemo(() => Math.max(...bars.map(b => b.amount), 1), [bars]);
+  const hasData = bars.some(b => b.amount > 0);
+
+  if (!hasData) return null;
+
+  return (
+    <Card padding="none" layoutClassName="p-4 overflow-hidden" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
+      <Box layoutClassName="mb-3 flex items-center gap-2">
+        <BarChart2 className="h-4 w-4 text-orange-500" />
+        <Typography size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">
+          Biểu đồ doanh thu
+        </Typography>
+      </Box>
+      <div className="flex items-end gap-0.5 overflow-x-auto pb-1" style={{ height: 72 }}>
+        {bars.map((b, i) => {
+          const heightPct = b.amount > 0 ? Math.max(8, Math.round((b.amount / max) * 100)) : 0;
+          return (
+            <div key={i} className="group relative flex min-w-0 flex-1 flex-col items-center justify-end">
+              {b.amount > 0 && (
+                <div
+                  className="absolute bottom-5 left-1/2 z-10 hidden -translate-x-1/2 -translate-y-1 whitespace-nowrap rounded bg-slate-800 px-2 py-0.5 text-[10px] text-white shadow group-hover:flex dark:bg-slate-600"
+                >
+                  {formatVND(b.amount)}
+                </div>
+              )}
+              <div
+                className={`w-full rounded-t transition-all ${b.amount > 0 ? 'bg-orange-400 hover:bg-orange-500 dark:bg-orange-500 dark:hover:bg-orange-400' : 'bg-slate-100 dark:bg-slate-700'}`}
+                style={{ height: `${heightPct}%` }}
+              />
+              {bars.length <= 31 && (
+                <span className="mt-1 w-full truncate text-center text-[9px] text-slate-400 dark:text-slate-500">
+                  {b.label}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+};
+
+/* ─── Main page ─── */
 const TransactionsPage: React.FC = () => {
   const { t } = useLanguage();
   const { orders, modifyOrder } = useOrders();
@@ -85,11 +177,37 @@ const TransactionsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [fromDate, setFromDate] = useState(() => {
+    const d = new Date();
+    return fmt(new Date(d.getFullYear(), d.getMonth(), 1));
+  });
+  const [toDate, setToDate] = useState(() => fmt(new Date()));
+  const [datePreset, setDatePreset] = useState<DatePreset>('month');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('all');
+
+  const applyPreset = (preset: DatePreset) => {
+    const today = new Date();
+    if (preset === 'today') {
+      setFromDate(fmt(today));
+      setToDate(fmt(today));
+    } else if (preset === '7d') {
+      const from = new Date(today);
+      from.setDate(from.getDate() - 6);
+      setFromDate(fmt(from));
+      setToDate(fmt(today));
+    } else if (preset === 'month') {
+      setFromDate(fmt(new Date(today.getFullYear(), today.getMonth(), 1)));
+      setToDate(fmt(today));
+    } else if (preset === 'last_month') {
+      const first = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const last = new Date(today.getFullYear(), today.getMonth(), 0);
+      setFromDate(fmt(first));
+      setToDate(fmt(last));
+    }
+    setDatePreset(preset);
+  };
 
   const loadData = async () => {
     try {
@@ -118,9 +236,7 @@ const TransactionsPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const formatDate = (dateStr: string) => {
     try {
@@ -134,10 +250,8 @@ const TransactionsPage: React.FC = () => {
     }
   };
 
-  // Base: chỉ giao dịch tiền vào, áp filter ngày + search
   const baseFiltered = useMemo(() => {
     let filtered = transactions.filter(tr => tr.transferType === 'in');
-
     if (fromDate) {
       const from = new Date(fromDate);
       filtered = filtered.filter(tr => new Date(tr.transactionDate) >= from);
@@ -163,7 +277,6 @@ const TransactionsPage: React.FC = () => {
     () => baseFiltered.filter(tr => tr.orderNumber && tr.orderNumber.trim() !== ''),
     [baseFiltered],
   );
-  // invalidTransactions = chưa có mã đơn (bao gồm cả external, panel tự phân loại)
   const invalidTransactions = useMemo(
     () => baseFiltered.filter(tr => !tr.orderNumber || tr.orderNumber.trim() === ''),
     [baseFiltered],
@@ -183,18 +296,20 @@ const TransactionsPage: React.FC = () => {
     activeTab === 'external' ? externalTransactions :
     baseFiltered;
 
-  // Doanh thu chỉ tính GD hợp lệ (có mã đơn, không phải ngoài hệ thống)
   const totalAmount = useMemo(
     () => validTransactions.reduce((s, tr) => s + tr.transferAmount, 0),
     [validTransactions],
   );
+  const avgAmount = useMemo(
+    () => validTransactions.length > 0 ? Math.round(totalAmount / validTransactions.length) : 0,
+    [totalAmount, validTransactions.length],
+  );
 
-  const hasFilters = searchTerm || fromDate || toDate;
+  const hasFilters = searchTerm || !fromDate || !toDate;
 
   const clearFilters = () => {
     setSearchTerm('');
-    setFromDate('');
-    setToDate('');
+    applyPreset('month');
   };
 
   const handleTransactionClick = (tr: Transaction) => {
@@ -202,7 +317,6 @@ const TransactionsPage: React.FC = () => {
     setIsDetailModalOpen(true);
   };
 
-  /** Liên kết giao dịch với đơn hàng: cập nhật sepayId + đánh dấu đã thanh toán + cập nhật list */
   const handleLinkOrder = async (orderId: string, transaction: Transaction) => {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
@@ -210,12 +324,10 @@ const TransactionsPage: React.FC = () => {
       await modifyOrder(orderId, {
         ...order,
         sepayId: transaction.sepayId,
-        // Chỉ chuyển PAID nếu chưa thanh toán
         paymentStatus: order.paymentStatus === PaymentStatus.PAID
           ? order.paymentStatus
           : PaymentStatus.PAID,
       });
-      // Cập nhật local: gán orderNumber → transaction chuyển sang tab "Hợp lệ"
       setTransactions(prev =>
         prev.map(tr =>
           tr.id === transaction.id
@@ -230,7 +342,6 @@ const TransactionsPage: React.FC = () => {
     }
   };
 
-  /** Đánh dấu giao dịch là ngoài hệ thống (cập nhật Firestore + local state) */
   const handleMarkExternal = async (transaction: Transaction) => {
     try {
       await markTransactionExternal(transaction.id, true);
@@ -244,7 +355,6 @@ const TransactionsPage: React.FC = () => {
     }
   };
 
-  /** Khôi phục giao dịch về trạng thái chưa khớp */
   const handleUnmarkExternal = async (transaction: Transaction) => {
     try {
       await markTransactionExternal(transaction.id, false);
@@ -259,30 +369,10 @@ const TransactionsPage: React.FC = () => {
   };
 
   const tabs: { key: TabKey; label: string; count: number; icon: React.ReactNode }[] = [
-    {
-      key: 'all',
-      label: 'Tất cả',
-      count: baseFiltered.length,
-      icon: <ArrowRightLeft className="h-3.5 w-3.5" />,
-    },
-    {
-      key: 'valid',
-      label: 'Hợp lệ',
-      count: validTransactions.length,
-      icon: <CheckCircle2 className="h-3.5 w-3.5" />,
-    },
-    {
-      key: 'invalid',
-      label: 'Chưa khớp',
-      count: pendingInvalidCount,
-      icon: <AlertTriangle className="h-3.5 w-3.5" />,
-    },
-    {
-      key: 'external',
-      label: 'Ngoài hệ thống',
-      count: externalTransactions.length,
-      icon: <XCircle className="h-3.5 w-3.5" />,
-    },
+    { key: 'all', label: 'Tất cả', count: baseFiltered.length, icon: <ArrowRightLeft className="h-3.5 w-3.5" /> },
+    { key: 'valid', label: 'Hợp lệ', count: validTransactions.length, icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+    { key: 'invalid', label: 'Chưa khớp', count: pendingInvalidCount, icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+    { key: 'external', label: 'Ngoài HT', count: externalTransactions.length, icon: <XCircle className="h-3.5 w-3.5" /> },
   ];
 
   return (
@@ -292,7 +382,7 @@ const TransactionsPage: React.FC = () => {
       <Box layoutClassName="flex items-center justify-between gap-3">
         <Box layoutClassName="flex items-center gap-3">
           <Box layoutClassName="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/30">
-            <ArrowRightLeft className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            <TrendingUp className="h-5 w-5 text-orange-600 dark:text-orange-400" />
           </Box>
           <Box>
             <Typography as="h1" layoutClassName="text-lg font-bold sm:text-xl" textClassName="text-slate-900 dark:text-white">
@@ -300,7 +390,7 @@ const TransactionsPage: React.FC = () => {
             </Typography>
             {!loading && (
               <Typography as="p" size="xs" variant="muted">
-                {baseFiltered.length} giao dịch{hasFilters ? ' (đang lọc)' : ''}
+                {baseFiltered.length} giao dịch • {fromDate && toDate ? `${fromDate.split('-').reverse().join('/')} — ${toDate.split('-').reverse().join('/')}` : ''}
               </Typography>
             )}
           </Box>
@@ -324,7 +414,7 @@ const TransactionsPage: React.FC = () => {
 
       {/* ── Stats ── */}
       {!loading && (
-        <Box layoutClassName="grid grid-cols-3 gap-3">
+        <Box layoutClassName="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Card padding="none" layoutClassName="p-4" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
             <Box layoutClassName="flex items-start justify-between">
               <Box>
@@ -335,6 +425,20 @@ const TransactionsPage: React.FC = () => {
               </Box>
               <Box layoutClassName="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
                 <Banknote className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              </Box>
+            </Box>
+          </Card>
+
+          <Card padding="none" layoutClassName="p-4" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
+            <Box layoutClassName="flex items-start justify-between">
+              <Box>
+                <Typography as="p" size="xs" variant="muted" layoutClassName="mb-1 uppercase tracking-wide font-medium">Trung bình / GD</Typography>
+                <Typography as="p" layoutClassName="text-lg font-bold sm:text-xl" textClassName="text-orange-600 dark:text-orange-400">
+                  {avgAmount > 0 ? formatVND(avgAmount) : '—'}
+                </Typography>
+              </Box>
+              <Box layoutClassName="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-50 dark:bg-orange-900/20">
+                <TrendingUp className="h-4 w-4 text-orange-600 dark:text-orange-400" />
               </Box>
             </Box>
           </Card>
@@ -377,8 +481,50 @@ const TransactionsPage: React.FC = () => {
       )}
 
       {/* ── Filters ── */}
-      <Card padding="none" layoutClassName="p-3 sm:p-4" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
-        <Box layoutClassName="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <Card padding="none" layoutClassName="p-3 sm:p-4 space-y-3" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
+        {/* Quick presets */}
+        <Box layoutClassName="flex flex-wrap items-center gap-1.5">
+          {DATE_PRESETS.map(p => (
+            <button
+              key={p.key}
+              type="button"
+              onClick={() => applyPreset(p.key)}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                datePreset === p.key
+                  ? 'border-orange-400 bg-orange-50 text-orange-700 dark:border-orange-600 dark:bg-orange-900/30 dark:text-orange-300'
+                  : 'border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-orange-700'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+          <span className="ml-1 text-xs text-slate-300 dark:text-slate-600">|</span>
+          <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+          <Input
+            type="date"
+            value={fromDate}
+            onChange={(e) => { setFromDate(e.target.value); setDatePreset('custom'); }}
+            sizeClassName="px-2 py-1 text-xs"
+            backgroundClassName="bg-slate-50 dark:bg-slate-700"
+            borderClassName="border-slate-200 dark:border-slate-600"
+            textClassName="text-slate-700 dark:text-slate-200"
+            focusClassName="focus:ring-1"
+          />
+          <Typography as="span" size="xs" variant="muted">—</Typography>
+          <Input
+            type="date"
+            value={toDate}
+            onChange={(e) => { setToDate(e.target.value); setDatePreset('custom'); }}
+            sizeClassName="px-2 py-1 text-xs"
+            backgroundClassName="bg-slate-50 dark:bg-slate-700"
+            borderClassName="border-slate-200 dark:border-slate-600"
+            textClassName="text-slate-700 dark:text-slate-200"
+            focusClassName="focus:ring-1"
+          />
+        </Box>
+
+        {/* Search */}
+        <Box layoutClassName="flex items-center gap-2">
           <Box layoutClassName="flex-1 min-w-0">
             <Input
               type="text"
@@ -391,28 +537,23 @@ const TransactionsPage: React.FC = () => {
               borderClassName="border-slate-200 dark:border-slate-600"
             />
           </Box>
-          <Box layoutClassName="flex items-center gap-2">
-            <Calendar className="h-4 w-4 shrink-0 text-slate-400" />
-            <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
-              sizeClassName="px-2 py-1.5 text-xs sm:text-sm"
-              backgroundClassName="bg-slate-50 dark:bg-slate-700"
-              borderClassName="border-slate-200 dark:border-slate-600"
-              textClassName="text-slate-700 dark:text-slate-200" focusClassName="focus:ring-1" />
-            <Typography as="span" size="xs" variant="muted">—</Typography>
-            <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
-              sizeClassName="px-2 py-1.5 text-xs sm:text-sm"
-              backgroundClassName="bg-slate-50 dark:bg-slate-700"
-              borderClassName="border-slate-200 dark:border-slate-600"
-              textClassName="text-slate-700 dark:text-slate-200" focusClassName="focus:ring-1" />
-          </Box>
-          {hasFilters && (
-            <button type="button" onClick={clearFilters}
-              className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200">
-              <X className="h-3.5 w-3.5" />Xóa lọc
+          {searchTerm && (
+            <button type="button" onClick={() => setSearchTerm('')}
+              className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700">
+              <X className="h-3.5 w-3.5" />Xóa
             </button>
           )}
         </Box>
       </Card>
+
+      {/* ── Revenue Chart ── */}
+      {!loading && (activeTab === 'all' || activeTab === 'valid') && (
+        <RevenueChart
+          transactions={activeTab === 'valid' ? validTransactions : baseFiltered}
+          fromDate={fromDate}
+          toDate={toDate}
+        />
+      )}
 
       {/* ── Tabs ── */}
       {!loading && (
@@ -470,7 +611,6 @@ const TransactionsPage: React.FC = () => {
           </div>
         )
       ) : activeTab === 'invalid' ? (
-        /* Mapping panel for unmatched transactions */
         invalidTransactions.length === 0 ? (
           <Box layoutClassName="flex flex-1 flex-col items-center justify-center gap-3 py-16" textClassName="text-slate-400 dark:text-slate-500">
             <Box layoutClassName="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/20">

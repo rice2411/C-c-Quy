@@ -59,4 +59,10 @@ export interface Order {
   history?: OrderHistoryEntry[];
   /** Don tao de test tinh nang — Zalo message se prepend banner ĐƠN HÀNG TEST */
   isTest?: boolean;
+  /** Tổng hoa hồng snapshot tại thời điểm tạo đơn (chỉ áp dụng khi CTV tạo) */
+  commissionAmount?: number;
+  /** Trạng thái hoa hồng: pending = chưa trả, paid = đã trả */
+  commissionStatus?: 'pending' | 'paid';
+  /** Thời điểm đánh dấu đã trả hoa hồng */
+  commissionPaidAt?: string;
 }
