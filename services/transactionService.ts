@@ -1,4 +1,4 @@
-import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { collection, doc, getDocs, query, orderBy, updateDoc, where } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 import { Transaction } from '@/types';
 
@@ -37,7 +37,8 @@ export const fetchTransactions = async (): Promise<Transaction[]> => {
         subAccount: data.subAccount || '',
         transactionDate: getDateStr(data.transactionDate),
         transferAmount: Number(data.transferAmount) || 0,
-        transferType: data.transferType || 'in'
+        transferType: data.transferType || 'in',
+        isExternal: data.isExternal === true,
       } as Transaction;
     });
   } catch (error) {
@@ -50,6 +51,15 @@ export const fetchTransactions = async (): Promise<Transaction[]> => {
         return [];
     }
   }
+};
+
+/** Đánh dấu giao dịch là không liên quan đến hệ thống (hoặc bỏ đánh dấu) */
+export const markTransactionExternal = async (
+  transactionId: string,
+  isExternal: boolean,
+): Promise<void> => {
+  const ref = doc(db, 'transactions', transactionId);
+  await updateDoc(ref, { isExternal });
 };
 
 export const fetchTransactionsByOrderNumber = async (orderNumber: string): Promise<Transaction[]> => {

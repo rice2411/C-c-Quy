@@ -16,7 +16,6 @@ import Button from '@/components/ui/Button';
 import Checkbox from '@/components/ui/Checkbox';
 import Field from '@/components/ui/Field';
 import Input from '@/components/ui/Input';
-import Label from '@/components/ui/Label';
 import Spinner from '@/components/ui/Spinner';
 import CreateCustomerModal from '@/pages/Orders/components/modals/CreateCustomerModal';
 import OrderFormCustomerSection from '@/pages/Orders/components/OrderFormCustomerSection';
@@ -516,18 +515,30 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
                   leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
                 />
               </Field>
-              <Box layoutClassName="space-y-2 min-w-0 overflow-hidden">
-                <Box layoutClassName="flex items-center justify-between">
-                  <Label htmlFor="order-form-delivery-time" className="mb-0">
-                    Giờ nhận (tùy chọn)
-                  </Label>
-                  <Checkbox
-                    checked={isDeliveryTimeEnabled}
-                    onChange={(e) => setIsDeliveryTimeEnabled(e.target.checked)}
-                    label="Thêm"
-                    containerClassName="text-sm text-slate-600 dark:text-slate-400"
-                  />
-                </Box>
+              <Field
+                htmlFor="order-form-delivery-time"
+                className="min-w-0 overflow-hidden"
+                label={
+                  <Box layoutClassName="flex w-full items-center justify-between">
+                    <span>Giờ nhận (tùy chọn)</span>
+                    <Checkbox
+                      checked={isDeliveryTimeEnabled}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setIsDeliveryTimeEnabled(checked);
+                        if (checked && !deliveryTime) {
+                          const now = new Date();
+                          const hh = String(now.getHours()).padStart(2, '0');
+                          const mm = String(now.getMinutes()).padStart(2, '0');
+                          setDeliveryTime(`${hh}:${mm}`);
+                        }
+                      }}
+                      label="Thêm"
+                      containerClassName="text-sm text-slate-600 dark:text-slate-400"
+                    />
+                  </Box>
+                }
+              >
                 <Box
                   layoutClassName="transition-all"
                   stateClassName={isDeliveryTimeEnabled ? 'opacity-100' : 'pointer-events-none opacity-50'}
@@ -542,7 +553,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
                     leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
                   />
                 </Box>
-              </Box>
+              </Field>
             </Box>
             <hr className="border-slate-100 dark:border-slate-700" />
 

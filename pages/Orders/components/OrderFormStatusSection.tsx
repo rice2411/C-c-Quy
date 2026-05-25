@@ -47,23 +47,25 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
     <Box layoutClassName="space-y-6">
       <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label={t('form.status')} htmlFor="order-form-status">
-          <Select
-            id="order-form-status"
-            fullWidth
-            value={status}
-            onChange={(e) => setStatus(e.target.value as OrderStatus)}
-          >
-            {Object.values(OrderStatus).map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </Select>
+          <div>
+            <Select
+              id="order-form-status"
+              fullWidth
+              value={status}
+              onChange={(e) => setStatus(e.target.value as OrderStatus)}
+            >
+              {Object.values(OrderStatus).map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </Select>
+          </div>
         </Field>
 
         <Field label={t('detail.payment')} htmlFor="order-form-payment-status">
-          <Box layoutClassName="relative">
-            <CreditCard className="absolute left-3 top-2.5 z-10 h-4 w-4 text-slate-400" />
+          <div className="relative">
+            <CreditCard className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Select
               id="order-form-payment-status"
               fullWidth
@@ -77,13 +79,13 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
                 </option>
               ))}
             </Select>
-          </Box>
+          </div>
         </Field>
       </Box>
 
       <Field label={t('paymentMethod.label')} htmlFor="order-form-payment-method">
-        <Box layoutClassName="relative">
-          <Wallet className="absolute left-3 top-2.5 z-10 h-4 w-4 text-slate-400" />
+        <div className="relative">
+          <Wallet className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Select
             id="order-form-payment-method"
             fullWidth
@@ -94,7 +96,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             <option value={PaymentMethod.CASH}>{t('paymentMethod.cash')}</option>
             <option value={PaymentMethod.BANKING}>{t('paymentMethod.banking')}</option>
           </Select>
-        </Box>
+        </div>
       </Field>
 
       {/* DeliveryType đã được chuyển lên OrderFormCustomerSection để gần ô địa chỉ */}

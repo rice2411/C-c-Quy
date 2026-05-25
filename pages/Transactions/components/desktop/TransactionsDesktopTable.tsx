@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Building2, CreditCard, TrendingUp, TrendingDown } from 'lucide-react';
+import { Calendar, Building2, CreditCard, TrendingUp } from 'lucide-react';
 import { Transaction } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Badge from '@/components/ui/Badge';
@@ -19,9 +19,7 @@ const TransactionsDesktopTable: React.FC<TransactionsDesktopTableProps> = ({
   formatDate,
   onTransactionClick,
 }) => {
-  if (!transactions.length) {
-    return null;
-  }
+  if (!transactions.length) return null;
 
   return (
     <Card
@@ -33,113 +31,121 @@ const TransactionsDesktopTable: React.FC<TransactionsDesktopTableProps> = ({
       <Box layoutClassName="flex-1 overflow-x-auto">
         <Table>
           <TableHead
-            layoutClassName="sticky top-0 z-10 backdrop-blur-sm"
-            backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+            layoutClassName="sticky top-0 z-10"
+            backgroundClassName="bg-slate-50 dark:bg-slate-700/60"
             borderClassName="border-b border-slate-200 dark:border-slate-600"
-            shadowClassName="shadow-sm"
           >
-            <TableRow textClassName="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">Date</TableHeaderCell>
-              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">Amount</TableHeaderCell>
-              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">Content</TableHeaderCell>
-              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">Order Ref</TableHeaderCell>
-              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">SePay ID</TableHeaderCell>
-              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">Gateway</TableHeaderCell>
-              <TableHeaderCell layoutClassName="px-4 py-3 sm:px-6">Account</TableHeaderCell>
+            <TableRow textClassName="text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              <TableHeaderCell layoutClassName="px-5 py-3.5">Ngày GD</TableHeaderCell>
+              <TableHeaderCell layoutClassName="px-5 py-3.5">Số tiền</TableHeaderCell>
+              <TableHeaderCell layoutClassName="px-5 py-3.5">Nội dung</TableHeaderCell>
+              <TableHeaderCell layoutClassName="px-5 py-3.5">Mã đơn</TableHeaderCell>
+              <TableHeaderCell layoutClassName="px-5 py-3.5">SePay ID</TableHeaderCell>
+              <TableHeaderCell layoutClassName="px-5 py-3.5">Ngân hàng</TableHeaderCell>
+              <TableHeaderCell layoutClassName="px-5 py-3.5">Tài khoản</TableHeaderCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {transactions.map((tr) => (
+            {transactions.map((tr, idx) => (
               <TableRow
                 key={tr.id}
                 onClick={() => onTransactionClick?.(tr)}
-                hoverClassName="hover:bg-slate-50/80 dark:hover:bg-slate-700/30"
+                backgroundClassName={idx % 2 === 0 ? '' : 'bg-slate-50/50 dark:bg-slate-700/20'}
+                hoverClassName="hover:bg-orange-50/60 dark:hover:bg-orange-900/10"
                 stateClassName="group cursor-pointer transition-colors"
+                borderClassName="border-b border-slate-100 dark:border-slate-700/60 last:border-0"
               >
-                <TableCell layoutClassName="whitespace-nowrap px-4 py-4 sm:px-6">
+                {/* Date */}
+                <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
                   <Box layoutClassName="flex items-center gap-2">
                     <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                    <Typography as="span" size="sm" layoutClassName="font-medium text-xs sm:text-sm" textClassName="text-slate-600 dark:text-slate-300">
+                    <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-300">
                       {formatDate(tr.transactionDate)}
                     </Typography>
                   </Box>
                 </TableCell>
-                <TableCell layoutClassName="whitespace-nowrap px-4 py-4 sm:px-6">
-                  <Box layoutClassName="flex items-center gap-2">
-                    {tr.transferType === 'in' ? (
-                      <TrendingUp className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
-                    )}
+
+                {/* Amount */}
+                <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
+                  <Box layoutClassName="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 dark:bg-emerald-900/20">
+                    <TrendingUp className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                     <Typography
                       as="span"
-                      layoutClassName="text-sm font-bold sm:text-base"
-                      textClassName={
-                        tr.transferType === 'in'
-                          ? 'text-emerald-600 dark:text-emerald-400'
-                          : 'text-red-600 dark:text-red-400'
-                      }
+                      layoutClassName="text-sm font-bold"
+                      textClassName="text-emerald-700 dark:text-emerald-300"
                     >
-                      {tr.transferType === 'in' ? '+' : '-'}
-                      {formatVND(tr.transferAmount)}
+                      +{formatVND(tr.transferAmount)}
                     </Typography>
                   </Box>
                 </TableCell>
-                <TableCell layoutClassName="px-4 py-4 sm:px-6">
-                  <Box layoutClassName="max-w-xs">
-                    <Typography
-                      size="sm"
-                      layoutClassName="truncate text-xs sm:text-sm"
-                      textClassName="text-slate-700 transition-colors group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white"
-                      title={tr.content}
-                    >
-                      {tr.content || '-'}
-                    </Typography>
-                  </Box>
+
+                {/* Content */}
+                <TableCell layoutClassName="px-5 py-3.5">
+                  <Typography
+                    as="div"
+                    size="xs"
+                    layoutClassName="max-w-[260px] truncate"
+                    textClassName="text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white transition-colors"
+                    title={tr.content}
+                  >
+                    {tr.content || '—'}
+                  </Typography>
                 </TableCell>
-                <TableCell layoutClassName="px-4 py-4 sm:px-6">
+
+                {/* Order ref */}
+                <TableCell layoutClassName="px-5 py-3.5">
                   {tr.orderNumber ? (
                     <Badge
                       size="sm"
-                      layoutClassName="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium font-mono"
-                      borderClassName="border-transparent"
+                      layoutClassName="inline-flex items-center px-2.5 py-1 text-xs font-semibold font-mono"
+                      borderClassName="border border-orange-200 dark:border-orange-700"
                       backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
                       textClassName="text-orange-700 dark:text-orange-300"
                     >
                       {tr.orderNumber}
                     </Badge>
                   ) : (
-                    <Typography as="span" size="xs" variant="muted">-</Typography>
+                    <Typography as="span" size="xs" variant="muted">—</Typography>
                   )}
                 </TableCell>
-                <TableCell layoutClassName="whitespace-nowrap px-4 py-4 sm:px-6">
+
+                {/* SePay ID */}
+                <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
                   {tr.sepayId ? (
-                    <Badge
-                      size="sm"
-                      layoutClassName="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-mono"
-                      borderClassName="border-transparent"
-                      backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
-                      textClassName="text-slate-700 dark:text-slate-200"
+                    <Typography
+                      as="span"
+                      size="xs"
+                      layoutClassName="font-mono"
+                      textClassName="text-slate-500 dark:text-slate-400"
                     >
                       #{tr.sepayId}
-                    </Badge>
+                    </Typography>
                   ) : (
-                    <Typography as="span" size="xs" variant="muted">-</Typography>
+                    <Typography as="span" size="xs" variant="muted">—</Typography>
                   )}
                 </TableCell>
-                <TableCell layoutClassName="px-4 py-4 sm:px-6">
-                  <Box layoutClassName="flex items-center gap-2">
-                    <Building2 className="h-3.5 w-3.5 text-slate-400" />
-                    <Typography as="span" size="sm" layoutClassName="text-xs sm:text-sm" textClassName="text-slate-600 dark:text-slate-400">
-                      {tr.gateway || '-'}
+
+                {/* Gateway */}
+                <TableCell layoutClassName="px-5 py-3.5">
+                  <Box layoutClassName="flex items-center gap-1.5">
+                    <Building2 className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                    <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-400">
+                      {tr.gateway || '—'}
                     </Typography>
                   </Box>
                 </TableCell>
-                <TableCell layoutClassName="px-4 py-4 sm:px-6">
-                  <Box layoutClassName="flex items-center gap-2">
-                    <CreditCard className="h-3.5 w-3.5 text-slate-400" />
-                    <Typography as="span" size="xs" layoutClassName="font-mono" textClassName="text-slate-500 dark:text-slate-400">
-                      {tr.subAccount || tr.accountNumber || '-'}
+
+                {/* Account */}
+                <TableCell layoutClassName="px-5 py-3.5">
+                  <Box layoutClassName="flex items-center gap-1.5">
+                    <CreditCard className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                    <Typography
+                      as="span"
+                      size="xs"
+                      layoutClassName="font-mono"
+                      textClassName="text-slate-500 dark:text-slate-400"
+                    >
+                      {tr.subAccount || tr.accountNumber || '—'}
                     </Typography>
                   </Box>
                 </TableCell>
@@ -153,5 +159,3 @@ const TransactionsDesktopTable: React.FC<TransactionsDesktopTableProps> = ({
 };
 
 export default TransactionsDesktopTable;
-
-

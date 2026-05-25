@@ -52,7 +52,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
 
   useEffect(() => {
     setRecentIds(getRecentProductIds());
-  }, [items.length, products.length]);
+  }, []);
 
   useEffect(() => {
     setQuantityInputs((prev) => {
@@ -123,45 +123,50 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
         </Button>
       ) : null}
 
-      {items.length === 0 ? (
-        <Box
-          layoutClassName="rounded-xl border-2 border-dashed border-slate-200 p-4 dark:border-slate-700"
-        >
-          {recentChips.length > 0 && onAddItemWithProduct ? (
-            <>
-              <Typography size="xs" variant="muted" layoutClassName="mb-2 font-medium uppercase tracking-wide">
-                Hay dùng
-              </Typography>
-              <Box layoutClassName="flex flex-wrap gap-2">
-                {recentChips.map((p) => (
-                  <button
-                    type="button"
-                    key={p.id}
-                    onClick={() => onAddItemWithProduct(p)}
-                    className="group flex items-center gap-2 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs transition-colors hover:border-orange-300 hover:bg-orange-50 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-orange-700 dark:hover:bg-orange-950/30"
-                  >
-                    {p.image ? (
-                      <img
-                        src={p.image}
-                        alt={p.name}
-                        className="h-5 w-5 shrink-0 rounded-full object-cover"
-                      />
-                    ) : null}
-                    <span className="font-medium text-slate-700 dark:text-slate-200">{p.name}</span>
-                    <span className="text-orange-600 dark:text-orange-400">
-                      {formatVNDOrDash(p.price)}
+      {recentChips.length > 0 && onAddItemWithProduct ? (
+        <Box layoutClassName="space-y-1.5">
+          <Typography size="xs" variant="muted" layoutClassName="font-medium uppercase tracking-wide">
+            Hay dùng
+          </Typography>
+          <Box layoutClassName="flex flex-wrap gap-2">
+            {recentChips.map((p) => {
+              const qty = currentQuantities[p.id] || 0;
+              return (
+                <button
+                  type="button"
+                  key={p.id}
+                  onClick={() => onAddItemWithProduct(p)}
+                  className={`flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                    qty > 0
+                      ? 'border-orange-300 bg-orange-50 dark:border-orange-700 dark:bg-orange-950/30'
+                      : 'border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-orange-700 dark:hover:bg-orange-950/30'
+                  }`}
+                >
+                  {p.image ? (
+                    <img src={p.image} alt={p.name} className="h-5 w-5 shrink-0 rounded-full object-cover" />
+                  ) : null}
+                  <span className="font-medium text-slate-700 dark:text-slate-200">{p.name}</span>
+                  {qty > 0 ? (
+                    <span className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      ×{qty}
                     </span>
-                  </button>
-                ))}
-              </Box>
-            </>
-          ) : (
-            <Typography size="sm" variant="muted" layoutClassName="text-center">
-              Chưa có sản phẩm nào — bấm "Thêm sản phẩm" để chọn.
-            </Typography>
-          )}
+                  ) : (
+                    <span className="text-orange-600 dark:text-orange-400">{formatVNDOrDash(p.price)}</span>
+                  )}
+                </button>
+              );
+            })}
+          </Box>
         </Box>
-      ) : (
+      ) : null}
+
+      {items.length === 0 && recentChips.length === 0 ? (
+        <Box layoutClassName="rounded-xl border-2 border-dashed border-slate-200 p-4 dark:border-slate-700">
+          <Typography size="sm" variant="muted" layoutClassName="text-center">
+            Chưa có sản phẩm nào — bấm "Thêm sản phẩm" để chọn.
+          </Typography>
+        </Box>
+      ) : items.length > 0 ? (
         <Box layoutClassName="space-y-2">
           {items.map((item, index) => {
             const currentImage = getProductImage(item);
@@ -295,7 +300,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
             );
           })}
         </Box>
-      )}
+      ) : null}
 
       {/* Input phí ship đã được xoá — phí ship tự tính từ AddressMapInput
           (auto-fill qua onShipFeeChange khi user nhập địa chỉ + bấm Enter).

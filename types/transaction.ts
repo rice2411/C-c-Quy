@@ -15,4 +15,6 @@ export interface Transaction {
   transactionDate: string;
   transferAmount: number;
   transferType: string; // 'in' | 'out'
+  /** Giao dịch không liên quan đến hệ thống (đánh dấu thủ công) */
+  isExternal?: boolean;
 }
