@@ -1218,6 +1218,73 @@ const Styles: React.FC = () => (
     .cq2-ig-post:hover .cq2-ig-overlay { opacity: 1; }
     .cq2-ig-cta { display: flex; justify-content: center; margin-top: 3rem; }
 
+    /* ============ SOCIAL MEDIA GRID ============ */
+    .cq2-social-grid {
+      max-width: 1200px; margin: 0 auto;
+      display: grid; gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 640px) { .cq2-social-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .cq2-social-grid { grid-template-columns: repeat(4, 1fr); } }
+    .cq2-social-card {
+      position: relative;
+      display: flex; flex-direction: column; align-items: center; gap: 1rem;
+      padding: 2rem 1.5rem;
+      border-radius: 24px;
+      background: #FFFFFF;
+      border: 1.5px solid rgba(26,20,16,0.06);
+      text-decoration: none;
+      color: var(--cq-ink);
+      transition: transform 0.5s cubic-bezier(.2,.8,.2,1), box-shadow 0.5s, border-color 0.4s;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .cq2-social-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.12);
+      border-color: var(--accent, #D87E2D);
+    }
+    .cq2-social-icon {
+      display: flex; align-items: center; justify-content: center;
+      width: 80px; height: 80px;
+      border-radius: 20px;
+      color: #FFFFFF;
+      box-shadow: 0 12px 25px rgba(0,0,0,0.18);
+      transition: transform 0.5s cubic-bezier(.2,.8,.2,1);
+    }
+    .cq2-social-card:hover .cq2-social-icon { transform: scale(1.1) rotate(-5deg); }
+    .cq2-social-info { text-align: center; }
+    .cq2-social-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem; font-weight: 800;
+      color: var(--cq-ink);
+    }
+    .cq2-social-handle {
+      font-size: 0.8rem; letter-spacing: 1px;
+      color: var(--cq-ink); opacity: 0.6;
+      margin-top: 0.2rem; font-weight: 600;
+    }
+    .cq2-social-arrow {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 36px; height: 36px;
+      border-radius: 999px;
+      background: rgba(26,20,16,0.04);
+      color: var(--cq-ink);
+      opacity: 0.5;
+      transition: opacity 0.3s, background 0.3s, color 0.3s, transform 0.4s;
+    }
+    .cq2-social-card:hover .cq2-social-arrow {
+      opacity: 1;
+      background: var(--accent, #D87E2D);
+      color: #FFFFFF;
+      transform: rotate(-15deg) scale(1.1);
+    }
+    .cq2-dark .cq2-social-card { background: rgba(245,235,219,0.04); border-color: rgba(245,235,219,0.08); }
+    .cq2-dark .cq2-social-card:hover { background: rgba(245,235,219,0.08); }
+    .cq2-dark .cq2-social-arrow { background: rgba(245,235,219,0.06); color: var(--cq-ink); }
+
     /* ============ FAQ ============ */
     .cq2-faq { padding: 7rem 1.5rem; background: var(--cq-bg); }
     .cq2-faq-head { max-width: 900px; margin: 0 auto 3rem; text-align: center; }
