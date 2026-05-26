@@ -1,28 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tiệm bánh Cúc Quy</title>
-    
-    <!-- PWA Config -->
-    <meta name="theme-color" content="#ea580c">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="CucQuy Bakery">
-    <link rel="apple-touch-icon" href="./public/icon.png">
+    <title>Cúc Quy Bakery — Cookies · Brownies · Set quà</title>
+    <meta
+      name="description"
+      content="Tiệm bánh handmade tại Sài Gòn. Cookies lạnh signature, brownies đậm đà, set quà tặng cho mọi dịp. Đặt bánh: 0776 750 418."
+    />
 
-    <link rel="icon" type="image/svg+xml" href="./public/icon.svg" />
+    <!-- Open Graph (Facebook, Zalo, Messenger, Discord, iMessage…) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:site_name" content="Cúc Quy Bakery" />
+    <meta property="og:url" content="__SITE_URL__/" />
+    <meta property="og:title" content="Cúc Quy Bakery — Cookies · Brownies · Set quà" />
+    <meta
+      property="og:description"
+      content="Tiệm bánh handmade tại Sài Gòn. Cookies lạnh signature, brownies đậm đà, set quà tặng cho mọi dịp. Đặt bánh: 0776 750 418."
+    />
+    <meta property="og:image" content="__SITE_URL__/banner.png" />
+    <meta property="og:image:alt" content="Cúc Quy Bakery — Cookies · Brownies · Set quà" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Cúc Quy Bakery — Cookies · Brownies · Set quà" />
+    <meta
+      name="twitter:description"
+      content="Tiệm bánh handmade tại Sài Gòn. Cookies lạnh signature, brownies, set quà tặng."
+    />
+    <meta name="twitter:image" content="__SITE_URL__/banner.png" />
+
+    <link rel="canonical" href="__SITE_URL__/" />
+
+    <!-- PWA Config -->
+    <meta name="theme-color" content="#ea580c" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="CucQuy Bakery" />
+    <link rel="apple-touch-icon" href="/icon.png" />
+
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      // Configure Tailwind dark mode
-      tailwind.config = {
-        darkMode: 'class'
-      };
+      tailwind.config = { darkMode: 'class' };
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./styles.css">
-</head>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
   <body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 antialiased transition-colors duration-200">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>

@@ -5,6 +5,12 @@ import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
+  const siteUrl = (
+    env.VITE_SITE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+    "http://localhost:3009"
+  ).replace(/\/$/, "");
+
   return {
     server: {
       port: 3009,
@@ -12,6 +18,12 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
+      {
+        name: "inject-site-url-meta",
+        transformIndexHtml(html) {
+          return html.replaceAll("__SITE_URL__", siteUrl);
+        },
+      },
       VitePWA({
         registerType: "autoUpdate",
         includeAssets: ["icon.svg", "icon.png"],
