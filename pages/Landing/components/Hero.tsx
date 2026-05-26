@@ -46,7 +46,7 @@ const Hero: React.FC = () => {
 
       {/* Vertical side label */}
       <div className="cq2-side-label cq2-side-label-left">
-        <span>HANDMADE BAKERY · SAIGON · 2025</span>
+        <span>HANDMADE BAKERY · HUẾ · 2025</span>
       </div>
       <div className="cq2-side-label cq2-side-label-right">
         <span>SCROLL TO DISCOVER ↓ ✦ NGỌT NGÀO HẰNG NGÀY ✦</span>
