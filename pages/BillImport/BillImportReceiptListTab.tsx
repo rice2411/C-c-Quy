@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import Input from '@/components/ui/Input';
+import FilterToolbar from '@/components/shared/FilterToolbar';
 import {
   Table,
   TableBody,
@@ -141,10 +142,10 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
             {receiptLoading ? 'Đang tải...' : 'Làm mới'}
           </Button>
         </Box>
-        <Input
-          value={receiptSearch}
-          onChange={(e) => onReceiptSearchChange(e.target.value)}
-          placeholder="Tìm theo NCC, ngày bill, ngày nhập, mã phiếu..."
+        <FilterToolbar
+          search={receiptSearch}
+          onSearchChange={onReceiptSearchChange}
+          searchPlaceholder="Tìm theo NCC, ngày bill, ngày nhập, mã phiếu..."
         />
         <Box layoutClassName="max-h-[560px] overflow-auto rounded-lg border border-slate-100 dark:border-slate-800">
           {filteredReceipts.length === 0 ? (

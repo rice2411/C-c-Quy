@@ -1,9 +1,9 @@
 import React from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import FilterToolbar from '@/components/shared/FilterToolbar';
 
 interface ProductToolbarProps {
   searchTerm: string;
@@ -15,18 +15,12 @@ const ProductToolbar: React.FC<ProductToolbarProps> = ({ searchTerm, onSearchCha
   const { t } = useLanguage();
 
   return (
-    <Box layoutClassName="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-      <Box layoutClassName="relative w-full sm:w-72">
-        <Input
-          type="text"
-          placeholder={t('inventory.searchPlaceholder')}
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          leftIcon={<Search />}
-          leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
-          backgroundClassName="bg-white dark:bg-slate-800"
-          borderClassName="border-slate-200 dark:border-slate-700"
-          shadowClassName="shadow-sm"
+    <Box layoutClassName="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-start">
+      <Box layoutClassName="flex-1 min-w-0">
+        <FilterToolbar
+          search={searchTerm}
+          onSearchChange={onSearchChange}
+          searchPlaceholder={t('inventory.searchPlaceholder')}
         />
       </Box>
 
@@ -36,7 +30,7 @@ const ProductToolbar: React.FC<ProductToolbarProps> = ({ searchTerm, onSearchCha
         leftIcon={<Plus />}
         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
         sizeClassName="px-4 py-2"
-        layoutClassName="whitespace-nowrap gap-2"
+        layoutClassName="whitespace-nowrap gap-2 sm:self-start"
         backgroundClassName="bg-orange-600"
         hoverClassName="hover:bg-orange-700"
         textClassName="text-sm font-medium text-white"
@@ -53,4 +47,3 @@ const ProductToolbar: React.FC<ProductToolbarProps> = ({ searchTerm, onSearchCha
 };
 
 export default ProductToolbar;
-

@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Package, Tag, Loader2, Image as ImageIcon, DollarSign, Boxes } from 'lucide-react';
 import { Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { getTagPalette } from '@/utils/product/productTagPalette';
+import { fetchBadgesConfiguration } from '@/services/badgeService';
+import type { ProductBadge } from '@/types/badge';
 import Badge from '@/components/ui/Badge';
 
 interface ProductGridProps {
@@ -15,6 +17,25 @@ interface ProductGridProps {
 
 const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, onEdit, onCreate }) => {
   const { t } = useLanguage();
+
+  // Load product badges từ config để hiển thị chip có màu đúng cấu hình
+  const [productBadges, setProductBadges] = useState<ProductBadge[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const cfg = await fetchBadgesConfiguration();
+        if (!cancelled) setProductBadges(cfg.productBadges);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const badgeByName = useMemo(() => {
+    const m = new Map<string, ProductBadge>();
+    productBadges.forEach((b) => m.set(b.name, b));
+    return m;
+  }, [productBadges]);
 
   if (loading) {
     return (
@@ -113,8 +134,27 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, onEdit, on
                 {product.name}
               </h3>
               {product.tags && product.tags.length > 0 ? (
-                <div className="mb-2 flex flex-wrap gap-2">
+                <div className="mb-2 flex flex-wrap gap-1.5">
                   {product.tags.map((tag, idx) => {
+                    const badge = badgeByName.get(tag);
+                    // Tag có trong config → dùng màu cấu hình
+                    if (badge) {
+                      return (
+                        <span
+                          key={`${product.id}-tag-${idx}-${tag}`}
+                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                          style={{
+                            backgroundColor: badge.color + '22',
+                            color: badge.color,
+                            border: `1px solid ${badge.color}55`,
+                          }}
+                        >
+                          {badge.icon ? <span>{badge.icon}</span> : null}
+                          {tag}
+                        </span>
+                      );
+                    }
+                    // Legacy fallback
                     const palette = getTagPalette(tag);
                     return (
                       <Badge

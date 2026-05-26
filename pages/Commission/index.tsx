@@ -462,15 +462,10 @@ const ProductsTab: React.FC<ProductsTabProps> = ({ groups, products, onProductsC
   return (
     <div className="space-y-4">
       <Card padding="none" layoutClassName="p-3" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
-        <Input
-          type="text"
-          placeholder="Tìm sản phẩm..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          leftIcon={<Search />}
-          leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
-          backgroundClassName="bg-slate-50 dark:bg-slate-700"
-          borderClassName="border-slate-200 dark:border-slate-600"
+        <FilterToolbar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Tìm sản phẩm..."
         />
       </Card>
 

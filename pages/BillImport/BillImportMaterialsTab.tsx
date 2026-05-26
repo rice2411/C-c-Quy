@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { GitMerge, X } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { GitMerge, Package, ShoppingBag, TrendingUp, X } from 'lucide-react';
 import type { ImportedMaterialSummary } from '@/types/billReceipt';
 import { mergeMaterials } from '@/services/stockReceiptService';
+import StatsBanner from '@/pages/BillImport/StatsBanner';
+import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/BillImport/dateFilter';
+import FilterToolbar from '@/components/shared/FilterToolbar';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -35,6 +38,30 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
 }) => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mergeOpen, setMergeOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<'recent' | 'amount' | 'name' | 'count'>('recent');
+  const [period, setPeriod] = useState<DatePeriod>('all');
+
+  // Apply period filter first, then sort
+  const periodFiltered = useMemo(
+    () => filterByPeriod(filteredMaterials, period),
+    [filteredMaterials, period],
+  );
+
+  const sortedMaterials = useMemo(() => {
+    const arr = [...periodFiltered];
+    if (sortBy === 'amount') arr.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
+    else if (sortBy === 'name') arr.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    else if (sortBy === 'count') arr.sort((a, b) => (b.importCount || 0) - (a.importCount || 0));
+    return arr;
+  }, [periodFiltered, sortBy]);
+
+  // Stats tính từ periodFiltered (phản ánh đúng filter người dùng đang xem)
+  const stats = useMemo(() => {
+    const totalAmount = periodFiltered.reduce((s, m) => s + (m.totalAmount || 0), 0);
+    const totalQty = periodFiltered.reduce((s, m) => s + (m.totalQty || 0), 0);
+    const totalCount = periodFiltered.reduce((s, m) => s + (m.importCount || 0), 0);
+    return { totalAmount, totalQty, totalCount };
+  }, [periodFiltered]);
 
   const toggle = (id: string) => {
     setSelected((prev) => {
@@ -102,10 +129,44 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
             </Button>
           </Box>
         </Box>
-        <Input
-          value={materialSearch}
-          onChange={(e) => onMaterialSearchChange(e.target.value)}
-          placeholder="Tìm nguyên vật liệu..."
+        <StatsBanner
+          items={[
+            {
+              icon: Package,
+              label: 'Loại NVL',
+              value: String(periodFiltered.length),
+              accent: '#ea580c',
+            },
+            {
+              icon: ShoppingBag,
+              label: 'Lần nhập',
+              value: String(stats.totalCount),
+              accent: '#0ea5e9',
+            },
+            {
+              icon: TrendingUp,
+              label: 'Tổng chi',
+              value: formatVNDOrDash(stats.totalAmount),
+              accent: '#16a34a',
+            },
+          ]}
+        />
+        <FilterToolbar
+          search={materialSearch}
+          onSearchChange={onMaterialSearchChange}
+          searchPlaceholder="Tìm nguyên vật liệu theo tên..."
+          period={period}
+          periodOptions={PERIOD_OPTIONS as any}
+          onPeriodChange={(v) => setPeriod(v as DatePeriod)}
+          sortBy={sortBy}
+          sortOptions={[
+            { value: 'recent', label: 'Mới nhất' },
+            { value: 'amount', label: 'Chi nhiều nhất' },
+            { value: 'count', label: 'Nhập nhiều nhất' },
+            { value: 'name', label: 'Tên A-Z' },
+          ]}
+          onSortChange={(v) => setSortBy(v as any)}
+          onClearAll={() => { setPeriod('all'); onMaterialSearchChange(''); }}
         />
         {selected.size >= 1 ? (
           <Typography size="xs" variant="muted">
@@ -116,12 +177,12 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
 
         {/* ===== MOBILE: card layout ===== */}
         <Box layoutClassName="max-h-[60vh] space-y-2 overflow-auto md:hidden">
-          {filteredMaterials.length === 0 ? (
+          {sortedMaterials.length === 0 ? (
             <Typography size="sm" variant="muted" layoutClassName="p-3">
               Không có nguyên vật liệu phù hợp.
             </Typography>
           ) : (
-            filteredMaterials.map((row) => {
+            sortedMaterials.map((row) => {
               const isChecked = selected.has(row.id);
               return (
                 <Box
@@ -172,7 +233,7 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
 
         {/* ===== DESKTOP: table layout ===== */}
         <Box layoutClassName="hidden max-h-[480px] overflow-auto rounded-lg border border-slate-100 dark:border-slate-800 md:block">
-          {filteredMaterials.length === 0 ? (
+          {sortedMaterials.length === 0 ? (
             <Typography size="sm" variant="muted" layoutClassName="p-3">
               Không có nguyên vật liệu phù hợp.
             </Typography>
@@ -189,7 +250,7 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredMaterials.map((row) => {
+                {sortedMaterials.map((row) => {
                   const isChecked = selected.has(row.id);
                   return (
                     <TableRow

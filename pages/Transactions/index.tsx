@@ -31,6 +31,7 @@ import IconButton from '@/components/ui/IconButton';
 import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
+import FilterToolbar from '@/components/shared/FilterToolbar';
 
 type TabKey = 'all' | 'valid' | 'invalid' | 'external';
 type DatePreset = 'today' | '7d' | 'month' | 'last_month' | 'custom';
@@ -524,26 +525,11 @@ const TransactionsPage: React.FC = () => {
         </Box>
 
         {/* Search */}
-        <Box layoutClassName="flex items-center gap-2">
-          <Box layoutClassName="flex-1 min-w-0">
-            <Input
-              type="text"
-              placeholder={t('transactions.searchPlaceholder') || 'Tìm nội dung, mã đơn...'}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              leftIcon={<Search />}
-              leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
-              backgroundClassName="bg-slate-50 dark:bg-slate-700"
-              borderClassName="border-slate-200 dark:border-slate-600"
-            />
-          </Box>
-          {searchTerm && (
-            <button type="button" onClick={() => setSearchTerm('')}
-              className="flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700">
-              <X className="h-3.5 w-3.5" />Xóa
-            </button>
-          )}
-        </Box>
+        <FilterToolbar
+          search={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder={t('transactions.searchPlaceholder') || 'Tìm nội dung, mã đơn...'}
+        />
       </Card>
 
       {/* ── Revenue Chart ── */}

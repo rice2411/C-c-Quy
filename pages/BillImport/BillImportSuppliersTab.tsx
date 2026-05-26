@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -7,12 +7,18 @@ import {
   MapPin,
   Pencil,
   Phone,
+  ReceiptText,
+  Store,
   Tag,
+  TrendingUp,
   User,
   X,
 } from 'lucide-react';
 import type { ImportedSupplierSummary } from '@/types/billReceipt';
 import { mergeSuppliers } from '@/services/stockReceiptService';
+import StatsBanner from '@/pages/BillImport/StatsBanner';
+import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/BillImport/dateFilter';
+import FilterToolbar from '@/components/shared/FilterToolbar';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -49,6 +55,27 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
   const [editing, setEditing] = useState<ImportedSupplierSummary | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mergeOpen, setMergeOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<'recent' | 'amount' | 'name' | 'count'>('recent');
+  const [period, setPeriod] = useState<DatePeriod>('all');
+
+  const periodFiltered = useMemo(
+    () => filterByPeriod(filteredSuppliers, period),
+    [filteredSuppliers, period],
+  );
+
+  const sortedSuppliers = useMemo(() => {
+    const arr = [...periodFiltered];
+    if (sortBy === 'amount') arr.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
+    else if (sortBy === 'name') arr.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    else if (sortBy === 'count') arr.sort((a, b) => (b.receiptCount || 0) - (a.receiptCount || 0));
+    return arr;
+  }, [periodFiltered, sortBy]);
+
+  const stats = useMemo(() => {
+    const totalAmount = periodFiltered.reduce((s, sp) => s + (sp.totalAmount || 0), 0);
+    const totalReceipts = periodFiltered.reduce((s, sp) => s + (sp.receiptCount || 0), 0);
+    return { totalAmount, totalReceipts };
+  }, [periodFiltered]);
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -121,10 +148,44 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
             </Button>
           </Box>
         </Box>
-        <Input
-          value={supplierSearch}
-          onChange={(e) => onSupplierSearchChange(e.target.value)}
-          placeholder="Tìm nhà cung cấp..."
+        <StatsBanner
+          items={[
+            {
+              icon: Store,
+              label: 'NCC',
+              value: String(periodFiltered.length),
+              accent: '#ea580c',
+            },
+            {
+              icon: ReceiptText,
+              label: 'Phiếu',
+              value: String(stats.totalReceipts),
+              accent: '#0ea5e9',
+            },
+            {
+              icon: TrendingUp,
+              label: 'Tổng chi',
+              value: formatVNDOrDash(stats.totalAmount),
+              accent: '#16a34a',
+            },
+          ]}
+        />
+        <FilterToolbar
+          search={supplierSearch}
+          onSearchChange={onSupplierSearchChange}
+          searchPlaceholder="Tìm NCC theo tên, SĐT, danh mục..."
+          period={period}
+          periodOptions={PERIOD_OPTIONS as any}
+          onPeriodChange={(v) => setPeriod(v as DatePeriod)}
+          sortBy={sortBy}
+          sortOptions={[
+            { value: 'recent', label: 'Mới nhất' },
+            { value: 'amount', label: 'Chi nhiều nhất' },
+            { value: 'count', label: 'Nhiều phiếu' },
+            { value: 'name', label: 'Tên A-Z' },
+          ]}
+          onSortChange={(v) => setSortBy(v as any)}
+          onClearAll={() => { setPeriod('all'); onSupplierSearchChange(''); }}
         />
         {selected.size >= 1 ? (
           <Typography size="xs" variant="muted">
@@ -135,12 +196,12 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
 
         {/* ===== MOBILE: card layout ===== */}
         <Box layoutClassName="max-h-[60vh] space-y-2 overflow-auto md:hidden">
-          {filteredSuppliers.length === 0 ? (
+          {sortedSuppliers.length === 0 ? (
             <Typography size="sm" variant="muted" layoutClassName="p-3">
               Không có nhà cung cấp phù hợp.
             </Typography>
           ) : (
-            filteredSuppliers.map((row) => {
+            sortedSuppliers.map((row) => {
               const isChecked = selected.has(row.id);
               const open = expanded === row.id;
               return (
@@ -262,7 +323,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
 
         {/* ===== DESKTOP: table layout ===== */}
         <Box layoutClassName="hidden max-h-[560px] overflow-auto rounded-lg border border-slate-100 dark:border-slate-800 md:block">
-          {filteredSuppliers.length === 0 ? (
+          {sortedSuppliers.length === 0 ? (
             <Typography size="sm" variant="muted" layoutClassName="p-3">
               Không có nhà cung cấp phù hợp.
             </Typography>
@@ -282,7 +343,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredSuppliers.map((row) => {
+                {sortedSuppliers.map((row) => {
                   const open = expanded === row.id;
                   const isChecked = selected.has(row.id);
                   return (

@@ -66,6 +66,9 @@ export interface Order {
   /** Thời điểm đánh dấu đã trả hoa hồng */
   commissionPaidAt?: string;
 
+  /** Badge IDs gán cho đơn (custom tags từ Settings → Badges) */
+  badgeIds?: string[];
+
   // ===== Cancel / Refund =====
   /** Lý do huỷ đơn — chỉ có khi status = CANCELLED */
   cancelReason?: string;
