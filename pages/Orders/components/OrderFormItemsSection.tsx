@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { DollarSign, Package, Plus, Trash2 } from 'lucide-react';
+import { DollarSign, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Product } from '@/types';
 import { FormItem } from '@/pages/Orders/components/modals/OrderForm';
@@ -302,9 +302,69 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
         </Box>
       ) : null}
 
-      {/* Input phí ship đã được xoá — phí ship tự tính từ AddressMapInput
-          (auto-fill qua onShipFeeChange khi user nhập địa chỉ + bấm Enter).
-          shippingCost vẫn được dùng để tính total nhưng không cho user sửa tay nữa. */}
+      {/* ===== Phí ship + nút Freeship ===== */}
+      <Box
+        layoutClassName="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 p-3 dark:border-slate-700"
+        backgroundClassName="bg-slate-50/60 dark:bg-slate-900/60"
+      >
+        <Box layoutClassName="flex items-center gap-2 text-sm">
+          <Truck className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+          <Typography size="sm" textClassName="text-slate-600 dark:text-slate-300">
+            Phí ship:
+          </Typography>
+          <Typography size="sm" layoutClassName="font-semibold" textClassName="text-slate-800 dark:text-slate-100">
+            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(shippingCost)}
+          </Typography>
+          {shippingCost === 0 ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+              FREESHIP
+            </span>
+          ) : null}
+        </Box>
+        {shippingCost > 0 ? (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setShippingCost(0)}
+            leftIcon={<Truck />}
+            iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+            sizeClassName="px-3 py-1.5 text-xs"
+            textClassName="font-semibold text-emerald-700 dark:text-emerald-300"
+            backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20"
+            borderClassName="border border-emerald-200 dark:border-emerald-800"
+            hoverClassName="hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
+            roundedClassName="rounded-lg"
+            layoutClassName="inline-flex items-center gap-1.5"
+            disableVariantHover
+            disableVariantTextColor
+          >
+            Tặng freeship
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              const restored = Number(shippingInput);
+              if (Number.isFinite(restored) && restored > 0) setShippingCost(restored);
+            }}
+            leftIcon={<RotateCcw />}
+            iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+            sizeClassName="px-3 py-1.5 text-xs"
+            textClassName="font-semibold text-slate-700 dark:text-slate-200"
+            backgroundClassName="bg-white dark:bg-slate-800"
+            borderClassName="border border-slate-200 dark:border-slate-600"
+            hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+            roundedClassName="rounded-lg"
+            layoutClassName="inline-flex items-center gap-1.5"
+            disableVariantHover
+            disableVariantTextColor
+            disabled={!shippingInput || Number(shippingInput) <= 0}
+          >
+            Bỏ freeship
+          </Button>
+        )}
+      </Box>
 
       <Box
         layoutClassName="flex items-center justify-between rounded-lg border border-slate-100 p-3 dark:border-slate-700"
