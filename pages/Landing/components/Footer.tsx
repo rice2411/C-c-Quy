@@ -12,7 +12,7 @@ const Footer: React.FC = () => (
         <div>
           <div className="cq2-footer-h">Liên hệ</div>
           <a href="tel:+84776750418">0776 750 418</a>
-          <span>Sài Gòn, Việt Nam</span>
+          <span>Huế, Việt Nam</span>
         </div>
         <div>
           <div className="cq2-footer-h">Menu</div>
@@ -29,7 +29,7 @@ const Footer: React.FC = () => (
       </div>
     </div>
     <div className="cq2-footer-bot">
-      <span>© Cúc Quy Bakery — Made with 💗 in Saigon</span>
+      <span>© Cúc Quy Bakery — Made with 💗 in Hue</span>
       <Link to="/login">Đăng nhập</Link>
     </div>
   </footer>
