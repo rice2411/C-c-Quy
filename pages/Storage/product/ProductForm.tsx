@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Save, Image, Tag, DollarSign, AlignLeft, AlertCircle, Upload, Loader2, Plus, X } from 'lucide-react';
+import { Save, Image, Tag, DollarSign, AlignLeft, AlertCircle, Upload, Loader2 } from 'lucide-react';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
-import Badge from '@/components/ui/Badge';
 import Tabs from '@/components/ui/Tabs';
 import Textarea from '@/components/ui/Textarea';
 import { Product, ProductVersion } from '@/types';
@@ -10,7 +9,6 @@ import { uploadImage, getProductImagePath } from '@/services/imageService';
 import { fetchProductVersions } from '@/services/productService';
 import { fetchBadgesConfiguration } from '@/services/badgeService';
 import type { ProductBadge } from '@/types/badge';
-import { getTagPalette } from '@/utils/product/productTagPalette';
 
 interface ProductFormProps {
   initialData?: Product | null;
@@ -30,7 +28,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
   const [image, setImage] = useState('');
   const [category, setCategory] = useState('');
   const [tags, setTags] = useState<string[]>([]);
-  const [tagSearch, setTagSearch] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
   const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
@@ -52,12 +49,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
     return () => { cancelled = true; };
   }, []);
 
-  const filteredBadgeSuggestions = useMemo(() => {
-    const q = tagSearch.trim().toLowerCase();
-    if (!q) return productBadges;
-    return productBadges.filter((b) => b.name.toLowerCase().includes(q));
-  }, [productBadges, tagSearch]);
-
   // Lookup by tag name → badge config (for color/icon)
   const badgeByName = useMemo(() => {
     const m = new Map<string, ProductBadge>();
@@ -71,14 +62,18 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
       setPrice(initialData.price);
       setImage(initialData.image || '');
       setCategory(initialData.category);
-      setTags(initialData.tags || []);
+      const allowed = new Set(productBadges.map((b) => b.name.toLowerCase()));
+      const fromProduct = (initialData.tags || []).filter((t) =>
+        allowed.has(t.trim().toLowerCase()),
+      );
+      setTags(fromProduct);
       setDescription(initialData.description || '');
       setStatus(initialData.status);
     } else {
       setImage('');
       setTags([]);
     }
-  }, [initialData]);
+  }, [initialData, productBadges]);
 
   useEffect(() => {
     setActiveTab('details');
@@ -143,11 +138,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
     setTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   };
 
-  const handleAddTagFromInput = () => {
-    addTag(tagSearch);
-    setTagSearch('');
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -163,7 +153,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
         price,
         image,
         category: category || 'General',
-        tags: tags.filter((tag) => normalizeTag(tag) !== ''),
+        tags: tags.filter((tag) => badgeByName.has(tag)),
         description,
         status,
       };
@@ -355,41 +345,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
               <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wide">
-                    Tag sản phẩm <span className="text-slate-500 dark:text-slate-400 font-normal">(Tùy chọn)</span>
+                    Tag sản phẩm <span className="text-slate-500 dark:text-slate-400 font-normal">(từ cấu hình Badges)</span>
                   </h3>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
                     {tags.length} đã chọn
                   </span>
                 </div>
 
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={tagSearch}
-                    onChange={(e) => setTagSearch(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddTagFromInput();
-                      }
-                    }}
-                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
-                    placeholder="Nhập tag sản phẩm..."
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddTagFromInput}
-                    className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-1"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Thêm
-                  </button>
-                </div>
-
-                {/* Suggestion chips từ config — color + icon từ Settings */}
-                {filteredBadgeSuggestions.length > 0 ? (
+                {productBadges.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {filteredBadgeSuggestions.map((badge) => {
+                    {productBadges.map((badge) => {
                       const selected = hasTag(badge.name);
                       return (
                         <button
@@ -411,62 +376,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
                       );
                     })}
                   </div>
-                ) : tagSearch ? (
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Chưa có badge nào khớp. Bấm "Thêm" để tạo tag tự do.
-                  </p>
                 ) : (
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     Chưa có badge sản phẩm nào. Tạo trong <strong>Settings → Badges</strong>.
                   </p>
-                )}
-
-                {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
-                    {tags.map((tag) => {
-                      const badge = badgeByName.get(tag);
-                      // Có trong config → dùng màu config; không → fallback palette legacy
-                      if (badge) {
-                        return (
-                          <span
-                            key={tag}
-                            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
-                            style={{
-                              backgroundColor: badge.color + '22',
-                              color: badge.color,
-                              border: `1.5px solid ${badge.color}55`,
-                            }}
-                          >
-                            {badge.icon ? <span>{badge.icon}</span> : null}
-                            {tag}
-                            <button
-                              type="button"
-                              onClick={() => removeTag(tag)}
-                              className="ml-1 flex h-4 w-4 items-center justify-center rounded-full opacity-50 hover:bg-black/10 hover:opacity-100 dark:hover:bg-white/15"
-                              aria-label={`Remove tag ${tag}`}
-                            >
-                              <X className="h-3 w-3" strokeWidth={3} />
-                            </button>
-                          </span>
-                        );
-                      }
-                      // Legacy fallback
-                      const palette = getTagPalette(tag);
-                      return (
-                        <Badge key={tag} className={palette.chip}>
-                          {tag}
-                          <button
-                            type="button"
-                            onClick={() => removeTag(tag)}
-                            className={palette.removeHover}
-                            aria-label={`Remove tag ${tag}`}
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
-                      );
-                    })}
-                  </div>
                 )}
               </div>
 
