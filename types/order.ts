@@ -65,4 +65,20 @@ export interface Order {
   commissionStatus?: 'pending' | 'paid';
   /** Thời điểm đánh dấu đã trả hoa hồng */
   commissionPaidAt?: string;
+
+  // ===== Cancel / Refund =====
+  /** Lý do huỷ đơn — chỉ có khi status = CANCELLED */
+  cancelReason?: string;
+  /** Thời điểm huỷ đơn (ISO) */
+  cancelledAt?: string;
+  /** Người huỷ đơn (display name) */
+  cancelledBy?: string;
+  /** Thời điểm hoàn tiền (ISO) — paymentStatus = REFUNDED */
+  refundedAt?: string;
+  /** Số tiền đã hoàn lại cho khách */
+  refundedAmount?: number;
+  /** Lý do hoàn tiền */
+  refundReason?: string;
+  /** Người thao tác hoàn tiền */
+  refundedBy?: string;
 }

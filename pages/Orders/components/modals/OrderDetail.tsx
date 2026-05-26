@@ -36,6 +36,7 @@ import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
 import IconButton from '@/components/ui/IconButton';
 import Typography from '@/components/ui/Typography';
+import CancelRefundModal, { type CancelRefundMode, type CancelRefundResult } from '@/pages/Orders/components/modals/CancelRefundModal';
 interface OrderDetailProps {
   isOpen: boolean;
   order: Order | null;
@@ -65,6 +66,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const [selectedPrompt, setSelectedPrompt] = useState<'email' | 'risk' | 'summary' | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPayment, setUpdatingPayment] = useState(false);
+  const [crMode, setCrMode] = useState<CancelRefundMode | null>(null);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [localOrder, setLocalOrder] = useState(order);
   // Transactions của đơn hiện tại — load lazy khi panel mở. Mỗi transaction
@@ -159,6 +161,27 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
       if (!isNaN(n)) return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
     }
     return s;
+  };
+
+  const handleCancelRefund = async (result: CancelRefundResult) => {
+    if (!currentOrder?.id || !onUpdateOrder) throw new Error('Không thể cập nhật đơn');
+    const isCancel = crMode === 'cancel';
+    const nowIso = new Date().toISOString();
+    const patch: Partial<Order> = {};
+    if (isCancel) {
+      patch.status = OrderStatus.CANCELLED;
+      patch.cancelReason = result.reason;
+      patch.cancelledAt = nowIso;
+    } else {
+      patch.refundReason = result.reason;
+    }
+    if (result.refund && result.refundAmount) {
+      patch.paymentStatus = PaymentStatus.REFUNDED;
+      patch.refundedAt = nowIso;
+      patch.refundedAmount = result.refundAmount;
+      patch.refundReason = patch.refundReason || result.reason;
+    }
+    await onUpdateOrder(currentOrder.id, { ...currentOrder, ...patch });
   };
 
   const handleUpdateField = async (patch: Partial<Order>, setLoading: (v: boolean) => void) => {
@@ -282,6 +305,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   );
 
   return (
+    <>
     <BaseSlidePanel
       isOpen={isOpen && !!order}
       onClose={onClose}
@@ -588,7 +612,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                   disableVariantHover
                                   disableVariantTextColor
                                   leftIcon={<Trash2 className="h-3.5 w-3.5" />}
-                                  onClick={() => handleUpdateField({ status: OrderStatus.CANCELLED }, setUpdatingStatus)}
+                                  onClick={() => setCrMode('cancel')}
                                   disabled={updatingStatus}
                                   sizeClassName="px-3 py-1.5"
                                   textClassName="text-xs font-semibold text-red-700 dark:text-red-200"
@@ -601,6 +625,27 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                 >
                                   Huỷ đơn
                                 </Button>
+                                {currentOrder.paymentStatus === PaymentStatus.PAID ? (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    disableVariantHover
+                                    disableVariantTextColor
+                                    leftIcon={<Wallet className="h-3.5 w-3.5" />}
+                                    onClick={() => setCrMode('refund')}
+                                    disabled={updatingStatus}
+                                    sizeClassName="px-3 py-1.5"
+                                    textClassName="text-xs font-semibold text-amber-700 dark:text-amber-200"
+                                    backgroundClassName="bg-amber-50 dark:bg-amber-900/20"
+                                    borderClassName="border border-amber-200 dark:border-amber-800"
+                                    hoverClassName="hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                                    roundedClassName="rounded-lg"
+                                    shadowClassName=""
+                                    stateClassName="transition-colors"
+                                  >
+                                    Hoàn tiền
+                                  </Button>
+                                ) : null}
                                 <Button
                                   type="button"
                                   variant="secondary"
@@ -1120,6 +1165,15 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         </div>
       </div>
     </BaseSlidePanel>
+
+    <CancelRefundModal
+      open={crMode !== null}
+      mode={crMode ?? 'cancel'}
+      order={currentOrder}
+      onClose={() => setCrMode(null)}
+      onConfirm={handleCancelRefund}
+    />
+    </>
   );
 };
 
