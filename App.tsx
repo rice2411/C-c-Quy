@@ -21,6 +21,7 @@ import UsersPage from "./pages/Users/index";
 import NotificationsPage from "./pages/Notifications/index";
 import SettingsPage from "./pages/Settings/index";
 import LoginPage from "./pages/Login/index";
+import LandingPage from "./pages/Landing/index";
 import SerpApiMapsTestPage from "./pages/Test/SerpApiMaps/index";
 import { routes } from "./config/routes";
 import { Toaster } from "react-hot-toast";
@@ -39,6 +40,7 @@ const App: React.FC = () => {
                 <CustomerProvider>
                   <Routes>
                     <Route path="/login" element={<LoginPage />} />
+                    <Route path="/landing" element={<LandingPage />} />
                     <Route path="/" element={
                       <ProtectedRoute>
                         <Layout />
