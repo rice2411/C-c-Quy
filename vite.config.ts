@@ -26,7 +26,12 @@ export default defineConfig(({ mode }) => {
       },
       VitePWA({
         registerType: "autoUpdate",
-        includeAssets: ["icon.svg", "icon.png"],
+        includeAssets: [
+          "icon.svg",
+          "icon.png",
+          "og-image.jpg",
+          "banner.jpg",
+        ],
         manifest: {
           name: "Tiệm bánh Cúc Quy",
           short_name: "CucQuy",
@@ -46,7 +51,11 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
-          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          navigateFallbackDenylist: [
+            /\.[a-zA-Z0-9]+$/,
+            /^\/api\//,
+          ],
         },
         devOptions: {
           // Tắt PWA Service Worker trong dev — SW cache có thể intercept request
