@@ -12,6 +12,7 @@ import { Order, PaymentStatus } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { getOrderTotal } from '@/utils/order/orderUtils';
 
+import Checkbox from '@/components/ui/Checkbox';
 export type CancelRefundMode = 'cancel' | 'refund';
 
 export interface CancelRefundResult {
@@ -207,9 +208,7 @@ const CancelRefundModal: React.FC<CancelRefundModalProps> = ({
             backgroundClassName={refund ? 'bg-emerald-50/60 dark:bg-emerald-950/30' : ''}
           >
             <label className="flex items-start gap-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={refund}
+              <Checkbox checked={refund}
                 onChange={(e) => setRefund(e.target.checked)}
                 className="mt-1 h-4 w-4 cursor-pointer rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
               />

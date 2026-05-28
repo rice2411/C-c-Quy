@@ -135,7 +135,7 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
           {items.map((item) => {
             const isRoot = item.id === rootId;
             return (
-              <button
+              <Button
                 key={item.id}
                 type="button"
                 onClick={() => setRootId(item.id)}
@@ -145,7 +145,7 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
                     ? 'border-orange-400 bg-orange-50 ring-2 ring-orange-200 dark:border-orange-600 dark:bg-orange-950/30 dark:ring-orange-900'
                     : 'border-slate-200 bg-white hover:border-orange-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-orange-700'
                 }`}
-              >
+               variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 <Box layoutClassName="flex items-center gap-3">
                   <Box
                     layoutClassName={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
@@ -173,7 +173,7 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
                     </span>
                   ) : null}
                 </Box>
-              </button>
+              </Button>
             );
           })}
         </Box>

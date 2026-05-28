@@ -403,14 +403,14 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
                   { key: 'thisMonth', label: 'Tháng này' },
                   { key: 'last30', label: '30 ngày qua' },
                 ] as const).map((p) => (
-                  <button
+                  <Button
                     key={p.key}
                     type="button"
                     onClick={() => applyDatePreset(p.key)}
                     className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-orange-600 dark:hover:bg-orange-900/30 dark:hover:text-orange-200"
-                  >
+                   variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                     {p.label}
-                  </button>
+                  </Button>
                 ))}
               </Box>
 

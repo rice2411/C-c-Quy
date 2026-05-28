@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Product } from '@/types';
 import { fetchProducts, addProduct, updateProduct } from '@/services/productService';
+import { useOrders } from '@/contexts/OrderContext';
 import TabsHeader from '@/pages/Storage/TabsHeader';
-import { ProductForm, ProductToolbar, ProductGrid } from '@/pages/Storage/product';
+import { ProductForm } from '@/pages/Storage/product';
+import ProductStatsBanner from '@/pages/Storage/product/ProductStatsBanner';
+import ProductSection from '@/pages/Storage/product/ProductSection';
 import { getAccessibleStorageTabs } from '@/config/routes';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
@@ -16,6 +19,7 @@ const InventoryPage: React.FC = () => {
   const { screenVisibility } = useScreenConfig();
   const storedUser = React.useMemo(() => getUserFromLocalStorage(), []);
   const userRole = userData?.role || storedUser?.role;
+  const { orders } = useOrders();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -109,13 +113,16 @@ const InventoryPage: React.FC = () => {
     if (activeTab === 'products') {
       return (
         <>
-          <ProductToolbar searchTerm={searchTerm} onSearchChange={setSearchTerm} onCreate={handleCreate} />
-
-          <ProductGrid
-            products={filteredProducts}
+          <ProductStatsBanner products={products} orders={orders} />
+          <ProductSection
+            products={products}
+            orders={orders}
             loading={loading}
-            onEdit={handleEdit}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
             onCreate={handleCreate}
+            onEdit={handleEdit}
+            onAfterMutate={loadProducts}
           />
         </>
       );

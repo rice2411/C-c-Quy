@@ -36,6 +36,7 @@ import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import SupplierEditModal from '@/pages/BillImport/SupplierEditModal';
 import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/BillImport/MergeItemsModal';
 
+import Checkbox from '@/components/ui/Checkbox';
 export interface BillImportSuppliersTabProps {
   supplierSearch: string;
   onSupplierSearchChange: (value: string) => void;
@@ -215,9 +216,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                   }
                 >
                   <Box layoutClassName="flex gap-3">
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
+                    <Checkbox checked={isChecked}
                       onChange={() => toggleSelect(row.id)}
                       className="mt-1 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                     />
@@ -352,22 +351,20 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                         layoutClassName={isChecked ? 'bg-orange-50/60 dark:bg-orange-950/20' : undefined}
                       >
                         <TableCell>
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
+                          <Checkbox checked={isChecked}
                             onChange={() => toggleSelect(row.id)}
                             className="h-4 w-4 cursor-pointer rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                           />
                         </TableCell>
                         <TableCell>
-                          <button
+                          <Button
                             type="button"
                             onClick={() => setExpanded(open ? null : row.id)}
                             className="rounded p-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                             aria-label={open ? 'Thu gọn' : 'Mở rộng'}
-                          >
+                           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                             {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                          </button>
+                          </Button>
                         </TableCell>
                         <TableCell>
                           <Box layoutClassName="flex flex-col">

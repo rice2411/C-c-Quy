@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Reveal } from './Shared';
 
+import Heading from '@/components/ui/Heading';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 const Newsletter: React.FC = () => {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
@@ -15,14 +18,14 @@ const Newsletter: React.FC = () => {
           <p className="cq2-cta-kicker">✦ Bản tin Cúc Quy</p>
         </Reveal>
         <Reveal variant="up" delay={120}>
-          <h2 className="cq2-news-head">
+          <Heading level={2} textClassName="cq2-news-head">
             Đăng ký nhận <em className="cq2-script-gold">deal sớm</em><br />
             cho khách thân thiết.
-          </h2>
+          </Heading>
         </Reveal>
         <Reveal variant="up" delay={250}>
           <form onSubmit={submit} className="cq2-news-form">
-            <input
+            <Input
               type="email"
               required
               placeholder="email@cucquy.vn"
@@ -30,10 +33,10 @@ const Newsletter: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               className="cq2-news-input"
               disabled={sent}
-            />
-            <button type="submit" className="cq2-news-btn" disabled={sent}>
+             />
+            <Button type="submit" className="cq2-news-btn" disabled={sent} variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
               {sent ? '✓ Đã đăng ký' : 'Đăng ký →'}
-            </button>
+            </Button>
           </form>
         </Reveal>
         <Reveal variant="up" delay={350}>

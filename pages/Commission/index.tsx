@@ -24,6 +24,7 @@ import { Order } from '@/types';
 import { OrderStatus } from '@/types/enums';
 import { CommissionGroup, calcItemCommission, findGroupForMargin } from '@/types/commissionGroup';
 import { fetchProducts, updateProduct } from '@/services/productService';
+import FilterToolbar from '@/components/shared/FilterToolbar';
 import {
   fetchCommissionGroups,
   createCommissionGroup,
@@ -43,6 +44,8 @@ import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import Input from '@/components/ui/Input';
 
+import Checkbox from '@/components/ui/Checkbox';
+import Button from '@/components/ui/Button';
 type PageTab = 'groups' | 'products' | 'stats';
 
 /* ─────────────────────────── helpers ─── */
@@ -138,84 +141,174 @@ const GroupRow: React.FC<GroupRowProps> = ({ group, products, onUpdate, onDelete
     'w-16 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-center text-sm text-slate-900 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400 dark:border-slate-600 dark:bg-slate-700 dark:text-white';
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-100 bg-white dark:border-slate-700 dark:bg-slate-800">
-      {/* Main row */}
-      <div className="flex items-center gap-3 p-3">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-slate-700 dark:bg-slate-800">
+      {/* Header */}
+      <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-700/60">
         <GripVertical className="h-4 w-4 shrink-0 cursor-grab text-slate-300 dark:text-slate-600" />
-
-        {/* Name */}
-        <input
+        <Input
           value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSave()}
-          className="min-w-0 w-36 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm font-semibold text-slate-900 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSave()}
           placeholder="Tên nhóm"
+          containerClassName="flex-1 min-w-0 max-w-xs"
+          backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+          borderClassName="border-slate-200 dark:border-slate-600"
+          textClassName="text-base font-bold text-slate-900 dark:text-white"
+          sizeClassName="py-2"
         />
-
-        {/* Ranges */}
-        <div className="hidden flex-1 items-center gap-2 sm:flex flex-wrap">
-          <div className="flex items-center gap-1">
-            <input type="number" value={minMargin} onChange={e => setMinMargin(e.target.value)} className={fieldCls} min={0} max={99} step={1} />
-            <span className="text-xs text-slate-400">–</span>
-            <input type="number" value={maxMargin} onChange={e => setMaxMargin(e.target.value)} className={fieldCls} min={1} max={100} step={1} />
-            <span className="shrink-0 text-xs text-slate-400">% margin</span>
-          </div>
-          <span className="text-slate-200 dark:text-slate-600">|</span>
-          <div className="flex items-center gap-1">
-            <input type="number" value={profitShare} onChange={e => setProfitShare(e.target.value)} className={fieldCls} min={0} max={100} step={0.5} />
-            <span className="shrink-0 text-xs text-slate-400">% lợi nhuận</span>
-          </div>
-          <span className="text-slate-200 dark:text-slate-600">|</span>
-          <div className="flex items-center gap-1">
-            <input type="number" value={fallback} onChange={e => setFallback(e.target.value)} className={fieldCls} min={0} max={100} step={0.5} />
-            <span className="shrink-0 text-xs text-slate-400">% fallback</span>
-          </div>
-        </div>
-
-        {/* Mobile compact */}
-        <div className="flex flex-1 flex-col gap-0.5 text-xs text-slate-500 dark:text-slate-400 sm:hidden">
-          <span>{minMargin}–{maxMargin}% margin</span>
-          <span>{profitShare}% LP · fb {fallback}%</span>
-        </div>
-
-        {/* Products badge + toggle */}
-        <button
+        <Button
           type="button"
-          onClick={() => setShowProducts(v => !v)}
-          className={`flex shrink-0 items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors ${
+          onClick={() => setShowProducts((v) => !v)}
+          variant="ghost"
+          disableVariantHover
+          disableVariantTextColor
+          sizeClassName="px-2.5 py-1.5 text-xs"
+          roundedClassName="rounded-lg"
+          borderClassName="border border-transparent"
+          backgroundClassName={
             groupProducts.length > 0
-              ? 'bg-orange-50 text-orange-700 hover:bg-orange-100 dark:bg-orange-900/20 dark:text-orange-300'
-              : 'bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-500'
-          }`}
+              ? 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40'
+              : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600'
+          }
+          textClassName={
+            groupProducts.length > 0
+              ? 'font-semibold text-orange-700 dark:text-orange-300'
+              : 'font-semibold text-slate-500 dark:text-slate-400'
+          }
+          layoutClassName="inline-flex shrink-0 items-center gap-1"
           title="Xem sản phẩm thuộc nhóm"
         >
           <Package className="h-3.5 w-3.5" />
-          <span>{groupProducts.length}</span>
+          <span>{groupProducts.length} sp</span>
           {showProducts ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-        </button>
-
-        {/* Save */}
-        <button
+        </Button>
+        <Button
           type="button"
           disabled={!isDirty || saving}
           onClick={handleSave}
-          className="flex shrink-0 items-center gap-1 rounded-lg bg-orange-600 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-40"
+          variant="ghost"
+          disableVariantHover
+          disableVariantTextColor
+          leftIcon={saving ? undefined : <Save />}
+          iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+          sizeClassName="px-2.5 py-1.5 text-xs"
+          roundedClassName="rounded-lg"
+          borderClassName="border border-transparent"
+          backgroundClassName={isDirty ? 'bg-orange-600 hover:bg-orange-700' : 'bg-slate-200 dark:bg-slate-700'}
+          textClassName={isDirty ? 'font-semibold text-white' : 'font-semibold text-slate-400 dark:text-slate-500'}
+          layoutClassName="inline-flex shrink-0 items-center gap-1"
+          stateClassName="transition-colors disabled:cursor-not-allowed"
         >
-          {saving
-            ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            : <Save className="h-3.5 w-3.5" />}
-        </button>
-
-        {/* Delete */}
+          {saving ? (
+            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+          ) : (
+            isDirty ? 'Lưu' : 'Đã lưu'
+          )}
+        </Button>
         {canDelete && (
-          <button
+          <Button
             type="button"
             onClick={() => onDelete(group.id)}
-            className="flex shrink-0 items-center rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+            variant="ghost"
+            disableVariantHover
+            disableVariantTextColor
+            sizeClassName="p-1.5"
+            roundedClassName="rounded-lg"
+            borderClassName="border border-transparent"
+            backgroundClassName="bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20"
+            textClassName="text-slate-400 hover:text-red-500"
+            layoutClassName="inline-flex shrink-0"
+            stateClassName="transition-colors"
+            title="Xoá nhóm"
           >
             <Trash2 className="h-4 w-4" />
-          </button>
+          </Button>
         )}
+      </div>
+
+      {/* Body — 3 field sections */}
+      <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
+        {/* Margin range */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500" />
+            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">% Margin</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Input
+              type="number"
+              value={minMargin}
+              onChange={(e) => setMinMargin(e.target.value)}
+              min={0}
+              max={99}
+              step={1}
+              containerClassName="w-16"
+              backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+              sizeClassName="py-1.5 text-center text-sm font-semibold"
+            />
+            <span className="text-slate-400">–</span>
+            <Input
+              type="number"
+              value={maxMargin}
+              onChange={(e) => setMaxMargin(e.target.value)}
+              min={1}
+              max={100}
+              step={1}
+              containerClassName="w-16"
+              backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+              sizeClassName="py-1.5 text-center text-sm font-semibold"
+            />
+            <span className="text-xs text-slate-400">%</span>
+          </div>
+        </div>
+
+        {/* % Profit share */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">% Lợi nhuận</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Input
+              type="number"
+              value={profitShare}
+              onChange={(e) => setProfitShare(e.target.value)}
+              min={0}
+              max={100}
+              step={0.5}
+              containerClassName="w-20"
+              backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20"
+              borderClassName="border-emerald-200 dark:border-emerald-700/50"
+              sizeClassName="py-1.5 text-center text-sm font-bold"
+              textClassName="text-emerald-700 dark:text-emerald-300"
+            />
+            <span className="text-xs text-slate-500 dark:text-slate-400">% trên lợi nhuận</span>
+          </div>
+        </div>
+
+        {/* % Fallback */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
+            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">% Fallback</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Input
+              type="number"
+              value={fallback}
+              onChange={(e) => setFallback(e.target.value)}
+              min={0}
+              max={100}
+              step={0.5}
+              containerClassName="w-20"
+              backgroundClassName="bg-amber-50 dark:bg-amber-900/20"
+              borderClassName="border-amber-200 dark:border-amber-700/50"
+              sizeClassName="py-1.5 text-center text-sm font-bold"
+              textClassName="text-amber-700 dark:text-amber-300"
+            />
+            <span className="text-xs text-slate-500 dark:text-slate-400">% khi không có cost</span>
+          </div>
+        </div>
       </div>
 
       {/* Products list */}
@@ -227,16 +320,18 @@ const GroupRow: React.FC<GroupRowProps> = ({ group, products, onUpdate, onDelete
             </p>
           ) : (
             <div className="divide-y divide-slate-50 dark:divide-slate-700/50">
-              {groupProducts.map(p => {
+              {groupProducts.map((p) => {
                 const profit = p.price - (p.costPrice ?? 0);
                 const margin = profit / p.price;
                 const commission = calcItemCommission(p.price, p.costPrice, [group]);
                 return (
                   <div key={p.id} className="flex items-center gap-3 px-4 py-2.5">
                     <div className="h-7 w-7 shrink-0 overflow-hidden rounded-lg border border-slate-100 dark:border-slate-700">
-                      {p.image
-                        ? <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
-                        : <div className="flex h-full w-full items-center justify-center bg-slate-100 text-[10px] text-slate-400 dark:bg-slate-700">?</div>}
+                      {p.image ? (
+                        <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-slate-100 text-[10px] text-slate-400 dark:bg-slate-700">?</div>
+                      )}
                     </div>
                     <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-700 dark:text-slate-300">{p.name}</span>
                     <span className="shrink-0 text-xs text-slate-400">{formatVND(p.price)}</span>
@@ -325,17 +420,17 @@ const GroupsTab: React.FC<GroupsTabProps> = ({ groups, products, onGroupsChange 
         ))}
       </div>
 
-      <button
+      <Button
         type="button"
         onClick={handleAdd}
         disabled={adding}
         className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 py-3 text-sm font-medium text-slate-500 transition-colors hover:border-orange-400 hover:text-orange-600 disabled:opacity-50 dark:border-slate-600 dark:text-slate-400 dark:hover:border-orange-600 dark:hover:text-orange-400"
-      >
+       variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
         {adding
           ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />
           : <Plus className="h-4 w-4" />}
         Thêm nhóm
-      </button>
+      </Button>
     </div>
   );
 };
@@ -412,7 +507,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, groups, onSaved }) => 
 
       <div className="relative shrink-0 w-28">
         <DollarSign className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-        <input
+        <Input
           type="number"
           min={0}
           value={costInput}
@@ -420,20 +515,20 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, groups, onSaved }) => 
           onKeyDown={e => e.key === 'Enter' && handleSave()}
           placeholder="Giá cost"
           className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-7 pr-2 text-sm text-slate-900 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-        />
+         />
       </div>
 
-      <button
+      <Button
         type="button"
         disabled={!dirty || saving}
         onClick={handleSave}
         className="flex shrink-0 items-center gap-1 rounded-lg bg-orange-600 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-40"
-      >
+       variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
         {saving
           ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
           : <Save className="h-3.5 w-3.5" />}
         Lưu
-      </button>
+      </Button>
     </div>
   );
 };
@@ -526,7 +621,7 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
     });
 
   const handleMarkPaid = async () => {
-    const ids = Array.from(selected);
+    const ids: string[] = Array.from(selected);
     if (!ids.length) return;
     setBusy(true);
     try {
@@ -556,11 +651,11 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-100 bg-white dark:border-slate-700 dark:bg-slate-800">
-      <button
+      <Button
         type="button"
         onClick={() => setExpanded(v => !v)}
         className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/50"
-      >
+       variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
           {summary.collaboratorName.charAt(0).toUpperCase()}
         </span>
@@ -589,15 +684,13 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
         <span className="shrink-0 text-slate-400">
           {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </span>
-      </button>
+      </Button>
 
       {expanded && (
         <div className="border-t border-slate-100 dark:border-slate-700">
           {pendingOrders.length > 0 && (
             <div className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 dark:bg-slate-700/40">
-              <input
-                type="checkbox"
-                checked={allPendingSelected}
+              <Checkbox checked={allPendingSelected}
                 onChange={() =>
                   setSelected(
                     allPendingSelected ? new Set() : new Set(pendingOrders.map(o => o.id)),
@@ -609,17 +702,17 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
                 {selected.size > 0 ? `Đã chọn ${selected.size} đơn` : 'Chọn tất cả chưa trả'}
               </span>
               {selected.size > 0 && (
-                <button
+                <Button
                   type="button"
                   disabled={busy}
                   onClick={handleMarkPaid}
                   className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-                >
+                 variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                   {busy
                     ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     : <CheckCircle2 className="h-3.5 w-3.5" />}
                   Đánh dấu đã trả
-                </button>
+                </Button>
               )}
             </div>
           )}
@@ -632,7 +725,7 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
               return (
                 <div key={order.id} className="flex items-center gap-3 px-4 py-3 text-sm">
                   {isPending
-                    ? <input type="checkbox" checked={selected.has(order.id)} onChange={() => toggleSelect(order.id)} className="h-4 w-4 rounded border-slate-300 accent-orange-500" />
+                    ? <Checkbox checked={selected.has(order.id)} onChange={() => toggleSelect(order.id)} className="h-4 w-4 rounded border-slate-300 accent-orange-500" />
                     : <div className="h-4 w-4 shrink-0" />}
                   <div className="min-w-0 flex-1">
                     <span className={`font-medium ${statusColor(order)}`}>{order.orderNumber || order.id}</span>
@@ -646,15 +739,15 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
                   </div>
                   <CommissionBadge status={order.commissionStatus} cancelled={cancelled} />
                   {isPaid && (
-                    <button
+                    <Button
                       type="button"
                       disabled={busy}
                       onClick={() => handleUnmark(order.id)}
                       title="Đặt lại thành chưa trả"
                       className="ml-1 shrink-0 rounded p-1 text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-500 disabled:opacity-50 dark:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-400"
-                    >
+                     variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                       <RotateCcw className="h-3.5 w-3.5" />
-                    </button>
+                    </Button>
                   )}
                 </div>
               );
@@ -782,7 +875,7 @@ const CommissionPage: React.FC = () => {
         {tabs.map(({ key, label, icon }) => {
           const active = activeTab === key;
           return (
-            <button
+            <Button
               key={key}
               type="button"
               onClick={() => setActiveTab(key)}
@@ -791,10 +884,10 @@ const CommissionPage: React.FC = () => {
                   ? 'bg-white shadow-sm text-slate-900 dark:bg-slate-700 dark:text-white'
                   : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
-            >
+             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
               <span className={active ? 'text-orange-500' : ''}>{icon}</span>
               {label}
-            </button>
+            </Button>
           );
         })}
       </Box>

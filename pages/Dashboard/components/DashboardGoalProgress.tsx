@@ -8,6 +8,8 @@ import { Order, OrderStatus, PaymentStatus } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { getOrderRevenueDate, getOrderTotal } from '@/utils/order/orderUtils';
 
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 interface DashboardGoalProgressProps {
   orders: Order[];
 }
@@ -99,45 +101,44 @@ const DashboardGoalProgress: React.FC<DashboardGoalProgressProps> = ({ orders })
           </Heading>
         </Box>
         {!editing ? (
-          <button
+          <Button
             type="button"
             onClick={handleStartEdit}
             className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-          >
+           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             <Pencil className="h-3.5 w-3.5" />
             {target > 0 ? 'Sửa mục tiêu' : 'Đặt mục tiêu'}
-          </button>
+          </Button>
         ) : null}
       </Box>
 
       <Box layoutClassName="p-5">
         {editing ? (
           <Box layoutClassName="flex items-center gap-2">
-            <input
-              type="text"
+            <Input
               inputMode="numeric"
               autoFocus
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Nhập mục tiêu (VND, vd: 50000000)"
               className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-orange-500 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
-            />
-            <button
+             />
+            <Button
               type="button"
               onClick={handleSave}
               className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-orange-600 text-white hover:bg-orange-700"
               aria-label="Lưu"
-            >
+             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
               <Check className="h-4 w-4" />
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={() => setEditing(false)}
               className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700"
               aria-label="Huỷ"
-            >
+             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
               <X className="h-4 w-4" />
-            </button>
+            </Button>
           </Box>
         ) : target <= 0 ? (
           <Box layoutClassName="py-6 text-center">

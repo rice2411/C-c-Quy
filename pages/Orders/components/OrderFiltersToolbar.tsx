@@ -3,49 +3,59 @@ import { AlertTriangle, Clock, Filter, Truck, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Box from '@/components/ui/Box';
 import Heading from '@/components/ui/Heading';
-import FilterToolbar, { type ToolbarPill } from '@/components/shared/FilterToolbar';
+import FilterToolbar, { type ToolbarPill, type ToolbarOption } from '@/components/shared/FilterToolbar';
 
 export interface QuickPillState {
-  pending: boolean;   // Cần xử lý — hideCompleted
-  unpaid: boolean;    // Chưa thanh toán
-  today: boolean;     // Cần ship hôm nay
-  overdue: boolean;   // Quá hạn
+  pending: boolean;
+  unpaid: boolean;
+  today: boolean;
+  overdue: boolean;
 }
+
+export type OrderSortKey =
+  | 'date-desc' | 'date-asc'
+  | 'total-desc' | 'total-asc'
+  | 'deliveryDate-asc' | 'deliveryDate-desc'
+  | 'status-asc' | 'paymentStatus-asc';
+
+const SORT_OPTIONS: ToolbarOption[] = [
+  { value: 'date-desc',         label: 'Mới nhất' },
+  { value: 'date-asc',          label: 'Cũ nhất' },
+  { value: 'total-desc',        label: 'Tổng tiền cao→thấp' },
+  { value: 'total-asc',         label: 'Tổng tiền thấp→cao' },
+  { value: 'deliveryDate-asc',  label: 'Ngày giao sớm nhất' },
+  { value: 'deliveryDate-desc', label: 'Ngày giao xa nhất' },
+  { value: 'status-asc',        label: 'Trạng thái' },
+  { value: 'paymentStatus-asc', label: 'Thanh toán' },
+];
 
 interface OrderFiltersToolbarProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   onOpenAdvanced: () => void;
-  /** Số lượng filter đang active — hiện badge trên nút Bộ lọc */
   activeFiltersCount?: number;
-  /** Trạng thái các quick filter pill — để highlight đúng */
   quickPills?: QuickPillState;
   onTogglePending?: () => void;
   onToggleUnpaid?: () => void;
   onToggleToday?: () => void;
   onToggleOverdue?: () => void;
+  sortKey?: OrderSortKey;
+  onSortChange?: (k: OrderSortKey) => void;
+  onClearAll?: () => void;
 }
 
 const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
-  searchTerm,
-  onSearchChange,
-  onOpenAdvanced,
-  activeFiltersCount = 0,
-  quickPills,
-  onTogglePending,
-  onToggleUnpaid,
-  onToggleToday,
-  onToggleOverdue,
+  searchTerm, onSearchChange, onOpenAdvanced, activeFiltersCount = 0,
+  quickPills, onTogglePending, onToggleUnpaid, onToggleToday, onToggleOverdue,
+  sortKey, onSortChange, onClearAll,
 }) => {
   const { t } = useLanguage();
-
   const pills: ToolbarPill[] = [
     { id: 'pending',  label: 'Cần xử lý',       active: !!quickPills?.pending,  onClick: onTogglePending ?? (() => {}),  icon: Clock },
     { id: 'today',    label: 'Ship hôm nay',    active: !!quickPills?.today,    onClick: onToggleToday ?? (() => {}),    icon: Truck },
     { id: 'overdue',  label: 'Quá hạn',         active: !!quickPills?.overdue,  onClick: onToggleOverdue ?? (() => {}),  icon: AlertTriangle },
     { id: 'unpaid',   label: 'Chưa thanh toán', active: !!quickPills?.unpaid,   onClick: onToggleUnpaid ?? (() => {}),   icon: Wallet },
   ];
-
   return (
     <Box
       layoutClassName="flex shrink-0 flex-col gap-3 p-5"
@@ -57,14 +67,17 @@ const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
           {t('orders.recent')}
         </Heading>
       </Box>
-
       <FilterToolbar
         search={searchTerm}
         onSearchChange={onSearchChange}
         searchPlaceholder={t('orders.searchPlaceholder')}
+        sortBy={sortKey}
+        sortOptions={onSortChange ? SORT_OPTIONS : undefined}
+        onSortChange={onSortChange ? (v) => onSortChange(v as OrderSortKey) : undefined}
         onOpenAdvanced={onOpenAdvanced}
         advancedFiltersCount={activeFiltersCount}
         pills={pills}
+        onClearAll={onClearAll}
       />
     </Box>
   );

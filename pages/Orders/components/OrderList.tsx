@@ -481,6 +481,26 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
         onToggleUnpaid={togglePill_unpaid}
         onToggleToday={togglePill_today}
         onToggleOverdue={togglePill_overdue}
+        sortKey={`${String(sortField)}-${sortDirection}` as any}
+        onSortChange={(k) => {
+          const [field, dir] = k.split('-');
+          setSortField(field as keyof Order);
+          setSortDirection(dir as 'asc' | 'desc');
+        }}
+        onClearAll={() => {
+          setSearchTerm('');
+          setStatusFilter('All');
+          setProductFilter('');
+          setSelectedMonth('');
+          setPaymentStatusFilter('All');
+          setPaymentMethodFilter('All');
+          setCreatorFilter('');
+          setDateFrom('');
+          setDateTo('');
+          setDateType('orderDate');
+          setHideCompleted(false);
+          setIsOverdueFilter(false);
+        }}
       />
 
       <OrderListMobile

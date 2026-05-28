@@ -9,6 +9,7 @@ import { normalizeSearchText } from '@/utils/format/stringUtil';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import { getTagPalette } from '@/utils/product/productTagPalette';
 
+import Button from '@/components/ui/Button';
 const MAX_RESULTS = 12;
 
 export interface ProductPickerProps {
@@ -156,14 +157,14 @@ const ProductPicker: React.FC<ProductPickerProps> = ({
               ) : null}
             </Box>
           </Box>
-          <button
+          <Button
             type="button"
             onClick={handleClearSelection}
             aria-label="Đổi sản phẩm khác"
             className="rounded-md p-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 dark:text-emerald-300 dark:hover:bg-emerald-900/60"
-          >
+           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             Đổi
-          </button>
+          </Button>
         </Box>
       </Box>
     );
@@ -184,16 +185,16 @@ const ProductPicker: React.FC<ProductPickerProps> = ({
           leftIcon={<Search />}
           leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
         />
-        <button
+        <Button
           type="button"
           aria-label="Mở danh sách sản phẩm"
           onClick={() => setOpen((v) => !v)}
           className="absolute inset-y-0 right-2 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-        >
+         variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
           <ChevronDown className="h-4 w-4" />
-        </button>
+        </Button>
         {(query || selectedName) && (
-          <button
+          <Button
             type="button"
             aria-label="Xoá tìm kiếm"
             onClick={() => {
@@ -201,9 +202,9 @@ const ProductPicker: React.FC<ProductPickerProps> = ({
               if (selectedName && onClear) onClear();
             }}
             className="absolute inset-y-0 right-8 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-          >
+           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             <X className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         )}
       </Box>
 
@@ -218,12 +219,12 @@ const ProductPicker: React.FC<ProductPickerProps> = ({
               {filtered.map((p, idx) => {
                 const isTopHint = idx === 0 && normalizeSearchText(query).length > 0;
                 return (
-                  <button
+                  <Button
                     type="button"
                     key={p.id}
                     onClick={() => handlePick(p)}
                     className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-orange-50 dark:hover:bg-orange-900/20"
-                  >
+                   variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                     {p.image ? (
                       <img
                         src={p.image}
@@ -271,21 +272,21 @@ const ProductPicker: React.FC<ProductPickerProps> = ({
                     <span className="shrink-0 text-sm font-semibold text-orange-600 dark:text-orange-400">
                       {formatVNDOrDash(p.price)}
                     </span>
-                  </button>
+                  </Button>
                 );
               })}
             </Box>
           ) : null}
           {showCreateRow ? (
-            <button
+            <Button
               type="button"
               onClick={handleCustom}
               className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2 text-left text-sm text-orange-700 hover:bg-orange-50 dark:border-slate-700 dark:text-orange-300 dark:hover:bg-orange-900/20"
-            >
+             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
               <span>
                 + Tạo item tuỳ chỉnh: <strong>{query.trim()}</strong>
               </span>
-            </button>
+            </Button>
           ) : null}
         </Box>
       ) : null}

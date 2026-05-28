@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { Order } from '@/types';
+import { Order, Product } from '@/types';
 import type { StockReceiptStructured } from '@/types/billReceipt';
 
 const getClient = () => {
@@ -303,3 +303,74 @@ ${ocrText.slice(0, 12000)}
   if (!text) throw new Error('Gemini không trả lời nội dung.');
   return parseStructuredJson(text);
 }
+
+/**
+ * Phân tích sản phẩm + đưa ra insights: similar names, low margin, stale, suggestions giá.
+ */
+export const generateProductInsights = async (
+  products: Product[],
+  orders: Order[],
+  language: 'en' | 'vi' = 'vi',
+): Promise<string> => {
+  const ai = getClient();
+  if (!ai) return language === 'vi' ? 'Thiếu GEMINI_API_KEY.' : 'API Key missing.';
+
+  // Compact data — chỉ field cần thiết
+  const productData = products.map((p) => {
+    const margin = (p.costPrice && p.price > 0) ? ((p.price - p.costPrice) / p.price) : null;
+    return {
+      id: p.id.slice(0, 8),
+      name: p.name,
+      category: p.category,
+      price: p.price,
+      cost: p.costPrice ?? null,
+      margin: margin !== null ? Number((margin * 100).toFixed(0)) : null,
+      status: p.status,
+      tags: p.tags,
+    };
+  });
+
+  // Sales per product (60 days)
+  const sixtyAgo = Date.now() - 60 * 86400000;
+  const soldByProduct: Record<string, { units: number; revenue: number }> = {};
+  for (const o of orders) {
+    const st = String(o.status ?? '').toUpperCase();
+    if (st === 'CANCELLED' || st === 'RETURNED') continue;
+    const od = (o.orderDate as any)?.toDate?.() ?? (o.orderDate ? new Date(o.orderDate as any) : null);
+    if (!od || od.getTime() < sixtyAgo) continue;
+    for (const it of o.items || []) {
+      if (!it.productId) continue;
+      const key = it.productId.slice(0, 8);
+      if (!soldByProduct[key]) soldByProduct[key] = { units: 0, revenue: 0 };
+      soldByProduct[key].units += it.quantity || 0;
+      soldByProduct[key].revenue += (it.price || 0) * (it.quantity || 0);
+    }
+  }
+
+  const prompt = language === 'vi'
+    ? `Bạn là chuyên gia kinh doanh tiệm bánh. Phân tích danh sách sản phẩm + doanh số 60 ngày, đưa ra 4-6 insights cụ thể bằng tiếng Việt, format markdown.
+
+Tập trung vào:
+1. Sản phẩm có TÊN GẦN GIỐNG NHAU (có thể trùng/duplicate cần merge)
+2. Sản phẩm MARGIN THẤP (<20%) hoặc đang LỖ (margin <0) — đề xuất tăng giá cụ thể
+3. Sản phẩm Ế (0 đơn 60 ngày) — đề xuất inactive hoặc promote
+4. Sản phẩm BÁN CHẠY NHẤT — gợi ý cross-sell với sp liên quan
+5. Combo cơ hội: 2 sp thường mua chung
+
+Mỗi insight 2-3 dòng, có ⚠️/💡/🔥 emoji + tên sp cụ thể + số liệu.
+
+Sản phẩm: ${JSON.stringify(productData)}
+Doanh số 60 ngày: ${JSON.stringify(soldByProduct)}`
+    : `Analyze products + 60-day sales. Provide 4-6 actionable insights in markdown.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash-exp',
+      contents: prompt,
+    });
+    return response.text ?? (language === 'vi' ? 'Không có phản hồi.' : 'No response.');
+  } catch (e: any) {
+    console.error('Gemini product insights error:', e);
+    return language === 'vi' ? 'Lỗi khi gọi AI. Thử lại sau.' : 'AI error.';
+  }
+};

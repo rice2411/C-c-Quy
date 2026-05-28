@@ -1,6 +1,7 @@
 import React from 'react';
 import { Reveal } from './Shared';
 
+import Heading from '@/components/ui/Heading';
 const processSteps = [
   { num: '01', title: 'Chọn nguyên liệu', desc: 'Bơ Pháp, bột mì cao cấp, sô-cô-la Bỉ. Mọi nguyên liệu đều được tuyển chọn kỹ lưỡng.', icon: '🌾' },
   { num: '02', title: 'Trộn bột thủ công', desc: 'Tỷ lệ chính xác, ủ bột đúng thời gian để bánh đạt độ giòn — mềm — xốp hoàn hảo.', icon: '🥣' },
@@ -18,9 +19,9 @@ const Process: React.FC = () => (
         </div>
       </Reveal>
       <Reveal variant="up" delay={150}>
-        <h2 className="cq2-h-big">
+        <Heading level={2} textClassName="cq2-h-big">
           Từ căn bếp <em className="cq2-script-gold">đến tay bạn</em>
-        </h2>
+        </Heading>
       </Reveal>
     </div>
     <div className="cq2-process-grid">
@@ -28,7 +29,7 @@ const Process: React.FC = () => (
         <Reveal key={p.num} variant="up" delay={200 + i * 120} className="cq2-process-step">
           <div className="cq2-process-num">{p.num}</div>
           <div className="cq2-process-icon">{p.icon}</div>
-          <h3 className="cq2-process-title">{p.title}</h3>
+          <Heading level={3} textClassName="cq2-process-title">{p.title}</Heading>
           <p className="cq2-process-desc">{p.desc}</p>
           {i < processSteps.length - 1 && <div className="cq2-process-line" />}
         </Reveal>

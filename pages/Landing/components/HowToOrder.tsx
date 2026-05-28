@@ -1,6 +1,7 @@
 import React from 'react';
 import { Reveal } from './Shared';
 
+import Heading from '@/components/ui/Heading';
 const HowToOrder: React.FC = () => (
   <section className="cq2-how">
     <div className="cq2-how-head">
@@ -11,9 +12,9 @@ const HowToOrder: React.FC = () => (
         </div>
       </Reveal>
       <Reveal variant="up" delay={150}>
-        <h2 className="cq2-h-big">
+        <Heading level={2} textClassName="cq2-h-big">
           Đặt bánh siêu dễ — <em className="cq2-script-gold">3 bước</em>
-        </h2>
+        </Heading>
       </Reveal>
     </div>
     <div className="cq2-how-grid">
@@ -25,7 +26,7 @@ const HowToOrder: React.FC = () => (
         <Reveal key={s.n} variant="scale" delay={200 + i * 150} className="cq2-how-step">
           <div className="cq2-how-emoji">{s.emoji}</div>
           <div className="cq2-how-num">{s.n}</div>
-          <h3 className="cq2-how-title">{s.t}</h3>
+          <Heading level={3} textClassName="cq2-how-title">{s.t}</Heading>
           <p className="cq2-how-desc">{s.d}</p>
         </Reveal>
       ))}

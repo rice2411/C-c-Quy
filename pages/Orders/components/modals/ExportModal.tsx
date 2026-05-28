@@ -19,6 +19,8 @@ import { exportOrdersToExcel, ExportColumn, getOrderTotal } from '@/utils/order/
 import { parseDateValue } from '@/utils/format/dateUtil';
 import toast from 'react-hot-toast';
 
+import Heading from '@/components/ui/Heading';
+import Checkbox from '@/components/ui/Checkbox';
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -293,9 +295,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
             {/* Left Column: Range & Color */}
             <div className="flex flex-col gap-4">
                 <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
-                   <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                   <Heading level={4} textClassName="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                      <Calendar className="w-4 h-4" /> Range
-                   </h4>
+                   </Heading>
                    <div className="space-y-2">
                       {/* Option 1: Single Month */}
                       <label className={`flex flex-col p-3 border rounded-lg cursor-pointer transition-all ${rangeType === 'month' ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/10 ring-1 ring-orange-500' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}>
@@ -368,9 +370,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
                 </div>
 
                 <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-xl border border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                     <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                     <Heading level={4} textClassName="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                        <Settings className="w-4 h-4" /> Header Color
-                     </h4>
+                     </Heading>
                      <div className="flex items-center gap-2">
                         <input 
                           type="color" 
@@ -384,7 +386,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
 
             {/* Right Column: Columns */}
             <div className="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-xl border border-slate-100 dark:border-slate-700 flex flex-col max-h-[400px]">
-               <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">Columns to Export</h4>
+               <Heading level={4} textClassName="text-sm font-bold text-slate-900 dark:text-white mb-2">Columns to Export</Heading>
                <div className="overflow-y-auto flex-1 pr-2 grid grid-cols-1 sm:grid-cols-2 gap-2 content-start">
                   {AVAILABLE_COLUMNS.map(col => (
                      <label key={col.id} className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-600 rounded-lg cursor-pointer hover:border-orange-400 dark:hover:border-orange-500 transition-all">
@@ -392,7 +394,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
                         <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shrink-0 ml-2 ${selectedColumnIds.includes(col.id) ? 'bg-orange-500 border-orange-500 text-white' : 'border-slate-300 dark:border-slate-600 text-transparent'}`}>
                            <Check className="w-3 h-3" />
                         </div>
-                        <input type="checkbox" checked={selectedColumnIds.includes(col.id)} onChange={() => handleToggleColumn(col.id)} className="hidden" />
+                        <Checkbox checked={selectedColumnIds.includes(col.id)} onChange={() => handleToggleColumn(col.id)} className="hidden" />
                      </label>
                   ))}
                </div>
@@ -403,9 +405,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
          <div className="flex-1 flex flex-col min-h-0">
             <div className="flex justify-between items-center mb-2 shrink-0">
                <div className="flex items-center gap-3">
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Heading level={4} textClassName="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <Eye className="w-4 h-4" /> Live Preview
-                    </h4>
+                    </Heading>
                     {isMultiSheet && (
                         <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
                              <FileSpreadsheet className="w-3 h-3 text-blue-600 dark:text-blue-400" />
@@ -419,19 +421,19 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
             {/* Preview Tabs (Visible only if multi-sheet) */}
             {isMultiSheet && (
                 <div className="flex gap-2 mb-2 overflow-x-auto pb-1 scrollbar-hide">
-                    <button
+                    <Button
                         onClick={() => setActiveSheet('Overall')}
                         className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors border flex items-center gap-1.5 ${
                             activeSheet === 'Overall' 
                             ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800 shadow-sm' 
                             : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
                         }`}
-                    >
+                     variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                         <TableIcon className="w-3 h-3" />
                         Overall Summary
-                    </button>
+                    </Button>
                     {monthKeys.map(m => (
-                        <button
+                        <Button
                             key={m}
                             onClick={() => setActiveSheet(m)}
                             className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors border ${
@@ -439,9 +441,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
                                 ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800 shadow-sm' 
                                 : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
                             }`}
-                        >
+                         variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                             {m}
-                        </button>
+                        </Button>
                     ))}
                 </div>
             )}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Reveal } from './Shared';
 
+import Heading from '@/components/ui/Heading';
 const Story: React.FC = () => (
   <section id="story" className="cq2-story">
     <div className="cq2-story-inner">
@@ -15,10 +16,10 @@ const Story: React.FC = () => (
 
       <div className="cq2-story-right">
         <Reveal variant="up">
-          <h2 className="cq2-h-big">
+          <Heading level={2} textClassName="cq2-h-big">
             Không chỉ là bánh.<br />
             Là <em className="cq2-script-gold">cảm xúc</em> được gói lại.
-          </h2>
+          </Heading>
         </Reveal>
         <Reveal variant="up" delay={200}>
           <p className="cq2-story-text">

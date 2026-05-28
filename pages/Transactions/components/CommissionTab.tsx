@@ -22,6 +22,8 @@ import {
 import { OrderStatus } from '@/types/enums';
 import Spinner from '@/components/ui/Spinner';
 
+import Checkbox from '@/components/ui/Checkbox';
+import Button from '@/components/ui/Button';
 const statusColor = (order: Order) => {
   if (order.status === OrderStatus.CANCELLED || order.status === OrderStatus.RETURNED) {
     return 'text-red-400 line-through';
@@ -97,7 +99,7 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
   };
 
   const handleMarkPaid = async () => {
-    const ids = Array.from(selected);
+    const ids: string[] = Array.from(selected);
     if (ids.length === 0) return;
     setBusy(true);
     try {
@@ -128,11 +130,11 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-100 bg-white dark:border-slate-700 dark:bg-slate-800">
       {/* Header row */}
-      <button
+      <Button
         type="button"
         onClick={() => setExpanded(v => !v)}
         className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/50"
-      >
+       variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
           {summary.collaboratorName.charAt(0).toUpperCase()}
         </span>
@@ -170,7 +172,7 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
         <span className="shrink-0 text-slate-400">
           {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </span>
-      </button>
+      </Button>
 
       {/* Order list */}
       {expanded && (
@@ -178,29 +180,26 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
           {/* Bulk action bar */}
           {pendingOrders.length > 0 && (
             <div className="flex items-center gap-3 bg-slate-50 px-4 py-2.5 dark:bg-slate-700/40">
-              <input
-                type="checkbox"
-                checked={allPendingSelected}
+              <Checkbox checked={allPendingSelected}
                 onChange={toggleSelectAll}
-                className="h-4 w-4 rounded border-slate-300 accent-orange-500"
-              />
+                className="h-4 w-4 rounded border-slate-300 accent-orange-500" />
               <span className="flex-1 text-xs text-slate-500 dark:text-slate-400">
                 {selected.size > 0 ? `Đã chọn ${selected.size} đơn` : 'Chọn tất cả chưa trả'}
               </span>
               {selected.size > 0 && (
-                <button
+                <Button
                   type="button"
                   disabled={busy}
                   onClick={handleMarkPaid}
                   className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-60"
-                >
+                 variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                   {busy ? (
                     <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   ) : (
                     <CheckCircle2 className="h-3.5 w-3.5" />
                   )}
                   Đánh dấu đã trả
-                </button>
+                </Button>
               )}
             </div>
           )}
@@ -219,9 +218,7 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
                   className="flex items-center gap-3 px-4 py-3 text-sm"
                 >
                   {isPending && (
-                    <input
-                      type="checkbox"
-                      checked={selected.has(order.id)}
+                    <Checkbox checked={selected.has(order.id)}
                       onChange={() => toggleSelect(order.id)}
                       className="h-4 w-4 rounded border-slate-300 accent-orange-500"
                     />
@@ -253,15 +250,15 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
                   </div>
 
                   {isPaid && (
-                    <button
+                    <Button
                       type="button"
                       disabled={busy}
                       onClick={() => handleUnmark(order.id)}
                       title="Đặt lại thành chưa trả"
                       className="ml-1 shrink-0 rounded p-1 text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-500 disabled:opacity-50 dark:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-400"
-                    >
+                     variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                       <RotateCcw className="h-3.5 w-3.5" />
-                    </button>
+                    </Button>
                   )}
                 </div>
               );

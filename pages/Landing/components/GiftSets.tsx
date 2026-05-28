@@ -2,6 +2,7 @@ import React from 'react';
 import { Reveal } from './Shared';
 import { ProductRow, ShowcaseProduct } from './ProductShowcase';
 
+import Heading from '@/components/ui/Heading';
 const giftRows: ShowcaseProduct[] = [
   {
     no: '01',
@@ -67,9 +68,9 @@ const GiftSets: React.FC = () => (
         </div>
       </Reveal>
       <Reveal variant="up" delay={150}>
-        <h2 className="cq2-h-big">
+        <Heading level={2} textClassName="cq2-h-big">
           Quà tặng — <em className="cq2-script-gold">gói cảm xúc</em>
-        </h2>
+        </Heading>
       </Reveal>
       <Reveal variant="up" delay={250}>
         <p className="cq2-showcase-lead">

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Reveal } from './Shared';
 
+import Heading from '@/components/ui/Heading';
 const testimonials = [
   { quote: 'Bánh ngon xuất sắc, cookies lạnh mềm tan ngay trong miệng. Đặt mãi không chán!', name: 'Mai Anh', role: 'Khách quen · 2 năm', stars: 5 },
   { quote: 'Set quà Valentine năm nay đẹp ngỡ ngàng. Người yêu mở ra xong khóc thiệt luôn 🥹', name: 'Tuấn Khang', role: 'Sinh viên', stars: 5 },
@@ -18,9 +19,9 @@ const Testimonials: React.FC = () => (
         </div>
       </Reveal>
       <Reveal variant="up" delay={150}>
-        <h2 className="cq2-h-big cq2-h-dark">
+        <Heading level={2} textClassName="cq2-h-big cq2-h-dark">
           Khách yêu thương — <em className="cq2-script-orange">chúng tôi biết ơn</em>
-        </h2>
+        </Heading>
       </Reveal>
     </div>
     <div className="cq2-testimonials-grid">

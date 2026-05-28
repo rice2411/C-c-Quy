@@ -1,6 +1,7 @@
 import React from 'react';
 import { Reveal, MagBtn } from './Shared';
 
+import Heading from '@/components/ui/Heading';
 const CTA: React.FC = () => (
   <section id="contact" className="cq2-cta">
     <div className="cq2-cta-grid" />
@@ -9,10 +10,10 @@ const CTA: React.FC = () => (
         <p className="cq2-cta-kicker">⌘ Bắt đầu</p>
       </Reveal>
       <Reveal variant="up" delay={120}>
-        <h2 className="cq2-cta-head">
+        <Heading level={2} textClassName="cq2-cta-head">
           Gửi <em className="cq2-script-gold">yêu thương</em><br />
           qua từng chiếc bánh.
-        </h2>
+        </Heading>
       </Reveal>
       <Reveal variant="up" delay={300}>
         <p className="cq2-cta-sub">

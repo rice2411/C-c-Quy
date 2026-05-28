@@ -2,6 +2,7 @@ import React from 'react';
 import { Facebook, Instagram as InstagramIcon, ArrowUpRight } from 'lucide-react';
 import { Reveal } from './Shared';
 
+import Heading from '@/components/ui/Heading';
 // Inline SVG cho TikTok + Zalo (lucide không có)
 const TikTokIcon: React.FC<{ size?: number }> = ({ size = 48 }) => (
   <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
@@ -87,9 +88,9 @@ const Instagram: React.FC = () => (
         </div>
       </Reveal>
       <Reveal variant="up" delay={150}>
-        <h2 className="cq2-h-big">
+        <Heading level={2} textClassName="cq2-h-big">
           Theo dõi <em className="cq2-script-gold">Cúc Quy</em>
-        </h2>
+        </Heading>
       </Reveal>
       <Reveal variant="up" delay={250}>
         <p className="cq2-ig-lead">

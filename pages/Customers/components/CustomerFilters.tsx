@@ -22,10 +22,12 @@ const CustomerFilters: React.FC<CustomerFiltersProps> = ({ searchTerm, onSearchC
         search={searchTerm}
         onSearchChange={onSearchChange}
         searchPlaceholder={t('customers.search')}
+        stats={
+          <Typography size="xs" variant="muted" layoutClassName="shrink-0 tabular-nums sm:text-right">
+            {toolbarHint}
+          </Typography>
+        }
       />
-      <Typography size="xs" variant="muted" layoutClassName="shrink-0 tabular-nums sm:text-right">
-        {toolbarHint}
-      </Typography>
     </Box>
   );
 };

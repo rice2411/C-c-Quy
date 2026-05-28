@@ -33,6 +33,7 @@ import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 
+import Button from '@/components/ui/Button';
 type TabKey = 'all' | 'valid' | 'invalid' | 'external';
 type DatePreset = 'today' | '7d' | 'month' | 'last_month' | 'custom';
 
@@ -73,17 +74,17 @@ const ExternalTransactionRow: React.FC<ExternalTransactionRowProps> = ({ transac
           </div>
         </div>
       </div>
-      <button
+      <Button
         type="button"
         disabled={busy}
         onClick={handle}
         className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-400 dark:hover:border-orange-600 dark:hover:text-orange-400"
-      >
+       variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
         {busy
           ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
           : <RotateCcw className="h-3.5 w-3.5" />}
         Khôi phục
-      </button>
+      </Button>
     </div>
   );
 };
@@ -486,7 +487,7 @@ const TransactionsPage: React.FC = () => {
         {/* Quick presets */}
         <Box layoutClassName="flex flex-wrap items-center gap-1.5">
           {DATE_PRESETS.map(p => (
-            <button
+            <Button
               key={p.key}
               type="button"
               onClick={() => applyPreset(p.key)}
@@ -495,9 +496,9 @@ const TransactionsPage: React.FC = () => {
                   ? 'border-orange-400 bg-orange-50 text-orange-700 dark:border-orange-600 dark:bg-orange-900/30 dark:text-orange-300'
                   : 'border-slate-200 bg-white text-slate-600 hover:border-orange-300 hover:bg-orange-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-orange-700'
               }`}
-            >
+             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
               {p.label}
-            </button>
+            </Button>
           ))}
           <span className="ml-1 text-xs text-slate-300 dark:text-slate-600">|</span>
           <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
@@ -547,7 +548,7 @@ const TransactionsPage: React.FC = () => {
           {tabs.map(({ key, label, count, icon }) => {
             const active = activeTab === key;
             return (
-              <button
+              <Button
                 key={key}
                 type="button"
                 onClick={() => setActiveTab(key)}
@@ -556,7 +557,7 @@ const TransactionsPage: React.FC = () => {
                     ? 'bg-white shadow-sm text-slate-900 dark:bg-slate-700 dark:text-white'
                     : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                 } ${key === 'invalid' && count > 0 && !active ? 'text-amber-600 dark:text-amber-400' : ''}`}
-              >
+               variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 <span className={active ? 'text-orange-500' : ''}>{icon}</span>
                 <span>{label}</span>
                 <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
@@ -565,7 +566,7 @@ const TransactionsPage: React.FC = () => {
                 }`}>
                   {count}
                 </span>
-              </button>
+              </Button>
             );
           })}
         </Box>
@@ -623,10 +624,10 @@ const TransactionsPage: React.FC = () => {
             {hasFilters ? 'Không tìm thấy giao dịch phù hợp' : t('transactions.noData')}
           </Typography>
           {hasFilters && (
-            <button type="button" onClick={clearFilters}
-              className="text-xs font-medium text-orange-600 hover:underline dark:text-orange-400">
+            <Button type="button" onClick={clearFilters}
+              className="text-xs font-medium text-orange-600 hover:underline dark:text-orange-400" variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
               Xóa bộ lọc
-            </button>
+            </Button>
           )}
         </Box>
       ) : (

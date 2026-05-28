@@ -123,14 +123,14 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
             }}
             placeholder="Tên NCC — gõ để tìm, hoặc bấm vào ô để chọn lại"
           />
-          <button
+          <Button
             type="button"
             aria-label="Mở danh sách NCC"
             onClick={() => setOpen((v) => !v)}
             className="absolute inset-y-0 right-2 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-          >
+           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             <ChevronDown className="h-4 w-4" />
-          </button>
+          </Button>
         </Box>
         {selectedSupplier ? (
           <Box
@@ -141,14 +141,14 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
           >
             <Check className="h-3 w-3" />
             <span className="font-medium">Đã chọn: {selectedSupplier.name}</span>
-            <button
+            <Button
               type="button"
               onClick={handleClear}
               aria-label="Bỏ chọn NCC"
               className="ml-1 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/60"
-            >
+             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
               <X className="h-3 w-3" />
-            </button>
+            </Button>
           </Box>
         ) : (
           <Box
@@ -180,7 +180,7 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
                       normalizeSearchText(rawName));
                 const isTopHint = !isCurrent && idx === 0 && hasTypedQuery;
                 return (
-                  <button
+                  <Button
                     type="button"
                     key={s.id}
                     onClick={() => handlePickExisting(s)}
@@ -190,7 +190,7 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
                         ? 'bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40'
                         : 'hover:bg-orange-50 dark:hover:bg-orange-900/20')
                     }
-                  >
+                   variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                     <Box layoutClassName="flex items-center justify-between gap-2">
                       <Box layoutClassName="flex min-w-0 items-center gap-2">
                         {isCurrent ? (
@@ -219,22 +219,22 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
                         <span>Lần cuối: {s.lastReceiptDate.slice(0, 10)}</span>
                       ) : null}
                     </Box>
-                  </button>
+                  </Button>
                 );
               })}
             </Box>
           ) : null}
           {showCreateRow ? (
-            <button
+            <Button
               type="button"
               onClick={handleCreateNew}
               className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2 text-left text-sm text-orange-700 hover:bg-orange-50 dark:border-slate-700 dark:text-orange-300 dark:hover:bg-orange-900/20"
-            >
+             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
               <Plus className="h-4 w-4" />
               <span>
                 Tạo NCC mới: <strong>{rawName.trim()}</strong>
               </span>
-            </button>
+            </Button>
           ) : null}
         </Box>
       ) : null}

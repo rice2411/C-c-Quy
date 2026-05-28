@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Reveal, CookieMedia } from './Shared';
 
+import Heading from '@/components/ui/Heading';
 export interface ShowcaseProduct {
   no: string;
   tag: string;
@@ -99,7 +100,7 @@ export const ProductRow: React.FC<{
           <span className="cq2-product-dot" style={{ background: product.accent }} />
           {product.tag}
         </div>
-        <h3 className="cq2-product-name">{product.name}</h3>
+        <Heading level={3} textClassName="cq2-product-name">{product.name}</Heading>
         <p className="cq2-product-desc">{product.desc}</p>
         {product.prices && product.prices.length > 0 ? (
           <div className="cq2-combo-tags cq2-combo-tags-inline">
@@ -239,7 +240,7 @@ const TraditionalRow: React.FC = () => {
           <span className="cq2-product-dot" style={{ background: '#D87E2D' }} />
           Cookies truyền thống
         </div>
-        <h3 className="cq2-product-name">Bốn vị kinh điển<br />— mỗi ngày tươi mới</h3>
+        <Heading level={3} textClassName="cq2-product-name">Bốn vị kinh điển<br />— mỗi ngày tươi mới</Heading>
         <p className="cq2-product-desc">
           Socola · Cafe · Matcha Cheese · Red Velvet Cheese. Giòn rụm bên ngoài, mềm xốp bên trong.
           Bắt đầu hành trình Cúc Quy với 4 vị quen thuộc nhất.
@@ -273,10 +274,10 @@ const ProductShowcase: React.FC = () => (
         </div>
       </Reveal>
       <Reveal variant="up" delay={150}>
-        <h2 className="cq2-h-big">
+        <Heading level={2} textClassName="cq2-h-big">
           Từng <em className="cq2-script-gold">chiếc bánh</em><br />
           ra mắt bạn.
-        </h2>
+        </Heading>
       </Reveal>
       <Reveal variant="up" delay={250}>
         <p className="cq2-showcase-lead">

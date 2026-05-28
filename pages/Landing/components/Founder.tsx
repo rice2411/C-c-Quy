@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Reveal } from './Shared';
 
+import Heading from '@/components/ui/Heading';
 const founders = [
   {
     img: '/person1.jpeg',
@@ -91,9 +92,9 @@ const FounderCard: React.FC<{ founder: typeof founders[0]; delay: number }> = ({
           <span className="cq2-founder-dot" style={{ background: founder.accent }} />
           <span>Co-founder</span>
         </div>
-        <h3 className="cq2-founder-name">
+        <Heading level={3} textClassName="cq2-founder-name">
           <em className="cq2-script-gold">{founder.name}</em>
-        </h3>
+        </Heading>
         <p className="cq2-founder-role-text">{founder.role}</p>
         <p className="cq2-founder-quote-small">"{founder.quote}"</p>
         <div className="cq2-founder-skills">
@@ -117,9 +118,9 @@ const Founder: React.FC = () => (
         </div>
       </Reveal>
       <Reveal variant="up" delay={150}>
-        <h2 className="cq2-h-big">
+        <Heading level={2} textClassName="cq2-h-big">
           Hai người — <em className="cq2-script-gold">một niềm vui</em>
-        </h2>
+        </Heading>
       </Reveal>
       <Reveal variant="up" delay={250}>
         <p className="cq2-founders-lead">

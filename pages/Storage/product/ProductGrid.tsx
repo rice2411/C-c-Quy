@@ -8,6 +8,8 @@ import { fetchBadgesConfiguration } from '@/services/badgeService';
 import type { ProductBadge } from '@/types/badge';
 import Badge from '@/components/ui/Badge';
 
+import Heading from '@/components/ui/Heading';
+import Button from '@/components/ui/Button';
 interface ProductGridProps {
   products: Product[];
   loading: boolean;
@@ -63,12 +65,12 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, onEdit, on
               Tạo sản phẩm đầu tiên để bắt đầu
             </p>
           </div>
-          <button
+          <Button
             onClick={onCreate}
             className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
-          >
+           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             {t('inventory.createFirst') || 'Tạo sản phẩm đầu tiên'}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -130,9 +132,9 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, onEdit, on
           <div className="p-4 space-y-3">
             {/* Title */}
             <div>
-              <h3 className="font-bold text-slate-900 dark:text-white line-clamp-1 text-base mb-1" title={product.name}>
+              <Heading level={3} textClassName="font-bold text-slate-900 dark:text-white line-clamp-1 text-base mb-1" title={product.name}>
                 {product.name}
-              </h3>
+              </Heading>
               {product.tags && product.tags.length > 0 ? (
                 <div className="mb-2 flex flex-wrap gap-1.5">
                   {product.tags.map((tag, idx) => {

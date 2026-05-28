@@ -16,6 +16,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 
@@ -45,14 +46,14 @@ const ChipBadge: React.FC<{
   >
     {icon ? <span>{icon}</span> : null}
     <span>{name || '(chưa đặt tên)'}</span>
-    <button
+    <Button
       type="button"
       onClick={(e) => { e.stopPropagation(); onDelete(); }}
       aria-label="Xoá"
       className="ml-1 flex h-4 w-4 items-center justify-center rounded-full opacity-50 hover:bg-black/10 hover:opacity-100 dark:hover:bg-white/15"
-    >
+     variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
       <X className="h-3 w-3" strokeWidth={3} />
-    </button>
+    </Button>
   </span>
 );
 
@@ -60,14 +61,14 @@ const ChipBadge: React.FC<{
 const ColorPicker: React.FC<{ value: string; onChange: (c: string) => void }> = ({ value, onChange }) => (
   <Box layoutClassName="flex flex-wrap gap-1.5">
     {DEFAULT_BADGE_COLORS.map((c) => (
-      <button
+      <Button
         key={c}
         type="button"
         onClick={() => onChange(c)}
         className={`h-7 w-7 rounded-full ring-offset-2 ring-offset-white transition-all dark:ring-offset-slate-800 ${value === c ? 'ring-2 ring-slate-800 dark:ring-white' : 'hover:scale-110'}`}
         style={{ backgroundColor: c }}
         aria-label={c}
-      />
+       variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent" />
     ))}
     <input
       type="color"
@@ -486,24 +487,30 @@ const BadgesTab: React.FC = () => {
             extra={
               <Box layoutClassName="flex flex-wrap items-center gap-2">
                 <Typography size="xs" variant="muted" layoutClassName="font-bold uppercase">Khi</Typography>
-                <select
+                <Select
+                  size="sm"
                   value={editingCustomer.ruleType}
                   onChange={(e) => updateCustomerRule(editingCustomer.id, { ruleType: e.target.value as CustomerBadgeRuleType })}
-                  className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium dark:border-slate-600 dark:bg-slate-800 dark:[color-scheme:dark]"
+                  sizeClassName="py-1.5 text-xs"
+                  textClassName="font-medium"
+                  stateClassName="dark:[color-scheme:dark]"
                 >
                   {(Object.entries(RULE_TYPE_LABELS) as Array<[CustomerBadgeRuleType, string]>).map(([k, lbl]) => (
                     <option key={k} value={k}>{lbl}</option>
                   ))}
-                </select>
-                <select
+                </Select>
+                <Select
+                  size="sm"
                   value={editingCustomer.operator}
                   onChange={(e) => updateCustomerRule(editingCustomer.id, { operator: e.target.value as CustomerBadgeOperator })}
-                  className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold dark:border-slate-600 dark:bg-slate-800 dark:[color-scheme:dark]"
+                  sizeClassName="py-1.5 text-xs"
+                  textClassName="font-bold"
+                  stateClassName="dark:[color-scheme:dark]"
                 >
                   {(Object.entries(OPERATOR_LABELS) as Array<[CustomerBadgeOperator, string]>).map(([k, lbl]) => (
                     <option key={k} value={k}>{lbl}</option>
                   ))}
-                </select>
+                </Select>
                 <Input
                   type="number"
                   value={String(editingCustomer.threshold)}

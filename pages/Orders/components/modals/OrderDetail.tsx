@@ -398,7 +398,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
             {activeTab === 'details' ? (
               <div className="space-y-6">
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('detail.customer')}</h3>
+                  <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('detail.customer')}</Heading>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-3">
                       {currentOrder.customer.name && (
@@ -450,9 +450,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
                 {/* Note Section - Separate card */}
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide flex items-center gap-2">
+                  <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide flex items-center gap-2">
                     {t('detail.note')}
-                  </h3>
+                  </Heading>
                   {currentOrder.note ? (
                     <div className="bg-slate-50 dark:bg-slate-700/30 border border-slate-100 dark:border-slate-700 rounded-lg p-4">
                       <p className="text-sm font-medium text-slate-900 dark:text-white leading-relaxed whitespace-pre-wrap">
@@ -469,13 +469,13 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 </div>
 
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
-                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('detail.items')}</h3>
+                   <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('detail.items')}</Heading>
                    <div className="space-y-4">
                      {currentOrder.items.map((item) => (
                        <div key={item.id} className="flex items-center gap-4 py-2">
                          <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover bg-slate-100 dark:bg-slate-700" />
                          <div className="flex-1">
-                           <h4 className="text-sm font-medium text-slate-900 dark:text-white">{item.name}</h4>
+                           <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name}</Heading>
                            <p className="text-xs text-slate-500 dark:text-slate-400">ID: {item.id}</p>
                          </div>
                          <div className="text-right">
@@ -504,10 +504,10 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
                 {/* STATUS STEPPER CARD */}
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide flex items-center gap-2">
+                  <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide flex items-center gap-2">
                     <StickyNote className="w-4 h-4" />
                     {t('orders.tableStatus')}
-                  </h3>
+                  </Heading>
 
                   {currentOrder.status === OrderStatus.CANCELLED || currentOrder.status === OrderStatus.RETURNED ? (
                     /* Terminal state banner */
@@ -697,7 +697,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 </div>
 
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
-                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('detail.fulfillment')}</h3>
+                   <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('detail.fulfillment')}</Heading>
                    <div className="flex flex-col gap-3">
                       <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-3">
@@ -853,7 +853,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 {/* Payment QR Section — luôn hiển thị (kể cả khi đơn thanh toán tiền mặt) */}
                 {(
                   <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors animate-fade-in">
-                     <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('qr.sectionTitle')}</h3>
+                     <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('qr.sectionTitle')}</Heading>
                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
                         <div className="shrink-0 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
                             <img 
@@ -1056,7 +1056,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 <div className="bg-gradient-to-r from-orange-500 to-rose-600 dark:from-orange-700 dark:to-rose-800 rounded-xl p-6 text-white mb-6 shadow-md transition-colors">
                    <div className="flex items-center gap-3 mb-2">
                      <Sparkles className="w-6 h-6 text-yellow-300" />
-                     <h3 className="font-bold text-lg">Gemini Intelligence</h3>
+                     <Heading level={3} textClassName="font-bold text-lg">Gemini Intelligence</Heading>
                    </div>
                    <p className="text-orange-50 dark:text-orange-100 text-sm">
                      {t('detail.aiIntro')}
@@ -1123,9 +1123,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 </div>
 
                 <div className="flex-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm overflow-hidden flex flex-col transition-colors">
-                  <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">
+                  <Heading level={4} textClassName="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">
                     {loadingAi ? 'Generating Analysis...' : 'AI Output'}
-                  </h4>
+                  </Heading>
                   
                   {loadingAi ? (
                     <div className="flex-1 flex flex-col items-center justify-center space-y-4 opacity-70">

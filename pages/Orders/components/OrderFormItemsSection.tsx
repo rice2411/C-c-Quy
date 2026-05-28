@@ -132,7 +132,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
             {recentChips.map((p) => {
               const qty = currentQuantities[p.id] || 0;
               return (
-                <button
+                <Button
                   type="button"
                   key={p.id}
                   onClick={() => onAddItemWithProduct(p)}
@@ -141,7 +141,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                       ? 'border-orange-300 bg-orange-50 dark:border-orange-700 dark:bg-orange-950/30'
                       : 'border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-orange-700 dark:hover:bg-orange-950/30'
                   }`}
-                >
+                 variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                   {p.image ? (
                     <img src={p.image} alt={p.name} className="h-5 w-5 shrink-0 rounded-full object-cover" />
                   ) : null}
@@ -153,7 +153,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                   ) : (
                     <span className="text-orange-600 dark:text-orange-400">{formatVNDOrDash(p.price)}</span>
                   )}
-                </button>
+                </Button>
               );
             })}
           </Box>
@@ -228,14 +228,14 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                           size="sm"
                         />
                       ) : (
-                        <button
+                        <Button
                           type="button"
                           onClick={() => setEditingPriceId(item.id)}
                           className="rounded px-1 py-0.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                           title="Click để sửa đơn giá"
-                        >
+                         variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                           {formatVNDOrDash(item.unitPrice)}
-                        </button>
+                        </Button>
                       )}
                       <span className="text-slate-400">× {item.quantity}</span>
                       <span className="text-slate-400">=</span>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Reveal } from './Shared';
 
+import Heading from '@/components/ui/Heading';
+import Button from '@/components/ui/Button';
 const faqs = [
   { q: 'Tôi cần đặt bánh trước bao lâu?', a: 'Cookies/brownies lẻ: đặt trước 1-2 tiếng. Set quà tặng và bánh theo yêu cầu: 24-48h trước ngày nhận để có chất lượng tốt nhất.' },
   { q: 'Có giao hàng tận nơi không?', a: 'Có. Chúng tôi giao trong khu vực TP.HCM với phí giao tùy quận. Đặt từ 200K được hỗ trợ giao gần miễn phí.' },
@@ -22,9 +24,9 @@ const FAQ: React.FC = () => {
           </div>
         </Reveal>
         <Reveal variant="up" delay={150}>
-          <h2 className="cq2-h-big">
+          <Heading level={2} textClassName="cq2-h-big">
             Câu hỏi <em className="cq2-script-gold">thường gặp</em>
-          </h2>
+          </Heading>
         </Reveal>
       </div>
       <div className="cq2-faq-list">
@@ -32,11 +34,11 @@ const FAQ: React.FC = () => {
           const open = openIdx === i;
           return (
             <Reveal key={f.q} variant="up" delay={150 + i * 80}>
-              <button
+              <Button
                 type="button"
                 onClick={() => setOpenIdx(open ? null : i)}
                 className={`cq2-faq-item ${open ? 'is-open' : ''}`}
-              >
+               variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 <span className="cq2-faq-q">
                   <span className="cq2-faq-num">0{i + 1}</span>
                   <span>{f.q}</span>
@@ -45,7 +47,7 @@ const FAQ: React.FC = () => {
                 <span className="cq2-faq-a">
                   <span>{f.a}</span>
                 </span>
-              </button>
+              </Button>
             </Reveal>
           );
         })}

@@ -8,6 +8,7 @@ import { formatVND } from '@/utils/format/currencyUtil';
 import { parseDateValue } from '@/utils/format/dateUtil';
 import { getOrderTotal } from '@/utils/order/orderUtils';
 
+import Button from '@/components/ui/Button';
 interface DashboardAlertsProps {
   orders: Order[];
 }
@@ -117,14 +118,14 @@ const DashboardAlerts: React.FC<DashboardAlertsProps> = ({ orders }) => {
   return (
     <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {items.map((it) => (
-        <button
+        <Button
           key={it.key}
           type="button"
           onClick={() => navigate(`/orders?quick=${it.key}`)}
           className={`group flex items-center gap-3 rounded-xl border p-4 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${toneClass(
             it.tone,
           )}`}
-        >
+         variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/60 dark:bg-slate-900/30">
             {it.icon}
           </span>
@@ -137,7 +138,7 @@ const DashboardAlerts: React.FC<DashboardAlertsProps> = ({ orders }) => {
             </Typography>
           </Box>
           <ChevronRight className="h-5 w-5 shrink-0 opacity-60 transition-transform group-hover:translate-x-0.5" />
-        </button>
+        </Button>
       ))}
     </Box>
   );

@@ -19,6 +19,7 @@ import Typography from '@/components/ui/Typography';
 import ZaloSettingsTab from '@/pages/Settings/ZaloSettingsTab';
 import OrderSettingsTab from '@/pages/Settings/OrderSettingsTab';
 import BadgesTab from '@/pages/Settings/BadgesTab';
+import CategoriesTab from '@/pages/Settings/CategoriesTab';
 import ProductDatabaseToolsPanel from '@/pages/Settings/ProductDatabaseToolsPanel';
 
 interface DbRecord {
@@ -48,7 +49,7 @@ const SettingsPage: React.FC = () => {
   const { t } = useLanguage();
   const { screenVisibility, loading, saving, saveVisibility } = useScreenConfig();
   const [draftVisibility, setDraftVisibility] = useState<ScreenVisibilityMap>({});
-  const [activeTab, setActiveTab] = useState<'screens' | 'database' | 'zalo' | 'order' | 'badges'>('screens');
+  const [activeTab, setActiveTab] = useState<'screens' | 'database' | 'zalo' | 'order' | 'badges' | 'categories'>('screens');
   const [selectedCollection, setSelectedCollection] = useState<string>(DATABASE_COLLECTIONS[0].id);
   const [collectionRecords, setCollectionRecords] = useState<Record<string, DbRecord[]>>({});
   const [loadingCollectionId, setLoadingCollectionId] = useState<string | null>(null);
@@ -295,12 +296,36 @@ const SettingsPage: React.FC = () => {
               />
             )}
           </Button>
+          <Button
+            type="button"
+            onClick={() => setActiveTab('categories')}
+            variant="ghost"
+            disableVariantHover
+            disableVariantTextColor
+            roundedClassName="rounded-none"
+            layoutClassName="relative pb-2 text-sm font-semibold uppercase tracking-wide"
+            textClassName={
+              activeTab === 'categories'
+                ? 'text-orange-500 dark:text-orange-400'
+                : 'text-slate-500 hover:text-orange-500 dark:text-slate-300 dark:hover:text-orange-400'
+            }
+            stateClassName="transition-colors duration-200"
+          >
+            Danh mục
+            {activeTab === 'categories' && (
+              <Box
+                layoutClassName="absolute -bottom-[1px] left-0 right-0 h-0.5"
+                roundedClassName="rounded-full"
+                backgroundClassName="bg-orange-500 dark:bg-orange-400"
+              />
+            )}
+          </Button>
         </Box>
       </Box>
 
       <Box layoutClassName="flex items-center justify-between">
         <Box>
-          {activeTab === 'order' || activeTab === 'badges' ? null : activeTab === 'screens' ? (
+          {activeTab === 'order' || activeTab === 'badges' || activeTab === 'categories' ? null : activeTab === 'screens' ? (
             <>
               <Heading level={2} textClassName="text-xl font-semibold">Quản lý màn hình</Heading>
               <Typography size="sm" variant="muted" layoutClassName="mt-1">
@@ -352,6 +377,8 @@ const SettingsPage: React.FC = () => {
         <OrderSettingsTab />
       ) : activeTab === 'badges' ? (
         <BadgesTab />
+      ) : activeTab === 'categories' ? (
+        <CategoriesTab />
       ) : activeTab === 'zalo' ? (
         <ZaloSettingsTab />
       ) : activeTab === 'screens' ? (

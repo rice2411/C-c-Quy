@@ -1,9 +1,8 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import Box from '@/components/ui/Box';
-import Select from '@/components/ui/Select';
 import { UserStatus } from '@/types/user';
 import FilterToolbar from '@/components/shared/FilterToolbar';
+import FilterPill from '@/components/shared/FilterPill';
 
 interface UserFiltersProps {
   searchTerm: string;
@@ -21,27 +20,24 @@ const UserFilters: React.FC<UserFiltersProps> = ({
   const { t } = useLanguage();
 
   return (
-    <Box layoutClassName="flex flex-col gap-3 sm:flex-row sm:items-start">
-      <Box layoutClassName="flex-1 min-w-0">
-        <FilterToolbar
-          search={searchTerm}
-          onSearchChange={onSearchChange}
-          searchPlaceholder={t('users.searchPlaceholder')}
+    <FilterToolbar
+      search={searchTerm}
+      onSearchChange={onSearchChange}
+      searchPlaceholder={t('users.searchPlaceholder')}
+      customFilters={
+        <FilterPill
+          label={t('users.filter.statusLabel') || 'Trạng thái'}
+          value={statusFilter}
+          onChange={(v) => onStatusFilterChange(v as UserStatus | 'all')}
+          options={[
+            { value: 'all', label: t('users.filter.all') },
+            { value: 'pending', label: t('users.status.pending') },
+            { value: 'active', label: t('users.status.active') },
+            { value: 'inactive', label: t('users.status.inactive') },
+          ]}
         />
-      </Box>
-      <Select
-        value={statusFilter}
-        onChange={(e) => onStatusFilterChange(e.target.value as UserStatus | 'all')}
-        backgroundClassName="bg-white dark:bg-slate-800"
-        borderClassName="border-slate-200 dark:border-slate-700"
-        shadowClassName="shadow-sm"
-      >
-        <option value="all">{t('users.filter.all')}</option>
-        <option value="pending">{t('users.status.pending')}</option>
-        <option value="active">{t('users.status.active')}</option>
-        <option value="inactive">{t('users.status.inactive')}</option>
-      </Select>
-    </Box>
+      }
+    />
   );
 };
 

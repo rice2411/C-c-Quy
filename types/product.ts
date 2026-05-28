@@ -8,18 +8,26 @@ export interface Product {
   name: string;
   price: number;
   image: string;
+  /** Ảnh phụ (gallery) — các góc chụp/chi tiết khác. Primary vẫn là `image` */
+  gallery?: string[];
   category: string;
   tags?: string[];
   description?: string;
   status: 'active' | 'inactive';
   materials?: ProductMaterial[];
   createdAt?: string;
-  /** Giá vốn / cost price (dùng để tính margin & hoa hồng nhóm) */
+  /** Giá vốn / cost price */
   costPrice?: number;
   /** Tỷ lệ hoa hồng cố định (legacy / override), VD: 0.1 = 10% trên giá bán */
   commissionRate?: number;
-  /** Badge IDs gán cho sản phẩm (Bán chạy / Mới / Sale...) — từ Settings → Badges */
+  /** Badge IDs gán cho sản phẩm */
   badgeIds?: string[];
+  /** Đơn vị tồn kho */
+  stockUnit?: string;
+  /** Số lượng tồn kho hiện tại */
+  currentStock?: number;
+  /** Ngưỡng cảnh báo low stock */
+  lowStockThreshold?: number;
 }
 
 export interface ProductVersion {

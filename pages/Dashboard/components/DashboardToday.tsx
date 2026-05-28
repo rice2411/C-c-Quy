@@ -9,6 +9,7 @@ import { formatVND } from '@/utils/format/currencyUtil';
 import { parseDateValue } from '@/utils/format/dateUtil';
 import { getOrderRevenueDate, getOrderTotal } from '@/utils/order/orderUtils';
 
+import Button from '@/components/ui/Button';
 interface DashboardTodayProps {
   orders: Order[];
 }
@@ -165,7 +166,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
               ? 'text-red-500 dark:text-red-400'
               : 'text-slate-400 dark:text-slate-500';
           return (
-            <button
+            <Button
               key={it.key}
               type="button"
               onClick={it.onClick}
@@ -175,7 +176,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
               } ${idx < 2 ? 'border-r sm:border-r' : 'sm:border-r-0'} ${
                 it.onClick ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/40' : 'cursor-default'
               }`}
-            >
+             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
               <Box layoutClassName="flex items-center gap-2">
                 <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg ${it.accent}`}>
                   {it.icon}
@@ -200,7 +201,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
                   —
                 </Typography>
               )}
-            </button>
+            </Button>
           );
         })}
       </Box>

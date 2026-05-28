@@ -5,6 +5,7 @@ import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 
+import Button from '@/components/ui/Button';
 export interface BillImportModalProps {
   open: boolean;
   onClose: () => void;
@@ -64,14 +65,14 @@ const BillImportModal: React.FC<BillImportModalProps> = ({
           <Typography size="sm" layoutClassName="font-semibold">
             {title}
           </Typography>
-          <button
+          <Button
             type="button"
             aria-label="Đóng"
             onClick={onClose}
             className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-          >
+           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </Box>
 
         {/* Body */}

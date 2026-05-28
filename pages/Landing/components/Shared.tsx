@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useReveal } from './hooks';
 
+import Button from '@/components/ui/Button';
 export const Reveal: React.FC<{
   children: React.ReactNode;
   delay?: number;
@@ -171,16 +172,16 @@ export const CookieMedia: React.FC<{
 };
 
 export const ThemeToggle: React.FC<{ theme: 'light' | 'dark'; onToggle: () => void }> = ({ theme, onToggle }) => (
-  <button
+  <Button
     type="button"
     onClick={onToggle}
     className="cq2-theme-toggle"
     aria-label={theme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
-  >
+   variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
     <span className={`cq2-theme-track ${theme === 'dark' ? 'is-dark' : ''}`}>
       <span className="cq2-theme-icon cq2-theme-sun" aria-hidden>☀</span>
       <span className="cq2-theme-icon cq2-theme-moon" aria-hidden>☾</span>
       <span className="cq2-theme-thumb" />
     </span>
-  </button>
+  </Button>
 );

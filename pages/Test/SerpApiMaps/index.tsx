@@ -8,6 +8,7 @@ import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
 import { getDirections, searchGoogleMaps, SerpApiMapsPlace } from '@/services/serpApiService';
 
+import Button from '@/components/ui/Button';
 const STORAGE_KEY_ORIGIN = 'test.serpApi.origin';
 
 interface LatLng {
@@ -193,7 +194,7 @@ const SerpApiMapsTestPage: React.FC = () => {
             <Crosshair className="h-5 w-5 text-emerald-600" />
             <Heading level={3} textClassName="text-base font-semibold">Diem goc (tiem banh)</Heading>
           </Box>
-          <button type="button" onClick={() => (editingOrigin ? handleSaveOrigin() : setEditingOrigin(true))} className="text-xs font-medium text-orange-600 hover:underline">{editingOrigin ? 'Luu' : 'Sua'}</button>
+          <Button type="button" onClick={() => (editingOrigin ? handleSaveOrigin() : setEditingOrigin(true))} className="text-xs font-medium text-orange-600 hover:underline" variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">{editingOrigin ? 'Luu' : 'Sua'}</Button>
         </Box>
         {editingOrigin ? (
           <Box layoutClassName="mt-3 space-y-2">
@@ -235,9 +236,9 @@ const SerpApiMapsTestPage: React.FC = () => {
                 placeholder="VD: cho Dong Ba Hue, 123 Tran Phu..."
                 leftIcon={<Search />} leftIconClassName="[&_svg]:h-4 [&_svg]:w-4" />
               {addressInput ? (
-                <button type="button" onClick={handleClear} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200">
+                <Button type="button" onClick={handleClear} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200" variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                   {suggestLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-                </button>
+                </Button>
               ) : null}
             </Box>
           </Field>
@@ -249,8 +250,8 @@ const SerpApiMapsTestPage: React.FC = () => {
               ) : suggestions.map((place, idx) => {
                 const km = place.gps_coordinates ? haversineKm(origin, { name: place.title, lat: place.gps_coordinates.latitude, lng: place.gps_coordinates.longitude }) : null;
                 return (
-                  <button key={place.place_id || place.data_id || idx} type="button" onClick={() => pickPlace(place)}
-                    className="flex w-full items-start gap-3 border-b border-slate-100 px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-orange-50 dark:border-slate-700 dark:hover:bg-orange-900/20">
+                  <Button key={place.place_id || place.data_id || idx} type="button" onClick={() => pickPlace(place)}
+                    className="flex w-full items-start gap-3 border-b border-slate-100 px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-orange-50 dark:border-slate-700 dark:hover:bg-orange-900/20" variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                     <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" />
                     <Box layoutClassName="min-w-0 flex-1">
                       <Typography as="div" size="sm" layoutClassName="font-semibold truncate">{place.title}</Typography>
@@ -259,7 +260,7 @@ const SerpApiMapsTestPage: React.FC = () => {
                     {km != null ? (
                       <Box layoutClassName="shrink-0 rounded-md bg-emerald-100 px-2 py-0.5 dark:bg-emerald-900/40" textClassName="text-[11px] font-bold text-emerald-700 dark:text-emerald-200">{km.toFixed(1)} km</Box>
                     ) : null}
-                  </button>
+                  </Button>
                 );
               })}
             </Box>
@@ -323,9 +324,9 @@ const SerpApiMapsTestPage: React.FC = () => {
                   <Loader2 className="h-3.5 w-3.5 animate-spin" /> Dang tai...
                 </Box>
               ) : (
-                <button type="button" onClick={() => destination && fetchDirections(destination)} className="mt-2 inline-flex items-center gap-1 rounded border border-blue-300 bg-white px-2 py-0.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+                <Button type="button" onClick={() => destination && fetchDirections(destination)} className="mt-2 inline-flex items-center gap-1 rounded border border-blue-300 bg-white px-2 py-0.5 text-xs font-semibold text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/40 dark:text-blue-200" variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                   <Route className="h-3 w-3" /> Tinh lai
-                </button>
+                </Button>
               )}
               {drivingError ? <Typography as="div" size="xs" textClassName="mt-1 text-red-600 dark:text-red-300">{drivingError}</Typography> : null}
             </Box>

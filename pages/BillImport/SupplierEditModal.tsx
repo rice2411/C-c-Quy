@@ -164,15 +164,15 @@ const SupplierEditModal: React.FC<SupplierEditModalProps> = ({
               Field để trống = xoá field đó. Tên đổi sẽ tự cập nhật khóa dedupe.
             </Typography>
           </Box>
-          <button
+          <Button
             type="button"
             aria-label="Đóng"
             disabled={saving}
             onClick={onClose}
             className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
-          >
+           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </Box>
 
         <Box layoutClassName="space-y-4 p-4 sm:p-5">

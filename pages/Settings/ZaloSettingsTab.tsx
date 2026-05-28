@@ -552,12 +552,12 @@ const ZaloSettingsTab: React.FC = () => {
           {groups.map((g, idx) => {
             const hasId = Boolean(g.zaloGroupId.trim());
             return (
-              <button
+              <Button
                 key={g.id}
                 type="button"
                 onClick={() => openGroupModal(g.id)}
                 className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:border-orange-300 hover:shadow-md dark:border-slate-600 dark:bg-slate-900 dark:hover:border-orange-700"
-              >
+               variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 <Box
                   layoutClassName="w-1 shrink-0 self-stretch rounded-full"
                   backgroundClassName={
@@ -627,7 +627,7 @@ const ZaloSettingsTab: React.FC = () => {
                   ) : null}
                 </Box>
                 <Pencil className="h-4 w-4 shrink-0 text-slate-400" aria-hidden />
-              </button>
+              </Button>
             );
           })}
         </Box>
@@ -694,7 +694,7 @@ const ZaloSettingsTab: React.FC = () => {
                 ['Sửa đơn', mainNotifyOnUpdate, setMainNotifyOnUpdate],
                 ['Xoá đơn', mainNotifyOnDelete, setMainNotifyOnDelete],
               ] as Array<[string, boolean, (v: boolean) => void]>).map(([label, val, setter]) => (
-                <button
+                <Button
                   key={label}
                   type="button"
                   onClick={() => setter(!val)}
@@ -703,10 +703,10 @@ const ZaloSettingsTab: React.FC = () => {
                       ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
                       : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
                   }`}
-                >
+                 variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                   {val ? <Check className="h-3 w-3" /> : null}
                   {label}
-                </button>
+                </Button>
               ))}
             </Box>
 
@@ -719,7 +719,7 @@ const ZaloSettingsTab: React.FC = () => {
                   {ZALO_TRACKABLE_FIELDS.map((f) => {
                     const active = mainUpdateFieldWhitelist.includes(f.key);
                     return (
-                      <button
+                      <Button
                         key={f.key}
                         type="button"
                         onClick={() =>
@@ -734,9 +734,9 @@ const ZaloSettingsTab: React.FC = () => {
                             ? 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300'
                             : 'border-slate-200 bg-white text-slate-500 hover:border-orange-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
                         }`}
-                      >
+                       variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                         {f.label}
-                      </button>
+                      </Button>
                     );
                   })}
                 </Box>
@@ -905,7 +905,7 @@ const ZaloSettingsTab: React.FC = () => {
                       ['Xoá đơn', activeGroup.notifyOnDelete !== false, 'notifyOnDelete'],
                     ] as Array<[string, boolean, 'notifyOnCreate' | 'notifyOnUpdate' | 'notifyOnDelete']>).map(
                       ([label, val, key]) => (
-                        <button
+                        <Button
                           key={key}
                           type="button"
                           onClick={() =>
@@ -916,10 +916,10 @@ const ZaloSettingsTab: React.FC = () => {
                               ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
                               : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
                           }`}
-                        >
+                         variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                           {val ? <Check className="h-3 w-3" /> : null}
                           {label}
-                        </button>
+                        </Button>
                       ),
                     )}
                   </Box>
@@ -937,7 +937,7 @@ const ZaloSettingsTab: React.FC = () => {
                           const wl = activeGroup.updateFieldWhitelist ?? [];
                           const active = wl.includes(f.key);
                           return (
-                            <button
+                            <Button
                               key={f.key}
                               type="button"
                               onClick={() =>
@@ -952,9 +952,9 @@ const ZaloSettingsTab: React.FC = () => {
                                   ? 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300'
                                   : 'border-slate-200 bg-white text-slate-500 hover:border-orange-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
                               }`}
-                            >
+                             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                               {f.label}
-                            </button>
+                            </Button>
                           );
                         })}
                       </Box>
@@ -1077,12 +1077,12 @@ const ZaloSettingsTab: React.FC = () => {
                       </Box>
                     </Box>
 
-                    <button
+                    <Button
                       ref={userPickerAnchorRef}
                       type="button"
                       onClick={() => setUserPickerOpen((o) => !o)}
                       className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-inner transition-colors hover:border-orange-300 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-orange-600"
-                    >
+                     variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                       {pickUidsModal.length === 0 ? (
                         <Typography size="sm" variant="muted" layoutClassName="flex-1">
                           Chọn user…
@@ -1124,7 +1124,7 @@ const ZaloSettingsTab: React.FC = () => {
                         className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${userPickerOpen ? 'rotate-180' : ''}`}
                         aria-hidden
                       />
-                    </button>
+                    </Button>
 
                     {typeof document !== 'undefined' &&
                       userPickerOpen &&
@@ -1149,7 +1149,7 @@ const ZaloSettingsTab: React.FC = () => {
                             modalCandidates.map((u) => {
                               const selected = pickUidsModal.includes(u.uid);
                               return (
-                                <button
+                                <Button
                                   key={u.uid}
                                   type="button"
                                   role="option"
@@ -1164,7 +1164,7 @@ const ZaloSettingsTab: React.FC = () => {
                                       ? 'bg-orange-50 dark:bg-orange-950/40'
                                       : 'hover:bg-orange-50/80 dark:hover:bg-orange-950/30'
                                   }`}
-                                >
+                                 variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                                   <UserAvatar user={u} size="sm" />
                                   <span className="min-w-0 flex-1">
                                     <span className="block truncate text-sm font-medium text-slate-900 dark:text-white">
@@ -1185,7 +1185,7 @@ const ZaloSettingsTab: React.FC = () => {
                                   ) : (
                                     <span className="h-4 w-4 shrink-0" aria-hidden />
                                   )}
-                                </button>
+                                </Button>
                               );
                             })
                           )}

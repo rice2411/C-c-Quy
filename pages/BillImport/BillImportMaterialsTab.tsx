@@ -21,6 +21,7 @@ import {
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/BillImport/MergeItemsModal';
 
+import Checkbox from '@/components/ui/Checkbox';
 export interface BillImportMaterialsTabProps {
   materialSearch: string;
   onMaterialSearchChange: (value: string) => void;
@@ -194,9 +195,7 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
                       : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900')
                   }
                 >
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
+                  <Checkbox checked={isChecked}
                     onChange={() => toggle(row.id)}
                     className="mt-1 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                   />
@@ -258,9 +257,7 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
                       layoutClassName={isChecked ? 'bg-orange-50/60 dark:bg-orange-950/20' : undefined}
                     >
                       <TableCell>
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
+                        <Checkbox checked={isChecked}
                           onChange={() => toggle(row.id)}
                           className="h-4 w-4 cursor-pointer rounded border-slate-300 text-orange-600 focus:ring-orange-500"
                         />

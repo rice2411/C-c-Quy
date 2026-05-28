@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { MagBtn, CookieMedia } from './Shared';
 
+import Heading from '@/components/ui/Heading';
 const Hero: React.FC = () => {
   const heroRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -58,7 +59,7 @@ const Hero: React.FC = () => {
           <span className="cq2-line" /> Tiệm bánh handmade — Cookies · Brownies · Set quà
         </div>
 
-        <h1 className="cq2-hero-headline">
+        <Heading level={1} textClassName="cq2-hero-headline">
           <span className="cq2-h-row">
             <em className="cq2-script">Cúc</em>
             <span className="cq2-blob" />
@@ -68,7 +69,7 @@ const Hero: React.FC = () => {
             <span className="cq2-h-word cq2-h-word-outline">NGÀO</span>
             <em className="cq2-script">Quy</em>
           </span>
-        </h1>
+        </Heading>
 
         <div className="cq2-hero-foot">
           <p className="cq2-hero-claim">

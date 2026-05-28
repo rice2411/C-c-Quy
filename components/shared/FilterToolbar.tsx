@@ -1,3 +1,7 @@
+/**
+ * FilterToolbar — toolbar dùng chung cho mọi list-style page.
+ * Slots: actions / customFilters / viewToggle / stats.
+ */
 import React from 'react';
 import {
   ArrowUpDown,
@@ -8,13 +12,8 @@ import {
   X,
 } from 'lucide-react';
 import Box from '@/components/ui/Box';
-
-/**
- * Shared toolbar for list-style modules (Orders, Bill Import suppliers/materials, …).
- * Compose any subset of: search · period · sort · quick pills · advanced filter button · clear-all.
- *
- * Pattern gốc lấy từ Orders toolbar — generalize để dùng chung mọi list.
- */
+import Input from '@/components/ui/Input';
+import Button from '@/components/ui/Button';
 
 export interface ToolbarPill {
   id: string;
@@ -24,60 +23,92 @@ export interface ToolbarPill {
   icon?: LucideIcon;
 }
 
-export interface ToolbarSortOption {
-  value: string;
-  label: string;
-}
-
-export interface ToolbarPeriodOption {
+export interface ToolbarOption {
   value: string;
   label: string;
 }
 
 export interface FilterToolbarProps {
-  /** Search */
   search: string;
   onSearchChange: (v: string) => void;
   searchPlaceholder?: string;
 
-  /** Optional: period filter dropdown */
   period?: string;
-  periodOptions?: ToolbarPeriodOption[];
+  periodOptions?: ToolbarOption[];
   onPeriodChange?: (v: string) => void;
 
-  /** Optional: sort dropdown */
   sortBy?: string;
-  sortOptions?: ToolbarSortOption[];
+  sortOptions?: ToolbarOption[];
   onSortChange?: (v: string) => void;
 
-  /** Optional: quick toggle pills (Order has 4: pending/unpaid/today/overdue) */
   pills?: ToolbarPill[];
 
-  /** Optional: open advanced filter modal */
   onOpenAdvanced?: () => void;
   advancedFiltersCount?: number;
+  advancedLabel?: string;
 
-  /** Optional: hard reset everything. Auto-show button when any filter active. */
   onClearAll?: () => void;
-  /** Override visibility of clear button — default: auto */
   showClearAll?: boolean;
+
+  /** Render bên phải search bar (Create/Import/Export buttons) */
+  actions?: React.ReactNode;
+  /** Render trong row 2 (vd: FilterPill cho status/category) */
+  customFilters?: React.ReactNode;
+  /** Render đầu row 2 (vd: view mode toggle) */
+  viewToggle?: React.ReactNode;
+  /** Render dưới toolbar (vd: stats banner) */
+  stats?: React.ReactNode;
 }
 
+const PillDropdown: React.FC<{
+  icon: LucideIcon;
+  value: string;
+  options: ToolbarOption[];
+  onChange: (v: string) => void;
+  ariaLabel: string;
+}> = ({ icon: Icon, value, options, onChange, ariaLabel }) => {
+  const current = options.find((o) => o.value === value)?.label ?? value;
+  const isAll = value === 'all' || value === '';
+  return (
+    <label
+      className={`group relative inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-sm transition-colors ${
+        isAll
+          ? 'border-slate-200 bg-white hover:border-orange-300 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-orange-500'
+          : 'border-orange-300 bg-orange-50 dark:border-orange-600 dark:bg-orange-900/30'
+      }`}
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+      <span className={`font-medium ${isAll ? 'text-slate-700 dark:text-slate-200' : 'text-orange-700 dark:text-orange-300'}`}>
+        {current}
+      </span>
+      <svg className="h-3 w-3 text-slate-400 dark:text-slate-500" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+        <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onClick={(e) => e.stopPropagation()}
+        className="absolute inset-0 h-full w-full cursor-pointer appearance-none bg-transparent text-transparent opacity-0 dark:[color-scheme:dark]"
+        aria-label={ariaLabel}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value} className="bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100">
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+};
+
 const FilterToolbar: React.FC<FilterToolbarProps> = ({
-  search,
-  onSearchChange,
-  searchPlaceholder = 'Tìm kiếm…',
-  period,
-  periodOptions,
-  onPeriodChange,
-  sortBy,
-  sortOptions,
-  onSortChange,
+  search, onSearchChange, searchPlaceholder = 'Tìm kiếm…',
+  period, periodOptions, onPeriodChange,
+  sortBy, sortOptions, onSortChange,
   pills,
-  onOpenAdvanced,
-  advancedFiltersCount = 0,
-  onClearAll,
-  showClearAll,
+  onOpenAdvanced, advancedFiltersCount = 0, advancedLabel = 'Bộ lọc',
+  onClearAll, showClearAll,
+  actions, customFilters, viewToggle, stats,
 }) => {
   const hasSearch = Boolean(search);
   const hasPeriod = Boolean(period && period !== 'all' && period !== '');
@@ -85,106 +116,101 @@ const FilterToolbar: React.FC<FilterToolbarProps> = ({
   const hasAnyFilter = hasSearch || hasPeriod || hasActivePills || advancedFiltersCount > 0;
   const clearVisible = (showClearAll ?? hasAnyFilter) && Boolean(onClearAll);
 
+  const showRow2 =
+    Boolean(periodOptions && onPeriodChange) ||
+    Boolean(sortOptions && onSortChange) ||
+    Boolean(viewToggle) ||
+    Boolean(customFilters) ||
+    Boolean(onOpenAdvanced) ||
+    clearVisible;
+
   return (
     <Box layoutClassName="flex flex-col gap-2">
-      {/* Row 1: Search + advanced button */}
       <Box layoutClassName="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <Box layoutClassName="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={searchPlaceholder}
-            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-10 text-sm text-slate-700 placeholder:text-slate-400 focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-400/30 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500"
-          />
-          {hasSearch ? (
-            <button
-              type="button"
-              onClick={() => onSearchChange('')}
-              aria-label="Xoá tìm kiếm"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          ) : null}
-        </Box>
-
-        {onOpenAdvanced ? (
-          <button
-            type="button"
-            onClick={onOpenAdvanced}
-            className="relative inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 hover:border-orange-300 hover:bg-orange-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-orange-700 dark:hover:bg-orange-950/30"
-          >
-            <Filter className="h-4 w-4" />
-            <span>Bộ lọc</span>
-            {advancedFiltersCount > 0 ? (
-              <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1.5 text-[10px] font-bold text-white">
-                {advancedFiltersCount}
-              </span>
-            ) : null}
-          </button>
-        ) : null}
+        <Input
+          type="text"
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder={searchPlaceholder}
+          leftIcon={<Search className="h-4 w-4" />}
+          rightIcon={
+            hasSearch ? (
+              <button
+                type="button"
+                onClick={() => onSearchChange('')}
+                aria-label="Xoá tìm kiếm"
+                className="pointer-events-auto rounded-full p-0.5 hover:bg-slate-100 dark:hover:bg-slate-700"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            ) : null
+          }
+          containerClassName="flex-1"
+          backgroundClassName="bg-white dark:bg-slate-800"
+          borderClassName="border-slate-200 dark:border-slate-600"
+          focusClassName="focus:border-orange-400 focus:ring-2 focus:ring-orange-400/30"
+          sizeClassName="py-2.5"
+          rightIconClassName="!pointer-events-auto"
+        />
+        {actions ? <Box layoutClassName="flex flex-wrap items-center gap-2">{actions}</Box> : null}
       </Box>
 
-      {/* Row 2: Period + Sort + Clear */}
-      {(periodOptions || sortOptions || clearVisible) ? (
+      {showRow2 ? (
         <Box layoutClassName="flex flex-wrap items-center gap-2">
+          {viewToggle}
           {periodOptions && onPeriodChange ? (
-            <Box layoutClassName="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 dark:border-slate-600 dark:bg-slate-800">
-              <Calendar className="h-3.5 w-3.5 text-slate-400" />
-              <select
-                value={period ?? 'all'}
-                onChange={(e) => onPeriodChange(e.target.value)}
-                className="bg-transparent text-xs font-medium text-slate-700 focus:outline-none dark:text-slate-200 dark:[color-scheme:dark]"
-              >
-                {periodOptions.map((p) => (
-                  <option
-                    key={p.value}
-                    value={p.value}
-                    className="bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                  >
-                    {p.label}
-                  </option>
-                ))}
-              </select>
-            </Box>
+            <PillDropdown icon={Calendar} value={period ?? 'all'} options={periodOptions} onChange={onPeriodChange} ariaLabel="Khoảng thời gian" />
           ) : null}
-
           {sortOptions && onSortChange ? (
-            <Box layoutClassName="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 dark:border-slate-600 dark:bg-slate-800">
-              <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
-              <select
-                value={sortBy ?? sortOptions[0]?.value}
-                onChange={(e) => onSortChange(e.target.value)}
-                className="bg-transparent text-xs font-medium text-slate-700 focus:outline-none dark:text-slate-200 dark:[color-scheme:dark]"
-              >
-                {sortOptions.map((s) => (
-                  <option
-                    key={s.value}
-                    value={s.value}
-                    className="bg-white text-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                  >
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-            </Box>
+            <PillDropdown icon={ArrowUpDown} value={sortBy ?? sortOptions[0]?.value ?? ''} options={sortOptions} onChange={onSortChange} ariaLabel="Sắp xếp" />
           ) : null}
-
+          {customFilters}
+          {onOpenAdvanced ? (
+            <Button
+              type="button"
+              onClick={onOpenAdvanced}
+              leftIcon={<Filter />}
+              iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+              sizeClassName="px-2.5 py-1.5 text-xs"
+              backgroundClassName="bg-white dark:bg-slate-800"
+              borderClassName="border border-slate-200 dark:border-slate-600"
+              textClassName="font-medium text-slate-700 dark:text-slate-200"
+              roundedClassName="rounded-lg"
+              hoverClassName="hover:border-orange-300 dark:hover:border-orange-500"
+              layoutClassName="inline-flex items-center gap-1.5"
+              disableVariantHover
+              disableVariantTextColor
+            >
+              <span>{advancedLabel}</span>
+              {advancedFiltersCount > 0 ? (
+                <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1.5 text-[10px] font-bold text-white">
+                  {advancedFiltersCount}
+                </span>
+              ) : null}
+            </Button>
+          ) : null}
           {clearVisible ? (
-            <button
+            <Button
               type="button"
               onClick={onClearAll}
-              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+              leftIcon={<X />}
+              iconClassName="inline-flex shrink-0 [&_svg]:h-3 [&_svg]:w-3"
+              sizeClassName="px-2.5 py-1.5 text-xs"
+              backgroundClassName="bg-white dark:bg-slate-800"
+              borderClassName="border border-slate-200 dark:border-slate-600"
+              textClassName="font-medium text-slate-600 dark:text-slate-300"
+              roundedClassName="rounded-lg"
+              hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+              layoutClassName="inline-flex items-center gap-1"
+              disableVariantHover
+              disableVariantTextColor
             >
-              <X className="h-3 w-3" /> Xoá filter
-            </button>
+              Xoá filter
+            </Button>
           ) : null}
         </Box>
       ) : null}
 
-      {/* Row 3: Quick pills */}
       {pills && pills.length > 0 ? (
         <Box layoutClassName="flex flex-wrap items-center gap-1.5">
           {pills.map((p) => {
@@ -203,6 +229,8 @@ const FilterToolbar: React.FC<FilterToolbarProps> = ({
           })}
         </Box>
       ) : null}
+
+      {stats}
     </Box>
   );
 };

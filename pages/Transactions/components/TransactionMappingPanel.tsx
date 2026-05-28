@@ -21,6 +21,7 @@ import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
 
+import Button from '@/components/ui/Button';
 interface TransactionMappingPanelProps {
   transactions: Transaction[];
   orders: Order[];
@@ -69,11 +70,11 @@ const MappingRow: React.FC<MappingRowProps> = ({
       {/* Header row */}
       <div className="flex items-start gap-2 p-3.5">
         {/* Toggle */}
-        <button
+        <Button
           type="button"
           onClick={() => setExpanded(v => !v)}
           className="flex min-w-0 flex-1 items-start gap-3 text-left"
-        >
+         variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
           <Box layoutClassName="flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 dark:bg-emerald-900/20">
             <TrendingUp className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
             <Typography as="span" layoutClassName="text-sm font-bold" textClassName="text-emerald-700 dark:text-emerald-300">
@@ -117,22 +118,22 @@ const MappingRow: React.FC<MappingRowProps> = ({
               ? <ChevronDown className="h-4 w-4 text-slate-400" />
               : <ChevronRight className="h-4 w-4 text-slate-400" />}
           </Box>
-        </button>
+        </Button>
 
         {/* Mark external button — luôn hiện khi chưa liên kết */}
         {!isDone && (
-          <button
+          <Button
             type="button"
             disabled={markingExternal}
             onClick={handleMarkExternal}
             title="Đánh dấu không liên quan đến hệ thống"
             className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-400 dark:hover:border-red-700 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-          >
+           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             {markingExternal
               ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
               : <XCircle className="h-3.5 w-3.5" />}
             Ngoài hệ thống
-          </button>
+          </Button>
         )}
       </div>
 
@@ -220,17 +221,17 @@ const MappingRow: React.FC<MappingRowProps> = ({
                           <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-emerald-700 dark:text-emerald-300">Đã liên kết</Typography>
                         </Box>
                       ) : (
-                        <button
+                        <Button
                           type="button"
                           disabled={isLinking || !!linked}
                           onClick={() => handleLink(order.id)}
                           className="flex items-center gap-1.5 rounded-lg border border-orange-300 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-700 transition-colors hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-orange-600 dark:bg-orange-900/20 dark:text-orange-300 dark:hover:bg-orange-900/40"
-                        >
+                         variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                           {isLinking
                             ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-orange-400 border-t-transparent" />
                             : <ArrowRight className="h-3.5 w-3.5" />}
                           Liên kết
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -274,17 +275,17 @@ const ExternalRow: React.FC<ExternalRowProps> = ({ transaction, onUnmark, format
           </Typography>
         </Box>
       </Box>
-      <button
+      <Button
         type="button"
         disabled={loading}
         onClick={handle}
         className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:border-orange-300 hover:text-orange-600 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-400 dark:hover:border-orange-600 dark:hover:text-orange-400"
-      >
+       variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
         {loading
           ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
           : <RotateCcw className="h-3.5 w-3.5" />}
         Khôi phục
-      </button>
+      </Button>
     </div>
   );
 };
@@ -377,11 +378,11 @@ const TransactionMappingPanel: React.FC<TransactionMappingPanelProps> = ({
       {/* External transactions collapsible */}
       {external.length > 0 && (
         <Box layoutClassName="space-y-2">
-          <button
+          <Button
             type="button"
             onClick={() => setShowExternal(v => !v)}
             className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/30"
-          >
+           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             <Box layoutClassName="flex items-center gap-2">
               <XCircle className="h-4 w-4 text-slate-400" />
               <Typography as="span" size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">
@@ -391,7 +392,7 @@ const TransactionMappingPanel: React.FC<TransactionMappingPanelProps> = ({
             {showExternal
               ? <ChevronDown className="h-4 w-4 text-slate-400" />
               : <ChevronRight className="h-4 w-4 text-slate-400" />}
-          </button>
+          </Button>
 
           {showExternal && (
             <Box layoutClassName="space-y-1.5">

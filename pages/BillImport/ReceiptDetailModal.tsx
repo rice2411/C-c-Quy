@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 
+import Button from '@/components/ui/Button';
 const ZOOM_MIN = 0.5;
 const ZOOM_MAX = 4;
 const ZOOM_STEP = 0.25;
@@ -79,13 +80,13 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
           <Typography size="sm" layoutClassName="font-semibold">
             Chi tiết bill
           </Typography>
-          <button
+          <Button
             type="button"
             className="text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-white"
             onClick={onClose}
-          >
+           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             Đóng
-          </button>
+          </Button>
         </Box>
 
         {detailLoading ? (
@@ -108,14 +109,14 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
             </Box>
 
             {receiptDetail.receiptImageBase64 && imageSrc ? (
-              <button
+              <Button
                 type="button"
                 className="group w-full overflow-hidden rounded-lg border border-slate-200 text-left transition ring-offset-2 hover:ring-2 hover:ring-orange-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 dark:border-slate-700"
                 onClick={(e) => {
                   e.stopPropagation();
                   openImageViewer();
                 }}
-              >
+               variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 <img
                   src={imageSrc}
                   alt="Bill"
@@ -124,7 +125,7 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
                 <Typography size="xs" variant="muted" layoutClassName="bg-slate-100 px-2 py-1.5 text-center dark:bg-slate-800">
                   Bấm để xem phóng to và zoom
                 </Typography>
-              </button>
+              </Button>
             ) : null}
 
             <Box layoutClassName="rounded-lg border border-slate-200 dark:border-slate-700">
@@ -163,7 +164,7 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
           onClick={closeImageViewer}
         >
           {/* Nút X cố định sau khi mở ảnh — trên mọi thanh app (z cao, portaled) */}
-          <button
+          <Button
             type="button"
             className="fixed right-3 z-[210] flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-white shadow-lg ring-2 ring-white/40 backdrop-blur-sm hover:bg-white/30 active:bg-white/40"
             style={{ top: 'max(0.75rem, env(safe-area-inset-top))' }}
@@ -172,9 +173,9 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
               e.stopPropagation();
               closeImageViewer();
             }}
-          >
+           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             <X className="h-7 w-7" strokeWidth={2.5} />
-          </button>
+          </Button>
 
           <Box
             layoutClassName="flex shrink-0 items-center justify-center gap-3 border-b border-white/10 px-12 py-2 text-white sm:px-3"
@@ -184,31 +185,31 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
               {Math.round(imageZoom * 100)}%
             </Typography>
             <Box layoutClassName="flex items-center gap-1">
-              <button
+              <Button
                 type="button"
                 className="flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-white/10 disabled:opacity-40"
                 aria-label="Thu nhỏ"
                 disabled={imageZoom <= ZOOM_MIN}
                 onClick={() => setImageZoom((z) => clampZoom(z - ZOOM_STEP))}
-              >
+               variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 <Minus className="h-5 w-5" />
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 className="rounded-lg px-3 py-2 text-sm hover:bg-white/10"
                 onClick={() => setImageZoom(1)}
-              >
+               variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 100%
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 className="flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-white/10 disabled:opacity-40"
                 aria-label="Phóng to"
                 disabled={imageZoom >= ZOOM_MAX}
                 onClick={() => setImageZoom((z) => clampZoom(z + ZOOM_STEP))}
-              >
+               variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 <Plus className="h-5 w-5" />
-              </button>
+              </Button>
             </Box>
           </Box>
 

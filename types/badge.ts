@@ -50,8 +50,7 @@ export interface BadgesConfiguration {
   productBadges: ProductBadge[];
   customerRules: CustomerBadgeRule[];
   updatedAt?: string;
-  updatedBy?: string | nul
-l;
+  updatedBy?: string | null;
 }
 
 export const DEFAULT_BADGE_COLORS = [
