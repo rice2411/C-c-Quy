@@ -69,6 +69,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const [products, setProducts] = useState<Product[]>([]);
 
   const [shippingCost, setShippingCost] = useState(0);
+  const [shipInfo, setShipInfo] = useState<NonNullable<Order['shipInfo']> | null>(null);
   const [note, setNote] = useState('');
   const [status, setStatus] = useState<OrderStatus>(OrderStatus.PENDING);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(PaymentStatus.UNPAID);
@@ -113,6 +114,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPaymentMethod(initialData.paymentMethod || PaymentMethod.CASH);
       setDeliveryType(initialData.deliveryType || DeliveryType.SHIP);
       setShippingCost(initialData.shippingCost || 0);
+      setShipInfo(initialData.shipInfo ?? null);
       setIsTest(!!initialData.isTest);
       if (initialData.items && initialData.items.length > 0) {
         const loadedItems = initialData.items.map((item, index) => ({
@@ -399,6 +401,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         },
         items: finalItems,
         shippingCost: Number(shippingCost),
+        shipInfo: shipInfo ?? undefined,
         total: total,
         note: note,
         deliveryDate: deliveryDate,
@@ -525,7 +528,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               deliveryType={deliveryType}
               setDeliveryType={setDeliveryType}
               shippingCost={shippingCost}
-              onShipFeeChange={(fee) => { if (fee != null) setShippingCost(fee); else setShippingCost(0); }}
+              onShipFeeChange={(fee) => { if (fee != null) setShippingCost(fee); }}
+              initialShipInfo={shipInfo ?? undefined}
+              onShipInfoChange={setShipInfo}
             />
             <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2 min-w-0">
               <Field label="Ngày nhận hàng" htmlFor="order-form-delivery-date" required className="min-w-0 overflow-hidden">

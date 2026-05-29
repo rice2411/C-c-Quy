@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Globe, Package, Store, Truck, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCustomers } from '@/contexts/CustomerContext';
-import AddressMapInput from '@/components/AddressMapInput';
+import AddressMapInput, { type ShipInfoSnapshot } from '@/components/AddressMapInput';
 import AutocompleteInput, { AutocompleteOption } from '@/components/AutocompleteInput';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -22,6 +22,8 @@ interface CustomerSectionProps {
   setDeliveryType: (val: DeliveryType) => void;
   shippingCost?: number;
   onShipFeeChange?: (fee: number | null) => void;
+  initialShipInfo?: ShipInfoSnapshot;
+  onShipInfoChange?: (info: ShipInfoSnapshot | null) => void;
 }
 
 const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
@@ -35,6 +37,8 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
   setDeliveryType,
   shippingCost,
   onShipFeeChange,
+  initialShipInfo,
+  onShipInfoChange,
 }) => {
   const { t } = useLanguage();
   const { customers } = useCustomers();
@@ -170,6 +174,8 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
                 showMap
                 showFeePanel={deliveryType !== DeliveryType.SHIP_PROVINCE}
                 onShipFeeChange={deliveryType === DeliveryType.SHIP ? onShipFeeChange : undefined}
+                initialShipInfo={initialShipInfo}
+                onShipInfoChange={deliveryType === DeliveryType.SHIP ? onShipInfoChange : undefined}
               />
             </Field>
 
@@ -183,8 +189,7 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
                   placeholder="0"
                   value={shippingCost ?? ''}
                   onChange={(e) => {
-                    const raw = e.target.value;
-                    onShipFeeChange?.(raw === '' ? null : Number(raw));
+                    const raw = e.target.value;onShipFeeChange?.(raw === '' ? null : Number(raw));
                   }}
                   leftIcon={<Package className="h-4 w-4" />}
                   leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"

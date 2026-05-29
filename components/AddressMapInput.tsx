@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Crosshair, Loader2, MapPin, Package, Route, Search } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Input from '@/components/ui/Input';
@@ -25,6 +25,14 @@ const routeKm = (trip: SerpApiDirectionsTrip | undefined): number | null => {
 
 interface LatLng { lat: number; lng: number; }
 
+export interface ShipInfoSnapshot {
+  distanceKm?: number;
+  distanceDisplay?: string;
+  destLat?: number;
+  destLng?: number;
+  pickedAddress?: string;
+}
+
 export interface AddressMapInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -34,12 +42,17 @@ export interface AddressMapInputProps {
   /** Khi false — ẩn panel Khoảng cách / Phí ship (dùng cho Ship tỉnh nhập tay) */
   showFeePanel?: boolean;
   onShipFeeChange?: (fee: number | null) => void;
+  /** Khôi phục từ cache đã lưu trên Order — bỏ qua SerpApi fetch. */
+  initialShipInfo?: ShipInfoSnapshot;
+  /** Emit shipInfo khi user search/click pick — parent lưu vào Order */
+  onShipInfoChange?: (info: ShipInfoSnapshot | null) => void;
 }
 
 const AddressMapInput: React.FC<AddressMapInputProps> = ({
   value, onChange, id = 'address-map-input',
   placeholder = 'Nhập địa chỉ giao hàng... (Enter để xem map)',
   showMap = true, showFeePanel = true, onShipFeeChange,
+  initialShipInfo, onShipInfoChange,
 }) => {
   const { config, calcShipFee, enrichAddress } = useShippingConfig();
   const SHOP_ORIGIN = config.shopOrigin;
@@ -48,15 +61,25 @@ const AddressMapInput: React.FC<AddressMapInputProps> = ({
     [SHOP_ORIGIN.lat, SHOP_ORIGIN.lng],
   );
 
-  const [pickedCoords, setPickedCoords] = useState<LatLng | null>(null);
-  const [pickedAddress, setPickedAddress] = useState<string>('');
+  // Hydrate từ cache nếu có (tránh fetch SerpApi khi edit order)
+  const [pickedCoords, setPickedCoords] = useState<LatLng | null>(() =>
+    initialShipInfo?.destLat != null && initialShipInfo?.destLng != null
+      ? { lat: initialShipInfo.destLat, lng: initialShipInfo.destLng }
+      : null
+  );
+  const [pickedAddress, setPickedAddress] = useState<string>(initialShipInfo?.pickedAddress ?? '');
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [drivingKm, setDrivingKm] = useState<number | null>(null);
-  const [drivingDisplay, setDrivingDisplay] = useState<string | null>(null);
+  const [drivingKm, setDrivingKm] = useState<number | null>(initialShipInfo?.distanceKm ?? null);
+  const [drivingDisplay, setDrivingDisplay] = useState<string | null>(initialShipInfo?.distanceDisplay ?? null);
   const [drivingLoading, setDrivingLoading] = useState(false);
   const [drivingError, setDrivingError] = useState<string | null>(null);
-  const [mapEmbedUrl, setMapEmbedUrl] = useState(DEFAULT_MAP_URL);
+  const [mapEmbedUrl, setMapEmbedUrl] = useState<string>(() => {
+    if (initialShipInfo?.destLat != null && initialShipInfo?.destLng != null) {
+      return `https://maps.google.com/maps?saddr=${SHOP_ORIGIN.lat},${SHOP_ORIGIN.lng}&daddr=${initialShipInfo.destLat},${initialShipInfo.destLng}&output=embed&hl=vi`;
+    }
+    return DEFAULT_MAP_URL;
+  });
 
   const fetchDirections = useCallback(async (opts: { dest?: LatLng; endAddr?: string }) => {
     setDrivingLoading(true);
@@ -152,7 +175,32 @@ const AddressMapInput: React.FC<AddressMapInputProps> = ({
   const shipFeeData = useMemo(() => effectiveKm != null ? calcShipFee(effectiveKm) : null, [effectiveKm, calcShipFee]);
   const shipFee = shipFeeData?.fee ?? null;
 
-  useEffect(() => { if (onShipFeeChange) onShipFeeChange(shipFee); }, [shipFee, onShipFeeChange]);
+  // Chỉ fire callback khi shipFee đã được tính (có địa chỉ + distance). null = chưa search map,
+  // không nên override giá trị parent đã có sẵn (vd: edit order với shipFee 30k đã lưu).
+  const prevShipFeeRef = useRef<number | null>(initialShipInfo?.distanceKm != null ? null : null);
+  useEffect(() => {
+    if (!onShipFeeChange) return;
+    if (shipFee === null && prevShipFeeRef.current === null) return;
+    prevShipFeeRef.current = shipFee;
+    onShipFeeChange(shipFee);
+  }, [shipFee, onShipFeeChange]);
+
+  // Emit shipInfo snapshot khi có thay đổi để parent cache vào Order
+  const prevShipInfoStrRef = useRef<string>('');
+  useEffect(() => {
+    if (!onShipInfoChange) return;
+    const snapshot: ShipInfoSnapshot | null = (pickedCoords || drivingKm != null) ? {
+      distanceKm: drivingKm ?? undefined,
+      distanceDisplay: drivingDisplay ?? undefined,
+      destLat: pickedCoords?.lat,
+      destLng: pickedCoords?.lng,
+      pickedAddress: pickedAddress || undefined,
+    } : null;
+    const key = JSON.stringify(snapshot);
+    if (key === prevShipInfoStrRef.current) return;
+    prevShipInfoStrRef.current = key;
+    onShipInfoChange(snapshot);
+  }, [pickedCoords, drivingKm, drivingDisplay, pickedAddress, onShipInfoChange]);
 
   return (
     <Box layoutClassName="space-y-2">

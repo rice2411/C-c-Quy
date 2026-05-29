@@ -3,7 +3,6 @@ import { Customer } from './customer';
 
 export interface OrderItem {
   id: string;
-  /** Product ID gốc (để tham chiếu sang collection products) */
   productId?: string;
   name: string;
   quantity: number;
@@ -11,7 +10,6 @@ export interface OrderItem {
   image: string;
 }
 
-/** Mot thay doi cua 1 field cu the trong 1 lan edit */
 export interface OrderFieldChange {
   field: string;
   label?: string;
@@ -19,7 +17,6 @@ export interface OrderFieldChange {
   newValue: string | number | null;
 }
 
-/** 1 lan chinh sua don = 1 entry trong history array */
 export interface OrderHistoryEntry {
   at: any;
   by?: string;
@@ -35,6 +32,14 @@ export interface Order {
   items: OrderItem[];
   total: number;
   shippingCost?: number;
+  /** Cache shipping info từ AddressMapInput — tránh fetch SerpApi khi edit */
+  shipInfo?: {
+    distanceKm?: number;
+    distanceDisplay?: string;
+    destLat?: number;
+    destLng?: number;
+    pickedAddress?: string;
+  };
   status: OrderStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
@@ -55,9 +60,7 @@ export interface Order {
   commissionAmount?: number;
   commissionStatus?: 'pending' | 'paid';
   commissionPaidAt?: string;
-  /** Badge IDs gán cho đơn (custom tags từ Settings → Badges) */
   badgeIds?: string[];
-  // ===== Cancel / Refund =====
   cancelReason?: string;
   cancelledAt?: string;
   cancelledBy?: string;
