@@ -307,7 +307,3 @@ export const deleteOrder = async (
     throw error;
   }
 };
-   onsole.error("Error deleting order:", error);
-    throw error;
-  }
-};

@@ -188,5 +188,3 @@ export const sendHealthCheckNotification = async () => {
   const message = formatHealthCheckMessage(new Date());
   await sendZaloMessage(message);
 };
- sendZaloMessage(message);
-};
