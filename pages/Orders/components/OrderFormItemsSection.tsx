@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DollarSign, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Product } from '@/types';
@@ -46,6 +46,8 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
   const { t } = useLanguage();
   const [quantityInputs, setQuantityInputs] = useState<Record<string, string>>({});
   const [shippingInput, setShippingInput] = useState<string>(String(shippingCost ?? 0));
+  // Lưu giá trị shipping > 0 cuối cùng để khôi phục khi user "Bỏ freeship"
+  const lastNonZeroShipRef = useRef<number>(shippingCost > 0 ? shippingCost : 0);
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [recentIds, setRecentIds] = useState<string[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -66,6 +68,8 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
 
   useEffect(() => {
     setShippingInput(String(shippingCost ?? 0));
+    // Track giá trị > 0 gần nhất để có thể restore khi bỏ freeship
+    if (shippingCost > 0) lastNonZeroShipRef.current = shippingCost;
   }, [shippingCost]);
 
   const getProductImage = (item: FormItem) => {
@@ -345,8 +349,13 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
             type="button"
             variant="ghost"
             onClick={() => {
-              const restored = Number(shippingInput);
-              if (Number.isFinite(restored) && restored > 0) setShippingCost(restored);
+              // Khôi phục từ ref (giá trị > 0 cuối cùng), fallback shippingInput
+              const fromRef = lastNonZeroShipRef.current;
+              const fromInput = Number(shippingInput);
+              const restored =
+                fromRef > 0 ? fromRef
+                : (Number.isFinite(fromInput) && fromInput > 0 ? fromInput : 0);
+              if (restored > 0) setShippingCost(restored);
             }}
             leftIcon={<RotateCcw />}
             iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
@@ -359,7 +368,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
             layoutClassName="inline-flex items-center gap-1.5"
             disableVariantHover
             disableVariantTextColor
-            disabled={!shippingInput || Number(shippingInput) <= 0}
+            disabled={lastNonZeroShipRef.current <= 0 && Number(shippingInput) <= 0}
           >
             Bỏ freeship
           </Button>
