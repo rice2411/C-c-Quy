@@ -243,11 +243,19 @@ export const updateOrder = async (
           orderNumber: existing.orderNumber,
           customer: safeCustomer,
         };
+        // Items diff cụ thể (added/removed/qty/price) — chỉ tính nếu items thực sự đổi
+        const { diffOrderItems } = await import('@/utils/order/itemsDiff');
+        const itemsDiff = diffOrderItems(
+          (existing as any).items as any,
+          payload.items as any,
+        );
         await sendOrderUpdateNotification(
           orderForMsg,
           changes,
           { name: editorName2, uid: editor?.uid },
           zaloGroupIds,
+          itemsDiff,
+          existing, // prevOrder để hiển thị snapshot "ĐƠN CŨ"
         );
       } catch (notifErr) {
         console.error("Update Zalo notify error (ignored):", notifErr);
@@ -296,6 +304,10 @@ export const deleteOrder = async (
     }
   } catch (error) {
     console.error("Error deleting order:", error);
+    throw error;
+  }
+};
+   onsole.error("Error deleting order:", error);
     throw error;
   }
 };

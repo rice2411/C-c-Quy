@@ -100,9 +100,11 @@ export const sendOrderUpdateNotification = async (
   changes: OrderFieldChange[],
   editor: OrderUpdateEditorInfo | undefined,
   groupIds: string[],
+  itemsDiff?: import('@/utils/order/itemsDiff').ItemChangeEntry[],
+  prevOrder?: any,
 ) => {
   if (groupIds.length === 0 || changes.length === 0) return;
-  const message = formatOrderUpdateMessage(order, changes, editor);
+  const message = formatOrderUpdateMessage(order, changes, editor, itemsDiff, prevOrder);
   try {
     await postTextToGroups(groupIds, message);
   } catch (error: any) {
@@ -185,4 +187,6 @@ export const sendDailySummaryNotification = async (stats: DailySummaryStats, dat
 export const sendHealthCheckNotification = async () => {
   const message = formatHealthCheckMessage(new Date());
   await sendZaloMessage(message);
+};
+ sendZaloMessage(message);
 };

@@ -1,6 +1,7 @@
 import { Order, OrderFieldChange } from "@/types";
 import { parseDateValue } from "../format/dateUtil";
 import { formatVND } from "../format/currencyUtil";
+import { formatItemsDiff } from "@/utils/order/itemsDiff";
 import { getOrderTotal } from "../order/orderUtils";
 
 const DIVIDER = '─────────────────────────';
@@ -83,10 +84,36 @@ export interface OrderUpdateEditorInfo {
   uid?: string;
 }
 
+/** Block render items + totals của một snapshot order — dùng cho 2 cột cũ/mới */
+const renderOrderSnapshot = (order: any, title: string): string[] => {
+  const lines: string[] = [];
+  lines.push(`═══ ${title} ═══`);
+  const items = order.items || [];
+  const totalItems = items.reduce((s: number, it: any) => s + (it.quantity || 0), 0);
+  const subtotal = items.reduce((s: number, it: any) => s + ((it.price || 0) * (it.quantity || 0)), 0);
+  const shipping = order.shippingCost || 0;
+  const total = getOrderTotal(order);
+
+  if (items.length === 0) {
+    lines.push('📋 (không có sản phẩm)');
+  } else {
+    lines.push(`📋 SP (${totalItems}):`);
+    items.forEach((it: any) => {
+      lines.push(`   • ${it.name} × ${it.quantity || 0}`);
+    });
+  }
+  lines.push(`💰 Hàng:  ${formatVND(subtotal)}`);
+  if (shipping > 0) lines.push(`🚚 Ship:  ${formatVND(shipping)}`);
+  lines.push(`💵 Tổng:  ${formatVND(total)}`);
+  return lines;
+};
+
 export const formatOrderUpdateMessage = (
   order: any,
   changes: OrderFieldChange[],
   editor?: OrderUpdateEditorInfo,
+  itemsDiff?: import('@/utils/order/itemsDiff').ItemChangeEntry[],
+  prevOrder?: any,
 ): string => {
   const lines: string[] = [];
   if (order.isTest) lines.push('⚠️ ĐƠN HÀNG TEST');
@@ -95,16 +122,35 @@ export const formatOrderUpdateMessage = (
   lines.push(`👤 KH:     ${order.customer?.name || order.customerName || '(không có)'}`);
   lines.push(`✏️ Sửa:    ${editor?.name || 'Unknown'}`);
   lines.push(`🕒         ${formatDateShort(new Date())}`);
+
+  // Show full đơn cũ vs đơn mới (side-by-side) khi có prevOrder
+  if (prevOrder) {
+    lines.push('');
+    renderOrderSnapshot(prevOrder, 'ĐƠN CŨ').forEach((l) => lines.push(l));
+    lines.push('');
+    renderOrderSnapshot(order, 'ĐƠN MỚI').forEach((l) => lines.push(l));
+  }
+
+  // Summary các thay đổi
   lines.push('');
   lines.push(`📝 Thay đổi (${changes.length}):`);
   changes.forEach((c) => {
     const label = c.label || c.field;
+    if (c.field === 'items' && itemsDiff && itemsDiff.length > 0) {
+      lines.push(`   • ${label} (${itemsDiff.length} thay đổi):`);
+      formatItemsDiff(itemsDiff).forEach((d) => lines.push(`     ${d}`));
+      return;
+    }
     const oldV = c.oldValue == null || c.oldValue === '' ? '—' : String(c.oldValue);
     const newV = c.newValue == null || c.newValue === '' ? '—' : String(c.newValue);
     lines.push(`   • ${label}: ${oldV} → ${newV}`);
   });
-  lines.push('');
-  lines.push(`💵 Tổng mới: ${formatVND(getOrderTotal(order))}`);
+
+  // Tổng mới (gọn) — chỉ show nếu KHÔNG có prevOrder snapshot (tránh duplicate)
+  if (!prevOrder) {
+    lines.push('');
+    lines.push(`💵 Tổng mới: ${formatVND(getOrderTotal(order))}`);
+  }
   return lines.join('\n');
 };
 
@@ -314,4 +360,4 @@ export const formatHealthCheckMessage = (now: Date): string => {
     lines.push('Hệ thống đang hoạt động bình thường.');
   lines.push('Zalo token: live ✓');
   return lines.join('\n');
-};
+}
