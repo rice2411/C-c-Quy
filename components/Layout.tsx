@@ -1,10 +1,10 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { LogOut, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
-import { getAccessibleRoutes } from '@/config/routes';
+import { buildNavTree, RouteConfig } from '@/config/routes';
 import { getUserFromLocalStorage } from '@/utils/user/userUtil';
 import ThemeToggle from './ThemeToggle';
 import toast from 'react-hot-toast';
@@ -38,7 +38,7 @@ const Layout: React.FC = () => {
   const userRole = userData?.role || storedUser?.role;
   
   
-  const accessibleRoutes = getAccessibleRoutes(userRole, screenVisibility);
+  const navTree = buildNavTree(userRole, screenVisibility);
 
   React.useEffect(() => {
     if (location.pathname === '/') return;
@@ -46,20 +46,49 @@ const Layout: React.FC = () => {
       navigate('/', { replace: true });
     }
   }, [location.pathname, isScreenEnabled, navigate]);
-  
-  // Map routes config thành navItems với translation
-  const navItems = accessibleRoutes.map(route => ({
-    id: route.path,
-    label: t(route.labelKey),
-    icon: route.icon,
-    disabled: route.disabled
-  }));
+
+  // Trạng thái xổ của các nhóm menu; tự mở nhóm chứa trang đang xem
+  const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>({});
+  React.useEffect(() => {
+    navTree.forEach(node => {
+      if (node.type === 'group' && node.children.some(c => c.path === location.pathname)) {
+        setOpenGroups(prev => (prev[node.group.key] ? prev : { ...prev, [node.group.key]: true }));
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  // Render 1 mục lá (route) trong sidebar
+  const renderLeaf = (item: RouteConfig, indented = false) => {
+    const active = location.pathname === item.path;
+    const Icon = item.icon;
+    return (
+      <Link
+        key={item.path}
+        to={item.disabled ? '#' : item.path}
+        className={`w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${indented ? 'pl-10' : ''} ${
+          active
+            ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 shadow-sm'
+            : item.disabled
+              ? 'text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-60'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
+        }`}
+      >
+        <Icon className={`${indented ? 'w-4 h-4' : 'w-5 h-5'} mr-3 ${active ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'}`} />
+        {t(item.labelKey)}
+        {item.disabled && <span className="ml-auto text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">Bảo trì</span>}
+      </Link>
+    );
+  };
 
   const getPageTitle = () => {
     if (location.pathname === '/') return t('header.dashboardTitle');
     if (location.pathname === '/orders') return t('header.ordersTitle');
     if (location.pathname === '/transactions') return t('header.transactionsTitle');
     if (location.pathname === '/commission') return 'Hoa hồng CTV';
+    if (location.pathname === '/commission-settings') return 'Cài đặt hoa hồng';
+    if (location.pathname === '/my-commission') return 'Hoa hồng của tôi';
+    if (location.pathname === '/commission-guide') return 'Hướng dẫn hoa hồng';
     if (location.pathname === '/storage') return t('header.inventoryTitle');
     if (location.pathname === '/bill-import') {
       return t('header.billImportTitle');
@@ -81,24 +110,36 @@ const Layout: React.FC = () => {
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
-            <Link
-              key={item.id}
-              to={item.disabled ? '#' : item.id}
-              className={`w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                location.pathname === item.id
-                  ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 shadow-sm'
-                  : item.disabled 
-                    ? 'text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-60' 
-                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <item.icon className={`w-5 h-5 mr-3 ${location.pathname === item.id ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'}`} />
-              {item.label}
-              {item.disabled && <span className="ml-auto text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">Bảo trì</span>}
-            </Link>
-          ))}
-          
+          {navTree.map((node) => {
+            if (node.type === 'route') return renderLeaf(node.route);
+
+            const GroupIcon = node.group.icon;
+            const groupActive = node.children.some(c => c.path === location.pathname);
+            const isOpen = openGroups[node.group.key] ?? groupActive;
+            return (
+              <div key={node.group.key}>
+                <button
+                  type="button"
+                  onClick={() => setOpenGroups(prev => ({ ...prev, [node.group.key]: !isOpen }))}
+                  className={`w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    groupActive
+                      ? 'text-orange-700 dark:text-orange-400'
+                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <GroupIcon className={`w-5 h-5 mr-3 ${groupActive ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'}`} />
+                  {t(node.group.labelKey)}
+                  <ChevronDown className={`ml-auto w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {isOpen && (
+                  <div className="mt-1 space-y-1">
+                    {node.children.map(child => renderLeaf(child, true))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
           <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-700">
             <button
               onClick={handleLogout}

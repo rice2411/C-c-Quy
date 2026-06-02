@@ -14,6 +14,9 @@ import DashboardPage from "./pages/Dashboard/index";
 import OrdersPage from "./pages/Orders/index";
 import TransactionsPage from "./pages/Transactions/index";
 import CommissionPage from "./pages/Commission/index";
+import CommissionSettingsPage from "./pages/Commission/SettingsPage";
+import CommissionGuidePage from "./pages/Commission/GuidePage";
+import MyCommissionPage from "./pages/MyCommission/index";
 import InventoryPage from "./pages/Storage/index";
 import ProductDetailPage from "./pages/Storage/product/ProductDetailPage";
 import BillImportPage from "./pages/BillImport/index";
@@ -65,6 +68,21 @@ const App: React.FC = () => {
                       <Route path="commission" element={
                         <RoleBasedRoute requiredRole={routes.find(r => r.path === '/commission')?.roles}>
                           <CommissionPage />
+                        </RoleBasedRoute>
+                      } />
+                      <Route path="commission-settings" element={
+                        <RoleBasedRoute requiredRole={routes.find(r => r.path === '/commission-settings')?.roles}>
+                          <CommissionSettingsPage />
+                        </RoleBasedRoute>
+                      } />
+                      <Route path="my-commission" element={
+                        <RoleBasedRoute requiredRole={routes.find(r => r.path === '/my-commission')?.roles}>
+                          <MyCommissionPage />
+                        </RoleBasedRoute>
+                      } />
+                      <Route path="commission-guide" element={
+                        <RoleBasedRoute requiredRole={routes.find(r => r.path === '/commission-guide')?.roles}>
+                          <CommissionGuidePage />
                         </RoleBasedRoute>
                       } />
                       <Route path="storage" element={

@@ -11,7 +11,12 @@ import { Order } from '@/types';
 import { Product } from '@/types';
 import { OrderStatus } from '@/types/enums';
 import { UserRole } from '@/types/user';
-import { CommissionGroup, calcItemCommission } from '@/types/commissionGroup';
+import {
+  CommissionGroup,
+  findGroupForMargin,
+  rateForQuantity,
+  itemCommissionAtRate,
+} from '@/types/commissionGroup';
 import { getAllUsers } from './userService';
 
 export interface CollaboratorCommissionSummary {
@@ -25,27 +30,148 @@ export interface CollaboratorCommissionSummary {
   paidCommission: number;
 }
 
+const isCancelled = (order: Order): boolean =>
+  order.status === OrderStatus.CANCELLED || order.status === OrderStatus.RETURNED;
+
+/** Khoá tháng "YYYY-MM" từ ngày giao của đơn (null nếu không có ngày hợp lệ) */
+const monthKeyOf = (dateStr?: string): string => {
+  if (!dateStr) return 'unknown';
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return 'unknown';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+
 /**
- * Tính lại commissionAmount cho 1 đơn dựa trên groups + products hiện tại.
- * Trả về số tiền tính được (không ghi lại Firestore).
+ * Nhóm hoa hồng của 1 sản phẩm:
+ * - Có costPrice & có lợi nhuận → nhóm theo margin.
+ * - Không có costPrice → nhóm đầu tiên (dùng fallbackRate).
+ * - Lợi nhuận <= 0 → undefined (không tính hoa hồng, không cộng số lượng).
  */
-function recalcOrderCommission(
-  order: Order,
+const groupOfProduct = (
+  product: Product | undefined,
+  groups: CommissionGroup[],
+): CommissionGroup | undefined => {
+  if (!product || groups.length === 0) return undefined;
+  if (product.costPrice !== undefined && product.costPrice >= 0) {
+    const profit = product.price - product.costPrice;
+    if (profit <= 0) return undefined;
+    return findGroupForMargin(profit / product.price, groups);
+  }
+  return [...groups].sort((a, b) => a.order - b.order)[0];
+};
+
+/**
+ * Tính hoa hồng cho từng đơn của 1 CTV theo logic bậc số lượng:
+ * - Gom đơn theo tháng (ngày giao).
+ * - Trong mỗi tháng, đếm tổng SL bán theo từng nhóm (bỏ đơn huỷ/hoàn).
+ * - Số lượng tháng của mỗi nhóm quyết định % lợi nhuận (rate) cho nhóm đó.
+ * - Mỗi đơn: cộng hoa hồng từng item theo rate của nhóm tương ứng trong tháng.
+ * Trả về map orderId -> commissionAmount.
+ */
+const computeCommissionByMonth = (
+  orders: Order[],
   groups: CommissionGroup[],
   products: Product[],
-): number {
-  if (!Array.isArray(order.items) || order.items.length === 0) return 0;
-  return order.items.reduce((sum, item) => {
-    const product = products.find(p => p.id === (item.id ?? item.productId));
-    if (!product) return sum;
-    const perUnit = calcItemCommission(item.price ?? product.price, product.costPrice, groups);
-    return sum + perUnit * (item.quantity ?? 1);
-  }, 0);
-}
+): Map<string, number> => {
+  const productById = new Map(products.map(p => [p.id, p]));
+  const result = new Map<string, number>();
+
+  // Gom theo tháng
+  const byMonth = new Map<string, Order[]>();
+  for (const o of orders) {
+    const m = monthKeyOf(o.deliveryDate);
+    if (!byMonth.has(m)) byMonth.set(m, []);
+    byMonth.get(m)!.push(o);
+  }
+
+  for (const monthOrders of byMonth.values()) {
+    // 1. Đếm SL theo nhóm trong tháng (bỏ đơn huỷ/hoàn)
+    const qtyByGroup = new Map<string, number>();
+    for (const o of monthOrders) {
+      if (isCancelled(o)) continue;
+      for (const item of o.items ?? []) {
+        const product = productById.get(item.id ?? item.productId ?? '');
+        const group = groupOfProduct(product, groups);
+        if (!group) continue;
+        qtyByGroup.set(group.id, (qtyByGroup.get(group.id) ?? 0) + (item.quantity ?? 1));
+      }
+    }
+
+    // 2. Rate mỗi nhóm theo SL tháng
+    const rateByGroup = new Map<string, number>();
+    for (const g of groups) {
+      rateByGroup.set(g.id, rateForQuantity(g, qtyByGroup.get(g.id) ?? 0));
+    }
+
+    // 3. Hoa hồng từng đơn
+    for (const o of monthOrders) {
+      if (isCancelled(o)) { result.set(o.id, 0); continue; }
+      let total = 0;
+      for (const item of o.items ?? []) {
+        const product = productById.get(item.id ?? item.productId ?? '');
+        if (!product) continue;
+        const group = groupOfProduct(product, groups);
+        if (!group) continue;
+        const rate = rateByGroup.get(group.id) ?? 0;
+        const perUnit = itemCommissionAtRate(
+          item.price ?? product.price,
+          product.costPrice,
+          group.fallbackRate,
+          rate,
+        );
+        total += perUnit * (item.quantity ?? 1);
+      }
+      result.set(o.id, total);
+    }
+  }
+
+  return result;
+};
+
+/** Dựng summary cho 1 CTV từ danh sách đơn của họ (đã áp logic bậc tháng). */
+const buildSummaryForOrders = (
+  uid: string,
+  name: string,
+  orders: Order[],
+  groups: CommissionGroup[],
+  products: Product[],
+): CollaboratorCommissionSummary => {
+  const commissionMap = computeCommissionByMonth(orders, groups, products);
+  const summary: CollaboratorCommissionSummary = {
+    collaboratorUid: uid,
+    collaboratorName: name,
+    orders: [],
+    totalSales: 0,
+    totalCommission: 0,
+    pendingCommission: 0,
+    paidCommission: 0,
+  };
+
+  for (const order of orders) {
+    const commissionAmount = commissionMap.get(order.id) ?? 0;
+    summary.orders.push({ ...order, commissionAmount });
+    if (!isCancelled(order)) {
+      const productSales = (order.total ?? 0) - (order.shippingCost ?? 0);
+      summary.totalSales += productSales > 0 ? productSales : 0;
+      summary.totalCommission += commissionAmount;
+      if (order.commissionStatus === 'paid') summary.paidCommission += commissionAmount;
+      else summary.pendingCommission += commissionAmount;
+    }
+  }
+
+  // Đơn mới nhất lên đầu
+  summary.orders.sort((a, b) => {
+    const da = a.deliveryDate ? new Date(a.deliveryDate).getTime() : 0;
+    const dbt = b.deliveryDate ? new Date(b.deliveryDate).getTime() : 0;
+    return dbt - da;
+  });
+
+  return summary;
+};
 
 /**
  * Fetch tất cả đơn của CTV (createdBy = uid của COLABORATOR),
- * tính lại commission từ groups + products, trả về summaries theo CTV.
+ * tính lại commission theo bậc số lượng tháng, trả về summaries theo CTV.
  */
 export const buildFullCommissionSummary = async (
   groups: CommissionGroup[],
@@ -55,64 +181,53 @@ export const buildFullCommissionSummary = async (
   const collaborators = users.filter(u => u.role === UserRole.COLABORATOR);
   if (collaborators.length === 0) return [];
 
-  // Batch query orders by createdBy for each CTV
   const ordersRef = collection(db, 'orders');
-  const allOrders: Order[] = [];
+  const ordersByUid = new Map<string, Order[]>();
 
   // Firestore `in` supports up to 30 items; chunk if needed
   const CHUNK = 30;
   for (let i = 0; i < collaborators.length; i += CHUNK) {
     const uids = collaborators.slice(i, i + CHUNK).map(u => u.uid);
     const snap = await getDocs(query(ordersRef, where('createdBy', 'in', uids)));
-    snap.forEach(d => allOrders.push({ id: d.id, ...d.data() } as Order));
-  }
-
-  const map = new Map<string, CollaboratorCommissionSummary>();
-
-  // Init entry for every CTV (even those with no orders)
-  for (const ctv of collaborators) {
-    map.set(ctv.uid, {
-      collaboratorUid: ctv.uid,
-      collaboratorName: ctv.customName || ctv.displayName || ctv.email || ctv.uid,
-      orders: [],
-      totalSales: 0,
-      totalCommission: 0,
-      pendingCommission: 0,
-      paidCommission: 0,
+    snap.forEach(d => {
+      const order = { id: d.id, ...d.data() } as Order;
+      const uid = order.createdBy || '';
+      if (!ordersByUid.has(uid)) ordersByUid.set(uid, []);
+      ordersByUid.get(uid)!.push(order);
     });
   }
 
-  for (const order of allOrders) {
-    const uid = order.createdBy || '';
-    const summary = map.get(uid);
-    if (!summary) continue;
-
-    const isCancelled =
-      order.status === OrderStatus.CANCELLED || order.status === OrderStatus.RETURNED;
-
-    // Recalculate commission from current groups/products
-    const commissionAmount = isCancelled ? 0 : recalcOrderCommission(order, groups, products);
-
-    // Attach recalculated amount to order object (in-memory only)
-    const enrichedOrder: Order = { ...order, commissionAmount };
-
-    summary.orders.push(enrichedOrder);
-    if (!isCancelled) {
-      const productSales = (order.total ?? 0) - (order.shippingCost ?? 0);
-      summary.totalSales += productSales > 0 ? productSales : 0;
-      summary.totalCommission += commissionAmount;
-      if (order.commissionStatus === 'paid') {
-        summary.paidCommission += commissionAmount;
-      } else {
-        summary.pendingCommission += commissionAmount;
-      }
-    }
+  const summaries: CollaboratorCommissionSummary[] = [];
+  for (const ctv of collaborators) {
+    const orders = ordersByUid.get(ctv.uid) ?? [];
+    if (orders.length === 0) continue;
+    const name = ctv.customName || ctv.displayName || ctv.email || ctv.uid;
+    summaries.push(buildSummaryForOrders(ctv.uid, name, orders, groups, products));
   }
 
-  // Only return CTVs with at least 1 order
-  return Array.from(map.values())
-    .filter(s => s.orders.length > 0)
-    .sort((a, b) => b.pendingCommission - a.pendingCommission);
+  return summaries.sort((a, b) => b.pendingCommission - a.pendingCommission);
+};
+
+/**
+ * Tính hoa hồng cho 1 CTV cụ thể (theo uid người đang đăng nhập).
+ * Chỉ query đơn của chính CTV đó nên không cần đọc toàn bộ users.
+ */
+export const buildMyCommissionSummary = async (
+  uid: string,
+  collaboratorName: string,
+  groups: CommissionGroup[],
+  products: Product[],
+): Promise<CollaboratorCommissionSummary> => {
+  if (!uid) {
+    return {
+      collaboratorUid: uid, collaboratorName, orders: [],
+      totalSales: 0, totalCommission: 0, pendingCommission: 0, paidCommission: 0,
+    };
+  }
+  const ordersRef = collection(db, 'orders');
+  const snap = await getDocs(query(ordersRef, where('createdBy', '==', uid)));
+  const orders = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+  return buildSummaryForOrders(uid, collaboratorName, orders, groups, products);
 };
 
 /** @deprecated Dùng buildFullCommissionSummary thay thế */

@@ -6,8 +6,11 @@ import {
   FileText,
   Users,
   Settings,
+  Settings2,
   TrendingUp,
   Coins,
+  Wallet,
+  BookOpen,
   UserCog,
   Bell,
 } from "lucide-react";
@@ -62,9 +65,30 @@ export const routes: RouteConfig[] = [
   {
     type: "page",
     path: "/commission",
-    labelKey: "nav.commission",
-    icon: Coins,
+    labelKey: "nav.commissionHome",
+    icon: TrendingUp,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/commission-settings",
+    labelKey: "nav.commissionSettings",
+    icon: Settings2,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/my-commission",
+    labelKey: "nav.myCommission",
+    icon: Wallet,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR],
+  },
+  {
+    type: "page",
+    path: "/commission-guide",
+    labelKey: "nav.commissionGuide",
+    icon: BookOpen,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR],
   },
   {
     type: "page",
@@ -188,6 +212,69 @@ export const getAccessibleRoutes = (
         disabled: Boolean(route.disabled) || disabledByConfig,
       };
     });
+};
+
+/**
+ * Nhóm menu sidebar dạng xổ xuống: 1 mục cha chứa nhiều route con.
+ * childPaths quyết định thứ tự hiển thị các mục con trong nhóm.
+ */
+export interface NavGroupConfig {
+  key: string;
+  labelKey: string;
+  icon: LucideIcon;
+  childPaths: string[];
+}
+
+export const navGroups: NavGroupConfig[] = [
+  {
+    key: "commission",
+    labelKey: "nav.commissionGroup",
+    icon: Coins,
+    childPaths: [
+      "/commission",
+      "/commission-settings",
+      "/my-commission",
+      "/commission-guide",
+    ],
+  },
+];
+
+export type NavNode =
+  | { type: "route"; route: RouteConfig }
+  | { type: "group"; group: NavGroupConfig; children: RouteConfig[] };
+
+/**
+ * Dựng cây điều hướng: route thường giữ nguyên, các route thuộc 1 nhóm
+ * được gom lại dưới mục cha (đặt tại vị trí của mục con đầu tiên).
+ */
+export const buildNavTree = (
+  userRole: UserRole | string | undefined,
+  screenVisibility: ScreenVisibilityMap = {},
+): NavNode[] => {
+  const accessible = getAccessibleRoutes(userRole, screenVisibility);
+  const pathToGroup = new Map<string, NavGroupConfig>();
+  navGroups.forEach((g) => g.childPaths.forEach((p) => pathToGroup.set(p, g)));
+
+  const nodes: NavNode[] = [];
+  const emitted = new Set<string>();
+
+  for (const route of accessible) {
+    const group = pathToGroup.get(route.path);
+    if (!group) {
+      nodes.push({ type: "route", route });
+      continue;
+    }
+    if (emitted.has(group.key)) continue;
+    emitted.add(group.key);
+    const children = group.childPaths
+      .map((p) => accessible.find((r) => r.path === p))
+      .filter((r): r is RouteConfig => Boolean(r));
+    if (children.length > 0) {
+      nodes.push({ type: "group", group, children });
+    }
+  }
+
+  return nodes;
 };
 
 export const getAccessibleStorageTabs = (

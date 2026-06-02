@@ -4,7 +4,7 @@ import { LayoutDashboard, Package, PlusCircle, ShoppingCart, Users, X } from 'lu
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
-import { getAccessibleRoutes } from '@/config/routes';
+import { getAccessibleRoutes, buildNavTree } from '@/config/routes';
 import { getUserFromLocalStorage } from '@/utils/user/userUtil';
 
 const MobileFooterNav: React.FC = () => {
@@ -26,12 +26,18 @@ const MobileFooterNav: React.FC = () => {
   );
 
   const mainTabs = ['/', '/orders', '/customers', '/storage'];
-  const otherRoutes = accessibleRoutes.filter(
-    (route) => !mainTabs.includes(route.path) && route.path !== '/'
+
+  // Cây nav: gom các route thuộc nhóm; lọc bỏ các tab chính khỏi menu "Thêm"
+  const navTree = buildNavTree(userRole, screenVisibility);
+  const moreNodes = navTree.filter(
+    (node) => node.type === 'group' || !mainTabs.includes(node.route.path)
+  );
+  const moreLeafRoutes = moreNodes.flatMap((node) =>
+    node.type === 'group' ? node.children : [node.route]
   );
 
-  const isMoreActive = otherRoutes.some((route) => route.path === location.pathname);
-  const activeMoreRoute = otherRoutes.find((route) => route.path === location.pathname);
+  const isMoreActive = moreLeafRoutes.some((route) => route.path === location.pathname);
+  const activeMoreRoute = moreLeafRoutes.find((route) => route.path === location.pathname);
 
   const tabs = [
     {
@@ -207,36 +213,51 @@ const MobileFooterNav: React.FC = () => {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
-              {otherRoutes.length > 0 ? (
+              {moreNodes.length > 0 ? (
                 <div className="space-y-1">
-                  {otherRoutes.map((route) => {
-                    const Icon = route.icon;
-                    const active = location.pathname === route.path;
-                    return (
-                      <button
-                        key={route.path}
-                        onClick={() => !route.disabled && handleRouteClick(route.path)}
-                        className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                          active
-                            ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400'
-                            : route.disabled
-                              ? 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-700/40'
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
-                        }`}
-                        disabled={route.disabled}
-                      >
-                        <Icon
-                          className={`w-5 h-5 mr-3 ${
-                            active ? 'text-orange-600 dark:text-orange-400' : route.disabled ? 'text-slate-400 dark:text-slate-500' : 'text-slate-400 dark:text-slate-500'
+                  {moreNodes.map((node) => {
+                    const renderRouteButton = (route: typeof moreLeafRoutes[number], indented = false) => {
+                      const Icon = route.icon;
+                      const active = location.pathname === route.path;
+                      return (
+                        <button
+                          key={route.path}
+                          onClick={() => !route.disabled && handleRouteClick(route.path)}
+                          className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all ${indented ? 'pl-8' : ''} ${
+                            active
+                              ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400'
+                              : route.disabled
+                                ? 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-700/40'
+                              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                           }`}
-                        />
-                        {t(route.labelKey)}
-                        {route.disabled && (
-                          <span className="ml-auto text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
-                            Bảo trì
-                          </span>
-                        )}
-                      </button>
+                          disabled={route.disabled}
+                        >
+                          <Icon
+                            className={`${indented ? 'w-4 h-4' : 'w-5 h-5'} mr-3 ${
+                              active ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'
+                            }`}
+                          />
+                          {t(route.labelKey)}
+                          {route.disabled && (
+                            <span className="ml-auto text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
+                              Bảo trì
+                            </span>
+                          )}
+                        </button>
+                      );
+                    };
+
+                    if (node.type === 'route') return renderRouteButton(node.route);
+
+                    const GroupIcon = node.group.icon;
+                    return (
+                      <div key={node.group.key} className="pt-1">
+                        <div className="flex items-center gap-2 px-4 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                          <GroupIcon className="w-4 h-4" />
+                          {t(node.group.labelKey)}
+                        </div>
+                        {node.children.map((child) => renderRouteButton(child, true))}
+                      </div>
                     );
                   })}
                 </div>

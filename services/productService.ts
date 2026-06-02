@@ -9,6 +9,7 @@ import {
   query,
   orderBy,
   runTransaction,
+  deleteField,
   serverTimestamp,
   where,
   writeBatch,
@@ -187,6 +188,44 @@ export const updateProduct = async (id: string, productData: Partial<Product>): 
     }
   } catch (error) {
     console.error("Error updating product:", error);
+    throw error;
+  }
+};
+
+/**
+ * Xoá giá cost của sản phẩm — đưa sản phẩm ra khỏi danh sách "đã có hoa hồng".
+ * Phải dùng deleteField() vì updateProduct bỏ qua các field undefined nên không
+ * thể xoá field bằng cách truyền costPrice: undefined.
+ */
+export const removeProductCostPrice = async (id: string): Promise<void> => {
+  try {
+    const productRef = doc(db, 'products', id);
+    const versionsRef = collection(db, 'product_versions');
+
+    await runTransaction(db, async (tx) => {
+      const currentSnap = await tx.get(productRef);
+      if (!currentSnap.exists()) {
+        throw new Error('PRODUCT_NOT_FOUND');
+      }
+
+      const before = currentSnap.data();
+      if (before.costPrice === undefined) return;
+
+      const after = { ...before };
+      delete after.costPrice;
+
+      tx.update(productRef, { costPrice: deleteField() });
+      tx.set(doc(versionsRef), {
+        productId: id,
+        editedAt: Timestamp.now(),
+        action: 'update',
+        before,
+        changes: { costPrice: null },
+        after,
+      });
+    });
+  } catch (error) {
+    console.error('Error removing product cost price:', error);
     throw error;
   }
 };
