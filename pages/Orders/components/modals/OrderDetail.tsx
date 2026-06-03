@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import {
-  AlertTriangle,
   Copy,
   CreditCard,
   FileText,
@@ -12,7 +11,6 @@ import {
   Phone,
   QrCode,
   Receipt,
-  Sparkles,
   StickyNote,
   Store,
   Trash2,
@@ -22,7 +20,6 @@ import {
   X
 } from 'lucide-react';
 import { STATUS_COLORS } from '@/constant/order';
-import { generateOrderAnalysis } from '@/services/geminiService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ORDER_EDIT_DENIED } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber } from '@/services/transactionService';
@@ -59,11 +56,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   canDelete = false,
   onUpdateOrder,
 }) => {
-  const { t, language } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'details' | 'ai' | 'history'>('details');
-  const [aiResponse, setAiResponse] = useState<string>('');
-  const [loadingAi, setLoadingAi] = useState(false);
-  const [selectedPrompt, setSelectedPrompt] = useState<'email' | 'risk' | 'summary' | null>(null);
+  const { t } = useLanguage();
+  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [crMode, setCrMode] = useState<CancelRefundMode | null>(null);
@@ -97,15 +91,6 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
   const currentOrder = localOrder || order;
   if (!currentOrder) return null;
-
-  const handleAiAction = async (type: 'email' | 'risk' | 'summary') => {
-    setSelectedPrompt(type);
-    setLoadingAi(true);
-    const response = await generateOrderAnalysis(currentOrder, type, language);
-    setAiResponse(response);
-    setLoadingAi(false);
-  };
-
 
   const calculateLineItemTotal = (item: OrderItem) => {
     return item.price * item.quantity;
@@ -336,26 +321,6 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
             stateClassName="transition-colors"
           >
             {t('detail.tabDetails')}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => setActiveTab('ai')}
-            variant="ghost"
-            disableVariantHover
-            disableVariantTextColor
-            borderClassName={
-              activeTab === 'ai' ? 'border-b-2 border-rose-600' : 'border-b-2 border-transparent'
-            }
-            textClassName={
-              activeTab === 'ai'
-                ? 'text-sm font-medium text-rose-600 dark:text-rose-400'
-                : 'text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-            }
-            layoutClassName="flex items-center gap-2 rounded-none py-4 shadow-none"
-            stateClassName="transition-colors"
-            leftIcon={<Sparkles className="h-4 w-4" />}
-          >
-            {t('detail.tabAi')}
           </Button>
           <Button
             type="button"
@@ -1051,117 +1016,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                   </div>
                 );
               })()
-            ) : (
-              <div className="h-full flex flex-col">
-                <div className="bg-gradient-to-r from-orange-500 to-rose-600 dark:from-orange-700 dark:to-rose-800 rounded-xl p-6 text-white mb-6 shadow-md transition-colors">
-                   <div className="flex items-center gap-3 mb-2">
-                     <Sparkles className="w-6 h-6 text-yellow-300" />
-                     <Heading level={3} textClassName="font-bold text-lg">Gemini Intelligence</Heading>
-                   </div>
-                   <p className="text-orange-50 dark:text-orange-100 text-sm">
-                     {t('detail.aiIntro')}
-                   </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-                  <Button
-                    variant="ghost"
-                    disableVariantHover
-                    disableVariantTextColor
-                    onClick={() => handleAiAction('email')}
-                    layoutClassName="flex flex-col items-start"
-                    sizeClassName="p-4"
-                    roundedClassName="rounded-xl"
-                    shadowClassName=""
-                    backgroundClassName={selectedPrompt === 'email' ? 'bg-orange-50 dark:bg-orange-900/30' : 'bg-white dark:bg-slate-800'}
-                    borderClassName={selectedPrompt === 'email' ? 'border border-orange-200 dark:border-orange-700 ring-2 ring-orange-500 ring-opacity-50' : 'border border-slate-200 dark:border-slate-700'}
-                    hoverClassName={selectedPrompt === 'email' ? '' : 'hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md'}
-                    stateClassName="text-left transition-all"
-                  >
-                    <Mail className="w-5 h-5 text-orange-500 dark:text-orange-400 mb-2" />
-                    <span className="block font-medium text-slate-900 dark:text-white text-sm">{t('detail.draftEmail')}</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">Apology or update for {currentOrder.customer.name.split(' ')[0]}</span>
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    disableVariantHover
-                    disableVariantTextColor
-                    onClick={() => handleAiAction('risk')}
-                    layoutClassName="flex flex-col items-start"
-                    sizeClassName="p-4"
-                    roundedClassName="rounded-xl"
-                    shadowClassName=""
-                    backgroundClassName={selectedPrompt === 'risk' ? 'bg-orange-50 dark:bg-orange-900/30' : 'bg-white dark:bg-slate-800'}
-                    borderClassName={selectedPrompt === 'risk' ? 'border border-orange-200 dark:border-orange-700 ring-2 ring-orange-500 ring-opacity-50' : 'border border-slate-200 dark:border-slate-700'}
-                    hoverClassName={selectedPrompt === 'risk' ? '' : 'hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md'}
-                    stateClassName="text-left transition-all"
-                  >
-                    <AlertTriangle className="w-5 h-5 text-orange-500 dark:text-orange-400 mb-2" />
-                    <span className="block font-medium text-slate-900 dark:text-white text-sm">{t('detail.riskCheck')}</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">Analyze fraud & fulfillment risks</span>
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    disableVariantHover
-                    disableVariantTextColor
-                    onClick={() => handleAiAction('summary')}
-                    layoutClassName="flex flex-col items-start"
-                    sizeClassName="p-4"
-                    roundedClassName="rounded-xl"
-                    shadowClassName=""
-                    backgroundClassName={selectedPrompt === 'summary' ? 'bg-blue-50 dark:bg-blue-900/30' : 'bg-white dark:bg-slate-800'}
-                    borderClassName={selectedPrompt === 'summary' ? 'border border-blue-200 dark:border-blue-700 ring-2 ring-blue-500 ring-opacity-50' : 'border border-slate-200 dark:border-slate-700'}
-                    hoverClassName={selectedPrompt === 'summary' ? '' : 'hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'}
-                    stateClassName="text-left transition-all"
-                  >
-                    <FileText className="w-5 h-5 text-blue-500 dark:text-blue-400 mb-2" />
-                    <span className="block font-medium text-slate-900 dark:text-white text-sm">{t('detail.summarize')}</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">Internal briefing for ops team</span>
-                  </Button>
-                </div>
-
-                <div className="flex-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm overflow-hidden flex flex-col transition-colors">
-                  <Heading level={4} textClassName="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">
-                    {loadingAi ? 'Generating Analysis...' : 'AI Output'}
-                  </Heading>
-                  
-                  {loadingAi ? (
-                    <div className="flex-1 flex flex-col items-center justify-center space-y-4 opacity-70">
-                      <div className="w-10 h-10 border-4 border-orange-200 dark:border-orange-800 border-t-orange-600 dark:border-t-orange-400 rounded-full animate-spin"></div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{t('detail.consulting')}</p>
-                    </div>
-                  ) : aiResponse ? (
-                     <div className="flex-1 overflow-y-auto">
-                       <p className="whitespace-pre-wrap text-slate-700 dark:text-slate-300 text-sm leading-relaxed">{aiResponse}</p>
-                       <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-end">
-                         <Button
-                           variant="ghost"
-                           disableVariantHover
-                           disableVariantTextColor
-                           onClick={() => navigator.clipboard.writeText(aiResponse)}
-                           sizeClassName=""
-                           shadowClassName=""
-                           backgroundClassName=""
-                           borderClassName=""
-                           roundedClassName=""
-                           textClassName="text-xs font-medium text-orange-600 dark:text-orange-400"
-                           hoverClassName="hover:text-orange-800 dark:hover:text-orange-300"
-                           stateClassName="transition-colors"
-                         >
-                           {t('detail.copyClipboard')}
-                         </Button>
-                       </div>
-                     </div>
-                  ) : (
-                    <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
-                      Select an action above to generate content.
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            ) : null}
         </div>
       </div>
     </BaseSlidePanel>

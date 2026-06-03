@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Order, OrderStatus, PaymentStatus } from '@/types';
 import Box from '@/components/ui/Box';
-import { generateDashboardInsights } from '@/services/geminiService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/contexts/OrderContext';
 import { getOrderRevenueDate, getOrderTotal } from '@/utils/order/orderUtils';
@@ -10,7 +9,6 @@ import DashboardToday from '@/pages/Dashboard/components/DashboardToday';
 import DashboardGoalProgress from '@/pages/Dashboard/components/DashboardGoalProgress';
 import DashboardMetrics from '@/pages/Dashboard/components/DashboardMetrics';
 import DashboardChart from '@/pages/Dashboard/components/DashboardChart';
-import DashboardInsights from '@/pages/Dashboard/components/DashboardInsights';
 import DashboardTopProducts from '@/pages/Dashboard/components/DashboardTopProducts';
 import DashboardTopCustomers from '@/pages/Dashboard/components/DashboardTopCustomers';
 import DashboardRecentOrders from '@/pages/Dashboard/components/DashboardRecentOrders';
@@ -22,8 +20,6 @@ type TimeRange = 'week' | 'month' | 'year';
 const DashboardPage: React.FC = () => {
   const { orders } = useOrders();
   const { language } = useLanguage();
-  const [insight, setInsight] = useState<string | null>(null);
-  const [loadingInsight, setLoadingInsight] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>('week');
   const [referenceDate, setReferenceDate] = useState<Date>(new Date());
   const isDarkMode = document.documentElement.classList.contains('dark');
@@ -205,13 +201,6 @@ const DashboardPage: React.FC = () => {
     return Array.from(dataMap.entries()).map(([name, amount]) => ({ name, amount }));
   }, [orders, startDate, endDate, timeRange, language]);
 
-  const handleGenerateInsight = async () => {
-    setLoadingInsight(true);
-    const result = await generateDashboardInsights(orders, language);
-    setInsight(result);
-    setLoadingInsight(false);
-  };
-
   const recentOrdersForDashboard: Order[] = useMemo(
     () => [...orders].sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime()),
     [orders]
@@ -238,7 +227,7 @@ const DashboardPage: React.FC = () => {
         prevRangeLabel={prevRangeLabel}
         isCurrentPeriod={isCurrentPeriod}
       />
-      <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-1">
         <DashboardChart
           data={chartData}
           timeRange={timeRange}
@@ -248,11 +237,6 @@ const DashboardPage: React.FC = () => {
           onNext={handleNext}
           isFuture={isFuture}
           isDarkMode={isDarkMode}
-        />
-        <DashboardInsights
-          insight={insight}
-          loading={loadingInsight}
-          onGenerate={handleGenerateInsight}
         />
       </Box>
       <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">

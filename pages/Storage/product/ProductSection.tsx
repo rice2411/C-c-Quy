@@ -13,7 +13,6 @@ import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
   ExternalLink,
-  Sparkles,
   ArrowUpDown,
   Boxes,
   Check,
@@ -56,8 +55,6 @@ import FilterPill from '@/components/shared/FilterPill';
 import GridCard from '@/pages/Storage/product/components/GridCard';
 import ListRow from '@/pages/Storage/product/components/ListRow';
 import CompactCard from '@/pages/Storage/product/components/CompactCard';
-import AiInsightsModal from '@/pages/Storage/product/components/AiInsightsModal';
-import { generateProductInsights } from '@/services/geminiService';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -110,24 +107,8 @@ const ProductSection: React.FC<Props> = ({
 
   // ===== Bulk selection =====
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [aiOpen, setAiOpen] = useState(false);
   const [csvImportOpen, setCsvImportOpen] = useState(false);
-  const [aiText, setAiText] = useState('');
-  const [aiLoading, setAiLoading] = useState(false);
 
-  const runAI = async () => {
-    setAiOpen(true);
-    if (aiText || aiLoading) return;
-    setAiLoading(true);
-    try {
-      const text = await generateProductInsights(products, orders, 'vi');
-      setAiText(text);
-    } catch (e: any) {
-      setAiText('Lỗi: ' + (e?.message || 'không xác định'));
-    } finally {
-      setAiLoading(false);
-    }
-  };
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -352,22 +333,6 @@ const ProductSection: React.FC<Props> = ({
 
   const ToolbarActions = (
     <>
-      <Button
-        type="button"
-        onClick={runAI}
-        leftIcon={<Sparkles />}
-        iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-        sizeClassName="px-3 py-2 text-xs"
-        backgroundClassName="bg-gradient-to-r from-purple-600 to-pink-600"
-        textClassName="font-semibold text-white"
-        roundedClassName="rounded-xl"
-        borderClassName="border border-transparent"
-        layoutClassName="inline-flex items-center gap-1.5"
-        disableVariantHover
-        disableVariantTextColor
-      >
-        AI Insights
-      </Button>
       <Button
         type="button"
         onClick={() => setCsvImportOpen(true)}
@@ -662,16 +627,6 @@ const ProductSection: React.FC<Props> = ({
           ))}
         </div>
       ) : null}
-
-      {/* AI Insights Modal */}
-      <AiInsightsModal
-        open={aiOpen}
-        loading={aiLoading}
-        text={aiText}
-        productCount={products.length}
-        onClose={() => setAiOpen(false)}
-        onRefresh={() => void runAI()}
-      />
 
       {/* CSV Import Modal */}
       {csvImportOpen ? (
