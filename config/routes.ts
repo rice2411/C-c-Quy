@@ -237,6 +237,15 @@ export const navGroups: NavGroupConfig[] = [
       "/commission-guide",
     ],
   },
+  {
+    key: "inventory",
+    labelKey: "nav.inventoryGroup",
+    icon: Boxes,
+    childPaths: [
+      "/storage",
+      "/bill-import",
+    ],
+  },
 ];
 
 export type NavNode =

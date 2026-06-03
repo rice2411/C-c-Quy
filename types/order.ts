@@ -8,6 +8,14 @@ export interface OrderItem {
   quantity: number;
   price: number;
   image: string;
+  /** HH của cả dòng (qty × đơn giá HH), tính lúc hiển thị — KHÔNG lưu Firestore */
+  commissionAmount?: number;
+  /** Tên nhóm hoa hồng sản phẩm rơi vào (tính lúc hiển thị) */
+  commissionGroupName?: string;
+  /** Tổng SL của nhóm đó trong tháng (quyết định bậc) */
+  commissionGroupQty?: number;
+  /** % lợi nhuận (rate) đã áp theo bậc */
+  commissionRate?: number;
 }
 
 export interface OrderFieldChange {

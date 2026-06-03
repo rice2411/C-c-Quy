@@ -66,15 +66,24 @@ const groupOfProduct = (
  * - Trong mỗi tháng, đếm tổng SL bán theo từng nhóm (bỏ đơn huỷ/hoàn).
  * - Số lượng tháng của mỗi nhóm quyết định % lợi nhuận (rate) cho nhóm đó.
  * - Mỗi đơn: cộng hoa hồng từng item theo rate của nhóm tương ứng trong tháng.
- * Trả về map orderId -> commissionAmount.
+ * Trả về map orderId -> mảng thông tin HH theo từng item (khớp index order.items).
  */
+interface ItemCommissionInfo {
+  amount: number;      // HH cả dòng
+  groupName: string;   // nhóm rơi vào
+  groupQty: number;    // tổng SL nhóm trong tháng (quyết định bậc)
+  rate: number;        // % lợi nhuận đã áp
+}
+
+const ZERO_ITEM: ItemCommissionInfo = { amount: 0, groupName: '', groupQty: 0, rate: 0 };
+
 const computeCommissionByMonth = (
   orders: Order[],
   groups: CommissionGroup[],
   products: Product[],
-): Map<string, number> => {
+): Map<string, ItemCommissionInfo[]> => {
   const productById = new Map(products.map(p => [p.id, p]));
-  const result = new Map<string, number>();
+  const result = new Map<string, ItemCommissionInfo[]>();
 
   // Gom theo tháng
   const byMonth = new Map<string, Order[]>();
@@ -103,15 +112,15 @@ const computeCommissionByMonth = (
       rateByGroup.set(g.id, rateForQuantity(g, qtyByGroup.get(g.id) ?? 0));
     }
 
-    // 3. Hoa hồng từng đơn
+    // 3. Hoa hồng từng item của từng đơn (giữ index khớp order.items)
     for (const o of monthOrders) {
-      if (isCancelled(o)) { result.set(o.id, 0); continue; }
-      let total = 0;
-      for (const item of o.items ?? []) {
+      const items = o.items ?? [];
+      if (isCancelled(o)) { result.set(o.id, items.map(() => ZERO_ITEM)); continue; }
+      const perItem = items.map((item): ItemCommissionInfo => {
         const product = productById.get(item.id ?? item.productId ?? '');
-        if (!product) continue;
+        if (!product) return ZERO_ITEM;
         const group = groupOfProduct(product, groups);
-        if (!group) continue;
+        if (!group) return ZERO_ITEM;
         const rate = rateByGroup.get(group.id) ?? 0;
         const perUnit = itemCommissionAtRate(
           item.price ?? product.price,
@@ -119,9 +128,14 @@ const computeCommissionByMonth = (
           group.fallbackRate,
           rate,
         );
-        total += perUnit * (item.quantity ?? 1);
-      }
-      result.set(o.id, total);
+        return {
+          amount: perUnit * (item.quantity ?? 1),
+          groupName: group.name,
+          groupQty: qtyByGroup.get(group.id) ?? 0,
+          rate,
+        };
+      });
+      result.set(o.id, perItem);
     }
   }
 
@@ -148,8 +162,16 @@ const buildSummaryForOrders = (
   };
 
   for (const order of orders) {
-    const commissionAmount = commissionMap.get(order.id) ?? 0;
-    summary.orders.push({ ...order, commissionAmount });
+    const perItem = commissionMap.get(order.id) ?? [];
+    const items = (order.items ?? []).map((it, i) => ({
+      ...it,
+      commissionAmount: perItem[i]?.amount ?? 0,
+      commissionGroupName: perItem[i]?.groupName || undefined,
+      commissionGroupQty: perItem[i]?.groupQty || undefined,
+      commissionRate: perItem[i]?.rate || undefined,
+    }));
+    const commissionAmount = perItem.reduce((a, b) => a + b.amount, 0);
+    summary.orders.push({ ...order, items, commissionAmount });
     if (!isCancelled(order)) {
       const productSales = (order.total ?? 0) - (order.shippingCost ?? 0);
       summary.totalSales += productSales > 0 ? productSales : 0;

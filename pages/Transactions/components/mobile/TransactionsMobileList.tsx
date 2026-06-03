@@ -22,10 +22,10 @@ const TransactionsMobileList: React.FC<TransactionsMobileListProps> = ({
   return (
     <Box layoutClassName="flex-1 space-y-2 overflow-y-auto pb-4 lg:hidden">
       {transactions.map((tr) => (
-        <div
+        <Box
           key={tr.id}
           onClick={() => onTransactionClick?.(tr)}
-          className="group cursor-pointer rounded-xl border border-slate-100 bg-white p-3.5 shadow-sm transition-all hover:border-orange-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-orange-600"
+          layoutClassName="group cursor-pointer rounded-xl border border-slate-100 bg-white p-3.5 shadow-sm transition-all hover:border-orange-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-orange-600"
         >
           {/* Top row: amount + order badge */}
           <Box layoutClassName="mb-2.5 flex items-start justify-between gap-2">
@@ -94,15 +94,15 @@ const TransactionsMobileList: React.FC<TransactionsMobileListProps> = ({
           {/* Footer: gateway + account */}
           <Box layoutClassName="flex items-center gap-1.5 text-[11px]" textClassName="text-slate-400 dark:text-slate-500">
             <Building2 className="h-3 w-3 shrink-0" />
-            <span className="truncate">{tr.gateway || '—'}</span>
+            <Typography as="span" layoutClassName="truncate">{tr.gateway || '—'}</Typography>
             {(tr.subAccount || tr.accountNumber) && (
               <>
-                <span className="mx-1 text-slate-300 dark:text-slate-600">·</span>
-                <span className="truncate font-mono">{tr.subAccount || tr.accountNumber}</span>
+                <Typography as="span" layoutClassName="mx-1" textClassName="text-slate-300 dark:text-slate-600">·</Typography>
+                <Typography as="span" layoutClassName="truncate font-mono">{tr.subAccount || tr.accountNumber}</Typography>
               </>
             )}
           </Box>
-        </div>
+        </Box>
       ))}
     </Box>
   );

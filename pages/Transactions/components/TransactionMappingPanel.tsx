@@ -20,8 +20,12 @@ import { formatTimeDiff, getOrderSuggestions, OrderSuggestion } from '@/utils/tr
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
-
 import Button from '@/components/ui/Button';
+
+const InlineSpinner: React.FC<{ className?: string }> = ({ className }) => (
+  <Box layoutClassName={`h-3.5 w-3.5 animate-spin rounded-full border-2 border-t-transparent ${className ?? 'border-slate-300'}`} />
+);
+
 interface TransactionMappingPanelProps {
   transactions: Transaction[];
   orders: Order[];
@@ -66,15 +70,17 @@ const MappingRow: React.FC<MappingRowProps> = ({
   const isDone = !!linked;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
+    <Box layoutClassName="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
       {/* Header row */}
-      <div className="flex items-start gap-2 p-3.5">
-        {/* Toggle */}
+      <Box layoutClassName="flex items-start gap-2 p-3.5">
         <Button
           type="button"
           onClick={() => setExpanded(v => !v)}
-          className="flex min-w-0 flex-1 items-start gap-3 text-left"
-         variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
+          variant="ghost"
+          disableVariantHover
+          disableVariantTextColor
+          borderClassName="border-transparent"
+          layoutClassName="flex min-w-0 flex-1 items-start gap-3 text-left">
           <Box layoutClassName="flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 dark:bg-emerald-900/20">
             <TrendingUp className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
             <Typography as="span" layoutClassName="text-sm font-bold" textClassName="text-emerald-700 dark:text-emerald-300">
@@ -127,40 +133,46 @@ const MappingRow: React.FC<MappingRowProps> = ({
             disabled={markingExternal}
             onClick={handleMarkExternal}
             title="Đánh dấu không liên quan đến hệ thống"
-            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-400 dark:hover:border-red-700 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
-            {markingExternal
-              ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
-              : <XCircle className="h-3.5 w-3.5" />}
+            variant="ghost"
+            disableVariantHover
+            disableVariantTextColor
+            layoutClassName="flex shrink-0 items-center gap-1.5"
+            roundedClassName="rounded-lg"
+            borderClassName="border border-slate-200 hover:border-red-200 dark:border-slate-600 dark:hover:border-red-700"
+            backgroundClassName="bg-slate-50 hover:bg-red-50 dark:bg-slate-700 dark:hover:bg-red-900/20"
+            sizeClassName="px-2.5 py-1.5 text-xs"
+            textClassName="font-medium text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+            stateClassName="transition-colors disabled:opacity-50">
+            {markingExternal ? <InlineSpinner /> : <XCircle className="h-3.5 w-3.5" />}
             Ngoài hệ thống
           </Button>
         )}
-      </div>
+      </Box>
 
       {/* Suggestions */}
       {expanded && !isDone && (
-        <div className="border-t border-slate-100 dark:border-slate-700">
+        <Box layoutClassName="border-t border-slate-100 dark:border-slate-700">
           {!hasSuggestions ? (
             <Box layoutClassName="flex items-center gap-2 px-4 py-3" textClassName="text-slate-400 dark:text-slate-500">
               <AlertTriangle className="h-4 w-4 text-amber-400" />
               <Typography size="xs" variant="muted">
                 Không tìm thấy đơn CK nào khớp{' '}
-                <strong className="text-slate-600 dark:text-slate-300">{formatVND(transaction.transferAmount)}</strong>{' '}
+                <Typography as="span" layoutClassName="font-bold" textClassName="text-slate-600 dark:text-slate-300">{formatVND(transaction.transferAmount)}</Typography>{' '}
                 trong 7 ngày.
               </Typography>
             </Box>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-700">
+            <Box layoutClassName="divide-y divide-slate-100 dark:divide-slate-700">
               {suggestions.map(({ order, minutesAfterOrder, score }) => {
                 const isLinked = linked === order.id;
                 const isLinking = linkingId === order.id;
                 const alreadyPaid = order.paymentStatus === PaymentStatus.PAID;
 
                 return (
-                  <div key={order.id} className="flex items-center justify-between gap-4 px-4 py-3">
+                  <Box key={order.id} layoutClassName="flex items-center justify-between gap-4 px-4 py-3">
                     <Box layoutClassName="flex min-w-0 flex-1 items-start gap-3">
-                      <div
-                        className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${
+                      <Box
+                        layoutClassName={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${
                           score > 1400 ? 'bg-emerald-500' : score > 800 ? 'bg-amber-400' : 'bg-slate-300'
                         }`}
                         title={`Độ khớp: ${score}`}
@@ -214,7 +226,7 @@ const MappingRow: React.FC<MappingRowProps> = ({
                       <Building2 className="h-3 w-3 text-slate-400" />
                     </Box>
 
-                    <div>
+                    <Box>
                       {isLinked ? (
                         <Box layoutClassName="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 dark:bg-emerald-900/20">
                           <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
@@ -225,23 +237,29 @@ const MappingRow: React.FC<MappingRowProps> = ({
                           type="button"
                           disabled={isLinking || !!linked}
                           onClick={() => handleLink(order.id)}
-                          className="flex items-center gap-1.5 rounded-lg border border-orange-300 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-700 transition-colors hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-orange-600 dark:bg-orange-900/20 dark:text-orange-300 dark:hover:bg-orange-900/40"
-                         variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
-                          {isLinking
-                            ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-orange-400 border-t-transparent" />
-                            : <ArrowRight className="h-3.5 w-3.5" />}
+                          variant="ghost"
+                          disableVariantHover
+                          disableVariantTextColor
+                          layoutClassName="flex items-center gap-1.5"
+                          roundedClassName="rounded-lg"
+                          borderClassName="border border-orange-300 dark:border-orange-600"
+                          backgroundClassName="bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40"
+                          sizeClassName="px-3 py-1.5 text-xs"
+                          textClassName="font-semibold text-orange-700 dark:text-orange-300"
+                          stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50">
+                          {isLinking ? <InlineSpinner className="border-orange-400" /> : <ArrowRight className="h-3.5 w-3.5" />}
                           Liên kết
                         </Button>
                       )}
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 );
               })}
-            </div>
+            </Box>
           )}
-        </div>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };
 
@@ -262,7 +280,7 @@ const ExternalRow: React.FC<ExternalRowProps> = ({ transaction, onUnmark, format
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/60">
+    <Box layoutClassName="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-800/60">
       <Box layoutClassName="flex min-w-0 flex-1 items-center gap-3">
         <XCircle className="h-4 w-4 shrink-0 text-slate-400" />
         <Box layoutClassName="min-w-0">
@@ -270,8 +288,7 @@ const ExternalRow: React.FC<ExternalRowProps> = ({ transaction, onUnmark, format
             +{formatVND(transaction.transferAmount)}
           </Typography>
           <Typography as="div" size="xs" variant="muted">
-            {formatDate(transaction.transactionDate)}
-            {transaction.content && ` · ${transaction.content}`}
+            {formatDate(transaction.transactionDate)}{transaction.content ? ` · ${transaction.content}` : ''}
           </Typography>
         </Box>
       </Box>
@@ -279,14 +296,20 @@ const ExternalRow: React.FC<ExternalRowProps> = ({ transaction, onUnmark, format
         type="button"
         disabled={loading}
         onClick={handle}
-        className="flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:border-orange-300 hover:text-orange-600 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-400 dark:hover:border-orange-600 dark:hover:text-orange-400"
-       variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
-        {loading
-          ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-transparent" />
-          : <RotateCcw className="h-3.5 w-3.5" />}
+        variant="ghost"
+        disableVariantHover
+        disableVariantTextColor
+        layoutClassName="flex shrink-0 items-center gap-1.5"
+        roundedClassName="rounded-lg"
+        borderClassName="border border-slate-200 hover:border-orange-300 dark:border-slate-600 dark:hover:border-orange-600"
+        backgroundClassName="bg-white dark:bg-slate-700"
+        sizeClassName="px-2.5 py-1.5 text-xs"
+        textClassName="font-medium text-slate-500 hover:text-orange-600 dark:text-slate-400 dark:hover:text-orange-400"
+        stateClassName="transition-colors disabled:opacity-50">
+        {loading ? <InlineSpinner /> : <RotateCcw className="h-3.5 w-3.5" />}
         Khôi phục
       </Button>
-    </div>
+    </Box>
   );
 };
 
@@ -318,13 +341,13 @@ const TransactionMappingPanel: React.FC<TransactionMappingPanelProps> = ({
       {/* Legend */}
       <Box layoutClassName="flex flex-wrap items-center gap-4 text-xs" textClassName="text-slate-500 dark:text-slate-400">
         <Box layoutClassName="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-emerald-500" />Khớp tốt (chưa TT + gần giờ)
+          <Box layoutClassName="h-2 w-2 rounded-full bg-emerald-500" />Khớp tốt (chưa TT + gần giờ)
         </Box>
         <Box layoutClassName="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-amber-400" />Khớp trung bình
+          <Box layoutClassName="h-2 w-2 rounded-full bg-amber-400" />Khớp trung bình
         </Box>
         <Box layoutClassName="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-slate-300" />Khớp yếu
+          <Box layoutClassName="h-2 w-2 rounded-full bg-slate-300" />Khớp yếu
         </Box>
       </Box>
 
@@ -381,8 +404,15 @@ const TransactionMappingPanel: React.FC<TransactionMappingPanelProps> = ({
           <Button
             type="button"
             onClick={() => setShowExternal(v => !v)}
-            className="flex w-full items-center justify-between rounded-lg px-1 py-1 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/30"
-           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
+            variant="ghost"
+            disableVariantHover
+            disableVariantTextColor
+            borderClassName="border-transparent"
+            layoutClassName="flex w-full items-center justify-between text-left"
+            roundedClassName="rounded-lg"
+            sizeClassName="px-1 py-1"
+            backgroundClassName="hover:bg-slate-50 dark:hover:bg-slate-700/30"
+            stateClassName="transition-colors">
             <Box layoutClassName="flex items-center gap-2">
               <XCircle className="h-4 w-4 text-slate-400" />
               <Typography as="span" size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">

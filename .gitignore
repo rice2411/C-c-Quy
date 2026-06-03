@@ -27,3 +27,6 @@ dev-dist
 .env*.local
 scripts
 .env*
+
+# Claude Code local settings (cá nhân, chứa bypassPermissions)
+.claude/settings.local.json

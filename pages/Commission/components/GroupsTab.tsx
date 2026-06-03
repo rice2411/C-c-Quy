@@ -118,6 +118,14 @@ const GroupRow: React.FC<GroupRowProps> = ({ group, products, onUpdate, onDelete
   const removeTier = (idx: number) =>
     setTiers(prev => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== idx)));
 
+  /** Cận trên của 1 bậc = (mốc kế tiếp − 1); null nếu là bậc cao nhất ("trở lên"). */
+  const tierUpperOf = (minQ: number): number | null => {
+    const greater = tiers
+      .map(t => Math.floor(Number(t.minQty) || 0))
+      .filter(q => q > minQ);
+    return greater.length ? Math.min(...greater) - 1 : null;
+  };
+
   const handleSave = async () => {
     if (!isDirty) return;
     const normalized = normalizeTiers(tiers);
@@ -285,20 +293,32 @@ const GroupRow: React.FC<GroupRowProps> = ({ group, products, onUpdate, onDelete
           <FieldLabel dotClassName="bg-emerald-500">% Lợi nhuận theo số lượng (bán/tháng)</FieldLabel>
 
           <Box layoutClassName="space-y-1.5">
-            {tiers.map((t, idx) => (
-              <Box key={idx} layoutClassName="flex items-center gap-2">
-                <Typography as="span" size="xs" layoutClassName="w-12 shrink-0" textClassName="text-slate-500 dark:text-slate-400">Từ</Typography>
+            {tiers.map((t, idx) => {
+              const upper = tierUpperOf(Math.floor(Number(t.minQty) || 0));
+              return (
+              <Box key={idx} layoutClassName="flex flex-wrap items-center gap-2">
+                <Typography as="span" size="xs" layoutClassName="w-8 shrink-0" textClassName="text-slate-500 dark:text-slate-400">Từ</Typography>
                 <Input
                   type="number"
                   value={t.minQty}
                   onChange={(e) => updateTier(idx, 'minQty', e.target.value)}
                   min={1}
                   step={1}
-                  containerClassName="w-20"
+                  containerClassName="w-16"
                   backgroundClassName="bg-white dark:bg-slate-700/50"
                   sizeClassName="py-1.5 text-center text-sm font-semibold"
                 />
-                <Typography as="span" size="xs" layoutClassName="shrink-0" textClassName="text-slate-400">sp →</Typography>
+                {upper === null ? (
+                  <Typography as="span" size="xs" layoutClassName="shrink-0" textClassName="text-slate-500 dark:text-slate-400">trở lên (sp) →</Typography>
+                ) : (
+                  <Box layoutClassName="flex shrink-0 items-center gap-2">
+                    <Typography as="span" size="xs" textClassName="text-slate-400">đến</Typography>
+                    <Box layoutClassName="w-16 rounded-md bg-slate-100 py-1.5 dark:bg-slate-700/50">
+                      <Typography as="span" size="xs" layoutClassName="block text-center font-semibold" textClassName="text-slate-500 dark:text-slate-400">{upper}</Typography>
+                    </Box>
+                    <Typography as="span" size="xs" textClassName="text-slate-400">sp →</Typography>
+                  </Box>
+                )}
                 <Input
                   type="number"
                   value={t.rate}
@@ -333,7 +353,8 @@ const GroupRow: React.FC<GroupRowProps> = ({ group, products, onUpdate, onDelete
                   </Button>
                 )}
               </Box>
-            ))}
+              );
+            })}
           </Box>
 
           <Button
@@ -444,7 +465,7 @@ const GroupsTab: React.FC<GroupsTabProps> = ({ groups, products, onGroupsChange 
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
           <Box layoutClassName="space-y-1 text-xs" textClassName="text-blue-700 dark:text-blue-300">
             <Typography as="p" size="xs" textClassName="text-blue-700 dark:text-blue-300"><strong>% Margin</strong>: khoảng biên lợi nhuận để xếp nhóm. VD: margin 30% → nhóm 25–45%.</Typography>
-            <Typography as="p" size="xs" textClassName="text-blue-700 dark:text-blue-300"><strong>% Lợi nhuận theo số lượng</strong>: bán càng nhiều (tính tổng theo tháng, theo từng CTV, đếm riêng từng nhóm) thì rate càng cao. Đạt mốc nào thì cả số lượng hưởng rate mốc đó.</Typography>
+            <Typography as="p" size="xs" textClassName="text-blue-700 dark:text-blue-300"><strong>% Lợi nhuận theo dải số lượng</strong>: chia theo dải SL bán/tháng (VD 1–10, 11–30, ≥30 sp). Cận trên tự suy từ mốc kế tiếp; bậc cuối là "trở lên". Bán càng nhiều (tính theo tháng, từng CTV, đếm riêng từng nhóm) rate càng cao — rơi vào dải nào thì cả số lượng hưởng rate dải đó.</Typography>
             <Typography as="p" size="xs" textClassName="text-blue-700 dark:text-blue-300"><strong>% Fallback</strong>: dùng khi sản phẩm không có giá cost. Commission = Giá × %Fallback.</Typography>
           </Box>
         </Box>
