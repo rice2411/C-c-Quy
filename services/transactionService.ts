@@ -62,6 +62,16 @@ export const markTransactionExternal = async (
   await updateDoc(ref, { isExternal });
 };
 
+/** Liên kết giao dịch với 1 đơn: ghi orderNumber xuống transaction để khớp đối soát.
+ *  Truyền orderNumber rỗng để gỡ liên kết. */
+export const linkTransactionOrder = async (
+  transactionId: string,
+  orderNumber: string,
+): Promise<void> => {
+  const ref = doc(db, 'transactions', transactionId);
+  await updateDoc(ref, { orderNumber });
+};
+
 export const fetchTransactionsByOrderNumber = async (orderNumber: string): Promise<Transaction[]> => {
   try {
     const transactionsRef = collection(db, 'transactions');

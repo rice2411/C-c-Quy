@@ -12,7 +12,7 @@ import {
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/contexts/OrderContext';
-import { fetchTransactions, markTransactionExternal } from '@/services/transactionService';
+import { fetchTransactions, markTransactionExternal, linkTransactionOrder } from '@/services/transactionService';
 import { PaymentStatus } from '@/types/enums';
 import { Transaction } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
@@ -233,13 +233,16 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   const handleLinkOrder = async (orderId: string, transaction: Transaction) => {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
+    const linkedNumber = order.orderNumber || orderId;
     try {
       await modifyOrder(orderId, {
         ...order,
         sepayId: transaction.sepayId,
         paymentStatus: order.paymentStatus === PaymentStatus.PAID ? order.paymentStatus : PaymentStatus.PAID,
       });
-      setTransactions(prev => prev.map(tr => tr.id === transaction.id ? { ...tr, orderNumber: order.orderNumber || orderId } : tr));
+      // Ghi orderNumber xuống transaction để F5 vẫn giữ trạng thái đã khớp
+      await linkTransactionOrder(transaction.id, linkedNumber);
+      setTransactions(prev => prev.map(tr => tr.id === transaction.id ? { ...tr, orderNumber: linkedNumber } : tr));
       toast.success(`Đã liên kết GD #${transaction.sepayId} → ${order.orderNumber}`);
     } catch (err: any) {
       toast.error(err?.message || 'Không liên kết được');

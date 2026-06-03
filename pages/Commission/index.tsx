@@ -19,10 +19,9 @@ import FilterToolbar from '@/components/shared/FilterToolbar';
 import StatsBanner from '@/pages/BillImport/StatsBanner';
 import CollabRow from './components/CollabRow';
 
-type SortKey = 'pending' | 'commission' | 'name';
+type SortKey = 'commission' | 'name';
 
 const SORT_OPTIONS = [
-  { value: 'pending', label: 'Chưa trả nhiều nhất' },
   { value: 'commission', label: 'Tổng HH cao nhất' },
   { value: 'name', label: 'Tên A-Z' },
 ];
@@ -43,7 +42,7 @@ const CommissionPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
 
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<SortKey>('pending');
+  const [sortBy, setSortBy] = useState<SortKey>('commission');
   const [onlyPending, setOnlyPending] = useState(false);
   const [period, setPeriod] = useState('all');
 
@@ -119,10 +118,8 @@ const CommissionPage: React.FC = () => {
     const sorted = [...list];
     if (sortBy === 'name') {
       sorted.sort((a, b) => a.collaboratorName.localeCompare(b.collaboratorName, 'vi'));
-    } else if (sortBy === 'commission') {
-      sorted.sort((a, b) => b.totalCommission - a.totalCommission);
     } else {
-      sorted.sort((a, b) => b.pendingCommission - a.pendingCommission);
+      sorted.sort((a, b) => b.totalCommission - a.totalCommission);
     }
     return sorted;
   }, [monthFiltered, search, sortBy, onlyPending]);
