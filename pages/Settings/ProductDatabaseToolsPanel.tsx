@@ -1,12 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  collection,
-  deleteField,
-  doc,
-  getDocs,
-  writeBatch,
-} from 'firebase/firestore';
-import { db } from '@/config/firebase';
 import toast from 'react-hot-toast';
 import {
   Copy,
@@ -27,9 +19,8 @@ import Select from '@/components/ui/Select';
 import Spinner from '@/components/ui/Spinner';
 import Textarea from '@/components/ui/Textarea';
 import Typography from '@/components/ui/Typography';
-import { syncAllProductImagesToOrders } from '@/services/productService';
+import { fetchProducts, syncAllProductImagesToOrders } from '@/services/productService';
 
-const PRODUCTS_COLLECTION = 'products';
 const FIRESTORE_BATCH_MAX = 500;
 
 type FirestoreDocData = Record<string, unknown>;
@@ -150,15 +141,14 @@ const ProductDatabaseToolsPanel: React.FC<ProductDatabaseToolsPanelProps> = ({
   const loadStats = useCallback(async () => {
     setStatsLoading(true);
     try {
-      const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
+      const products = await fetchProducts();
       let active = 0;
       let inactive = 0;
-      snap.docs.forEach((d) => {
-        const s = d.data().status;
-        if (s === 'inactive') inactive += 1;
+      products.forEach((p) => {
+        if ((p as { status?: string }).status === 'inactive') inactive += 1;
         else active += 1;
       });
-      setStats({ total: snap.size, active, inactive });
+      setStats({ total: products.length, active, inactive });
     } catch (e) {
       console.error(e);
       toast.error('Không tải được thống kê products');
@@ -186,15 +176,16 @@ const ProductDatabaseToolsPanel: React.FC<ProductDatabaseToolsPanelProps> = ({
     setSimpleSearchBusy(true);
     setSimpleSearchResult('');
     try {
-      const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
+      const products = await fetchProducts();
       const hits: string[] = [];
 
-      snap.docs.forEach((d) => {
-        const value = getAtPath(d.data() as FirestoreDocData, field);
+      products.forEach((p) => {
+        const data = p as unknown as FirestoreDocData;
+        const value = getAtPath(data, field);
         const text = toComparable(value, true);
         if (text.includes(keyword)) {
-          const name = String((d.data() as FirestoreDocData).name ?? '(no name)');
-          hits.push(`${d.id} | ${name} | ${text}`);
+          const name = String(data.name ?? '(no name)');
+          hits.push(`${String(data.id ?? '')} | ${name} | ${text}`);
         }
       });
 

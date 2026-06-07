@@ -1,8 +1,9 @@
 /**
- * SerpApi Google Maps service — gọi qua serverless proxy `/api/serpapi/*`.
+ * SerpApi Google Maps service — gọi qua BE NestJS `/serpapi/*`.
  * SerpApi không bật CORS nên không thể fetch trực tiếp từ browser.
- * Local dev cần `vercel dev` để serve api/*.
+ * Key SerpApi nằm ở BE (process.env.SERPAPI_KEY); FE không gửi key nữa.
  */
+import { apiClient } from './api/client';
 
 export interface SerpApiMapsPlace {
   position?: number;
@@ -75,44 +76,38 @@ export interface SerpApiDirectionsQuery {
   hl?: string;
 }
 
-const MAPS_URL = '/api/serpapi/maps';
-const DIRECTIONS_URL = '/api/serpapi/directions';
+const MAPS_URL = '/serpapi/maps';
+const DIRECTIONS_URL = '/serpapi/directions';
 
 export const searchGoogleMaps = async (
-  apiKey: string | null | undefined,
+  _apiKey: string | null | undefined,
   query: SerpApiMapsQuery,
 ): Promise<SerpApiMapsResult> => {
   if (!query.q?.trim()) throw new Error('Thiếu query string');
-  const resp = await fetch(MAPS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      ...(apiKey ? { apiKey } : {}),
+  // apiKey giữ trong signature để tương thích call cũ; BE tự dùng SERPAPI_KEY.
+  const { data } = await apiClient.get<SerpApiMapsResult>(MAPS_URL, {
+    params: {
       q: query.q.trim(),
       ll: query.ll,
       type: query.type || 'search',
       hl: query.hl || 'vi',
       start: query.start,
-    }),
+    },
   });
-  const data: SerpApiMapsResult & { error?: string } = await resp.json().catch(() => ({} as any));
-  if (!resp.ok) throw new Error(data?.error || `Proxy ${resp.status}`);
-  if (data.error) throw new Error(data.error);
+  if (data?.error) throw new Error(data.error);
   return data;
 };
 
 export const getDirections = async (
-  apiKey: string | null | undefined,
+  _apiKey: string | null | undefined,
   query: SerpApiDirectionsQuery,
 ): Promise<SerpApiDirectionsResult> => {
   if (!(query.startAddr || query.startCoords) || !(query.endAddr || query.endCoords)) {
     throw new Error('Cần ít nhất start và end (addr hoặc coords)');
   }
-  const resp = await fetch(DIRECTIONS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      ...(apiKey ? { apiKey } : {}),
+  // apiKey giữ trong signature để tương thích call cũ; BE tự dùng SERPAPI_KEY.
+  const { data } = await apiClient.get<SerpApiDirectionsResult>(DIRECTIONS_URL, {
+    params: {
       startAddr: query.startAddr,
       endAddr: query.endAddr,
       startCoords: query.startCoords,
@@ -120,10 +115,8 @@ export const getDirections = async (
       travelMode: query.travelMode ?? 6,
       distanceUnit: query.distanceUnit ?? 0, // 0=km, 1=miles
       hl: query.hl || 'vi',
-    }),
+    },
   });
-  const data: SerpApiDirectionsResult & { error?: string } = await resp.json().catch(() => ({} as any));
-  if (!resp.ok) throw new Error(data?.error || `Proxy ${resp.status}`);
-  if (data.error) throw new Error(data.error);
+  if (data?.error) throw new Error(data.error);
   return data;
 };

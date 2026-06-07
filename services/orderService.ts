@@ -1,134 +1,70 @@
-import {
-  collection,
-  getDocs,
-  getDoc,
-  query,
-  orderBy,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  limit,
-  Timestamp,
-  arrayUnion,
-} from "firebase/firestore";
-import { db } from "@/config/firebase";
-import { DeliveryType, Order, OrderHistoryEntry, PaymentMethod, PaymentStatus, Product } from "@/types";
+import { Order } from "@/types";
 import { UserRole } from "@/types/user";
-import { diffOrders } from "@/utils/order/orderHistoryDiff";
+import { apiClient } from "@/services/api/client";
 import { resolveZaloGroupIdsForOrderEvent } from "./configurationService";
 import {
   sendNewOrderZaloNotifications,
   sendOrderDeleteNotification,
   sendOrderUpdateNotification,
 } from "./zaloService";
-import { getUserByUid } from "./userService";
 
-/** Nem khi CTV co cap nhat don khong phai do ho tao */
+/** Nem khi CTV co cap nhat don khong phai do ho tao (FE van can de so message). */
 export const ORDER_EDIT_DENIED = "ORDER_EDIT_DENIED";
 
+/**
+ * Lay danh sach don hang. Phan ghi/doc Firestore da chuyen sang BE
+ * (GET /orders) — BE da enrich createdBy = ten hien thi va sort theo orderNumber.
+ */
 export const fetchOrders = async (): Promise<Order[]> => {
   try {
-    const ordersRef = collection(db, "orders");
-    const q = query(ordersRef);
-    const snapshot = await getDocs(q);
-    const result = snapshot.docs.map(async (docSnap) => {
-      const data = docSnap.data();
-      const creatorUid =
-        typeof data.createdBy === "string" && data.createdBy.length > 0 ? data.createdBy : undefined;
-      const user = creatorUid ? await getUserByUid(creatorUid) : null;
-      return {
-        ...data,
-        id: docSnap.id,
-        createdByUid: creatorUid,
-        createdBy: user?.customName || user?.displayName || user?.email || creatorUid || "",
-      } as Order;
-    });
-    return (await Promise.all(result)).sort((a, b) => b.orderNumber.localeCompare(a.orderNumber));
+    const res = await apiClient.get("/orders");
+    return (res.data as Order[]) ?? [];
   } catch (error) {
-    console.error("Error fetching orders from Firebase:", error);
+    console.error("Error fetching orders from API:", error);
     return [];
   }
 };
 
+/** Sinh so don ke tiep (BE: GET /orders/next-number → { orderNumber }). */
 export const getNextOrderNumber = async (): Promise<string> => {
   try {
-    const ordersRef = collection(db, "orders");
-    const q = query(ordersRef, orderBy("orderNumber", "desc"), limit(1));
-    const snapshot = await getDocs(q);
-
-    if (!snapshot.empty) {
-      const lastOrder = snapshot.docs[0].data();
-      const lastNumberStr = lastOrder.orderNumber;
-
-      if (lastNumberStr && lastNumberStr.startsWith("ORD-")) {
-        const numPart = parseInt(lastNumberStr.split("-")[1], 10);
-        if (!isNaN(numPart)) {
-          return `ORD-${String(numPart + 1).padStart(6, "0")}`;
-        }
-      }
-    }
-
+    const res = await apiClient.get("/orders/next-number");
+    const num = (res.data as { orderNumber?: string } | undefined)?.orderNumber;
+    if (typeof num === "string" && num.length > 0) return num;
     return "ORD-000001";
   } catch (e) {
-    console.warn(
-      "Failed to generate order number from DB, falling back to basic.",
-      e
-    );
+    console.warn("Failed to get order number from API, falling back.", e);
     return `ORD-${Date.now().toString().slice(-6)}`;
   }
 };
 
+/**
+ * Tao don. BE ghi Firestore (sinh orderNumber neu thieu) va tra ve order da tao.
+ * SAU KHI BE thanh cong → gui thong bao Zalo (goi API ngoai, GIU NGUYEN tren FE).
+ * Loi Zalo duoc nuot de khong lam fail viec tao don.
+ */
 export const addOrder = async (orderData: Order): Promise<void> => {
+  let created: any;
   try {
-    const ordersRef = collection(db, "orders");
-
-    const orderNumber = orderData.orderNumber || (await getNextOrderNumber());
-
-    const payload = {
-      orderNumber: orderNumber,
-      sepayId: orderData.sepayId || null,
-      customerName: orderData.customer?.name || "",
-      phone: orderData.customer?.phone || "",
-      address: orderData.customer?.address || "",
-      email: orderData.customer?.email || "",
-      customer: {
-        id: orderData.customer?.id || "",
-        name: orderData.customer?.name || "",
-        phone: orderData.customer?.phone || "",
-        address: orderData.customer?.address || "",
-        email: orderData.customer?.email || "",
-        city: orderData.customer?.city || "",
-        country: orderData.customer?.country || "",
-      },
-
-      items: orderData.items || [],
-      decorations: orderData.decorations || [],
-      shippingCost: orderData.shippingCost || 0,
-      total: orderData.total || 0,
-      note: orderData.note || "",
-      status: orderData.status,
-      deliveryDate: orderData.deliveryDate || null,
-      deliveryTime: orderData.deliveryTime || null,
-      orderDate: Timestamp.now(),
-      createdAt: Timestamp.now(),
-      paymentStatus: orderData.paymentStatus || PaymentStatus.UNPAID,
-      paymentMethod: orderData.paymentMethod || PaymentMethod.CASH,
-      isTest: !!orderData.isTest,
-      deliveryType: orderData.deliveryType || DeliveryType.SHIP,
-      createdBy: orderData.createdBy || undefined,
-      ...(orderData.commissionAmount !== undefined && { commissionAmount: orderData.commissionAmount }),
-      ...(orderData.commissionStatus && { commissionStatus: orderData.commissionStatus }),
-    };
-    const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
-      'create',
-      orderData.createdBy as string | undefined,
-    );
-    await addDoc(ordersRef, payload);
-    await sendNewOrderZaloNotifications(payload as any, zaloGroupIds);
+    const res = await apiClient.post("/orders", orderData);
+    created = res.data;
   } catch (error) {
     console.error("Error adding order:", error);
     throw error;
+  }
+
+  // ── Phan Zalo: chay sau khi tao don thanh cong ──
+  try {
+    const createdByUid =
+      (orderData.createdBy as string | undefined) ??
+      (created?.createdBy as string | undefined);
+    const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
+      "create",
+      createdByUid,
+    );
+    await sendNewOrderZaloNotifications(created, zaloGroupIds);
+  } catch (notifErr) {
+    console.error("New order Zalo notify error (ignored):", notifErr);
   }
 };
 
@@ -139,173 +75,101 @@ export interface OrderUpdateEditor {
   email?: string;
 }
 
+/**
+ * Cap nhat don. BE check quyen (CTV chi sua don cua minh) + tinh diff + ghi history,
+ * tra ve order sau cap nhat (kem `changes` de FE biet co gi doi → gui Zalo).
+ * Neu BE tra 403 → throw error message ORDER_EDIT_DENIED (UI hien thi nhu cu).
+ */
 export const updateOrder = async (
   orderId: string,
   orderData: any,
   editor?: OrderUpdateEditor
 ): Promise<void> => {
+  let updated: any;
   try {
-    const orderRef = doc(db, "orders", orderId);
-    const existingSnap = await getDoc(orderRef);
-    if (!existingSnap.exists()) {
-      throw new Error("ORDER_NOT_FOUND");
+    const res = await apiClient.patch(`/orders/${orderId}`, orderData);
+    updated = res.data;
+  } catch (error: any) {
+    const msg = String(error?.message ?? "");
+    if (msg.includes(ORDER_EDIT_DENIED)) {
+      throw new Error(ORDER_EDIT_DENIED);
     }
-    const existing = existingSnap.data();
-    const creatorUid = existing.createdBy as string | undefined;
-
-    if (editor?.role === UserRole.COLABORATOR) {
-      if (!editor.uid || !creatorUid || creatorUid !== editor.uid) {
-        throw new Error(ORDER_EDIT_DENIED);
-      }
-    }
-
-    const safeCustomer = {
-      id: orderData.customer?.id || "",
-      name: orderData.customer?.name || "",
-      phone: orderData.customer?.phone || "",
-      address: orderData.customer?.address || "",
-      email: orderData.customer?.email || "",
-      city: orderData.customer?.city || "",
-      country: orderData.customer?.country || "",
-    };
-
-    const payload: any = {
-      customerName: safeCustomer.name,
-      phone: safeCustomer.phone,
-      address: safeCustomer.address,
-      email: safeCustomer.email,
-      customer: safeCustomer,
-      items: orderData.items || [],
-      decorations: orderData.decorations || [],
-      shippingCost: orderData.shippingCost || 0,
-      total: orderData.total || 0,
-      note: orderData.note || "",
-      status: orderData.status,
-      ...(orderData.deliveryDate !== undefined && {
-        deliveryDate: orderData.deliveryDate || null,
-      }),
-      ...(orderData.deliveryTime !== undefined && {
-        deliveryTime: orderData.deliveryTime || null,
-      }),
-      paymentStatus: orderData.paymentStatus || PaymentStatus.UNPAID,
-      paymentMethod: orderData.paymentMethod || PaymentMethod.CASH,
-      ...(orderData.sepayId !== undefined && { sepayId: orderData.sepayId }),
-      ...(orderData.isTest !== undefined && { isTest: !!orderData.isTest }),
-      ...(orderData.deliveryType !== undefined && { deliveryType: orderData.deliveryType }),
-      updatedAt: Timestamp.now(),
-    };
-
-    // Tinh diff giua existing va payload moi -> append history entry
-    const changes = diffOrders(existing, {
-      ...existing,
-      ...payload,
-      customer: safeCustomer,
-    });
-    if (changes.length > 0) {
-      const uidShort = editor?.uid ? ("User-" + editor.uid.slice(0, 6)) : null;
-      const editorName =
-        editor?.displayName ||
-        editor?.email ||
-        uidShort ||
-        "Unknown";
-      // Build entry — KHÔNG để bất kỳ field nào là undefined (Firestore reject)
-      const newEntry = {
-        at: Timestamp.now(),
-        by: editorName || "Unknown",
-        byUid: editor?.uid || "",
-        changes: changes.map((c: any) => ({
-          field: c.field || "",
-          label: c.label || "",
-          oldValue: c.oldValue ?? "—",
-          newValue: c.newValue ?? "—",
-        })),
-      };
-      // Dùng arrayUnion để append ở server-side — tránh đọc-spread-ghi-lại gây fail
-      // khi entry cũ trong array có field undefined.
-      payload.history = arrayUnion(newEntry);
-      payload.updatedBy = editorName || "Unknown";
-    }
-
-    await updateDoc(orderRef, payload);
-
-    if (changes.length > 0) {
-      try {
-        const uidShort = editor?.uid ? "User-" + editor.uid.slice(0, 6) : null;
-        const editorName2 = editor?.displayName || editor?.email || uidShort || "Unknown";
-        const changedFieldIds = changes.map((c: any) => c.field).filter(Boolean);
-        const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
-          'update',
-          (existing.createdBy as string | undefined) ?? editor?.uid,
-          changedFieldIds,
-        );
-        const orderForMsg = {
-          ...existing,
-          ...payload,
-          id: orderId,
-          orderNumber: existing.orderNumber,
-          customer: safeCustomer,
-        };
-        // Items diff cụ thể (added/removed/qty/price) — chỉ tính nếu items thực sự đổi
-        const { diffOrderItems } = await import('@/utils/order/itemsDiff');
-        const itemsDiff = diffOrderItems(
-          (existing as any).items as any,
-          payload.items as any,
-        );
-        await sendOrderUpdateNotification(
-          orderForMsg,
-          changes,
-          { name: editorName2, uid: editor?.uid },
-          zaloGroupIds,
-          itemsDiff,
-          existing, // prevOrder để hiển thị snapshot "ĐƠN CŨ"
-        );
-      } catch (notifErr) {
-        console.error("Update Zalo notify error (ignored):", notifErr);
-      }
-    }
-  } catch (error) {
     console.error("Error updating order:", error);
     throw error;
   }
+
+  // ── Phan Zalo update: chay sau khi BE cap nhat thanh cong ──
+  const changes: any[] = Array.isArray(updated?.changes) ? updated.changes : [];
+  const prevOrder = updated?.prevOrder;
+  if (changes.length > 0) {
+    try {
+      const uidShort = editor?.uid ? "User-" + editor.uid.slice(0, 6) : null;
+      const editorName =
+        editor?.displayName || editor?.email || uidShort || "Unknown";
+      const changedFieldIds = changes.map((c: any) => c.field).filter(Boolean);
+      const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
+        "update",
+        (prevOrder?.createdBy as string | undefined) ??
+          (updated?.createdByUid as string | undefined) ??
+          editor?.uid,
+        changedFieldIds,
+      );
+      const orderForMsg = { ...updated, id: orderId };
+      const { diffOrderItems } = await import("@/utils/order/itemsDiff");
+      const itemsDiff = diffOrderItems(
+        prevOrder?.items as any,
+        updated?.items as any,
+      );
+      await sendOrderUpdateNotification(
+        orderForMsg,
+        changes,
+        { name: editorName, uid: editor?.uid },
+        zaloGroupIds,
+        itemsDiff,
+        prevOrder, // prevOrder de hien thi snapshot "DON CU"
+      );
+    } catch (notifErr) {
+      console.error("Update Zalo notify error (ignored):", notifErr);
+    }
+  }
 };
 
-
 /**
- * Xóa đơn hàng trong Firebase
- * @param {string} orderId - Mã đơn hàng
- * @returns {Promise<void>} Không trả về
+ * Xoa don hang. BE xoa Firestore (DELETE /orders/:id). SAU DO gui Zalo notify
+ * (GIU NGUYEN tren FE). Loi Zalo duoc nuot.
  */
 export const deleteOrder = async (
   orderId: string,
   editor?: OrderUpdateEditor,
 ): Promise<void> => {
+  if (!orderId) throw new Error("Order ID is required");
+  let deleted: any;
   try {
-    if (!orderId) throw new Error("Order ID is required");
-    const orderRef = doc(db, "orders", orderId);
-    const snap = await getDoc(orderRef);
-    const existing = snap.exists() ? snap.data() : null;
-
-    await deleteDoc(orderRef);
-
-    if (existing) {
-      try {
-        const uidShort = editor?.uid ? "User-" + editor.uid.slice(0, 6) : null;
-        const editorName = editor?.displayName || editor?.email || uidShort || "Unknown";
-        const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
-          'delete',
-          (existing.createdBy as string | undefined) ?? editor?.uid,
-        );
-        await sendOrderDeleteNotification(
-          { ...existing, id: orderId },
-          { name: editorName, uid: editor?.uid },
-          zaloGroupIds,
-        );
-      } catch (notifErr) {
-        console.error("Delete Zalo notify error (ignored):", notifErr);
-      }
-    }
+    const res = await apiClient.delete(`/orders/${orderId}`);
+    deleted = res.data;
   } catch (error) {
     console.error("Error deleting order:", error);
     throw error;
+  }
+
+  // ── Phan Zalo delete: dung snapshot prevOrder BE tra ve ──
+  const existing = deleted?.prevOrder;
+  if (existing) {
+    try {
+      const uidShort = editor?.uid ? "User-" + editor.uid.slice(0, 6) : null;
+      const editorName =
+        editor?.displayName || editor?.email || uidShort || "Unknown";
+      const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
+        "delete",
+        (existing.createdBy as string | undefined) ?? editor?.uid,
+      );
+      await sendOrderDeleteNotification(
+        { ...existing, id: orderId },
+        { name: editorName, uid: editor?.uid },
+        zaloGroupIds,
+      );
+    } catch (notifErr) {
+      console.error("Delete Zalo notify error (ignored):", notifErr);
+    }
   }
 };

@@ -1,5 +1,6 @@
 export const translations = {
   en: {
+    language: "en",
     common: {
       apply: "Apply",
       cancel: "Cancel",
@@ -458,6 +459,7 @@ export const translations = {
     }
   },
   vi: {
+    language: "vi",
     common: {
       apply: "Áp dụng",
       cancel: "Hủy",

@@ -1,15 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Coins, TrendingUp, Users, CheckCircle2, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Product } from '@/types';
 import { OrderStatus } from '@/types/enums';
-import { CommissionGroup } from '@/types/commissionGroup';
-import { fetchProducts } from '@/services/productService';
-import { fetchCommissionGroups } from '@/services/commissionGroupService';
-import {
-  CollaboratorCommissionSummary,
-  buildFullCommissionSummary,
-} from '@/services/commissionService';
+import { CollaboratorCommissionSummary } from '@/services/commissionService';
+import { fetchCommissionSummariesApi } from '@/services/api/commissionApi';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Spinner from '@/components/ui/Spinner';
 import Box from '@/components/ui/Box';
@@ -38,36 +32,25 @@ const monthKeyOf = (dateStr?: string): string | null => {
 const CommissionPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [summaries, setSummaries] = useState<CollaboratorCommissionSummary[]>([]);
-  const [groups, setGroups] = useState<CommissionGroup[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
 
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('commission');
   const [onlyPending, setOnlyPending] = useState(false);
   const [period, setPeriod] = useState('all');
 
-  const load = async (g: CommissionGroup[], p: Product[]) => {
+  const load = async () => {
     setLoading(true);
     try {
-      setSummaries(await buildFullCommissionSummary(g, p));
-    } catch {
-      toast.error('Không thể tải dữ liệu hoa hồng');
+      setSummaries(await fetchCommissionSummariesApi());
+    } catch (e: any) {
+      toast.error(e?.message || 'Không thể tải dữ liệu hoa hồng');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    Promise.all([fetchCommissionGroups(), fetchProducts()])
-      .then(([g, p]) => {
-        setGroups(g);
-        setProducts(p);
-        return load(g, p);
-      })
-      .catch(() => {
-        toast.error('Không thể tải dữ liệu');
-        setLoading(false);
-      });
+    load();
   }, []);
 
   // Danh sách tháng có đơn (mới nhất lên đầu)
@@ -199,7 +182,7 @@ const CommissionPage: React.FC = () => {
           </Box>
         ) : (
           <Box layoutClassName="space-y-3">
-            {visible.map(s => <CollabRow key={s.collaboratorUid} summary={s} onRefresh={() => load(groups, products)} />)}
+            {visible.map(s => <CollabRow key={s.collaboratorUid} summary={s} onRefresh={() => load()} />)}
           </Box>
         )}
       </Box>

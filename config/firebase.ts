@@ -1,16 +1,17 @@
 /**
- * Firebase init cho FRONTEND (kéo theo auth + storage).
+ * Firebase init cho FRONTEND — CHỈ Auth (đăng nhập + lấy ID token gửi cho BE).
  *
- * Serverless function trong `api/` KHÔNG nên import file này — auth/storage
- * tham chiếu browser globals lúc load → crash Vercel Node runtime. Dùng
- * `config/firestore` (Firestore-only) thay thế.
+ * Firestore (db) & Storage đã chuyển HẾT sang BE NestJS — FE không còn dùng,
+ * nên file này KHÔNG import firebase/firestore hay firebase/storage nữa
+ * (giảm bundle, không lộ truy cập DB phía client).
  *
- * `app` và `db` được share với `config/firestore` để không init 2 lần.
+ * Lưu ý: serverless trong `api/` vẫn dùng `config/firestore` (Firestore-only)
+ * độc lập với file này.
  */
+import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
-import { app, db } from './firestore';
+import { firebaseConfig } from './firebaseConfig';
 
-export { db };
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+
 export const auth = getAuth(app);
-export const storage = getStorage(app);

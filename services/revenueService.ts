@@ -1,3 +1,4 @@
+import { apiClient } from '@/services/api/client';
 import { Order } from '@/types';
 import { Transaction } from '@/types';
 import { OrderStatus } from '@/types/enums';
@@ -172,4 +173,15 @@ export const computeRevenueReport = (input: RevenueReportInput): RevenueReport =
     series: buildSeries(fromISO, toISO, revOrders, commissionOrders, stockReceipts, expenses),
     costBreakdown: { stockIn: totalStockIn, commission: totalCommission, expenses: totalExpenses },
   };
+};
+
+/**
+ * Lấy báo cáo doanh thu (P&L) từ BE NestJS — BE tự fetch mọi nguồn & tính,
+ * FE chỉ cần gọi 1 API. Thay cho việc fetch nhiều nguồn rồi computeRevenueReport.
+ */
+export const fetchRevenueReport = async (fromISO: string, toISO: string): Promise<RevenueReport> => {
+  const res = await apiClient.get<RevenueReport>('/revenue/report', {
+    params: { from: fromISO, to: toISO },
+  });
+  return res.data;
 };

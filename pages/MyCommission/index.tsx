@@ -1,15 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Wallet, Receipt } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Product } from '@/types';
 import { OrderStatus } from '@/types/enums';
-import { CommissionGroup } from '@/types/commissionGroup';
-import { fetchProducts } from '@/services/productService';
-import { fetchCommissionGroups } from '@/services/commissionGroupService';
-import {
-  CollaboratorCommissionSummary,
-  buildMyCommissionSummary,
-} from '@/services/commissionService';
+import { CollaboratorCommissionSummary } from '@/services/commissionService';
+import { fetchMyCommissionApi } from '@/services/api/commissionApi';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Spinner from '@/components/ui/Spinner';
@@ -52,14 +46,10 @@ const MyCommissionPage: React.FC = () => {
 
   useEffect(() => {
     if (!userData?.uid) return;
-    const name = userData.customName || userData.displayName || userData.email || userData.uid;
     setLoading(true);
-    Promise.all([fetchCommissionGroups(), fetchProducts()])
-      .then(([g, p]: [CommissionGroup[], Product[]]) =>
-        buildMyCommissionSummary(userData.uid, name, g, p),
-      )
+    fetchMyCommissionApi()
       .then(setSummary)
-      .catch(() => toast.error('Không thể tải hoa hồng của bạn'))
+      .catch((e: any) => toast.error(e?.message || 'Không thể tải hoa hồng của bạn'))
       .finally(() => setLoading(false));
   }, [userData?.uid]);
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Wallet, Coins, Boxes, Receipt, TrendingUp, Banknote, PieChart as PieIcon, LineChart as LineIcon,
 } from 'lucide-react';
@@ -7,18 +7,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell,
 } from 'recharts';
-import { useOrders } from '@/contexts/OrderContext';
-import { Order } from '@/types';
-import { Transaction } from '@/types';
-import { SavedStockReceiptSummary } from '@/types/billReceipt';
-import { Expense } from '@/types/expense';
-import { fetchProducts } from '@/services/productService';
-import { fetchCommissionGroups } from '@/services/commissionGroupService';
-import { buildFullCommissionSummary } from '@/services/commissionService';
-import { fetchStockReceiptSummaries } from '@/services/stockReceiptService';
-import { fetchExpenses } from '@/services/expenseService';
-import { fetchTransactions } from '@/services/transactionService';
-import { computeRevenueReport } from '@/services/revenueService';
+import { fetchRevenueReport, RevenueReport } from '@/services/revenueService';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
@@ -26,53 +15,22 @@ import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
 import StatsBanner from '@/pages/BillImport/StatsBanner';
 
-interface RawData {
-  commissionOrders: Order[];
-  stockReceipts: SavedStockReceiptSummary[];
-  expenses: Expense[];
-  transactions: Transaction[];
-}
-
 const pctText = (v: number) => `${(v * 100).toFixed(1)}%`;
 
 const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, toDate }) => {
-  const { orders } = useOrders();
-  const [data, setData] = useState<RawData | null>(null);
+  const [report, setReport] = useState<RevenueReport | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Tải dữ liệu thô 1 lần; báo cáo tính lại khi đổi khoảng thời gian
+  // BE tự fetch mọi nguồn & tính; báo cáo nạp lại khi đổi khoảng thời gian
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    (async () => {
-      const [groups, products, stockReceipts, expenses, transactions] = await Promise.all([
-        fetchCommissionGroups(),
-        fetchProducts(),
-        fetchStockReceiptSummaries(),
-        fetchExpenses(),
-        fetchTransactions(),
-      ]);
-      const summaries = await buildFullCommissionSummary(groups, products);
-      const commissionOrders = summaries.flatMap(s => s.orders);
-      if (alive) setData({ commissionOrders, stockReceipts, expenses, transactions });
-    })()
+    fetchRevenueReport(fromDate, toDate)
+      .then(r => { if (alive) setReport(r); })
       .catch(() => toast.error('Không tải được dữ liệu doanh thu'))
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, []);
-
-  const report = useMemo(() => {
-    if (!data) return null;
-    return computeRevenueReport({
-      orders,
-      commissionOrders: data.commissionOrders,
-      stockReceipts: data.stockReceipts,
-      expenses: data.expenses,
-      transactions: data.transactions,
-      fromISO: fromDate,
-      toISO: toDate,
-    });
-  }, [data, orders, fromDate, toDate]);
+  }, [fromDate, toDate]);
 
   if (loading || !report) {
     return <Box layoutClassName="flex flex-1 items-center justify-center py-16"><Spinner size="lg" textClassName="text-orange-500" /></Box>;

@@ -6,8 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
 import { ScreenVisibilityMap } from '@/types';
 import toast from 'react-hot-toast';
-import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
-import { db } from '@/config/firebase';
+import { apiClient } from '@/services/api/client';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -26,24 +25,6 @@ interface DbRecord {
   id: string;
   data: Record<string, any>;
 }
-
-const FIRESTORE_BATCH_MAX = 500;
-
-const toSerializable = (value: any): any => {
-  if (value == null) return value;
-  if (Array.isArray(value)) return value.map(toSerializable);
-  if (typeof value === 'object') {
-    if (typeof value.toDate === 'function') {
-      try {
-        return value.toDate().toISOString();
-      } catch {
-        return String(value);
-      }
-    }
-    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, toSerializable(v)]));
-  }
-  return value;
-};
 
 const SettingsPage: React.FC = () => {
   const { t } = useLanguage();
@@ -104,11 +85,7 @@ const SettingsPage: React.FC = () => {
   const loadCollectionRecords = async (collectionId: string) => {
     setLoadingCollectionId(collectionId);
     try {
-      const snapshot = await getDocs(collection(db, collectionId));
-      const records: DbRecord[] = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        data: toSerializable(docSnap.data()) as Record<string, any>,
-      }));
+      const records = ((await apiClient.get(`/admin-db/${collectionId}`)).data || []) as DbRecord[];
       setCollectionRecords((prev) => ({ ...prev, [collectionId]: records }));
     } catch (error) {
       console.error(`Failed to load collection ${collectionId}`, error);
@@ -137,21 +114,14 @@ const SettingsPage: React.FC = () => {
 
     setDeletingCollectionId(collectionId);
     try {
-      const snapshot = await getDocs(collection(db, collectionId));
-      const refs = snapshot.docs.map((d) => doc(db, collectionId, d.id));
-      for (let i = 0; i < refs.length; i += FIRESTORE_BATCH_MAX) {
-        const batch = writeBatch(db);
-        for (const ref of refs.slice(i, i + FIRESTORE_BATCH_MAX)) {
-          batch.delete(ref);
-        }
-        await batch.commit();
-      }
+      const res = ((await apiClient.delete(`/admin-db/${collectionId}`)).data || {}) as { deleted?: number };
+      const deleted = typeof res.deleted === 'number' ? res.deleted : count;
       setCollectionRecords((prev) => ({ ...prev, [collectionId]: [] }));
       setExpandedRecordId(null);
       if (collectionId === 'products') {
         setProductToolsStatsNonce((n) => n + 1);
       }
-      toast.success(`Đã xóa ${refs.length} document trong ${collectionId}`);
+      toast.success(`Đã xóa ${deleted} document trong ${collectionId}`);
     } catch (error) {
       console.error(`Failed to delete collection ${collectionId}`, error);
       toast.error(`Không thể xóa bảng ${collectionId}`);

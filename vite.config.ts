@@ -66,8 +66,8 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     define: {
-      "process.env.VISION_API_KEY": JSON.stringify(env.VISION_API_KEY ?? ""),
-      "process.env.GEMINI_API_KEY": JSON.stringify(env.GEMINI_API_KEY),
+      // VISION_API_KEY / GEMINI_API_KEY / ZALO_TOKEN / ZALO_SHOP_CODE / ZALO_URL
+      // đã chuyển sang BE (không inline vào bundle FE nữa — tránh lộ secret).
       "process.env.FIREBASE_API_KEY": JSON.stringify(env.FIREBASE_API_KEY),
       "process.env.FIREBASE_AUTH_DOMAIN": JSON.stringify(
         env.FIREBASE_AUTH_DOMAIN
@@ -85,10 +85,6 @@ export default defineConfig(({ mode }) => {
       "process.env.FIREBASE_MEASUREMENT_ID": JSON.stringify(
         env.FIREBASE_MEASUREMENT_ID
       ),
-      "process.env.ZALO_SHOP_CODE": JSON.stringify(env.ZALO_SHOP_CODE),
-      "process.env.ZALO_TOKEN": JSON.stringify(env.ZALO_TOKEN),
-      "process.env.ZALO_URL": JSON.stringify(env.ZALO_URL),
-      "process.env.ZALO_MAIN_GROUP_ID": JSON.stringify(env.ZALO_MAIN_GROUP_ID ?? ""),
     },
     resolve: {
       alias: {

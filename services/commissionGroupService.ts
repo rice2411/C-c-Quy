@@ -1,48 +1,24 @@
-import {
-  collection,
-  doc,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  orderBy,
-  query,
-  writeBatch,
-} from 'firebase/firestore';
-import { db } from '@/config/firebase';
-import {
-  CommissionGroup,
-  DEFAULT_COMMISSION_GROUPS,
-} from '@/types/commissionGroup';
+/**
+ * Commission group service — CRUD nhóm hoa hồng qua BE NestJS
+ * (envelope `.data` đã được apiClient bóc sẵn). Collection 'commissionGroups'.
+ * BE tự seed DEFAULT_COMMISSION_GROUPS khi collection rỗng.
+ */
 
-const COL = 'commissionGroups';
+import { apiClient } from '@/services/api/client';
+import { CommissionGroup } from '@/types/commissionGroup';
 
-/** Lấy danh sách nhóm hoa hồng. Nếu chưa có, seed defaults vào Firestore. */
+/** Lấy danh sách nhóm hoa hồng (BE seed defaults nếu chưa có). */
 export const fetchCommissionGroups = async (): Promise<CommissionGroup[]> => {
-  const snap = await getDocs(query(collection(db, COL), orderBy('order', 'asc')));
-
-  if (!snap.empty) {
-    return snap.docs.map(d => ({ id: d.id, ...d.data() } as CommissionGroup));
-  }
-
-  // Seed defaults
-  const batch = writeBatch(db);
-  const seeded: CommissionGroup[] = [];
-  for (const g of DEFAULT_COMMISSION_GROUPS) {
-    const ref = doc(collection(db, COL));
-    batch.set(ref, g);
-    seeded.push({ id: ref.id, ...g });
-  }
-  await batch.commit();
-  return seeded;
+  const res = await apiClient.get<CommissionGroup[]>('/commission-groups');
+  return res.data;
 };
 
 /** Tạo nhóm mới */
 export const createCommissionGroup = async (
   data: Omit<CommissionGroup, 'id'>,
 ): Promise<CommissionGroup> => {
-  const ref = await addDoc(collection(db, COL), data);
-  return { id: ref.id, ...data };
+  const res = await apiClient.post<CommissionGroup>('/commission-groups', data);
+  return res.data;
 };
 
 /** Cập nhật nhóm */
@@ -50,10 +26,10 @@ export const updateCommissionGroup = async (
   id: string,
   data: Partial<Omit<CommissionGroup, 'id'>>,
 ): Promise<void> => {
-  await updateDoc(doc(db, COL, id), data as Record<string, unknown>);
+  await apiClient.patch(`/commission-groups/${id}`, data);
 };
 
 /** Xoá nhóm */
 export const deleteCommissionGroup = async (id: string): Promise<void> => {
-  await deleteDoc(doc(db, COL, id));
+  await apiClient.delete(`/commission-groups/${id}`);
 };

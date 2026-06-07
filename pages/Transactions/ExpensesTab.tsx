@@ -6,9 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Order } from '@/types';
 import { SavedStockReceiptSummary } from '@/types/billReceipt';
 import { Expense, EXPENSE_CATEGORIES, ExpenseCategory, expenseCategoryLabel } from '@/types/expense';
-import { fetchProducts } from '@/services/productService';
-import { fetchCommissionGroups } from '@/services/commissionGroupService';
-import { buildFullCommissionSummary } from '@/services/commissionService';
+import { fetchCommissionSummariesApi } from '@/services/api/commissionApi';
 import { fetchStockReceiptSummaries } from '@/services/stockReceiptService';
 import { fetchExpenses, addExpense, updateExpense, deleteExpense } from '@/services/expenseService';
 import {
@@ -79,13 +77,11 @@ const ExpensesTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
     let alive = true;
     setLoading(true);
     (async () => {
-      const [groups, products, receipts, exp] = await Promise.all([
-        fetchCommissionGroups(),
-        fetchProducts(),
+      const [summaries, receipts, exp] = await Promise.all([
+        fetchCommissionSummariesApi(),
         fetchStockReceiptSummaries(),
         fetchExpenses(),
       ]);
-      const summaries = await buildFullCommissionSummary(groups, products);
       if (!alive) return;
       setStockReceipts(receipts);
       setExpenses(exp);

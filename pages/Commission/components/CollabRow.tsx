@@ -2,11 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, CheckCircle2, RotateCcw, ListOrdered } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { OrderStatus } from '@/types/enums';
-import {
-  CollaboratorCommissionSummary,
-  markCommissionPaid,
-  markCommissionPending,
-} from '@/services/commissionService';
+import { CollaboratorCommissionSummary } from '@/services/commissionService';
+import { markCommissionPaidApi, markCommissionPendingApi } from '@/services/api/commissionApi';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Box from '@/components/ui/Box';
 import Image from '@/components/ui/Image';
@@ -78,7 +75,7 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
     if (!ids.length) return;
     setBusy(true);
     try {
-      await markCommissionPaid(ids);
+      await markCommissionPaidApi(ids);
       toast.success(`Đã trả HH cho ${summary.collaboratorName} (${ids.length} đơn)`);
       onRefresh();
     } catch { toast.error('Không thể cập nhật'); }
@@ -90,7 +87,7 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
     if (!ids.length) return;
     setBusy(true);
     try {
-      await markCommissionPending(ids);
+      await markCommissionPendingApi(ids);
       toast.success('Đã đặt lại thành chưa trả');
       onRefresh();
     } catch { toast.error('Không thể cập nhật'); }
