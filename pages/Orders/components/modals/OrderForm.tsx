@@ -11,7 +11,8 @@ import { fetchProducts } from '@/services/productService';
 import { fetchCommissionGroups } from '@/services/commissionGroupService';
 import { calcItemCommission } from '@/types/commissionGroup';
 import { getUserByUid } from '@/services/userService';
-import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product } from '@/types/index';
+import { fetchMaterialPriceOptions, MaterialPriceOption } from '@/services/stockReceiptService';
+import { DeliveryType, Order, OrderDecoration, OrderStatus, PaymentMethod, PaymentStatus, Product } from '@/types/index';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -22,6 +23,7 @@ import Spinner from '@/components/ui/Spinner';
 import CreateCustomerModal from '@/pages/Orders/components/modals/CreateCustomerModal';
 import OrderFormCustomerSection from '@/pages/Orders/components/OrderFormCustomerSection';
 import OrderFormItemsSection from '@/pages/Orders/components/OrderFormItemsSection';
+import OrderFormDecorationSection from '@/pages/Orders/components/OrderFormDecorationSection';
 import OrderFormStatusSection from '@/pages/Orders/components/OrderFormStatusSection';
 import { pushRecentProductId } from '@/utils/product/recentProducts';
 
@@ -68,6 +70,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const [items, setItems] = useState<FormItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
 
+  // Trang trí thêm: vật phẩm chọn từ nguyên liệu (materials)
+  const [materials, setMaterials] = useState<MaterialPriceOption[]>([]);
+  const [decorations, setDecorations] = useState<OrderDecoration[]>([]);
+
   const [shippingCost, setShippingCost] = useState(0);
   const [shipInfo, setShipInfo] = useState<NonNullable<Order['shipInfo']> | null>(null);
   const [note, setNote] = useState('');
@@ -94,6 +100,13 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
     loadProducts();
   }, []);
 
+  // Load nguyên liệu (cho mục trang trí thêm)
+  useEffect(() => {
+    fetchMaterialPriceOptions()
+      .then(setMaterials)
+      .catch((error) => console.error('Failed to load materials', error));
+  }, []);
+
   // Initialize or reset form when panel opens; reset fully when opening for new order
   useEffect(() => {
     if (!isOpen) return;
@@ -116,6 +129,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setShippingCost(initialData.shippingCost || 0);
       setShipInfo(initialData.shipInfo ?? null);
       setIsTest(!!initialData.isTest);
+      setDecorations(initialData.decorations ?? []);
       if (initialData.items && initialData.items.length > 0) {
         const loadedItems = initialData.items.map((item, index) => ({
           id: `item-${Date.now()}-${index}`,
@@ -163,6 +177,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setDeliveryType(DeliveryType.SHIP);
       setItems([]);
       setIsTest(false);
+      setDecorations([]);
     }
   }, [initialData, isOpen]);
 
@@ -284,7 +299,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   // Calculate total: Sum(Item Price * Qty) + Shipping
   const calculateTotal = () => {
       const itemsTotal = items.reduce((sum, item) => sum + (Number(item.unitPrice) * Number(item.quantity)), 0);
-      return itemsTotal + Number(shippingCost);
+      const decorationsTotal = decorations.reduce((sum, d) => sum + (Number(d.price) * Number(d.quantity)), 0);
+      return itemsTotal + decorationsTotal + Number(shippingCost);
   };
 
   const total = calculateTotal();
@@ -400,6 +416,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
           address: address,
         },
         items: finalItems,
+        decorations: decorations,
         shippingCost: Number(shippingCost),
         shipInfo: shipInfo ?? undefined,
         total: total,
@@ -598,6 +615,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               total={total}
               products={products}
               recentlyAddedId={recentlyAddedId}
+            />
+
+            <hr className="border-slate-100 dark:border-slate-700" />
+
+            <OrderFormDecorationSection
+              materials={materials}
+              decorations={decorations}
+              onChange={setDecorations}
             />
 
             <hr className="border-slate-100 dark:border-slate-700" />

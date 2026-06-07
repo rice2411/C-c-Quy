@@ -18,6 +18,13 @@ export interface OrderItem {
   commissionRate?: number;
 }
 
+export interface OrderDecoration {
+  materialId: string;
+  name: string;
+  quantity: number;
+  price: number; // đơn giá VND (có thể đã sửa tay)
+}
+
 export interface OrderFieldChange {
   field: string;
   label?: string;
@@ -38,6 +45,8 @@ export interface Order {
   sepayId?: number;
   customer: Customer;
   items: OrderItem[];
+  /** Vật phẩm trang trí thêm (chọn từ materials) — cộng vào total */
+  decorations?: OrderDecoration[];
   total: number;
   shippingCost?: number;
   /** Cache shipping info từ AddressMapInput — tránh fetch SerpApi khi edit */

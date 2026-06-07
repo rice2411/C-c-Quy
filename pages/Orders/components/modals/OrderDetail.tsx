@@ -450,7 +450,21 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                        </div>
                      ))}
                    </div>
-                   
+
+                   {currentOrder.decorations && currentOrder.decorations.length > 0 ? (
+                     <Box layoutClassName="mt-4 border-t border-slate-100 pt-4 dark:border-slate-700">
+                       <Typography as="p" size="xs" layoutClassName="mb-2 font-semibold uppercase tracking-wide" textClassName="text-slate-400 dark:text-slate-500">Trang trí thêm</Typography>
+                       <Box layoutClassName="space-y-1.5">
+                         {currentOrder.decorations.map((d, idx) => (
+                           <Box key={`${d.materialId}-${idx}`} layoutClassName="flex items-center justify-between gap-2">
+                             <Typography as="span" size="sm" textClassName="text-slate-700 dark:text-slate-300">{d.quantity}× {d.name}</Typography>
+                             <Typography as="span" size="sm" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{formatVND(d.price * d.quantity)}</Typography>
+                           </Box>
+                         ))}
+                       </Box>
+                     </Box>
+                   ) : null}
+
                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 space-y-2">
                      <div className="flex justify-between items-center text-sm text-slate-500 dark:text-slate-400">
                        <span>{t('detail.subtotal')}</span>
@@ -460,6 +474,12 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                        <span>{t('detail.shipping')}</span>
                        <span>{formatVND(shippingCost)}</span>
                      </div>
+                     {currentOrder.decorations && currentOrder.decorations.length > 0 ? (
+                       <Box layoutClassName="flex items-center justify-between" textClassName="text-sm text-slate-500 dark:text-slate-400">
+                         <Typography as="span" size="sm">Trang trí</Typography>
+                         <Typography as="span" size="sm">{formatVND(currentOrder.decorations.reduce((s, d) => s + d.price * d.quantity, 0))}</Typography>
+                       </Box>
+                     ) : null}
                      <div className="flex justify-between items-center pt-2 border-t border-slate-50 dark:border-slate-700">
                        <span className="font-medium text-slate-900 dark:text-white">{t('detail.total')}</span>
                        <span className="text-lg font-bold text-orange-600 dark:text-orange-400">{formatVND(finalTotal)}</span>

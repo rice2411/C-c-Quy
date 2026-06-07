@@ -456,6 +456,27 @@ export async function fetchImportedMaterials(): Promise<ImportedMaterialSummary[
   });
 }
 
+export interface MaterialPriceOption {
+  id: string;
+  name: string;
+  unitPrice: number;
+}
+
+/**
+ * Trả về danh sách nguyên liệu kèm đơn giá nhập trung bình (totalAmount / totalQty),
+ * dùng cho dropdown "Trang trí thêm" khi tạo/sửa đơn. Sort theo name (vi).
+ */
+export async function fetchMaterialPriceOptions(): Promise<MaterialPriceOption[]> {
+  const materials = await fetchImportedMaterials();
+  return materials
+    .map((m) => ({
+      id: m.id,
+      name: m.name,
+      unitPrice: m.totalQty > 0 ? Math.round(m.totalAmount / m.totalQty) : 0,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+}
+
 export async function fetchStockReceiptSummaries(): Promise<SavedStockReceiptSummary[]> {
   const q = query(collection(db, RECEIPTS_COLLECTION), orderBy('createdAt', 'desc'));
   const snap = await getDocs(q);

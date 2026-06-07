@@ -103,6 +103,7 @@ export const addOrder = async (orderData: Order): Promise<void> => {
       },
 
       items: orderData.items || [],
+      decorations: orderData.decorations || [],
       shippingCost: orderData.shippingCost || 0,
       total: orderData.total || 0,
       note: orderData.note || "",
@@ -175,6 +176,7 @@ export const updateOrder = async (
       email: safeCustomer.email,
       customer: safeCustomer,
       items: orderData.items || [],
+      decorations: orderData.decorations || [],
       shippingCost: orderData.shippingCost || 0,
       total: orderData.total || 0,
       note: orderData.note || "",

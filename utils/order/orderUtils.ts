@@ -1,7 +1,7 @@
 
 
 import * as XLSX from 'xlsx-js-style';
-import { Order, OrderItem } from '@/types/order';
+import { Order, OrderDecoration, OrderItem } from '@/types/order';
 import { UserData, UserRole } from '@/types/user';
 import { parseDateValue } from '../format/dateUtil';
 
@@ -11,9 +11,14 @@ import { parseDateValue } from '../format/dateUtil';
  * @param shippingCost - Chi phí vận chuyển
  * @returns Tổng giá trị đơn hàng
  */
-export const calculateOrderTotal = (items: OrderItem[], shippingCost: number = 0): number => {
+export const calculateOrderTotal = (
+  items: OrderItem[],
+  shippingCost: number = 0,
+  decorations: OrderDecoration[] = [],
+): number => {
   const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0);
-  return subtotal + Number(shippingCost);
+  const decorationsTotal = decorations.reduce((sum, d) => sum + (Number(d.price) * Number(d.quantity)), 0);
+  return subtotal + Number(shippingCost) + decorationsTotal;
 };
 
 /**
@@ -25,7 +30,7 @@ export const getOrderTotal = (order: Order): number => {
   if (order.total && order.total > 0) {
     return Number(order.total);
   }
-  return calculateOrderTotal(order.items || [], order.shippingCost || 0);
+  return calculateOrderTotal(order.items || [], order.shippingCost || 0, order.decorations || []);
 };
 
 /**
