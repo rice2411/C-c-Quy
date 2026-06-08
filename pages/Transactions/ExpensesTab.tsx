@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Order } from '@/types';
 import { SavedStockReceiptSummary } from '@/types/billReceipt';
 import { Expense, EXPENSE_CATEGORIES, ExpenseCategory, expenseCategoryLabel } from '@/types/expense';
-import { fetchCommissionSummariesApi } from '@/services/api/commissionApi';
+import { fetchCommissionSummaries } from '@/services/commissionService';
 import { fetchStockReceiptSummaries } from '@/services/stockReceiptService';
 import { fetchExpenses, addExpense, updateExpense, deleteExpense } from '@/services/expenseService';
 import {
@@ -78,7 +78,7 @@ const ExpensesTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
     setLoading(true);
     (async () => {
       const [summaries, receipts, exp] = await Promise.all([
-        fetchCommissionSummariesApi(),
+        fetchCommissionSummaries(),
         fetchStockReceiptSummaries(),
         fetchExpenses(),
       ]);

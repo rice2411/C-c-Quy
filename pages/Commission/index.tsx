@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Coins, TrendingUp, Users, CheckCircle2, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { OrderStatus } from '@/types/enums';
-import { CollaboratorCommissionSummary } from '@/services/commissionService';
-import { fetchCommissionSummariesApi } from '@/services/api/commissionApi';
+import { CollaboratorCommissionSummary, fetchCommissionSummaries } from '@/services/commissionService';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Spinner from '@/components/ui/Spinner';
 import Box from '@/components/ui/Box';
@@ -41,7 +40,7 @@ const CommissionPage: React.FC = () => {
   const load = async () => {
     setLoading(true);
     try {
-      setSummaries(await fetchCommissionSummariesApi());
+      setSummaries(await fetchCommissionSummaries());
     } catch (e: any) {
       toast.error(e?.message || 'Không thể tải dữ liệu hoa hồng');
     } finally {

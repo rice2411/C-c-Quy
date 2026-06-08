@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Wallet, Receipt } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { OrderStatus } from '@/types/enums';
-import { CollaboratorCommissionSummary } from '@/services/commissionService';
-import { fetchMyCommissionApi } from '@/services/api/commissionApi';
+import { CollaboratorCommissionSummary, fetchMyCommission } from '@/services/commissionService';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Spinner from '@/components/ui/Spinner';
@@ -47,7 +46,7 @@ const MyCommissionPage: React.FC = () => {
   useEffect(() => {
     if (!userData?.uid) return;
     setLoading(true);
-    fetchMyCommissionApi()
+    fetchMyCommission()
       .then(setSummary)
       .catch((e: any) => toast.error(e?.message || 'Không thể tải hoa hồng của bạn'))
       .finally(() => setLoading(false));
