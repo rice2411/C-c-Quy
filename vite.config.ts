@@ -7,8 +7,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
   const siteUrl = (
     env.VITE_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
-    "http://localhost:3009"
+    "https://admin.cucquy.site"
   ).replace(/\/$/, "");
 
   return {

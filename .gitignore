@@ -23,7 +23,6 @@ dev-dist
 *.njsproj
 *.sln
 *.sw?
-.vercel
 .env*.local
 scripts
 .env*
