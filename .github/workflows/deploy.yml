@@ -1,0 +1,39 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [production]
+  workflow_dispatch: {}
+
+jobs:
+  # 1) CI — kiểm tra code biên dịch được
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  # 2) CD — SSH vào VPS, pull + build image FE + chạy lại container
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /root/cucquy/frontend
+            git pull origin production
+            docker build --build-arg VITE_API_URL=https://api.cucquy.site/api -t cucquy-frontend .
+            docker stop cucquy-frontend || true
+            docker rm cucquy-frontend || true
+            docker run -d --name cucquy-frontend --restart unless-stopped -p 127.0.0.1:8080:80 cucquy-frontend
+            docker image prune -f
