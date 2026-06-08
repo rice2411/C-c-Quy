@@ -16,8 +16,15 @@ export const apiClient = axios.create({
   timeout: 30000,
 });
 
-// Tự gắn ID token của user đang đăng nhập
+// Tự gắn ID token của user đang đăng nhập.
+// QUAN TRỌNG: lúc app mới mở, Firebase Auth chưa khôi phục xong → auth.currentUser
+// tạm null. Phải ĐỢI authStateReady() trước, nếu không request đầu tiên sẽ thiếu
+// token → BE trả 401 → trang trống tới khi refresh. Đây là fix cho lỗi "vào trang
+// bị empty, refresh mới có data".
 apiClient.interceptors.request.use(async (config) => {
+  if (!auth.currentUser && typeof (auth as any).authStateReady === 'function') {
+    await (auth as any).authStateReady();
+  }
   const user = auth.currentUser;
   if (user) {
     const token = await user.getIdToken();
