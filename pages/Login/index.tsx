@@ -1,7 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth } from '@/config/firebase';
+
+/** PWA standalone (iOS/Android cài về màn hình chính) không chạy được popup
+ *  → phải dùng redirect, nếu không login sẽ treo loading mãi. */
+const isStandalonePWA = (): boolean =>
+  typeof window !== 'undefined' &&
+  (window.matchMedia?.('(display-mode: standalone)').matches === true ||
+    (window.navigator as any).standalone === true);
+
+const signInGoogle = async (provider: GoogleAuthProvider) => {
+  if (isStandalonePWA()) {
+    await signInWithRedirect(auth, provider); // PWA → redirect (page rời đi rồi quay lại)
+  } else {
+    await signInWithPopup(auth, provider); // trình duyệt thường → popup
+  }
+};
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ChefHat, UserPlus, LogIn, X } from 'lucide-react';
@@ -25,6 +40,15 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [useCurrentAccount, setUseCurrentAccount] = useState(false);
   const [accountsHistory, setAccountsHistory] = useState(getAccountsHistory());
+
+  // PWA: sau khi đăng nhập bằng redirect, Google trả về đây → nhận kết quả + vào app.
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((res) => {
+        if (res?.user) setUseCurrentAccount(true); // kích hoạt useEffect điều hướng bên dưới
+      })
+      .catch((err) => console.error('Redirect login error:', err));
+  }, []);
 
   // Tự động redirect về trang chủ nếu user đã đăng nhập và không muốn chọn tài khoản khác
   useEffect(() => {
@@ -52,7 +76,8 @@ const LoginPage: React.FC = () => {
         });
       }
       
-      await signInWithPopup(auth, provider);
+      await signInGoogle(provider);
+      // Nếu là PWA redirect: page đã rời đi, các dòng dưới không chạy.
       toast.success('Login successful!');
       setUseCurrentAccount(true);
       // Redirect sẽ được xử lý bởi useEffect khi currentUser được cập nhật
@@ -84,7 +109,7 @@ const LoginPage: React.FC = () => {
           login_hint: account.email
         });
       }
-      await signInWithPopup(auth, provider);
+      await signInGoogle(provider);
       toast.success('Login successful!');
       setUseCurrentAccount(true);
     } catch (error: any) {
