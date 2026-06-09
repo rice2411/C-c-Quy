@@ -95,6 +95,7 @@ const Layout: React.FC = () => {
     }
     if (location.pathname === '/customers') return t('header.customersTitle');
     if (location.pathname === '/users') return t('header.usersTitle');
+    if (location.pathname === '/admin/request-logs') return t('nav.requestLogs');
     return 'CucQuyBakery';
   };
 

@@ -22,6 +22,7 @@ import ProductDetailPage from "./pages/Storage/product/ProductDetailPage";
 import BillImportPage from "./pages/BillImport/index";
 import CustomersPage from "./pages/Customers/index";
 import UsersPage from "./pages/Users/index";
+import RequestLogsPage from "./pages/Admin/RequestLogs/index";
 import NotificationsPage from "./pages/Notifications/index";
 import SettingsPage from "./pages/Settings/index";
 import LoginPage from "./pages/Login/index";
@@ -106,6 +107,11 @@ const App: React.FC = () => {
                       <Route path="users" element={
                         <RoleBasedRoute requiredRole={routes.find(r => r.path === '/users')?.roles}>
                           <UsersPage />
+                        </RoleBasedRoute>
+                      } />
+                      <Route path="admin/request-logs" element={
+                        <RoleBasedRoute requiredRole={routes.find(r => r.path === '/admin/request-logs')?.roles}>
+                          <RequestLogsPage />
                         </RoleBasedRoute>
                       } />
                       <Route path="notifications" element={

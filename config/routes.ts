@@ -13,6 +13,8 @@ import {
   BookOpen,
   UserCog,
   Bell,
+  Activity,
+  ShieldCheck,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { ScreenVisibilityMap } from "@/types";
@@ -124,6 +126,13 @@ export const routes: RouteConfig[] = [
     labelKey: "nav.notifications",
     icon: Bell,
     roles: [UserRole.SUPER_ADMIN],
+  },
+  {
+    type: "page",
+    path: "/admin/request-logs",
+    labelKey: "nav.requestLogs",
+    icon: Activity,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
     type: "page",
@@ -244,6 +253,14 @@ export const navGroups: NavGroupConfig[] = [
     childPaths: [
       "/storage",
       "/bill-import",
+    ],
+  },
+  {
+    key: "system",
+    labelKey: "nav.systemGroup",
+    icon: ShieldCheck,
+    childPaths: [
+      "/admin/request-logs",
     ],
   },
 ];
