@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Customer } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 import { fetchCustomers, addCustomer, updateCustomer, deleteCustomer } from '@/services/customerService';
 
 interface CustomerContextType {
@@ -14,23 +15,41 @@ interface CustomerContextType {
 const CustomerContext = createContext<CustomerContextType | undefined>(undefined);
 
 export const CustomerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { currentUser } = useAuth();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadData = async () => {
     setLoading(true);
-    const data = await fetchCustomers();
-    setCustomers(data);
-    setLoading(false);
+    try {
+      const data = await fetchCustomers();
+      setCustomers(data);
+    } catch (err) {
+      // QUAN TRỌNG: nếu fetch lỗi mà không bắt, setLoading(false) sẽ không chạy
+      // → spinner quay mãi (đúng lỗi "tab customer load mãi không xong").
+      console.error('CustomerContext loadData error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Chỉ fetch khi đã có currentUser (auth khôi phục xong) — tránh gọi API thiếu
+  // token lúc app mới mở (PWA iOS).
   useEffect(() => {
+    if (!currentUser) {
+      setLoading(false);
+      return;
+    }
     loadData();
-  }, []);
+  }, [currentUser]);
 
   const refreshCustomers = async () => {
-    const data = await fetchCustomers();
-    setCustomers(data);
+    try {
+      const data = await fetchCustomers();
+      setCustomers(data);
+    } catch (err) {
+      console.error('CustomerContext refreshCustomers error:', err);
+    }
   };
 
   const createNewCustomer = async (data: Omit<Customer, 'id'>) => {

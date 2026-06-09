@@ -21,18 +21,35 @@ export const OrderProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const loadData = async () => {
     setLoading(true);
-    const fetchedOrders = await fetchOrders();
-    setOrders(fetchedOrders);
-    setLoading(false);
+    try {
+      const fetchedOrders = await fetchOrders();
+      setOrders(fetchedOrders);
+    } catch (err) {
+      // QUAN TRỌNG: nếu fetch lỗi (vd token chưa sẵn lần đầu) mà không bắt,
+      // setLoading(false) sẽ không chạy → spinner quay mãi. Luôn tắt ở finally.
+      console.error('OrderContext loadData error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Chỉ fetch khi đã có currentUser (auth khôi phục xong) — tránh gọi API thiếu
+  // token lúc app mới mở (PWA iOS) khiến trang trống tới khi bấm refresh.
   useEffect(() => {
+    if (!currentUser) {
+      setLoading(false);
+      return;
+    }
     loadData();
-  }, []);
+  }, [currentUser]);
 
   const refreshOrders = async () => {
-    const fetchedOrders = await fetchOrders();
-    setOrders(fetchedOrders);
+    try {
+      const fetchedOrders = await fetchOrders();
+      setOrders(fetchedOrders);
+    } catch (err) {
+      console.error('OrderContext refreshOrders error:', err);
+    }
   };
 
   const buildEditor = () => {
