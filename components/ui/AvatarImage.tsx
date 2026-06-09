@@ -37,7 +37,7 @@ const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
     return (
       <div className={containerClasses}>
         {showImage ? (
-          <img ref={ref} src={src} alt={alt} className={imageClasses} onError={() => setHasError(true)} {...props} />
+          <img ref={ref} src={src} alt={alt} className={imageClasses} loading="lazy" decoding="async" onError={() => setHasError(true)} {...props} />
         ) : (
           fallback
         )}
