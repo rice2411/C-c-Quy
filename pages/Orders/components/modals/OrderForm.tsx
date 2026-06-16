@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { AlertCircle, Calendar, Clock, Hash, Save } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { AlertCircle, Calendar, Clock, Hash, Save, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatVND } from '@/utils/format/currencyUtil';
+import { previewPromotion, fetchPromotions } from '@/services/promotionService';
+import { ComputeResult, Promotion } from '@/types/promotion';
 import { useAuth } from '@/contexts/AuthContext';
 import { collaboratorHasZaloGroup } from '@/services/configurationService';
 import { UserRole } from '@/types/user';
@@ -20,6 +23,7 @@ import Checkbox from '@/components/ui/Checkbox';
 import Field from '@/components/ui/Field';
 import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
+import Typography from '@/components/ui/Typography';
 import CreateCustomerModal from '@/pages/Orders/components/modals/CreateCustomerModal';
 import OrderFormCustomerSection from '@/pages/Orders/components/OrderFormCustomerSection';
 import OrderFormItemsSection from '@/pages/Orders/components/OrderFormItemsSection';
@@ -87,6 +91,35 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   // Đơn hàng test — dùng để test tính năng. Khi bật, Zalo message sẽ có banner === ĐƠN HÀNG TEST ===
   const [isTest, setIsTest] = useState<boolean>(false);
 
+  // Khuyến mãi: chọn chiến dịch (opt-in) + mã nhập + kết quả tính giảm (thẩm quyền BE).
+  const [promoCode, setPromoCode] = useState('');
+  const [promoPreview, setPromoPreview] = useState<ComputeResult | null>(null);
+  const [loadingPromo, setLoadingPromo] = useState(false);
+  const [campaigns, setCampaigns] = useState<Promotion[]>([]); // chiến dịch đang chạy (đề xuất)
+  const [selectedPromoIds, setSelectedPromoIds] = useState<string[]>([]);
+
+  // Tải chiến dịch đang trong thời gian hoạt động (active + trong khoảng start/end).
+  useEffect(() => {
+    let alive = true;
+    fetchPromotions()
+      .then((list) => {
+        if (!alive) return;
+        const now = Date.now();
+        setCampaigns(
+          list.filter(
+            (p) =>
+              p.status === 'active' &&
+              (!p.startAt || now >= Date.parse(p.startAt)) &&
+              (!p.endAt || now <= Date.parse(p.endAt)),
+          ),
+        );
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   // Load products from inventory
   useEffect(() => {
     const loadProducts = async () => {
@@ -130,6 +163,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setShipInfo(initialData.shipInfo ?? null);
       setIsTest(!!initialData.isTest);
       setDecorations(initialData.decorations ?? []);
+      // Điền lại mã + chiến dịch đã áp để sửa đơn không mất khuyến mãi.
+      setPromoCode(initialData.appliedPromotions?.find((p) => p.code)?.code ?? '');
+      setSelectedPromoIds((initialData.appliedPromotions ?? []).map((p) => p.promotionId));
       if (initialData.items && initialData.items.length > 0) {
         const loadedItems = initialData.items.map((item, index) => ({
           id: `item-${Date.now()}-${index}`,
@@ -178,6 +214,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setItems([]);
       setIsTest(false);
       setDecorations([]);
+      setPromoCode('');
+      setPromoPreview(null);
+      setSelectedPromoIds([]);
     }
   }, [initialData, isOpen]);
 
@@ -296,14 +335,67 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
     }));
   };
 
-  // Calculate total: Sum(Item Price * Qty) + Shipping
-  const calculateTotal = () => {
-      const itemsTotal = items.reduce((sum, item) => sum + (Number(item.unitPrice) * Number(item.quantity)), 0);
-      const decorationsTotal = decorations.reduce((sum, d) => sum + (Number(d.price) * Number(d.quantity)), 0);
-      return itemsTotal + decorationsTotal + Number(shippingCost);
+  // Tổng tiền hàng TRƯỚC giảm (items + decorations).
+  const subtotal =
+    items.reduce((sum, item) => sum + Number(item.unitPrice) * Number(item.quantity), 0) +
+    decorations.reduce((sum, d) => sum + Number(d.price) * Number(d.quantity), 0);
+  const discountAmount = promoPreview?.discountAmount ?? 0;
+  const total = Math.max(0, subtotal + Number(shippingCost) - discountAmount);
+
+  // Giữ mã mới nhất để effect tự-áp dùng mà không phụ thuộc vào từng phím gõ.
+  const promoCodeRef = useRef(promoCode);
+  useEffect(() => {
+    promoCodeRef.current = promoCode;
+  }, [promoCode]);
+
+  const runPreview = async (ids: string[], code: string, silent: boolean) => {
+    if (items.length === 0) {
+      setPromoPreview(null);
+      if (!silent) toast.error('Thêm sản phẩm trước khi áp khuyến mãi');
+      return;
+    }
+    if (ids.length === 0 && !code.trim()) {
+      setPromoPreview(null); // chưa chọn chiến dịch & chưa nhập mã → không giảm
+      return;
+    }
+    if (!silent) setLoadingPromo(true);
+    try {
+      const res = await previewPromotion({
+        items: items
+          .filter((i) => i.productId)
+          .map((i) => ({ productId: i.productId, price: Number(i.unitPrice), quantity: Number(i.quantity) })),
+        decorations: decorations.map((d) => ({ price: Number(d.price), quantity: Number(d.quantity) })),
+        shippingCost: Number(shippingCost),
+        code: code.trim() || undefined,
+        promotionIds: ids,
+      });
+      setPromoPreview(res);
+      if (!silent) {
+        if (res.errors?.length) res.errors.forEach((er) => toast.error(er));
+        else if (res.discountAmount > 0) toast.success(`Đã áp dụng — giảm ${formatVND(res.discountAmount)}`);
+        else toast('Khuyến mãi chưa áp được cho đơn này');
+      }
+    } catch (e) {
+      if (!silent) toast.error(e instanceof Error ? e.message : 'Không kiểm tra được khuyến mãi');
+    } finally {
+      if (!silent) setLoadingPromo(false);
+    }
   };
 
-  const total = calculateTotal();
+  // Tính lại khi giỏ / chiến dịch chọn thay đổi (mã lấy từ ref) — debounce, im lặng.
+  useEffect(() => {
+    let cancelled = false;
+    const t = setTimeout(() => {
+      if (!cancelled) void runPreview(selectedPromoIds, promoCodeRef.current, true);
+    }, 400);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, decorations, shippingCost, selectedPromoIds]);
+
+  const handlePreviewPromo = () => void runPreview(selectedPromoIds, promoCode, false);
 
 
   const normalizePhone = (phoneStr: string) => phoneStr.replace(/[^0-9]/g, '').toLowerCase();
@@ -419,6 +511,11 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         decorations: decorations,
         shippingCost: Number(shippingCost),
         shipInfo: shipInfo ?? undefined,
+        subtotal: subtotal,
+        discountAmount: discountAmount,
+        appliedPromotions: promoPreview?.appliedPromotions ?? [],
+        appliedPromotionCode: promoCode.trim() || undefined,
+        appliedPromotionIds: selectedPromoIds,
         total: total,
         note: note,
         deliveryDate: deliveryDate,
@@ -624,6 +721,92 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               decorations={decorations}
               onChange={setDecorations}
             />
+
+            <hr className="border-slate-100 dark:border-slate-700" />
+
+            {/* ─── Khuyến mãi ─── */}
+            <Box layoutClassName="space-y-2">
+              <Box layoutClassName="flex items-center gap-1.5">
+                <Tag className="h-4 w-4 text-orange-500" />
+                <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-800 dark:text-slate-200">
+                  Khuyến mãi
+                </Typography>
+              </Box>
+
+              {campaigns.length > 0 ? (
+                <Box layoutClassName="space-y-1">
+                  <Typography as="span" size="xs" textClassName="text-slate-500 dark:text-slate-400">
+                    Chiến dịch đang chạy — chọn để áp:
+                  </Typography>
+                  <Box layoutClassName="flex flex-wrap gap-1.5">
+                    {campaigns.map((c) => {
+                      const on = selectedPromoIds.includes(c.id);
+                      return (
+                        <Button
+                          key={c.id}
+                          type="button"
+                          size="sm"
+                          variant={on ? 'primary' : 'secondary'}
+                          onClick={() =>
+                            setSelectedPromoIds((prev) =>
+                              on ? prev.filter((x) => x !== c.id) : [...prev, c.id],
+                            )
+                          }
+                        >
+                          {on ? '✓ ' : ''}{c.name}
+                        </Button>
+                      );
+                    })}
+                  </Box>
+                </Box>
+              ) : (
+                <Typography as="p" size="xs" variant="muted">Không có chiến dịch nào đang chạy.</Typography>
+              )}
+
+              <Box layoutClassName="flex items-center gap-2">
+                <Input
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  placeholder="Hoặc nhập mã giảm giá"
+                  containerClassName="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={loadingPromo}
+                  onClick={handlePreviewPromo}
+                  leftIcon={loadingPromo ? <Spinner size="sm" /> : <Tag className="h-4 w-4" />}
+                >
+                  Áp dụng
+                </Button>
+              </Box>
+              {promoPreview && promoPreview.discountAmount > 0 && (
+                <Box layoutClassName="space-y-0.5 rounded-lg p-2" backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20">
+                  {(promoPreview.appliedPromotions ?? []).map((ap) => (
+                    <Box key={ap.promotionId} layoutClassName="flex items-center justify-between gap-2">
+                      <Typography as="span" size="xs" textClassName="text-emerald-800 dark:text-emerald-300">• {ap.name}</Typography>
+                      <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-emerald-800 dark:text-emerald-300">−{formatVND(ap.amount)}</Typography>
+                    </Box>
+                  ))}
+                  <Box layoutClassName="flex items-center justify-between gap-2 border-t border-emerald-200 pt-1 dark:border-emerald-800">
+                    <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-emerald-900 dark:text-emerald-200">Tổng giảm</Typography>
+                    <Typography as="span" size="xs" layoutClassName="font-bold" textClassName="text-emerald-900 dark:text-emerald-200">−{formatVND(promoPreview.discountAmount)}</Typography>
+                  </Box>
+                </Box>
+              )}
+              {promoPreview && (promoPreview.giftItems?.length ?? 0) > 0 && (
+                <Box layoutClassName="space-y-0.5 rounded-lg p-2" backgroundClassName="bg-amber-50 dark:bg-amber-900/20">
+                  <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-amber-800 dark:text-amber-300">🎁 Quà tặng kèm</Typography>
+                  {(promoPreview.giftItems ?? []).map((g) => (
+                    <Typography key={g.productId} as="p" size="xs" textClassName="text-amber-800 dark:text-amber-300">• {g.name} × {g.quantity}</Typography>
+                  ))}
+                </Box>
+              )}
+              {promoPreview?.errors?.map((er, i) => (
+                <Typography key={i} as="p" size="xs" variant="danger">✗ {er}</Typography>
+              ))}
+            </Box>
 
             <hr className="border-slate-100 dark:border-slate-700" />
             <OrderFormStatusSection

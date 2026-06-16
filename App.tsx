@@ -13,6 +13,7 @@ import RoleBasedRoute from "./components/RoleBasedRoute";
 import DashboardPage from "./pages/Dashboard/index";
 import OrdersPage from "./pages/Orders/index";
 import TransactionsPage from "./pages/Transactions/index";
+import PromotionsPage from "./pages/Promotions/index";
 import CommissionPage from "./pages/Commission/index";
 import CommissionSettingsPage from "./pages/Commission/SettingsPage";
 import CommissionGuidePage from "./pages/Commission/GuidePage";
@@ -62,6 +63,11 @@ const App: React.FC = () => {
                       <Route path="transactions" element={
                         <RoleBasedRoute requiredRole={routes.find(r => r.path === '/transactions')?.roles}>
                           <TransactionsPage />
+                        </RoleBasedRoute>
+                      } />
+                      <Route path="promotions" element={
+                        <RoleBasedRoute requiredRole={routes.find(r => r.path === '/promotions')?.roles}>
+                          <PromotionsPage />
                         </RoleBasedRoute>
                       } />
                       <Route path="commission" element={

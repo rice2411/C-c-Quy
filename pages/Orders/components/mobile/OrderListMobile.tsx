@@ -168,6 +168,17 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                       FREE SHIP
                     </span>
                   )}
+                  {order.discountAmount && order.discountAmount > 0 ? (
+                    <Badge
+                      size="sm"
+                      layoutClassName="px-2 py-0.5 text-[10px] font-bold"
+                      borderClassName="border-transparent"
+                      backgroundClassName="bg-emerald-100 dark:bg-emerald-900/40"
+                      textClassName="text-emerald-700 dark:text-emerald-300"
+                    >
+                      KM −{formatVND(order.discountAmount)}
+                    </Badge>
+                  ) : null}
                 </Box>
                 <Typography
                   as="div"

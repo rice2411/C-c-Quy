@@ -1,5 +1,6 @@
 import { OrderStatus, PaymentStatus, PaymentMethod, DeliveryType } from './enums';
 import { Customer } from './customer';
+import { AppliedPromotion, GiftItem } from './promotion';
 
 export interface OrderItem {
   id: string;
@@ -47,6 +48,15 @@ export interface Order {
   items: OrderItem[];
   /** Vật phẩm trang trí thêm (chọn từ materials) — cộng vào total */
   decorations?: OrderDecoration[];
+  /** Tổng tiền hàng TRƯỚC giảm (items + decorations). */
+  subtotal?: number;
+  /** Tổng tiền đã giảm bởi khuyến mãi. */
+  discountAmount?: number;
+  /** Các khuyến mãi đã áp vào đơn. */
+  appliedPromotions?: AppliedPromotion[];
+  /** Quà tặng (Mua X tặng Y) — giá 0. */
+  giftItems?: GiftItem[];
+  /** = subtotal + shippingCost − discountAmount. */
   total: number;
   shippingCost?: number;
   /** Cache shipping info từ AddressMapInput — tránh fetch SerpApi khi edit */

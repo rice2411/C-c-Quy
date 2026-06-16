@@ -480,6 +480,17 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                          <Typography as="span" size="sm">{formatVND(currentOrder.decorations.reduce((s, d) => s + d.price * d.quantity, 0))}</Typography>
                        </Box>
                      ) : null}
+                     {currentOrder.discountAmount && currentOrder.discountAmount > 0 ? (
+                       <Box layoutClassName="flex items-start justify-between gap-2">
+                         <Box layoutClassName="min-w-0">
+                           <Typography as="span" size="sm" layoutClassName="font-medium" textClassName="text-emerald-600 dark:text-emerald-400">Khuyến mãi</Typography>
+                           {(currentOrder.appliedPromotions ?? []).map((ap) => (
+                             <Typography key={ap.promotionId} as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">• {ap.name}</Typography>
+                           ))}
+                         </Box>
+                         <Typography as="span" size="sm" layoutClassName="shrink-0 font-medium" textClassName="text-emerald-600 dark:text-emerald-400">−{formatVND(currentOrder.discountAmount)}</Typography>
+                       </Box>
+                     ) : null}
                      <div className="flex justify-between items-center pt-2 border-t border-slate-50 dark:border-slate-700">
                        <span className="font-medium text-slate-900 dark:text-white">{t('detail.total')}</span>
                        <span className="text-lg font-bold text-orange-600 dark:text-orange-400">{formatVND(finalTotal)}</span>

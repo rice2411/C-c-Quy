@@ -15,6 +15,7 @@ import {
   Bell,
   Activity,
   ShieldCheck,
+  Tag,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { ScreenVisibilityMap } from "@/types";
@@ -62,6 +63,13 @@ export const routes: RouteConfig[] = [
     path: "/transactions",
     labelKey: "nav.transactions",
     icon: TrendingUp,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/promotions",
+    labelKey: "nav.promotions",
+    icon: Tag,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {

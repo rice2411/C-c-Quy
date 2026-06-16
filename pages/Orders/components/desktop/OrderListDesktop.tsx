@@ -189,6 +189,17 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                           FREE SHIP
                         </span>
                       )}
+                      {order.discountAmount && order.discountAmount > 0 ? (
+                        <Badge
+                          size="sm"
+                          layoutClassName="px-2 py-0.5 text-[11px] font-bold"
+                          borderClassName="border-transparent"
+                          backgroundClassName="bg-emerald-100 dark:bg-emerald-900/40"
+                          textClassName="text-emerald-700 dark:text-emerald-300"
+                        >
+                          KM −{formatVND(order.discountAmount)}
+                        </Badge>
+                      ) : null}
                       {order.createdBy ? (
                         <Typography
                           as="span"
