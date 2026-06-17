@@ -104,10 +104,8 @@ const Layout: React.FC = () => {
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex w-64 flex-col bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 z-20 transition-colors duration-200">
         <div className="h-16 flex items-center px-6 border-b border-slate-100 dark:border-slate-700">
-          <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold mr-3 shadow-sm shadow-primary-300 dark:shadow-none">
-            C
-          </div>
-          <span className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Tiệm Bánh <span className="text-primary-600 dark:text-primary-500">Cúc Quy</span></span>
+          <img src="/icon.svg" alt="Tiệm Bánh Cúc Quy" className="w-8 h-8 rounded-lg mr-3 shadow-sm shadow-primary-300 dark:shadow-none" />
+          <span className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Cúc <span className="text-primary-600 dark:text-primary-500"> Quy</span></span>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
@@ -159,9 +157,7 @@ const Layout: React.FC = () => {
         <header className="h-16 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 md:px-8 z-10 sticky top-0 transition-colors duration-200">
           <div className="flex items-center gap-3">
             <div className="md:hidden flex items-center gap-2">
-              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm shadow-primary-300 dark:shadow-none">
-                C
-              </div>
+              <img src="/icon.svg" alt="Tiệm Bánh Cúc Quy" className="w-8 h-8 rounded-lg shadow-sm shadow-primary-300 dark:shadow-none" />
               <span className="text-lg font-bold text-slate-800 dark:text-white">Tiệm Bánh <span className="text-primary-600 dark:text-primary-500">Cúc Quy</span></span>
             </div>
             <div className="hidden md:block">
