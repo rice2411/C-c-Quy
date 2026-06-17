@@ -60,7 +60,14 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
     setQuantityInputs((prev) => {
       const next: Record<string, string> = {};
       items.forEach((item) => {
-        next[item.id] = prev[item.id] ?? String(item.quantity ?? 1);
+        const qty = item.quantity ?? 1;
+        const raw = prev[item.id];
+        // Giữ nguyên ô input khi: đang gõ dở (rỗng) HOẶC giá trị đang khớp quantity.
+        // Còn lại (quantity đổi từ ngoài: bấm +1/POS, quick-add) → đồng bộ lại theo quantity.
+        next[item.id] =
+          raw === '' || (raw !== undefined && Math.floor(Number(raw)) === qty)
+            ? raw
+            : String(qty);
       });
       return next;
     });
