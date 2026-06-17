@@ -101,7 +101,8 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
     value: string;
     diff: number | null;
     onClick?: () => void;
-    accent: string;
+    iconBg: string;
+    iconText: string;
   }[] = [
     {
       key: 'revenue',
@@ -110,7 +111,8 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       value: formatVND(stats.revenueToday),
       diff: pctDiff(stats.revenueToday, stats.revenueYesterday),
       onClick: () => navigate('/orders?quick=paid'),
-      accent: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-300',
+      iconBg: 'bg-emerald-50 dark:bg-emerald-900/20',
+      iconText: 'text-emerald-600 dark:text-emerald-300',
     },
     {
       key: 'new',
@@ -119,7 +121,8 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       value: String(stats.newToday),
       diff: pctDiff(stats.newToday, stats.newYesterday),
       onClick: () => navigate('/orders'),
-      accent: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300',
+      iconBg: 'bg-blue-50 dark:bg-blue-900/20',
+      iconText: 'text-blue-600 dark:text-blue-300',
     },
     {
       key: 'delivered',
@@ -127,7 +130,8 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       label: 'Đã giao',
       value: String(stats.deliveredToday),
       diff: pctDiff(stats.deliveredToday, stats.deliveredYesterday),
-      accent: 'bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-300',
+      iconBg: 'bg-violet-50 dark:bg-violet-900/20',
+      iconText: 'text-violet-600 dark:text-violet-300',
     },
     {
       key: 'ship',
@@ -136,7 +140,8 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       value: String(stats.shipToday),
       diff: null,
       onClick: () => navigate('/orders?quick=today'),
-      accent: 'bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-300',
+      iconBg: 'bg-orange-50 dark:bg-orange-900/20',
+      iconText: 'text-orange-600 dark:text-orange-300',
     },
   ];
 
@@ -154,8 +159,12 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
           So với hôm qua
         </Typography>
       </Box>
-      <Box layoutClassName="grid grid-cols-2 sm:grid-cols-4">
-        {items.map((it, idx) => {
+      {/* Hairline grid: gap-px + nền = divider 1px đều cả ngang lẫn dọc, khỏi border theo idx */}
+      <Box
+        layoutClassName="grid grid-cols-2 gap-px sm:grid-cols-4"
+        backgroundClassName="bg-slate-100 dark:bg-slate-700"
+      >
+        {items.map((it) => {
           const diff = it.diff;
           const diffPositive = diff != null && diff > 0;
           const diffNegative = diff != null && diff < 0;
@@ -165,22 +174,18 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
             : diffNegative
               ? 'text-red-500 dark:text-red-400'
               : 'text-slate-400 dark:text-slate-500';
-          return (
-            <Button
-              key={it.key}
-              type="button"
-              onClick={it.onClick}
-              disabled={!it.onClick}
-              className={`group flex flex-col gap-1 border-slate-100 px-5 py-4 text-left transition-colors dark:border-slate-700 ${
-                idx < 3 ? 'border-b sm:border-b-0 sm:border-r' : ''
-              } ${idx < 2 ? 'border-r sm:border-r' : 'sm:border-r-0'} ${
-                it.onClick ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/40' : 'cursor-default'
-              }`}
-             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
+
+          const inner = (
+            <>
               <Box layoutClassName="flex items-center gap-2">
-                <span className={`inline-flex h-7 w-7 items-center justify-center rounded-lg ${it.accent}`}>
+                <Box
+                  layoutClassName="inline-flex h-7 w-7 shrink-0 items-center justify-center"
+                  roundedClassName="rounded-lg"
+                  backgroundClassName={it.iconBg}
+                  textClassName={it.iconText}
+                >
                   {it.icon}
-                </span>
+                </Box>
                 <Typography as="span" size="xs" variant="muted" layoutClassName="truncate">
                   {it.label}
                 </Typography>
@@ -189,19 +194,47 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
                 {it.value}
               </Typography>
               {diff != null ? (
-                <Box layoutClassName={`flex items-center gap-1 text-xs ${diffColor}`}>
-                  {DiffIcon ? <DiffIcon className="h-3 w-3" /> : null}
-                  <span className="font-medium">
+                <Box layoutClassName="flex items-center gap-1">
+                  {DiffIcon ? <DiffIcon className={`h-3 w-3 ${diffColor}`} /> : null}
+                  <Typography as="span" size="xs" textClassName={`font-medium ${diffColor}`}>
                     {diffPositive ? '+' : ''}
                     {diff}%
-                  </span>
+                  </Typography>
                 </Box>
               ) : (
                 <Typography as="span" size="xs" variant="muted" layoutClassName="opacity-0">
                   —
                 </Typography>
               )}
+            </>
+          );
+
+          return it.onClick ? (
+            <Button
+              key={it.key}
+              type="button"
+              onClick={it.onClick}
+              variant="ghost"
+              disableVariantHover
+              disableVariantTextColor
+              layoutClassName="flex h-full flex-col items-start gap-1 px-5 py-4 text-left"
+              backgroundClassName="bg-white dark:bg-slate-800"
+              hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700/40"
+              borderClassName="border-transparent"
+              roundedClassName="rounded-none"
+              shadowClassName="shadow-none"
+              stateClassName="transition-colors cursor-pointer"
+            >
+              {inner}
             </Button>
+          ) : (
+            <Box
+              key={it.key}
+              layoutClassName="flex h-full flex-col items-start gap-1 px-5 py-4"
+              backgroundClassName="bg-white dark:bg-slate-800"
+            >
+              {inner}
+            </Box>
           );
         })}
       </Box>

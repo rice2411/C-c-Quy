@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, TrendingDown, DollarSign, Package, AlertCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Package, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
@@ -11,6 +11,8 @@ interface DashboardMetricsProps {
   metrics: {
     revenue: number;
     revenueChange: number;
+    completedCount: number;
+    completedChange: number;
   };
   totalOrders: number;
   newOrdersToday: number;
@@ -64,10 +66,11 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
   };
 
   const revenueInfo = getTrendInfo(metrics.revenueChange);
+  const completedInfo = getTrendInfo(metrics.completedChange);
   const navigate = useNavigate();
 
   return (
-    <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {/* Total Revenue */}
       <Card
         onClick={() => goToOrders(navigate, 'paid')}
@@ -148,6 +151,37 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
          <Box layoutClassName="mt-4 flex items-center text-sm text-slate-500 dark:text-slate-400">
           <Typography as="span" variant="muted">{t('dashboard.requiresAttention')}</Typography>
         </Box>
+      </Card>
+
+      {/* Đơn hoàn tất (PAID + DELIVERED) trong kỳ */}
+      <Card
+        onClick={() => goToOrders(navigate, 'delivered')}
+        layoutClassName="flex flex-col justify-between p-6 cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
+        stateClassName="transition-all"
+      >
+        <Box layoutClassName="flex items-start justify-between">
+          <Box>
+            <Typography size="sm" variant="muted" textClassName="font-medium">Đơn hoàn tất</Typography>
+            <Heading level={3} layoutClassName="mt-1" textClassName="text-2xl font-bold">{metrics.completedCount}</Heading>
+          </Box>
+          <Box
+            layoutClassName="p-2"
+            roundedClassName="rounded-lg"
+            backgroundClassName="bg-violet-50 dark:bg-violet-900/20"
+            textClassName="text-violet-600 dark:text-violet-400"
+          >
+            <CheckCircle2 size={20} />
+          </Box>
+        </Box>
+        <Box layoutClassName={`mt-4 flex items-center text-sm ${completedInfo.colorClass}`}>
+          <completedInfo.Icon size={16} className="mr-1" />
+          <Typography as="span" textClassName={completedInfo.colorClass}>
+            {completedInfo.isPositive ? '+' : ''}{metrics.completedChange.toFixed(1)}% {completedInfo.trendText}
+          </Typography>
+        </Box>
+        <Typography size="xs" layoutClassName="mt-1" textClassName="text-[10px] font-medium tracking-wide text-slate-400 dark:text-slate-500">
+          {completedInfo.bottomNote}
+        </Typography>
       </Card>
     </Box>
   );

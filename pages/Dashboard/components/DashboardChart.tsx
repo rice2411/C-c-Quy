@@ -8,133 +8,39 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { ChevronLeft, ChevronRight, BarChart } from "lucide-react";
-import Button from "@/components/ui/Button";
+import { BarChart } from "lucide-react";
 import Box from "@/components/ui/Box";
 import Heading from "@/components/ui/Heading";
-import IconButton from "@/components/ui/IconButton";
 import Typography from "@/components/ui/Typography";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatVND } from "@/utils/format/currencyUtil";
 
-type TimeRange = "week" | "month" | "year";
-
 interface DashboardChartProps {
   data: { name: string; amount: number }[];
-  timeRange: TimeRange;
-  setTimeRange: (range: TimeRange) => void;
-  dateRangeLabel: string;
-  onPrev: () => void;
-  onNext: () => void;
-  isFuture: boolean;
   isDarkMode: boolean;
 }
 
-const DashboardChart: React.FC<DashboardChartProps> = ({
-  data,
-  timeRange,
-  setTimeRange,
-  dateRangeLabel,
-  onPrev,
-  onNext,
-  isFuture,
-  isDarkMode,
-}) => {
+// Bộ chọn kỳ (Tuần/Tháng/Năm) + điều hướng ‹ kỳ › đã được tách ra
+// DashboardRangeControl và đặt ở header vùng "Phân tích" trong index.tsx.
+const DashboardChart: React.FC<DashboardChartProps> = ({ data, isDarkMode }) => {
   const { t } = useLanguage();
 
   return (
     <Box
-      layoutClassName="p-4 lg:col-span-2 sm:p-6"
+      layoutClassName="p-4 sm:p-6"
       borderClassName="border border-slate-100 dark:border-slate-700"
       backgroundClassName="bg-white dark:bg-slate-800"
       roundedClassName="rounded-xl"
       shadowClassName="shadow-sm"
       stateClassName="transition-colors"
     >
-      <Box layoutClassName="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <Box layoutClassName="w-full sm:w-auto">
-          <Heading
-            level={3}
-            layoutClassName="mb-2 sm:mb-0"
-            textClassName="text-lg font-semibold text-slate-800 dark:text-white"
-          >
-            {t("dashboard.revenueTrend")}
-          </Heading>
-          <Box
-            layoutClassName="mt-1 flex items-center justify-between gap-2 p-1 sm:justify-start sm:p-0"
-            roundedClassName="rounded-lg"
-            backgroundClassName="bg-slate-50 dark:bg-slate-900/50 sm:bg-transparent"
-          >
-            <IconButton
-              onClick={onPrev}
-              label={t("common.previous") ?? "Previous"}
-              size="sm"
-              sizeClassName="h-8 w-8"
-              roundedClassName="rounded-md"
-              shadowClassName="shadow-sm sm:shadow-none"
-              stateClassName="transition-all"
-              textClassName="text-slate-500 dark:text-slate-400"
-            >
-              <ChevronLeft size={16} />
-            </IconButton>
-            <Typography
-              as="span"
-              size="xs"
-              layoutClassName="w-full text-center sm:w-48"
-              textClassName="font-medium text-slate-600 dark:text-slate-300"
-            >
-              {dateRangeLabel}
-            </Typography>
-            <IconButton
-              onClick={onNext}
-              label={t("common.next") ?? "Next"}
-              size="sm"
-              disabled={isFuture}
-              sizeClassName="h-8 w-8"
-              roundedClassName="rounded-md"
-              shadowClassName="shadow-sm sm:shadow-none"
-              textClassName="text-slate-500 dark:text-slate-400"
-              stateClassName={`transition-all ${isFuture ? "opacity-30 cursor-not-allowed" : ""}`}
-              hoverClassName={isFuture ? "" : "hover:bg-white dark:hover:bg-slate-700"}
-            >
-              <ChevronRight size={16} />
-            </IconButton>
-          </Box>
-        </Box>
-
-        <Box
-          layoutClassName="flex w-full p-1 sm:w-auto"
-          roundedClassName="rounded-lg"
-          backgroundClassName="bg-slate-100 dark:bg-slate-700"
+      <Box layoutClassName="mb-6">
+        <Heading
+          level={3}
+          textClassName="text-lg font-semibold text-slate-800 dark:text-white"
         >
-          {(["week", "month", "year"] as TimeRange[]).map((range) => (
-            <Button
-              key={range}
-              onClick={() => setTimeRange(range)}
-              variant="ghost"
-              size="sm"
-              layoutClassName="flex-1 transition-all sm:flex-none"
-              sizeClassName="px-3 py-1.5"
-              textClassName={`text-xs font-medium ${
-                timeRange === range
-                  ? "text-orange-600 hover:text-orange-500 dark:text-orange-400 dark:hover:text-orange-300"
-                  : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-              }`}
-              roundedClassName="rounded-md"
-              shadowClassName="shadow-none"
-              borderClassName="border-0"
-              baseClassName="appearance-none"
-              stateClassName="active:!outline-none active:!shadow-none"
-              backgroundClassName={
-                timeRange === range ? "bg-white dark:bg-slate-600" : ""
-              }
-            >
-              {range === "week" && t("dashboard.filterWeek")}
-              {range === "month" && t("dashboard.filterMonth")}
-              {range === "year" && t("dashboard.filterYear")}
-            </Button>
-          ))}
-        </Box>
+          {t("dashboard.revenueTrend")}
+        </Heading>
       </Box>
 
       <Box layoutClassName="h-64 w-full sm:h-72">

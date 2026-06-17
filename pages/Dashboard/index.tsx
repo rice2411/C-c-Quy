@@ -1,16 +1,24 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { Order, OrderStatus, PaymentStatus } from '@/types';
 import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/contexts/OrderContext';
 import { getOrderRevenueDate, getOrderTotal } from '@/utils/order/orderUtils';
+import DashboardSection from '@/pages/Dashboard/components/DashboardSection';
+import DashboardRangeControl from '@/pages/Dashboard/components/DashboardRangeControl';
 import DashboardAlerts from '@/pages/Dashboard/components/DashboardAlerts';
 import DashboardToday from '@/pages/Dashboard/components/DashboardToday';
 import DashboardGoalProgress from '@/pages/Dashboard/components/DashboardGoalProgress';
 import DashboardMetrics from '@/pages/Dashboard/components/DashboardMetrics';
 import DashboardChart from '@/pages/Dashboard/components/DashboardChart';
+import DashboardProfit from '@/pages/Dashboard/components/DashboardProfit';
+import DashboardOrderStatus from '@/pages/Dashboard/components/DashboardOrderStatus';
+import DashboardPaymentMethods from '@/pages/Dashboard/components/DashboardPaymentMethods';
 import DashboardTopProducts from '@/pages/Dashboard/components/DashboardTopProducts';
 import DashboardTopCustomers from '@/pages/Dashboard/components/DashboardTopCustomers';
+import DashboardTopCollaborators from '@/pages/Dashboard/components/DashboardTopCollaborators';
 import DashboardRecentOrders from '@/pages/Dashboard/components/DashboardRecentOrders';
 import DashboardRecentTransactions from '@/pages/Dashboard/components/DashboardRecentTransactions';
 import DashboardRecentUsers from '@/pages/Dashboard/components/DashboardRecentUsers';
@@ -18,7 +26,7 @@ import DashboardRecentUsers from '@/pages/Dashboard/components/DashboardRecentUs
 type TimeRange = 'week' | 'month' | 'year';
 
 const DashboardPage: React.FC = () => {
-  const { orders } = useOrders();
+  const { orders, loading, refreshOrders } = useOrders();
   const { language } = useLanguage();
   const [timeRange, setTimeRange] = useState<TimeRange>('week');
   const [referenceDate, setReferenceDate] = useState<Date>(new Date());
@@ -96,9 +104,16 @@ const DashboardPage: React.FC = () => {
     const prevRevenue = prevOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
     const revenueChange = prevRevenue === 0 ? (currentRevenue > 0 ? 100 : 0) : ((currentRevenue - prevRevenue) / prevRevenue) * 100;
 
+    // Đơn hoàn tất (PAID + DELIVERED) trong kỳ — KPI thứ 4
+    const completedCount = currentOrders.length;
+    const prevCompleted = prevOrders.length;
+    const completedChange = prevCompleted === 0 ? (completedCount > 0 ? 100 : 0) : ((completedCount - prevCompleted) / prevCompleted) * 100;
+
     return {
       revenue: currentRevenue,
       revenueChange,
+      completedCount,
+      completedChange,
     };
   }, [orders, startDate, endDate, prevStartDate, prevEndDate]);
 
@@ -208,15 +223,36 @@ const DashboardPage: React.FC = () => {
 
   return (
     <Box layoutClassName="space-y-6 animate-fade-in">
-      {/* Critical alerts — morning glance cho chủ tiệm */}
-      <DashboardAlerts orders={orders} />
-
-      {/* Today's snapshot + Goal progress — focus hôm nay + động lực tháng */}
-      <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <DashboardToday orders={orders} />
-        <DashboardGoalProgress orders={orders} />
+      {/* TOOLBAR — góc phải: Làm mới + bộ lọc kỳ (theo bố cục tham khảo) */}
+      <Box layoutClassName="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+        <Button
+          onClick={() => { void refreshOrders(); }}
+          disabled={loading}
+          variant="ghost"
+          size="sm"
+          layoutClassName="inline-flex items-center gap-2"
+          sizeClassName="px-3 py-1.5"
+          textClassName="text-sm font-medium text-orange-600 dark:text-orange-400"
+          borderClassName="border border-orange-200 dark:border-orange-900/40"
+          roundedClassName="rounded-lg"
+          backgroundClassName="bg-white dark:bg-slate-800"
+          hoverClassName="hover:bg-orange-50 dark:hover:bg-orange-900/20"
+          stateClassName={`transition-colors ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
+        >
+          <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+          Làm mới
+        </Button>
+        <DashboardRangeControl
+          timeRange={timeRange}
+          setTimeRange={setTimeRange}
+          dateRangeLabel={currentRangeLabel}
+          onPrev={handlePrev}
+          onNext={handleNext}
+          isFuture={isFuture}
+        />
       </Box>
 
+      {/* HÀNG 4 THẺ KPI */}
       <DashboardMetrics
         metrics={metrics}
         totalOrders={totalOrders}
@@ -227,27 +263,43 @@ const DashboardPage: React.FC = () => {
         prevRangeLabel={prevRangeLabel}
         isCurrentPeriod={isCurrentPeriod}
       />
-      <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-1">
-        <DashboardChart
-          data={chartData}
-          timeRange={timeRange}
-          setTimeRange={setTimeRange}
-          dateRangeLabel={currentRangeLabel}
-          onPrev={handlePrev}
-          onNext={handleNext}
-          isFuture={isFuture}
-          isDarkMode={isDarkMode}
-        />
-      </Box>
-      <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <DashboardTopProducts orders={orders} startDate={startDate} endDate={endDate} />
-        <DashboardTopCustomers orders={orders} startDate={startDate} endDate={endDate} />
-      </Box>
+
+      {/* DẢI 1 — Biểu đồ (2/3) + Giao dịch gần đây (1/3) */}
       <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <DashboardRecentOrders orders={recentOrdersForDashboard} />
+        <Box layoutClassName="lg:col-span-2">
+          <DashboardChart data={chartData} isDarkMode={isDarkMode} />
+        </Box>
         <DashboardRecentTransactions />
-        <DashboardRecentUsers />
       </Box>
+
+      {/* DẢI 2 — Lợi nhuận & chi phí (2/3) + Top sản phẩm (1/3) */}
+      <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Box layoutClassName="lg:col-span-2">
+          <DashboardProfit fromISO={startDate.toISOString()} toISO={endDate.toISOString()} isDarkMode={isDarkMode} />
+        </Box>
+        <DashboardTopProducts orders={orders} startDate={startDate} endDate={endDate} />
+      </Box>
+
+      {/* CHI TIẾT KHÁC — các widget còn lại, để ở cuối */}
+      <DashboardSection title="Chi tiết khác">
+        <DashboardAlerts orders={orders} />
+        <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <DashboardToday orders={orders} />
+          <DashboardGoalProgress orders={orders} />
+        </Box>
+        <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <DashboardOrderStatus orders={orders} startDate={startDate} endDate={endDate} isDarkMode={isDarkMode} />
+          <DashboardPaymentMethods orders={orders} startDate={startDate} endDate={endDate} isDarkMode={isDarkMode} />
+        </Box>
+        <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <DashboardTopCustomers orders={orders} startDate={startDate} endDate={endDate} />
+          <DashboardTopCollaborators startDate={startDate} endDate={endDate} />
+        </Box>
+        <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <DashboardRecentOrders orders={recentOrdersForDashboard} />
+          <DashboardRecentUsers />
+        </Box>
+      </DashboardSection>
     </Box>
   );
 };
