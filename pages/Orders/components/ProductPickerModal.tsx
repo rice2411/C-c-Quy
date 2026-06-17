@@ -158,6 +158,8 @@ const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
             type="button"
             aria-label="Đóng"
             onClick={onClose}
+            sizeClassName="p-0"
+            shadowClassName="shadow-none"
             className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
            variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             <X className="h-5 w-5" />
@@ -184,6 +186,8 @@ const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
                 type="button"
                 aria-label="Xoá tìm kiếm"
                 onClick={() => setQuery('')}
+                sizeClassName="p-0"
+                shadowClassName="shadow-none"
                 className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 <X className="h-4 w-4" />
@@ -299,6 +303,8 @@ const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
                           type="button"
                           aria-label="Giảm 1"
                           onClick={() => onDecrementProduct(p.id)}
+                          sizeClassName="p-0"
+                          shadowClassName="shadow-none"
                           className="flex h-6 w-6 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
                          variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                           <Minus className="h-3.5 w-3.5" />
@@ -307,6 +313,8 @@ const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
                           type="button"
                           aria-label="Thêm 1"
                           onClick={() => onPickProduct(p)}
+                          sizeClassName="p-0"
+                          shadowClassName="shadow-none"
                           className="flex h-6 w-6 items-center justify-center rounded-full text-primary-600 hover:bg-primary-100 dark:text-primary-300 dark:hover:bg-primary-900/40"
                          variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                           <Plus className="h-3.5 w-3.5" />
