@@ -55,9 +55,9 @@ const CustomerCardList: React.FC<CustomerCardListProps> = ({
         >
           <Box
             layoutClassName="flex h-12 w-12 items-center justify-center rounded-xl"
-            backgroundClassName="bg-orange-100 dark:bg-orange-900/35"
+            backgroundClassName="bg-primary-100 dark:bg-primary-900/35"
           >
-            <Search className="h-5 w-5 text-orange-600 dark:text-orange-400" aria-hidden />
+            <Search className="h-5 w-5 text-primary-600 dark:text-primary-400" aria-hidden />
           </Box>
           <Typography size="sm" layoutClassName="max-w-xs px-4 text-center leading-relaxed text-slate-600 dark:text-slate-300">
             {emptyMessage}

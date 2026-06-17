@@ -31,11 +31,11 @@ const ProductToolbar: React.FC<ProductToolbarProps> = ({ searchTerm, onSearchCha
         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
         sizeClassName="px-4 py-2"
         layoutClassName="whitespace-nowrap gap-2 sm:self-start"
-        backgroundClassName="bg-orange-600"
-        hoverClassName="hover:bg-orange-700"
+        backgroundClassName="bg-primary-600"
+        hoverClassName="hover:bg-primary-700"
         textClassName="text-sm font-medium text-white"
         roundedClassName="rounded-lg"
-        shadowClassName="shadow-sm shadow-orange-200 dark:shadow-none"
+        shadowClassName="shadow-sm shadow-primary-200 dark:shadow-none"
         stateClassName="transition-colors"
         disableVariantHover
         disableVariantTextColor

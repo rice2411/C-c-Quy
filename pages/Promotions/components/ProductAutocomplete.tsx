@@ -79,8 +79,8 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
               key={p.id}
               size="sm"
               borderClassName="border-transparent"
-              backgroundClassName="bg-orange-100 dark:bg-orange-900/30"
-              textClassName="text-orange-700 dark:text-orange-300"
+              backgroundClassName="bg-primary-100 dark:bg-primary-900/30"
+              textClassName="text-primary-700 dark:text-primary-300"
             >
               {p.name}
               <Button
@@ -92,7 +92,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
                 disableVariantTextColor
                 borderClassName="border-transparent"
                 sizeClassName="p-0"
-                textClassName="text-orange-500 hover:text-red-500"
+                textClassName="text-primary-500 hover:text-red-500"
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -131,13 +131,13 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
               disableVariantHover
               disableVariantTextColor
               borderClassName="border-transparent"
-              backgroundClassName="bg-transparent hover:bg-orange-50 dark:hover:bg-orange-900/20"
+              backgroundClassName="bg-transparent hover:bg-primary-50 dark:hover:bg-primary-900/20"
               sizeClassName="px-3 py-2"
               layoutClassName="flex w-full items-center justify-between gap-2 text-left"
               textClassName="text-slate-700 dark:text-slate-200"
             >
               <Typography as="span" size="sm" layoutClassName="truncate">{p.name}</Typography>
-              <Typography as="span" size="xs" layoutClassName="shrink-0" textClassName="text-orange-600 dark:text-orange-400">
+              <Typography as="span" size="xs" layoutClassName="shrink-0" textClassName="text-primary-600 dark:text-primary-400">
                 {formatVND(p.price)}
               </Typography>
             </Button>

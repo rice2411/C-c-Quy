@@ -140,8 +140,8 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       value: String(stats.shipToday),
       diff: null,
       onClick: () => navigate('/orders?quick=today'),
-      iconBg: 'bg-orange-50 dark:bg-orange-900/20',
-      iconText: 'text-orange-600 dark:text-orange-300',
+      iconBg: 'bg-primary-50 dark:bg-primary-900/20',
+      iconText: 'text-primary-600 dark:text-primary-300',
     },
   ];
 

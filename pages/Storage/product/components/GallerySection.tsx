@@ -134,9 +134,9 @@ const GallerySection: React.FC<GallerySectionProps> = ({
             disabled={uploading}
             layoutClassName="flex aspect-square items-center justify-center"
             roundedClassName="rounded-lg"
-            borderClassName="border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-orange-400"
+            borderClassName="border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-primary-400"
             backgroundClassName="bg-transparent"
-            textClassName="text-slate-400 dark:text-slate-500 hover:text-orange-500"
+            textClassName="text-slate-400 dark:text-slate-500 hover:text-primary-500"
             stateClassName="transition-colors disabled:opacity-50"
             disableVariantHover
             disableVariantTextColor

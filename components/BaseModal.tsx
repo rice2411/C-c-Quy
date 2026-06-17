@@ -64,7 +64,7 @@ const BaseModal: React.FC<BaseModalProps> = ({
           }`}
         >
           {/* Header */}
-          <div className="flex items-start justify-between gap-4 border-b border-orange-100/90 bg-gradient-to-r from-orange-50/95 via-white to-amber-50/50 px-6 py-5 dark:border-slate-700 dark:from-slate-800 dark:via-slate-800 dark:to-orange-950/30">
+          <div className="flex items-start justify-between gap-4 border-b border-primary-100/90 bg-gradient-to-r from-primary-50/95 via-white to-primary-50/50 px-6 py-5 dark:border-slate-700 dark:from-slate-800 dark:via-slate-800 dark:to-primary-950/30">
             <h3
               className="min-w-0 flex-1 text-left text-xl font-bold tracking-tight text-slate-900 dark:text-white"
               id="modal-title"

@@ -172,7 +172,7 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
           layoutClassName="flex flex-shrink-0 items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-700"
         >
           <Box layoutClassName="flex items-center gap-2">
-            <SlidersHorizontal className="h-5 w-5 text-orange-500" />
+            <SlidersHorizontal className="h-5 w-5 text-primary-500" />
             <Heading level={3} textClassName="text-lg font-semibold">
               {t('orders.filters')}
             </Heading>
@@ -193,7 +193,7 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
           {/* ─── SECTION 1: SẮP XẾP ─────────────────────────────────────────── */}
           <Box layoutClassName="space-y-3">
             <Box layoutClassName="flex items-center gap-2 border-b border-slate-100 pb-2 dark:border-slate-700">
-              <ArrowDownWideNarrow className="h-4 w-4 text-orange-500" />
+              <ArrowDownWideNarrow className="h-4 w-4 text-primary-500" />
               <Heading level={4} textClassName="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">
                 Sắp xếp
               </Heading>
@@ -234,10 +234,10 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
                         sizeClassName="px-3"
                         roundedClassName="rounded-lg"
                         shadowClassName=""
-                        textClassName={`text-sm font-medium ${active ? 'text-orange-700 dark:text-orange-200' : 'text-slate-600 dark:text-slate-300'}`}
-                        backgroundClassName={active ? 'bg-orange-50 dark:bg-orange-900/30' : 'bg-white dark:bg-slate-800'}
-                        borderClassName={active ? 'border border-orange-300 dark:border-orange-600' : 'border border-slate-200 dark:border-slate-600'}
-                        hoverClassName={active ? '' : 'hover:border-orange-300'}
+                        textClassName={`text-sm font-medium ${active ? 'text-primary-700 dark:text-primary-200' : 'text-slate-600 dark:text-slate-300'}`}
+                        backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
+                        borderClassName={active ? 'border border-primary-300 dark:border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
+                        hoverClassName={active ? '' : 'hover:border-primary-300'}
                         stateClassName="transition-colors"
                       >
                         {label}
@@ -252,7 +252,7 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
           {/* ─── SECTION 2: TÌM KIẾM ────────────────────────────────────────── */}
           <Box layoutClassName="space-y-4">
             <Box layoutClassName="flex items-center gap-2 border-b border-slate-100 pb-2 dark:border-slate-700">
-              <Filter className="h-4 w-4 text-orange-500" />
+              <Filter className="h-4 w-4 text-primary-500" />
               <Heading level={4} textClassName="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">
                 Tìm kiếm
               </Heading>
@@ -269,13 +269,13 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
               sizeClassName="px-4 py-3"
               roundedClassName="rounded-lg"
               shadowClassName=""
-              backgroundClassName={values.hideCompleted ? 'bg-orange-50 dark:bg-orange-900/30' : 'bg-slate-50 dark:bg-slate-700/30'}
-              borderClassName={values.hideCompleted ? 'border border-orange-300 dark:border-orange-600' : 'border border-slate-200 dark:border-slate-600'}
-              hoverClassName={values.hideCompleted ? '' : 'hover:border-orange-300'}
+              backgroundClassName={values.hideCompleted ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-slate-50 dark:bg-slate-700/30'}
+              borderClassName={values.hideCompleted ? 'border border-primary-300 dark:border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
+              hoverClassName={values.hideCompleted ? '' : 'hover:border-primary-300'}
               stateClassName="text-left transition-colors"
             >
               <Box layoutClassName="flex flex-col">
-                <Typography as="span" size="sm" textClassName={values.hideCompleted ? 'font-semibold text-orange-700 dark:text-orange-200' : 'font-semibold text-slate-700 dark:text-slate-200'}>
+                <Typography as="span" size="sm" textClassName={values.hideCompleted ? 'font-semibold text-primary-700 dark:text-primary-200' : 'font-semibold text-slate-700 dark:text-slate-200'}>
                   Ẩn đơn đã hoàn thành
                 </Typography>
                 <Typography as="span" size="xs" variant="muted">
@@ -284,7 +284,7 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
               </Box>
               <span
                 className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                  values.hideCompleted ? 'bg-orange-500' : 'bg-slate-300 dark:bg-slate-600'
+                  values.hideCompleted ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'
                 }`}
               >
                 <span
@@ -407,7 +407,7 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
                     key={p.key}
                     type="button"
                     onClick={() => applyDatePreset(p.key)}
-                    className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-orange-600 dark:hover:bg-orange-900/30 dark:hover:text-orange-200"
+                    className="inline-flex shrink-0 items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-primary-600 dark:hover:bg-primary-900/30 dark:hover:text-primary-200"
                    variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                     {p.label}
                   </Button>
@@ -422,7 +422,7 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
                     value="orderDate"
                     checked={values.dateType === 'orderDate'}
                     onChange={(e) => handleChange('dateType', e.target.value as 'orderDate' | 'deliveryDate')}
-                    className="h-4 w-4 border-slate-300 text-orange-600 focus:ring-orange-500"
+                    className="h-4 w-4 border-slate-300 text-primary-600 focus:ring-primary-500"
                   />
                   <Typography as="span" size="sm" variant="secondary">
                     {t('orders.orderDateLabel')}
@@ -435,7 +435,7 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
                     value="deliveryDate"
                     checked={values.dateType === 'deliveryDate'}
                     onChange={(e) => handleChange('dateType', e.target.value as 'orderDate' | 'deliveryDate')}
-                    className="h-4 w-4 border-slate-300 text-orange-600 focus:ring-orange-500"
+                    className="h-4 w-4 border-slate-300 text-primary-600 focus:ring-primary-500"
                   />
                   <Typography as="span" size="sm" variant="secondary">
                     {t('orders.deliveryDateLabel')}
@@ -529,8 +529,8 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
             <Button
               type="button"
               onClick={handleApply}
-              backgroundClassName="bg-orange-600"
-              hoverClassName="hover:bg-orange-700"
+              backgroundClassName="bg-primary-600"
+              hoverClassName="hover:bg-primary-700"
               textClassName="text-sm font-semibold text-white"
               roundedClassName="rounded-lg"
               shadowClassName="shadow-sm"

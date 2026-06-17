@@ -252,11 +252,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         <Button
           type="button"
           onClick={onEdit}
-          backgroundClassName="bg-orange-600 dark:bg-orange-500"
-          hoverClassName="hover:bg-orange-700 dark:hover:bg-orange-600"
+          backgroundClassName="bg-primary-600 dark:bg-primary-500"
+          hoverClassName="hover:bg-primary-700 dark:hover:bg-primary-600"
           textClassName="text-sm font-medium text-white"
           roundedClassName="rounded-lg"
-          shadowClassName="shadow-sm shadow-orange-200 dark:shadow-none"
+          shadowClassName="shadow-sm shadow-primary-200 dark:shadow-none"
           layoutClassName="px-4 py-2"
           stateClassName="transition-colors"
           variant="primary"
@@ -310,11 +310,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
             disableVariantHover
             disableVariantTextColor
             borderClassName={
-              activeTab === 'details' ? 'border-b-2 border-orange-600' : 'border-b-2 border-transparent'
+              activeTab === 'details' ? 'border-b-2 border-primary-600' : 'border-b-2 border-transparent'
             }
             textClassName={
               activeTab === 'details'
-                ? 'text-sm font-medium text-orange-600 dark:text-orange-400'
+                ? 'text-sm font-medium text-primary-600 dark:text-primary-400'
                 : 'text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
             }
             layoutClassName="rounded-none py-4 shadow-none"
@@ -493,7 +493,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                      ) : null}
                      <div className="flex justify-between items-center pt-2 border-t border-slate-50 dark:border-slate-700">
                        <span className="font-medium text-slate-900 dark:text-white">{t('detail.total')}</span>
-                       <span className="text-lg font-bold text-orange-600 dark:text-orange-400">{formatVND(finalTotal)}</span>
+                       <span className="text-lg font-bold text-primary-600 dark:text-primary-400">{formatVND(finalTotal)}</span>
                      </div>
                    </div>
                 </div>
@@ -510,12 +510,12 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                     <div className={`flex flex-col items-center gap-3 rounded-xl border p-5 ${
                       currentOrder.status === OrderStatus.CANCELLED
                         ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
-                        : 'bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800'
+                        : 'bg-primary-50 border-primary-200 dark:bg-primary-900/20 dark:border-primary-800'
                     }`}>
                       <span className={`text-base font-bold ${
                         currentOrder.status === OrderStatus.CANCELLED
                           ? 'text-red-700 dark:text-red-200'
-                          : 'text-orange-700 dark:text-orange-200'
+                          : 'text-primary-700 dark:text-primary-200'
                       }`}>
                         {t(`orders.statusLabels.${currentOrder.status}`)}
                       </span>
@@ -560,7 +560,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                               const isReached = isActive || isPast;
                               const baseCircle = 'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-all';
                               const circleCls = isReached
-                                ? 'bg-orange-500 text-white shadow-sm shadow-orange-300 dark:bg-orange-500 dark:shadow-none'
+                                ? 'bg-primary-500 text-white shadow-sm shadow-primary-300 dark:bg-primary-500 dark:shadow-none'
                                 : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400';
                               const labelCls = isActive
                                 ? 'text-slate-900 font-bold dark:text-white'
@@ -592,7 +592,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                     </span>
                                   </Button>
                                   {idx < arr.length - 1 ? (
-                                    <span className={`mb-5 h-1 flex-1 rounded-full ${isPast ? 'bg-orange-500 dark:bg-orange-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                                    <span className={`mb-5 h-1 flex-1 rounded-full ${isPast ? 'bg-primary-500 dark:bg-primary-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
                                   ) : null}
                                 </React.Fragment>
                               );
@@ -670,9 +670,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                   disabled={updatingStatus}
                                   sizeClassName="px-4 py-2"
                                   textClassName="text-sm font-semibold text-white"
-                                  backgroundClassName="bg-orange-500 dark:bg-orange-500"
-                                  hoverClassName="hover:bg-orange-600 dark:hover:bg-orange-600"
-                                  shadowClassName="shadow-sm shadow-orange-300 dark:shadow-none"
+                                  backgroundClassName="bg-primary-500 dark:bg-primary-500"
+                                  hoverClassName="hover:bg-primary-600 dark:hover:bg-primary-600"
+                                  shadowClassName="shadow-sm shadow-primary-300 dark:shadow-none"
                                   roundedClassName="rounded-lg"
                                   stateClassName="transition-colors"
                                 >
@@ -817,15 +817,15 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                 shadowClassName=""
                                 stateClassName="transition-all whitespace-nowrap"
                                 textClassName={isActive
-                                  ? 'text-xs font-semibold text-orange-700 dark:text-orange-200'
+                                  ? 'text-xs font-semibold text-primary-700 dark:text-primary-200'
                                   : 'text-xs font-semibold text-slate-500 dark:text-slate-300'}
                                 backgroundClassName={isActive
-                                  ? 'bg-orange-50 dark:bg-orange-900/30'
+                                  ? 'bg-primary-50 dark:bg-primary-900/30'
                                   : 'bg-white dark:bg-slate-800'}
                                 borderClassName={isActive
-                                  ? 'border border-orange-300 dark:border-orange-700'
+                                  ? 'border border-primary-300 dark:border-primary-700'
                                   : 'border border-slate-200 dark:border-slate-600'}
-                                hoverClassName={isActive ? '' : 'hover:border-orange-300'}
+                                hoverClassName={isActive ? '' : 'hover:border-primary-300'}
                               >
                                 {label}
                               </Button>
@@ -883,7 +883,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                               </div>
                               <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
                                   <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.amount')}</span>
-                                  <span className="font-bold text-orange-600 dark:text-orange-400">
+                                  <span className="font-bold text-primary-600 dark:text-primary-400">
                                     {formatVND(finalTotal)}
                                   </span>
                               </div>
@@ -951,9 +951,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                   dotRingClass: string;
                 }> = [
                   { key: 'status', title: 'Lịch sử trạng thái', icon: StickyNote,
-                    borderClass: 'border-orange-200 dark:border-orange-800',
-                    iconBgClass: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-200',
-                    dotClass: 'bg-orange-500', dotRingClass: 'ring-orange-200 dark:ring-orange-900' },
+                    borderClass: 'border-primary-200 dark:border-primary-800',
+                    iconBgClass: 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-200',
+                    dotClass: 'bg-primary-500', dotRingClass: 'ring-primary-200 dark:ring-primary-900' },
                   { key: 'payment', title: 'Lịch sử nhận tiền', icon: Wallet,
                     borderClass: 'border-emerald-200 dark:border-emerald-800',
                     iconBgClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200',
@@ -1032,7 +1032,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                         {formatHistoryValue(g.change.field, g.change.oldValue)}
                                       </span>
                                       <span className="text-slate-400" aria-hidden="true">→</span>
-                                      <span className="font-semibold text-orange-700 dark:text-orange-300 break-all">
+                                      <span className="font-semibold text-primary-700 dark:text-primary-300 break-all">
                                         {formatHistoryValue(g.change.field, g.change.newValue)}
                                       </span>
                                     </div>

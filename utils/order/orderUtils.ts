@@ -164,7 +164,7 @@ const applySheetStyles = (ws: any, headerColor: string, currencyCols: number[] =
 export const exportOrdersToExcel = (
   orders: Order[], 
   columns: ExportColumn[], 
-  headerColor: string = '#ea580c'
+  headerColor: string = '#4abab9'
 ) => {
   const wb = XLSX.utils.book_new();
 

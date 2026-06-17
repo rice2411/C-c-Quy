@@ -82,8 +82,8 @@ const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
         disabled={isSubmitting}
         leftIcon={isSubmitting ? undefined : <Save />}
         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-        backgroundClassName="bg-orange-600 dark:bg-orange-500"
-        hoverClassName="hover:bg-orange-700 dark:hover:bg-orange-600"
+        backgroundClassName="bg-primary-600 dark:bg-primary-500"
+        hoverClassName="hover:bg-primary-700 dark:hover:bg-primary-600"
         textClassName="text-sm font-medium text-white"
         roundedClassName="rounded-lg"
         shadowClassName="shadow-sm"
@@ -116,8 +116,8 @@ const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({
 
           <Box
             layoutClassName="rounded-lg p-3 text-sm"
-            backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
-            textClassName="text-orange-700 dark:text-orange-300"
+            backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+            textClassName="text-primary-700 dark:text-primary-300"
           >
             Số điện thoại <strong>{phone}</strong> chưa tồn tại trong hệ thống. Vui lòng tạo khách hàng mới để tiếp
             tục.

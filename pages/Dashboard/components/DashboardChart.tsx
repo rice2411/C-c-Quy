@@ -52,8 +52,8 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ data, isDarkMode }) => 
             >
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ea580c" stopOpacity={0.1} />
-                  <stop offset="95%" stopColor="#ea580c" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#4abab9" stopOpacity={0.1} />
+                  <stop offset="95%" stopColor="#4abab9" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -105,13 +105,13 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ data, isDarkMode }) => 
               <Area
                 type="monotone"
                 dataKey="amount"
-                stroke="#ea580c"
+                stroke="#4abab9"
                 strokeWidth={3}
                 fillOpacity={1}
                 fill="url(#colorRevenue)"
                 dot={{
                   r: 3,
-                  fill: "#ea580c",
+                  fill: "#4abab9",
                   strokeWidth: 2,
                   stroke: isDarkMode ? "#1e293b" : "#fff",
                 }}

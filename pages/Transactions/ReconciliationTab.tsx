@@ -71,10 +71,10 @@ const ExternalTransactionRow: React.FC<ExternalTransactionRowProps> = ({ transac
         disableVariantTextColor
         layoutClassName="flex shrink-0 items-center gap-1.5"
         roundedClassName="rounded-lg"
-        borderClassName="border border-slate-200 hover:border-orange-300 dark:border-slate-600 dark:hover:border-orange-600"
-        backgroundClassName="bg-slate-50 hover:bg-orange-50 dark:bg-slate-700"
+        borderClassName="border border-slate-200 hover:border-primary-300 dark:border-slate-600 dark:hover:border-primary-600"
+        backgroundClassName="bg-slate-50 hover:bg-primary-50 dark:bg-slate-700"
         sizeClassName="px-3 py-1.5 text-xs"
-        textClassName="font-medium text-slate-500 hover:text-orange-600 dark:text-slate-400 dark:hover:text-orange-400"
+        textClassName="font-medium text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400"
         stateClassName="transition-colors disabled:opacity-50">
         {busy ? <InlineSpinner /> : <RotateCcw className="h-3.5 w-3.5" />}
         Khôi phục
@@ -113,7 +113,7 @@ const RevenueChart: React.FC<{ transactions: Transaction[]; fromDate: string; to
   return (
     <Card padding="none" layoutClassName="p-4 overflow-hidden" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
       <Box layoutClassName="mb-3 flex items-center gap-2">
-        <BarChart2 className="h-4 w-4 text-orange-500" />
+        <BarChart2 className="h-4 w-4 text-primary-500" />
         <Typography size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">Biểu đồ tiền vào</Typography>
       </Box>
       <Box layoutClassName="flex items-end gap-0.5 overflow-x-auto pb-1" style={{ height: 72 }}>
@@ -127,7 +127,7 @@ const RevenueChart: React.FC<{ transactions: Transaction[]; fromDate: string; to
                 </Box>
               )}
               <Box
-                layoutClassName={`w-full rounded-t transition-all ${b.amount > 0 ? 'bg-orange-400 hover:bg-orange-500 dark:bg-orange-500 dark:hover:bg-orange-400' : 'bg-slate-100 dark:bg-slate-700'}`}
+                layoutClassName={`w-full rounded-t transition-all ${b.amount > 0 ? 'bg-primary-400 hover:bg-primary-500 dark:bg-primary-500 dark:hover:bg-primary-400' : 'bg-slate-100 dark:bg-slate-700'}`}
                 style={{ height: `${heightPct}%` }}
               />
               {bars.length <= 31 && (
@@ -280,7 +280,7 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   ];
 
   if (loading) {
-    return <Box layoutClassName="flex flex-1 items-center justify-center py-16"><Spinner size="lg" textClassName="text-orange-500" /></Box>;
+    return <Box layoutClassName="flex flex-1 items-center justify-center py-16"><Spinner size="lg" textClassName="text-primary-500" /></Box>;
   }
 
   return (
@@ -302,7 +302,7 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
           <Box layoutClassName="flex items-start justify-between">
             <Box>
               <Typography as="p" size="xs" variant="muted" layoutClassName="mb-1 uppercase tracking-wide font-medium">Trung bình / GD</Typography>
-              <Typography as="p" layoutClassName="text-lg font-bold sm:text-xl" textClassName="text-orange-600 dark:text-orange-400">{avgAmount > 0 ? formatVND(avgAmount) : '—'}</Typography>
+              <Typography as="p" layoutClassName="text-lg font-bold sm:text-xl" textClassName="text-primary-600 dark:text-primary-400">{avgAmount > 0 ? formatVND(avgAmount) : '—'}</Typography>
             </Box>
           </Box>
         </Card>
@@ -385,13 +385,13 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
               stateClassName="transition-all"
               backgroundClassName={active ? 'bg-white shadow-sm dark:bg-slate-700' : 'bg-transparent'}
               textClassName={active ? 'font-semibold text-slate-900 dark:text-white' : (key === 'invalid' && count > 0 ? 'font-semibold text-amber-600 dark:text-amber-400' : 'font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200')}>
-              <Box layoutClassName={active ? 'text-orange-500' : ''}>{icon}</Box>
+              <Box layoutClassName={active ? 'text-primary-500' : ''}>{icon}</Box>
               <Typography as="span">{label}</Typography>
               <Badge
                 size="sm"
                 borderClassName="border-transparent"
-                backgroundClassName={active ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-slate-200 dark:bg-slate-600'}
-                textClassName={active ? 'text-[10px] font-bold text-orange-700 dark:text-orange-300' : 'text-[10px] font-bold text-slate-600 dark:text-slate-300'}>
+                backgroundClassName={active ? 'bg-primary-100 dark:bg-primary-900/30' : 'bg-slate-200 dark:bg-slate-600'}
+                textClassName={active ? 'text-[10px] font-bold text-primary-700 dark:text-primary-300' : 'text-[10px] font-bold text-slate-600 dark:text-slate-300'}>
                 {count}
               </Badge>
             </Button>

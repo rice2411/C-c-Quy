@@ -31,7 +31,7 @@ const Section: React.FC<{ icon: React.ReactNode; title: string; children: React.
 }) => (
   <Card padding="md" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
     <Box layoutClassName="mb-2 flex items-center gap-2">
-      <Box layoutClassName="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400">
+      <Box layoutClassName="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400">
         {icon}
       </Box>
       <Typography as="p" size="sm" layoutClassName="font-bold" textClassName="text-slate-900 dark:text-white">{title}</Typography>
@@ -60,7 +60,7 @@ const GroupTable: React.FC<{ groups: CommissionGroup[]; loading: boolean; canSee
   groups, loading, canSeeCost,
 }) => {
   if (loading) {
-    return <Box layoutClassName="flex justify-center py-6"><Spinner size="md" textClassName="text-orange-500" /></Box>;
+    return <Box layoutClassName="flex justify-center py-6"><Spinner size="md" textClassName="text-primary-500" /></Box>;
   }
   if (groups.length === 0) {
     return <Typography as="p" size="xs" variant="muted">Chưa có nhóm hoa hồng.</Typography>;
@@ -73,7 +73,7 @@ const GroupTable: React.FC<{ groups: CommissionGroup[]; loading: boolean; canSee
         return (
           <Box key={g.id} layoutClassName="rounded-lg border border-slate-100 p-2.5 dark:border-slate-700">
             <Box layoutClassName="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-              <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-orange-600 dark:text-orange-400">{g.name}</Typography>
+              <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-primary-600 dark:text-primary-400">{g.name}</Typography>
               {canSeeCost && (
                 <Typography as="span" size="xs" variant="muted">margin {pctText(g.minMargin)}–{pctText(g.maxMargin)}</Typography>
               )}
@@ -165,7 +165,7 @@ const SelfCalculator: React.FC<{
   const totalQty = rows.reduce((s, r) => s + r.q, 0);
 
   if (loading) {
-    return <Box layoutClassName="flex justify-center py-8"><Spinner size="md" textClassName="text-orange-500" /></Box>;
+    return <Box layoutClassName="flex justify-center py-8"><Spinner size="md" textClassName="text-primary-500" /></Box>;
   }
 
   if (examples.length === 0) {
@@ -219,7 +219,7 @@ const SelfCalculator: React.FC<{
                 <Box layoutClassName="min-w-0">
                   <Typography as="p" size="sm" layoutClassName="truncate font-medium" textClassName="text-slate-800 dark:text-slate-200">{product.name}</Typography>
                   <Typography as="p" layoutClassName="text-[11px]" textClassName="text-slate-400">
-                    <Typography as="span" textClassName="text-orange-600 dark:text-orange-400">{group.name}</Typography>
+                    <Typography as="span" textClassName="text-primary-600 dark:text-primary-400">{group.name}</Typography>
                     {' · '}{canSeeCost ? <>LN {pctText(rate)}</> : <>≈{pctText(eff)} giá bán</>}
                   </Typography>
                 </Box>
@@ -254,7 +254,7 @@ const SelfCalculator: React.FC<{
           ))}
         </Box>
 
-        <Box layoutClassName="flex items-center justify-between border-t border-slate-100 bg-orange-50/60 px-3 py-2.5 dark:border-slate-700 dark:bg-orange-900/10">
+        <Box layoutClassName="flex items-center justify-between border-t border-slate-100 bg-primary-50/60 px-3 py-2.5 dark:border-slate-700 dark:bg-primary-900/10">
           <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-700 dark:text-slate-200">
             Tổng hoa hồng {totalQty > 0 ? `(${totalQty} sp)` : ''}
           </Typography>
@@ -268,9 +268,9 @@ const SelfCalculator: React.FC<{
         <Box layoutClassName="space-y-1.5">
           {groupHints.map(h => (
             <Box key={h.group.id} layoutClassName="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs dark:bg-slate-900/40">
-              <TrendingUp className="h-3.5 w-3.5 shrink-0 text-orange-500" />
+              <TrendingUp className="h-3.5 w-3.5 shrink-0 text-primary-500" />
               <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-300">
-                Nhóm <Typography as="span" layoutClassName="font-bold" textClassName="text-orange-600 dark:text-orange-400">{h.group.name}</Typography>:
+                Nhóm <Typography as="span" layoutClassName="font-bold" textClassName="text-primary-600 dark:text-primary-400">{h.group.name}</Typography>:
                 {' '}đã {h.qty} sp
                 {canSeeCost && <> · đang ở mức <strong>{pctText(h.rate)}</strong></>}
                 {h.next
@@ -305,8 +305,8 @@ const CommissionGuidePage: React.FC = () => {
     <Box layoutClassName="flex h-full flex-col space-y-4 sm:space-y-5">
       {/* Header */}
       <Box layoutClassName="flex items-center gap-3">
-        <Box layoutClassName="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/30">
-          <BookOpen className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+        <Box layoutClassName="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
+          <BookOpen className="h-5 w-5 text-primary-600 dark:text-primary-400" />
         </Box>
         <Box>
           <Typography as="p" layoutClassName="text-lg font-bold sm:text-xl" textClassName="text-slate-900 dark:text-white">

@@ -95,7 +95,7 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
         layoutClassName="flex items-center gap-2 uppercase tracking-wider"
         textClassName="text-sm font-semibold"
       >
-        <User className="h-4 w-4 text-orange-500" /> {t('form.customerDetails')}
+        <User className="h-4 w-4 text-primary-500" /> {t('form.customerDetails')}
       </Heading>
 
       <Box layoutClassName="space-y-3">
@@ -140,13 +140,13 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
                   leftIcon={icon}
                   sizeClassName="px-2 py-2.5"
                   textClassName={active
-                    ? 'text-xs font-medium text-orange-700 dark:text-orange-200'
+                    ? 'text-xs font-medium text-primary-700 dark:text-primary-200'
                     : 'text-xs font-medium text-slate-600 dark:text-slate-300'}
                   backgroundClassName={active
-                    ? 'bg-orange-50 dark:bg-orange-900/30'
+                    ? 'bg-primary-50 dark:bg-primary-900/30'
                     : 'bg-white dark:bg-slate-800'}
                   borderClassName={active
-                    ? 'border border-orange-400 dark:border-orange-500'
+                    ? 'border border-primary-400 dark:border-primary-500'
                     : 'border border-slate-200 dark:border-slate-600'}
                   hoverClassName={active ? '' : 'hover:border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}
                   roundedClassName="rounded-lg"

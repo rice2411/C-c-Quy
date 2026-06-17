@@ -113,7 +113,7 @@ const LoginPage: React.FC = () => {
   return (
     <Box
       layoutClassName="min-h-screen flex flex-col items-center justify-center relative p-4"
-      backgroundClassName="bg-gradient-to-br from-orange-100 via-orange-50 to-orange-200 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900"
+      backgroundClassName="bg-gradient-to-br from-primary-100 via-primary-50 to-primary-200 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900"
     >
       <Box layoutClassName="absolute top-4 right-4">
         <ThemeToggle variant="floating" />
@@ -128,15 +128,15 @@ const LoginPage: React.FC = () => {
         <Box layoutClassName="text-center">
           <Box
             layoutClassName="mx-auto w-16 h-16 flex items-center justify-center mb-4 transform rotate-3"
-            backgroundClassName="bg-orange-100 dark:bg-orange-900/20"
+            backgroundClassName="bg-primary-100 dark:bg-primary-900/20"
             roundedClassName="rounded-2xl"
           >
-            <ChefHat className="w-10 h-10 text-orange-600 dark:text-orange-500" />
+            <ChefHat className="w-10 h-10 text-primary-600 dark:text-primary-500" />
           </Box>
           <Heading level={2} layoutClassName="mb-2">
-            CucQuy
-            <Typography as="span" textClassName="font-inherit text-orange-600 dark:text-orange-500">
-              Bakery
+            Tiệm Bánh{' '}
+            <Typography as="span" textClassName="font-inherit text-primary-600 dark:text-primary-500">
+              Cúc Quy
             </Typography>
           </Heading>
           <Typography variant="muted">{t('login.welcome')}</Typography>
@@ -168,7 +168,7 @@ const LoginPage: React.FC = () => {
                         src={account.photoURL || undefined}
                         alt={account.displayName || 'User'}
                         fallback={
-                          <Typography as="span" textClassName="text-sm font-bold text-orange-600 dark:text-orange-400">
+                          <Typography as="span" textClassName="text-sm font-bold text-primary-600 dark:text-primary-400">
                             {account.displayName?.charAt(0).toUpperCase() || account.email?.charAt(0).toUpperCase() || 'A'}
                           </Typography>
                         }
@@ -211,7 +211,7 @@ const LoginPage: React.FC = () => {
                   src={currentUser.photoURL || undefined}
                   alt={currentUser.displayName || 'User'}
                   fallback={
-                    <Typography as="span" textClassName="text-sm font-bold text-orange-600 dark:text-orange-400">
+                    <Typography as="span" textClassName="text-sm font-bold text-primary-600 dark:text-primary-400">
                       {currentUser.displayName?.charAt(0).toUpperCase() || currentUser.email?.charAt(0).toUpperCase() || 'A'}
                     </Typography>
                   }
@@ -229,8 +229,8 @@ const LoginPage: React.FC = () => {
                 onClick={handleUseCurrentAccount}
                 disabled={loading}
                 fullWidth
-                backgroundClassName="bg-orange-600"
-                hoverClassName="hover:bg-orange-700"
+                backgroundClassName="bg-primary-600"
+                hoverClassName="hover:bg-primary-700"
                 leftIcon={<LogIn className="w-4 h-4" />}
               >
                 {t('login.useCurrentAccount')}
@@ -267,7 +267,7 @@ const LoginPage: React.FC = () => {
 
         <Box layoutClassName="text-center text-xs" textClassName="text-slate-400 dark:text-slate-500">
           <Typography size="xs" variant="muted">
-            &copy; {new Date().getFullYear()} CucQuyBakery. All rights reserved.
+            &copy; {new Date().getFullYear()} Tiệm Bánh Cúc Quy. All rights reserved.
           </Typography>
         </Box>
       </Card>

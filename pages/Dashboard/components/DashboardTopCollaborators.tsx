@@ -14,7 +14,7 @@ interface Props {
   limit?: number;
 }
 
-const RANK = ['bg-amber-400', 'bg-slate-300', 'bg-orange-300', 'bg-slate-200', 'bg-slate-200'];
+const RANK = ['bg-primary-400', 'bg-slate-300', 'bg-primary-300', 'bg-slate-200', 'bg-slate-200'];
 
 /** Top CTV theo hoa hồng trong kỳ (lọc đơn theo deliveryDate). */
 const DashboardTopCollaborators: React.FC<Props> = ({ startDate, endDate, limit = 5 }) => {
@@ -59,7 +59,7 @@ const DashboardTopCollaborators: React.FC<Props> = ({ startDate, endDate, limit 
         <Heading level={3} textClassName="text-lg font-semibold text-slate-800 dark:text-white">Top cộng tác viên</Heading>
       </Box>
       {loading ? (
-        <Box layoutClassName="flex items-center justify-center py-12"><Spinner size="lg" textClassName="text-orange-500" /></Box>
+        <Box layoutClassName="flex items-center justify-center py-12"><Spinner size="lg" textClassName="text-primary-500" /></Box>
       ) : top.length === 0 ? (
         <Box layoutClassName="px-5 py-10"><Typography as="p" size="sm" variant="muted">Chưa có CTV bán trong kỳ.</Typography></Box>
       ) : (

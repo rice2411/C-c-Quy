@@ -139,7 +139,7 @@ const UsersPage: React.FC = () => {
 
       {loading ? (
         <Box layoutClassName="flex flex-1 items-center justify-center">
-          <Spinner size="lg" textClassName="text-orange-500" />
+          <Spinner size="lg" textClassName="text-primary-500" />
         </Box>
       ) : filteredUsers.length === 0 ? (
         <Box layoutClassName="flex flex-1 flex-col items-center justify-center" textClassName="text-slate-400 dark:text-slate-500">

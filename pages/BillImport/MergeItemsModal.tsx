@@ -74,7 +74,7 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
       onClose={() => !submitting && onClose()}
       title={
         <span className="flex items-center gap-2">
-          <GitMerge className="h-5 w-5 text-orange-600" />
+          <GitMerge className="h-5 w-5 text-primary-600" />
           Gộp {itemTypeLabel}
         </span>
       }
@@ -98,7 +98,7 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
             leftIcon={submitting ? <Spinner size="sm" textClassName="text-white" borderClassName="border-white" /> : <Check />}
             iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
             sizeClassName="px-4 py-2"
-            backgroundClassName="bg-gradient-to-r from-orange-600 to-amber-600"
+            backgroundClassName="bg-gradient-to-r from-primary-600 to-primary-600"
             textClassName="text-sm font-semibold text-white"
             roundedClassName="rounded-xl"
             layoutClassName="inline-flex items-center gap-2"
@@ -142,14 +142,14 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
                 disabled={submitting}
                 className={`w-full rounded-xl border p-3 text-left transition ${
                   isRoot
-                    ? 'border-orange-400 bg-orange-50 ring-2 ring-orange-200 dark:border-orange-600 dark:bg-orange-950/30 dark:ring-orange-900'
-                    : 'border-slate-200 bg-white hover:border-orange-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-orange-700'
+                    ? 'border-primary-400 bg-primary-50 ring-2 ring-primary-200 dark:border-primary-600 dark:bg-primary-950/30 dark:ring-primary-900'
+                    : 'border-slate-200 bg-white hover:border-primary-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-primary-700'
                 }`}
                variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 <Box layoutClassName="flex items-center gap-3">
                   <Box
                     layoutClassName={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-                      isRoot ? 'border-orange-600 bg-orange-600' : 'border-slate-300 dark:border-slate-600'
+                      isRoot ? 'border-primary-600 bg-primary-600' : 'border-slate-300 dark:border-slate-600'
                     }`}
                   >
                     {isRoot ? <Check className="h-3 w-3 text-white" strokeWidth={3} /> : null}
@@ -157,7 +157,7 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
                   <Box layoutClassName="min-w-0 flex-1">
                     <Typography
                       size="sm"
-                      layoutClassName={`truncate font-semibold ${isRoot ? 'text-orange-900 dark:text-orange-200' : ''}`}
+                      layoutClassName={`truncate font-semibold ${isRoot ? 'text-primary-900 dark:text-primary-200' : ''}`}
                     >
                       {item.name}
                     </Typography>
@@ -168,7 +168,7 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
                     ) : null}
                   </Box>
                   {isRoot ? (
-                    <span className="rounded-md bg-orange-600 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+                    <span className="rounded-md bg-primary-600 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
                       GỐC
                     </span>
                   ) : null}

@@ -62,9 +62,9 @@ const PeriodFilter: React.FC<PeriodFilterProps> = ({
             roundedClassName="rounded-full"
             sizeClassName="px-3 py-1 text-xs"
             stateClassName="transition-colors"
-            borderClassName={active ? 'border border-orange-400 dark:border-orange-600' : 'border border-slate-200 hover:border-orange-300 dark:border-slate-600 dark:hover:border-orange-700'}
-            backgroundClassName={active ? 'bg-orange-50 dark:bg-orange-900/30' : 'bg-white hover:bg-orange-50 dark:bg-slate-800'}
-            textClassName={active ? 'font-medium text-orange-700 dark:text-orange-300' : 'font-medium text-slate-600 dark:text-slate-400'}>
+            borderClassName={active ? 'border border-primary-400 dark:border-primary-600' : 'border border-slate-200 hover:border-primary-300 dark:border-slate-600 dark:hover:border-primary-700'}
+            backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white hover:bg-primary-50 dark:bg-slate-800'}
+            textClassName={active ? 'font-medium text-primary-700 dark:text-primary-300' : 'font-medium text-slate-600 dark:text-slate-400'}>
             {p.label}
           </Button>
         );

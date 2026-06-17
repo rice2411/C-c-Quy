@@ -33,20 +33,20 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
   }, [fromDate, toDate]);
 
   if (loading || !report) {
-    return <Box layoutClassName="flex flex-1 items-center justify-center py-16"><Spinner size="lg" textClassName="text-orange-500" /></Box>;
+    return <Box layoutClassName="flex flex-1 items-center justify-center py-16"><Spinner size="lg" textClassName="text-primary-500" /></Box>;
   }
 
   const profitPositive = report.profit >= 0;
   const pieData = [
     { name: 'Nhập kho', value: report.costBreakdown.stockIn, color: '#d97706' },
-    { name: 'Hoa hồng', value: report.costBreakdown.commission, color: '#ea580c' },
+    { name: 'Hoa hồng', value: report.costBreakdown.commission, color: '#4abab9' },
     { name: 'Chi phí khác', value: report.costBreakdown.expenses, color: '#64748b' },
   ].filter(d => d.value > 0);
 
   return (
     <Box layoutClassName="space-y-4">
       {/* Hero: Lợi nhuận */}
-      <Card padding="lg" backgroundClassName="bg-gradient-to-br from-orange-50 via-white to-emerald-50/40 dark:from-slate-800 dark:via-slate-800 dark:to-slate-900" borderClassName="border-slate-100 dark:border-slate-700">
+      <Card padding="lg" backgroundClassName="bg-gradient-to-br from-primary-50 via-white to-emerald-50/40 dark:from-slate-800 dark:via-slate-800 dark:to-slate-900" borderClassName="border-slate-100 dark:border-slate-700">
         <Box layoutClassName="flex items-start justify-between gap-3">
           <Box layoutClassName="min-w-0">
             <Typography as="p" size="xs" variant="muted" layoutClassName="mb-1 font-medium uppercase tracking-wide">Lợi nhuận trong kỳ</Typography>
@@ -57,8 +57,8 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
               Biên lợi nhuận {pctText(report.margin)} · {report.orderCount} đơn · Tổng thu {formatVND(report.totalRevenue)}
             </Typography>
           </Box>
-          <Box layoutClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/30">
-            <Wallet className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+          <Box layoutClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
+            <Wallet className="h-6 w-6 text-primary-600 dark:text-primary-400" />
           </Box>
         </Box>
         <Box layoutClassName="mt-3 rounded-lg bg-white/60 p-2.5 dark:bg-slate-900/30">
@@ -73,7 +73,7 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
         items={[
           { icon: Banknote, label: 'Tổng thu', value: formatVND(report.totalRevenue), accent: '#16a34a' },
           { icon: Boxes, label: '− Nhập kho', value: formatVND(report.totalStockIn), accent: '#d97706' },
-          { icon: Coins, label: '− Hoa hồng', value: formatVND(report.totalCommission), accent: '#ea580c' },
+          { icon: Coins, label: '− Hoa hồng', value: formatVND(report.totalCommission), accent: '#4abab9' },
           { icon: Receipt, label: '− Chi phí khác', value: formatVND(report.totalExpenses), accent: '#64748b' },
           { icon: TrendingUp, label: '= Lợi nhuận', value: formatVND(report.profit), accent: profitPositive ? '#16a34a' : '#dc2626' },
         ]}
@@ -84,7 +84,7 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
         {/* Line: doanh thu vs lợi nhuận */}
         <Card padding="md" layoutClassName="lg:col-span-2" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
           <Box layoutClassName="mb-3 flex items-center gap-2">
-            <LineIcon className="h-4 w-4 text-orange-500" />
+            <LineIcon className="h-4 w-4 text-primary-500" />
             <Typography size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">Doanh thu &amp; Lợi nhuận theo thời gian</Typography>
           </Box>
           <Box layoutClassName="h-64 w-full">
@@ -95,7 +95,7 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
                 <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={48} tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} />
                 <Tooltip formatter={(value: number | string, name) => [formatVND(Number(value)), name === 'revenue' ? 'Doanh thu' : 'Lợi nhuận']} labelStyle={{ fontSize: 12 }} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
                 <Line type="monotone" dataKey="revenue" stroke="#16a34a" strokeWidth={2} dot={false} name="revenue" />
-                <Line type="monotone" dataKey="profit" stroke="#ea580c" strokeWidth={2} dot={false} name="profit" />
+                <Line type="monotone" dataKey="profit" stroke="#4abab9" strokeWidth={2} dot={false} name="profit" />
               </LineChart>
             </ResponsiveContainer>
           </Box>
@@ -104,7 +104,7 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
         {/* Pie: tỷ trọng chi phí */}
         <Card padding="md" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
           <Box layoutClassName="mb-3 flex items-center gap-2">
-            <PieIcon className="h-4 w-4 text-orange-500" />
+            <PieIcon className="h-4 w-4 text-primary-500" />
             <Typography size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">Tỷ trọng chi phí</Typography>
           </Box>
           {pieData.length === 0 ? (

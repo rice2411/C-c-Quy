@@ -43,7 +43,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     // để select KHỚP HỆT Input: cùng pl-3, cùng chiều cao, cùng nền/viền. pr-9 chừa chỗ mũi tên.
     const classes = twMerge(
       [
-        'block w-full min-w-0 box-border max-w-full appearance-none rounded-lg border bg-slate-50 pl-3 pr-9 text-slate-900 outline-none transition-colors focus:ring-2 focus:ring-orange-500 dark:bg-slate-700 dark:text-white',
+        'block w-full min-w-0 box-border max-w-full appearance-none rounded-lg border bg-slate-50 pl-3 pr-9 text-slate-900 outline-none transition-colors focus:ring-2 focus:ring-primary-500 dark:bg-slate-700 dark:text-white',
         error ? 'border-red-500 dark:border-red-500' : 'border-slate-200 dark:border-slate-600',
         sizeClasses[size],
         borderClassName ?? '',

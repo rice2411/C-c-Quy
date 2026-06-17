@@ -130,13 +130,13 @@ const MobileFooterNav: React.FC = () => {
                   <span
                     className={` ${
                       active
-                        ? 'text-orange-600 dark:text-orange-300 font-semibold'
+                        ? 'text-primary-600 dark:text-primary-300 font-semibold'
                         : 'text-slate-500 dark:text-slate-300'
                     }`}
                   >
                     {tab.label}
                   </span>
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-orange-300 dark:shadow-none border-2 border-white dark:border-slate-900">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-primary-300 dark:shadow-none border-2 border-white dark:border-slate-900">
                     <LayoutDashboard className="w-6 h-6" />
                   </div>
                 </button>
@@ -158,11 +158,11 @@ const MobileFooterNav: React.FC = () => {
                 <div
                   className={`w-9 h-9 rounded-full flex items-center justify-center transition-all flex-shrink-0 ${
                     isMore && (isMoreMenuOpen || isMoreActive)
-                      ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-300'
+                      ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300'
                       : isDisabled
                         ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
                       : active
-                        ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-300'
+                        ? 'bg-primary-100 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300'
                         : 'text-slate-500 dark:text-slate-300'
                   }`}
                 >
@@ -171,11 +171,11 @@ const MobileFooterNav: React.FC = () => {
                 <span
                   className={`mt-0.5 w-full text-center truncate px-0.5 ${
                     isMore && (isMoreMenuOpen || isMoreActive)
-                      ? 'text-orange-600 dark:text-orange-300 font-semibold'
+                      ? 'text-primary-600 dark:text-primary-300 font-semibold'
                       : isDisabled
                         ? 'text-slate-400 dark:text-slate-500'
                       : active
-                        ? 'text-orange-600 dark:text-orange-300 font-semibold'
+                        ? 'text-primary-600 dark:text-primary-300 font-semibold'
                         : 'text-slate-500 dark:text-slate-300'
                   }`}
                 >
@@ -225,7 +225,7 @@ const MobileFooterNav: React.FC = () => {
                           onClick={() => !route.disabled && handleRouteClick(route.path)}
                           className={`w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition-all ${indented ? 'pl-8' : ''} ${
                             active
-                              ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400'
+                              ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400'
                               : route.disabled
                                 ? 'text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-700/40'
                               : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
@@ -234,7 +234,7 @@ const MobileFooterNav: React.FC = () => {
                         >
                           <Icon
                             className={`${indented ? 'w-4 h-4' : 'w-5 h-5'} mr-3 ${
-                              active ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'
+                              active ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500'
                             }`}
                           />
                           {t(route.labelKey)}

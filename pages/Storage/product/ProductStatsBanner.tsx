@@ -34,14 +34,14 @@ const ProductStatsBanner: React.FC<Props> = ({ products, orders }) => {
     <Box
       layoutClassName="grid grid-cols-2 gap-2 rounded-2xl border p-2 sm:grid-cols-3 sm:gap-3 sm:p-3 lg:grid-cols-5"
       borderClassName="border-slate-200 dark:border-slate-700"
-      backgroundClassName="bg-gradient-to-br from-orange-50/40 via-white to-amber-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800"
+      backgroundClassName="bg-gradient-to-br from-primary-50/40 via-white to-primary-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800"
     >
       <Tile
         icon={Package}
         label="Tổng SP"
         value={String(stats.totalProducts)}
         sub={`${stats.activeProducts} hoạt động · ${stats.inactiveProducts} tạm dừng`}
-        accent="#ea580c"
+        accent="#4abab9"
       />
       <Tile
         icon={TrendingUp}

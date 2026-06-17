@@ -52,7 +52,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         // `min-w-0 box-border` cần thiết để input không tràn ra ngoài container
         // trên mobile (đặc biệt input type="date"/"time" trên iOS có intrinsic
         // min-width > parent column).
-        'block w-full min-w-0 box-border max-w-full rounded-lg border bg-slate-50 text-slate-900 outline-none transition-colors focus:ring-2 focus:ring-orange-500 dark:bg-slate-700 dark:text-white',
+        'block w-full min-w-0 box-border max-w-full rounded-lg border bg-slate-50 text-slate-900 outline-none transition-colors focus:ring-2 focus:ring-primary-500 dark:bg-slate-700 dark:text-white',
         error ? 'border-red-500 dark:border-red-500' : 'border-slate-200 dark:border-slate-600',
         leftIcon ? 'pl-9' : 'pl-3',
         rightIcon ? 'pr-9' : 'pr-3',

@@ -320,7 +320,7 @@ const ProductSection: React.FC<Props> = ({
           onClick={() => setViewMode(id)}
           variant="ghost"
           size="sm"
-          backgroundClassName={viewMode === id ? 'bg-orange-500 hover:bg-orange-600' : 'bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700'}
+          backgroundClassName={viewMode === id ? 'bg-primary-500 hover:bg-primary-600' : 'bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700'}
           textClassName={viewMode === id ? 'text-white' : 'text-slate-500'}
           shadowClassName={viewMode === id ? 'shadow-sm' : ''}
           roundedClassName="rounded-md"
@@ -371,7 +371,7 @@ const ProductSection: React.FC<Props> = ({
         leftIcon={<Plus />}
         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
         sizeClassName="px-4 py-2"
-        backgroundClassName="bg-orange-600 hover:bg-orange-700"
+        backgroundClassName="bg-primary-600 hover:bg-primary-700"
         textClassName="font-medium text-white"
         roundedClassName="rounded-xl"
         borderClassName="border border-transparent"
@@ -454,10 +454,10 @@ const ProductSection: React.FC<Props> = ({
   // ===== Bulk bar =====
   const BulkBar = selected.size > 0 ? (
     <Box
-      layoutClassName="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-2 rounded-xl border-2 border-orange-300 bg-orange-50/90 p-3 shadow-lg backdrop-blur dark:border-orange-600 dark:bg-orange-950/40"
+      layoutClassName="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-2 rounded-xl border-2 border-primary-300 bg-primary-50/90 p-3 shadow-lg backdrop-blur dark:border-primary-600 dark:bg-primary-950/40"
     >
       <Box layoutClassName="flex items-center gap-2">
-        <Typography size="sm" layoutClassName="font-bold text-orange-700 dark:text-orange-300">
+        <Typography size="sm" layoutClassName="font-bold text-primary-700 dark:text-primary-300">
           {selected.size} đã chọn
         </Typography>
         <IconButton
@@ -465,8 +465,8 @@ const ProductSection: React.FC<Props> = ({
           variant="ghost"
           size="sm"
           onClick={clearSelection}
-          backgroundClassName="bg-transparent hover:bg-orange-200 dark:hover:bg-orange-900/40"
-          textClassName="text-orange-700 dark:text-orange-200"
+          backgroundClassName="bg-transparent hover:bg-primary-200 dark:hover:bg-primary-900/40"
+          textClassName="text-primary-700 dark:text-primary-200"
           roundedClassName="rounded-full"
         >
           <X className="h-3.5 w-3.5" />
@@ -504,7 +504,7 @@ const ProductSection: React.FC<Props> = ({
   if (loading) {
     return (
       <Box layoutClassName="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
       </Box>
     );
   }
@@ -515,7 +515,7 @@ const ProductSection: React.FC<Props> = ({
         <Package className="h-16 w-16 text-slate-300" />
         <Typography size="sm" variant="muted">Chưa có sản phẩm nào</Typography>
         <Button type="button" onClick={onCreate} sizeClassName="px-4 py-2"
-          backgroundClassName="bg-orange-600" textClassName="text-white"
+          backgroundClassName="bg-primary-600" textClassName="text-white"
           roundedClassName="rounded-lg" disableVariantHover disableVariantTextColor>
           Tạo sản phẩm đầu tiên
         </Button>
@@ -539,7 +539,7 @@ const ProductSection: React.FC<Props> = ({
             disableVariantTextColor
             sizeClassName="text-sm"
             backgroundClassName="bg-transparent"
-            textClassName="font-semibold text-orange-600 hover:underline"
+            textClassName="font-semibold text-primary-600 hover:underline"
             borderClassName="border-transparent"
           >
             Xoá filter

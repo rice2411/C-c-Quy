@@ -81,8 +81,8 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
             <Box
               layoutClassName="flex h-11 w-11 shrink-0 items-center justify-center text-base font-bold shadow-sm"
               roundedClassName="rounded-full"
-              backgroundClassName="bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/45 dark:to-amber-900/25"
-              textClassName="text-orange-700 dark:text-orange-300"
+              backgroundClassName="bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/45 dark:to-primary-800/25"
+              textClassName="text-primary-700 dark:text-primary-300"
             >
               {customer.name.charAt(0).toUpperCase()}
             </Box>
@@ -107,7 +107,7 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
               }}
               layoutClassName="rounded-xl p-2"
               textClassName="text-slate-400"
-              hoverClassName="hover:bg-orange-100 hover:text-orange-700 dark:hover:bg-orange-900/35 dark:hover:text-orange-300"
+              hoverClassName="hover:bg-primary-100 hover:text-primary-700 dark:hover:bg-primary-900/35 dark:hover:text-primary-300"
               stateClassName="transition-colors"
             >
               <Edit2 className="h-4 w-4" />
@@ -144,7 +144,7 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
               onChange={(e) => setPhoneDraft(e.target.value)}
               onBlur={handlePhoneBlur}
               placeholder={t('customers.phonePlaceholder')}
-              leftIcon={<Phone className="h-3.5 w-3.5 text-orange-500" />}
+              leftIcon={<Phone className="h-3.5 w-3.5 text-primary-500" />}
               containerClassName="min-w-0 flex-1"
               borderClassName={
                 !phoneDraft.trim()
@@ -170,9 +170,9 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
           <Badge
             size="sm"
             layoutClassName="inline-flex items-center gap-1.5 px-2.5 py-1.5"
-            borderClassName="border border-orange-200/70 dark:border-orange-800/50"
-            backgroundClassName="bg-orange-50 dark:bg-orange-950/35"
-            textClassName="text-xs font-semibold text-orange-900 dark:text-orange-100"
+            borderClassName="border border-primary-200/70 dark:border-primary-800/50"
+            backgroundClassName="bg-primary-50 dark:bg-primary-950/35"
+            textClassName="text-xs font-semibold text-primary-900 dark:text-primary-100"
           >
             <ShoppingBag className="h-3.5 w-3.5 opacity-80" aria-hidden />
             {t('customers.table.totalProducts')}: {productCount}

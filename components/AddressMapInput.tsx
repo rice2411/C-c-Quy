@@ -217,7 +217,7 @@ const AddressMapInput: React.FC<AddressMapInputProps> = ({
           type="button"
           onClick={handleSearch}
           disabled={searching}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-orange-400 bg-orange-50 px-3 py-2 text-xs font-medium text-orange-700 transition-colors hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-orange-500 dark:bg-orange-900/30 dark:text-orange-200 dark:hover:bg-orange-900/50"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-primary-400 bg-primary-50 px-3 py-2 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-primary-500 dark:bg-primary-900/30 dark:text-primary-200 dark:hover:bg-primary-900/50"
         >
           {searching
             ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -289,13 +289,13 @@ const AddressMapInput: React.FC<AddressMapInputProps> = ({
             </Box>
             <Box layoutClassName="p-3">
               <Box layoutClassName="flex items-center gap-1.5">
-                <Package className="h-3.5 w-3.5 text-orange-600" />
+                <Package className="h-3.5 w-3.5 text-primary-600" />
                 <Typography as="span" size="xs" variant="muted" layoutClassName="uppercase tracking-wide font-semibold">Phí ship</Typography>
               </Box>
               <Box layoutClassName="mt-1">
                 {shipFeeData ? (
                   <>
-                    <Typography as="div" layoutClassName="text-lg font-bold" textClassName="text-orange-700 dark:text-orange-300">{formatVnd(shipFeeData.fee)}</Typography>
+                    <Typography as="div" layoutClassName="text-lg font-bold" textClassName="text-primary-700 dark:text-primary-300">{formatVnd(shipFeeData.fee)}</Typography>
                     <Typography as="div" size="xs" variant="muted">{shipFeeData.label}</Typography>
                   </>
                 ) : (

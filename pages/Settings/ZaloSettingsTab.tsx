@@ -93,7 +93,7 @@ const UserAvatar: React.FC<{
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-full font-bold text-white shadow-sm ${dim} bg-gradient-to-br from-orange-500 to-amber-600 ${ring}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full font-bold text-white shadow-sm ${dim} bg-gradient-to-br from-primary-500 to-primary-600 ${ring}`}
     >
       {user ? initials(user) : '?'}
     </span>
@@ -391,9 +391,9 @@ const ZaloSettingsTab: React.FC = () => {
       >
         <Box
           layoutClassName="flex h-14 w-14 items-center justify-center rounded-2xl shadow-inner"
-          backgroundClassName="bg-orange-100 dark:bg-orange-900/40"
+          backgroundClassName="bg-primary-100 dark:bg-primary-900/40"
         >
-          <MessageCircle className="h-7 w-7 text-orange-600 dark:text-orange-400" />
+          <MessageCircle className="h-7 w-7 text-primary-600 dark:text-primary-400" />
         </Box>
         <Spinner size="md" />
         <Typography size="sm" variant="muted">
@@ -445,23 +445,23 @@ const ZaloSettingsTab: React.FC = () => {
     <Box layoutClassName="space-y-6">
       {/* ╭─────── SECTION: GROUP ───────╮ */}
       <Box layoutClassName="flex items-center gap-2">
-        <Users className="h-5 w-5 text-orange-600" />
+        <Users className="h-5 w-5 text-primary-600" />
         <Heading level={2} textClassName="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
           Nhóm CTV
         </Heading>
       </Box>
       <Box
         layoutClassName="relative overflow-hidden rounded-2xl border border-slate-200/90 p-6 dark:border-slate-600/80"
-        backgroundClassName="bg-gradient-to-br from-orange-50 via-white to-sky-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800"
+        backgroundClassName="bg-gradient-to-br from-primary-50 via-white to-sky-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800"
       >
         <Box
           layoutClassName="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full opacity-40 blur-2xl"
-          backgroundClassName="bg-orange-400"
+          backgroundClassName="bg-primary-400"
         />
         <Box layoutClassName="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Box layoutClassName="flex min-w-0 items-start gap-4">
             <Box
-              layoutClassName="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-md ring-1 ring-orange-200/80 dark:ring-orange-800/60"
+              layoutClassName="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-md ring-1 ring-primary-200/80 dark:ring-primary-800/60"
               backgroundClassName="bg-white dark:bg-slate-800"
             >
               <MessageCircle className="h-7 w-7 text-[#0068FF]" strokeWidth={2} />
@@ -506,7 +506,7 @@ const ZaloSettingsTab: React.FC = () => {
               sizeClassName="px-4 py-2.5"
               borderClassName="border border-slate-200 dark:border-slate-600"
               backgroundClassName="bg-white dark:bg-slate-800"
-              hoverClassName="hover:border-orange-300 hover:bg-orange-50/80 dark:hover:border-orange-700 dark:hover:bg-slate-700"
+              hoverClassName="hover:border-primary-300 hover:bg-primary-50/80 dark:hover:border-primary-700 dark:hover:bg-slate-700"
               textClassName="text-sm font-semibold text-slate-800 dark:text-slate-100"
               roundedClassName="rounded-xl"
               layoutClassName="inline-flex w-full items-center justify-center gap-2 shadow-sm"
@@ -519,8 +519,8 @@ const ZaloSettingsTab: React.FC = () => {
               disabled={saving}
               leftIcon={saving ? <Spinner size="sm" textClassName="text-white" borderClassName="border-white" /> : undefined}
               sizeClassName="px-4 py-2.5"
-              backgroundClassName="bg-gradient-to-r from-orange-600 to-amber-600"
-              hoverClassName="hover:from-orange-700 hover:to-amber-700"
+              backgroundClassName="bg-gradient-to-r from-primary-600 to-primary-600"
+              hoverClassName="hover:from-primary-700 hover:to-primary-700"
               textClassName="text-sm font-semibold text-white"
               roundedClassName="rounded-xl"
               layoutClassName="inline-flex w-full items-center justify-center gap-2 shadow-md"
@@ -556,19 +556,19 @@ const ZaloSettingsTab: React.FC = () => {
                 key={g.id}
                 type="button"
                 onClick={() => openGroupModal(g.id)}
-                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:border-orange-300 hover:shadow-md dark:border-slate-600 dark:bg-slate-900 dark:hover:border-orange-700"
+                className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all hover:border-primary-300 hover:shadow-md dark:border-slate-600 dark:bg-slate-900 dark:hover:border-primary-700"
                variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 <Box
                   layoutClassName="w-1 shrink-0 self-stretch rounded-full"
                   backgroundClassName={
-                    idx % 3 === 0 ? 'bg-orange-500' : idx % 3 === 1 ? 'bg-sky-500' : 'bg-rose-400'
+                    idx % 3 === 0 ? 'bg-primary-500' : idx % 3 === 1 ? 'bg-sky-500' : 'bg-rose-400'
                   }
                 />
                 <Box
                   layoutClassName="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-                  backgroundClassName="bg-orange-100 dark:bg-orange-950/60"
+                  backgroundClassName="bg-primary-100 dark:bg-primary-950/60"
                 >
-                  <Users className="h-5 w-5 text-orange-700 dark:text-orange-300" />
+                  <Users className="h-5 w-5 text-primary-700 dark:text-primary-300" />
                 </Box>
                 <Box layoutClassName="min-w-0 flex-1">
                   <Typography size="sm" layoutClassName="truncate font-bold text-slate-900 dark:text-white">
@@ -636,7 +636,7 @@ const ZaloSettingsTab: React.FC = () => {
 
       {/* ╭─────── SECTION: THÔNG BÁO ───────╮ */}
       <Box layoutClassName="flex items-center gap-2 pt-2">
-        <Bell className="h-5 w-5 text-orange-600" />
+        <Bell className="h-5 w-5 text-primary-600" />
         <Heading level={2} textClassName="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
           Thông báo
         </Heading>
@@ -646,7 +646,7 @@ const ZaloSettingsTab: React.FC = () => {
         backgroundClassName="bg-white dark:bg-slate-900"
       >
         <Box layoutClassName="mb-4 flex items-center gap-2">
-          <Bell className="h-4 w-4 text-orange-600" />
+          <Bell className="h-4 w-4 text-primary-600" />
           <Typography size="sm" layoutClassName="font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
             Cài đặt chung — Group chính
           </Typography>
@@ -731,8 +731,8 @@ const ZaloSettingsTab: React.FC = () => {
                         }
                         className={`rounded-md border px-2 py-1 text-[11px] transition ${
                           active
-                            ? 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300'
-                            : 'border-slate-200 bg-white text-slate-500 hover:border-orange-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                            ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300'
+                            : 'border-slate-200 bg-white text-slate-500 hover:border-primary-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
                         }`}
                        variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                         {f.label}
@@ -847,7 +847,7 @@ const ZaloSettingsTab: React.FC = () => {
                           sizeClassName="rounded-lg p-2"
                           onClick={() => setPeekZaloId((v) => !v)}
                           aria-label={peekZaloId ? 'Hide id' : 'Peek id'}
-                          textClassName="text-slate-500 hover:text-orange-600 dark:hover:text-orange-400"
+                          textClassName="text-slate-500 hover:text-primary-600 dark:hover:text-primary-400"
                         >
                           {peekZaloId ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
@@ -859,7 +859,7 @@ const ZaloSettingsTab: React.FC = () => {
                             setEditingZaloId(true);
                             setPeekZaloId(false);
                           }}
-                          textClassName="text-orange-600 dark:text-orange-400"
+                          textClassName="text-primary-600 dark:text-primary-400"
                         >
                           Sửa ID
                         </Button>
@@ -874,7 +874,7 @@ const ZaloSettingsTab: React.FC = () => {
                 >
                   <Box layoutClassName="mb-3 flex items-center justify-between gap-2">
                     <Box layoutClassName="flex items-center gap-2">
-                      <Bell className="h-3.5 w-3.5 text-orange-600" />
+                      <Bell className="h-3.5 w-3.5 text-primary-600" />
                       <Typography
                         size="xs"
                         layoutClassName="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
@@ -949,8 +949,8 @@ const ZaloSettingsTab: React.FC = () => {
                               }
                               className={`rounded-md border px-2 py-1 text-[11px] transition ${
                                 active
-                                  ? 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300'
-                                  : 'border-slate-200 bg-white text-slate-500 hover:border-orange-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                                  ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300'
+                                  : 'border-slate-200 bg-white text-slate-500 hover:border-primary-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
                               }`}
                              variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                               {f.label}
@@ -978,9 +978,9 @@ const ZaloSettingsTab: React.FC = () => {
                       <Box layoutClassName="flex items-center gap-2">
                         <Box
                           layoutClassName="flex h-8 w-8 items-center justify-center rounded-lg"
-                          backgroundClassName="bg-orange-100 dark:bg-orange-950/50"
+                          backgroundClassName="bg-primary-100 dark:bg-primary-950/50"
                         >
-                          <Users className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                          <Users className="h-4 w-4 text-primary-600 dark:text-primary-400" />
                         </Box>
                         <Typography size="sm" layoutClassName="font-semibold text-slate-900 dark:text-white">
                           Trong nhóm
@@ -1057,13 +1057,13 @@ const ZaloSettingsTab: React.FC = () => {
 
                   <Box
                     ref={userPickerRef}
-                    layoutClassName="rounded-2xl border border-orange-200/70 p-4 dark:border-orange-900/40"
-                    backgroundClassName="bg-gradient-to-br from-orange-50/90 via-white to-white dark:from-orange-950/25 dark:via-slate-900 dark:to-slate-900"
+                    layoutClassName="rounded-2xl border border-primary-200/70 p-4 dark:border-primary-900/40"
+                    backgroundClassName="bg-gradient-to-br from-primary-50/90 via-white to-white dark:from-primary-950/25 dark:via-slate-900 dark:to-slate-900"
                   >
                     <Box layoutClassName="mb-3 flex items-start gap-2">
                       <Box
                         layoutClassName="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                        backgroundClassName="bg-orange-500 shadow-sm"
+                        backgroundClassName="bg-primary-500 shadow-sm"
                       >
                         <UserPlus className="h-4 w-4 text-white" />
                       </Box>
@@ -1081,7 +1081,7 @@ const ZaloSettingsTab: React.FC = () => {
                       ref={userPickerAnchorRef}
                       type="button"
                       onClick={() => setUserPickerOpen((o) => !o)}
-                      className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-inner transition-colors hover:border-orange-300 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-orange-600"
+                      className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left shadow-inner transition-colors hover:border-primary-300 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-primary-600"
                      variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                       {pickUidsModal.length === 0 ? (
                         <Typography size="sm" variant="muted" layoutClassName="flex-1">
@@ -1105,9 +1105,9 @@ const ZaloSettingsTab: React.FC = () => {
                         <>
                           <Box
                             layoutClassName="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                            backgroundClassName="bg-orange-100 dark:bg-orange-900/40"
+                            backgroundClassName="bg-primary-100 dark:bg-primary-900/40"
                           >
-                            <Users className="h-5 w-5 text-orange-600 dark:text-orange-300" aria-hidden />
+                            <Users className="h-5 w-5 text-primary-600 dark:text-primary-300" aria-hidden />
                           </Box>
                           <Box layoutClassName="min-w-0 flex-1">
                             <Typography size="sm" layoutClassName="font-semibold text-slate-900 dark:text-white">
@@ -1161,8 +1161,8 @@ const ZaloSettingsTab: React.FC = () => {
                                   }}
                                   className={`flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors ${
                                     selected
-                                      ? 'bg-orange-50 dark:bg-orange-950/40'
-                                      : 'hover:bg-orange-50/80 dark:hover:bg-orange-950/30'
+                                      ? 'bg-primary-50 dark:bg-primary-950/40'
+                                      : 'hover:bg-primary-50/80 dark:hover:bg-primary-950/30'
                                   }`}
                                  variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                                   <UserAvatar user={u} size="sm" />
@@ -1181,7 +1181,7 @@ const ZaloSettingsTab: React.FC = () => {
                                     )}
                                   </span>
                                   {selected ? (
-                                    <Check className="h-4 w-4 shrink-0 text-orange-600 dark:text-orange-400" aria-hidden />
+                                    <Check className="h-4 w-4 shrink-0 text-primary-600 dark:text-primary-400" aria-hidden />
                                   ) : (
                                     <span className="h-4 w-4 shrink-0" aria-hidden />
                                   )}
@@ -1208,8 +1208,8 @@ const ZaloSettingsTab: React.FC = () => {
                       disabled={saving || pickUidsModal.length === 0}
                       leftIcon={<UserPlus className="h-4 w-4" />}
                       sizeClassName="mt-3 w-full justify-center py-2.5 sm:py-3"
-                      backgroundClassName="bg-gradient-to-r from-orange-600 to-amber-600"
-                      hoverClassName="hover:from-orange-700 hover:to-amber-700"
+                      backgroundClassName="bg-gradient-to-r from-primary-600 to-primary-600"
+                      hoverClassName="hover:from-primary-700 hover:to-primary-700"
                       textClassName="text-sm font-semibold text-white"
                       roundedClassName="rounded-xl"
                       layoutClassName="inline-flex items-center gap-2 shadow-md"

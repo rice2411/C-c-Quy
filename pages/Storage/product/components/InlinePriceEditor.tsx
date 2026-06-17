@@ -20,7 +20,7 @@ const InlinePriceEditor: React.FC<InlinePriceEditorProps> = ({ value, onSave }) 
       <span
         onClick={(e) => { e.stopPropagation(); setDraft(String(value)); setEditing(true); }}
         title="Click để sửa giá"
-        className="cursor-pointer rounded px-1 -mx-1 font-bold text-orange-600 transition-colors hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20"
+        className="cursor-pointer rounded px-1 -mx-1 font-bold text-primary-600 transition-colors hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
       >
         {formatVND(value)}
       </span>
@@ -49,8 +49,8 @@ const InlinePriceEditor: React.FC<InlinePriceEditorProps> = ({ value, onSave }) 
         if (e.key === 'Escape') { e.preventDefault(); setEditing(false); }
       }}
       containerClassName="w-24"
-      borderClassName="border-orange-300"
-      textClassName="font-bold text-orange-600 dark:text-orange-300"
+      borderClassName="border-primary-300"
+      textClassName="font-bold text-primary-600 dark:text-primary-300"
     />
   );
 };

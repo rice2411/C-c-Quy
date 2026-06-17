@@ -74,13 +74,13 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
       {onFileSelected ? (
         <Card
           padding="md"
-          borderClassName="border-orange-200 dark:border-orange-900/60"
-          backgroundClassName="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/40 dark:to-amber-950/30"
+          borderClassName="border-primary-200 dark:border-primary-900/60"
+          backgroundClassName="bg-gradient-to-br from-primary-50 to-primary-50 dark:from-primary-950/40 dark:to-primary-950/30"
           layoutClassName="shadow-sm"
         >
           <Box layoutClassName="flex flex-wrap items-center justify-between gap-3">
             <Box layoutClassName="min-w-0">
-              <Typography size="sm" layoutClassName="font-semibold text-orange-900 dark:text-orange-100">
+              <Typography size="sm" layoutClassName="font-semibold text-primary-900 dark:text-primary-100">
                 Nhập bill mới
               </Typography>
               <Typography size="xs" variant="muted" layoutClassName="mt-0.5">

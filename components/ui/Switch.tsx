@@ -33,7 +33,7 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
     const trackClasses = twMerge(
       [
         'relative inline-flex h-6 w-11 items-center rounded-full p-0 transition-colors',
-        checked ? 'bg-orange-600' : 'bg-slate-300 dark:bg-slate-600',
+        checked ? 'bg-primary-600' : 'bg-slate-300 dark:bg-slate-600',
         'disabled:cursor-not-allowed disabled:opacity-50',
         trackClassName ?? '',
         className ?? '',

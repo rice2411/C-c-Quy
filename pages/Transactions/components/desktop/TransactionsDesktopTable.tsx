@@ -51,7 +51,7 @@ const TransactionsDesktopTable: React.FC<TransactionsDesktopTableProps> = ({
                 key={tr.id}
                 onClick={() => onTransactionClick?.(tr)}
                 backgroundClassName={idx % 2 === 0 ? '' : 'bg-slate-50/50 dark:bg-slate-700/20'}
-                hoverClassName="hover:bg-orange-50/60 dark:hover:bg-orange-900/10"
+                hoverClassName="hover:bg-primary-50/60 dark:hover:bg-primary-900/10"
                 stateClassName="group cursor-pointer transition-colors"
                 borderClassName="border-b border-slate-100 dark:border-slate-700/60 last:border-0"
               >
@@ -98,9 +98,9 @@ const TransactionsDesktopTable: React.FC<TransactionsDesktopTableProps> = ({
                     <Badge
                       size="sm"
                       layoutClassName="inline-flex items-center px-2.5 py-1 text-xs font-semibold font-mono"
-                      borderClassName="border border-orange-200 dark:border-orange-700"
-                      backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
-                      textClassName="text-orange-700 dark:text-orange-300"
+                      borderClassName="border border-primary-200 dark:border-primary-700"
+                      backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+                      textClassName="text-primary-700 dark:text-primary-300"
                     >
                       {tr.orderNumber}
                     </Badge>

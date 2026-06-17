@@ -73,12 +73,12 @@ const PillDropdown: React.FC<{
     <label
       className={`group relative inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-sm transition-colors ${
         isAll
-          ? 'border-slate-200 bg-white hover:border-orange-300 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-orange-500'
-          : 'border-orange-300 bg-orange-50 dark:border-orange-600 dark:bg-orange-900/30'
+          ? 'border-slate-200 bg-white hover:border-primary-300 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-primary-500'
+          : 'border-primary-300 bg-primary-50 dark:border-primary-600 dark:bg-primary-900/30'
       }`}
     >
       <Icon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-      <span className={`font-medium ${isAll ? 'text-slate-700 dark:text-slate-200' : 'text-orange-700 dark:text-orange-300'}`}>
+      <span className={`font-medium ${isAll ? 'text-slate-700 dark:text-slate-200' : 'text-primary-700 dark:text-primary-300'}`}>
         {current}
       </span>
       <svg className="h-3 w-3 text-slate-400 dark:text-slate-500" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -148,7 +148,7 @@ const FilterToolbar: React.FC<FilterToolbarProps> = ({
           containerClassName="flex-1"
           backgroundClassName="bg-white dark:bg-slate-800"
           borderClassName="border-slate-200 dark:border-slate-600"
-          focusClassName="focus:border-orange-400 focus:ring-2 focus:ring-orange-400/30"
+          focusClassName="focus:border-primary-400 focus:ring-2 focus:ring-primary-400/30"
           sizeClassName="py-2.5"
           rightIconClassName="!pointer-events-auto"
         />
@@ -176,14 +176,14 @@ const FilterToolbar: React.FC<FilterToolbarProps> = ({
               borderClassName="border border-slate-200 dark:border-slate-600"
               textClassName="font-medium text-slate-700 dark:text-slate-200"
               roundedClassName="rounded-lg"
-              hoverClassName="hover:border-orange-300 dark:hover:border-orange-500"
+              hoverClassName="hover:border-primary-300 dark:hover:border-primary-500"
               layoutClassName="inline-flex items-center gap-1.5"
               disableVariantHover
               disableVariantTextColor
             >
               <span>{advancedLabel}</span>
               {advancedFiltersCount > 0 ? (
-                <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1.5 text-[10px] font-bold text-white">
+                <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-500 px-1.5 text-[10px] font-bold text-white">
                   {advancedFiltersCount}
                 </span>
               ) : null}
@@ -218,8 +218,8 @@ const FilterToolbar: React.FC<FilterToolbarProps> = ({
             const cls =
               'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ' +
               (p.active
-                ? 'border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-600 dark:bg-orange-900/30 dark:text-orange-200'
-                : 'border-slate-200 bg-white text-slate-600 hover:border-orange-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300');
+                ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-600 dark:bg-primary-900/30 dark:text-primary-200'
+                : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300');
             return (
               <button key={p.id} type="button" onClick={p.onClick} className={cls}>
                 {Icon ? <Icon className="h-3.5 w-3.5" /> : null}

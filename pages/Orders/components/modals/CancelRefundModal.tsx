@@ -159,7 +159,7 @@ const CancelRefundModal: React.FC<CancelRefundModalProps> = ({
             </Box>
             <Box layoutClassName="text-right">
               <Typography size="xs" variant="muted">Tổng tiền</Typography>
-              <Typography size="sm" layoutClassName="font-bold text-orange-600">
+              <Typography size="sm" layoutClassName="font-bold text-primary-600">
                 {formatVND(orderTotal)}
               </Typography>
             </Box>

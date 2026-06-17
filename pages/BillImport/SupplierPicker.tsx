@@ -188,7 +188,7 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
                       'flex w-full flex-col gap-1 px-3 py-2 text-left text-sm transition-colors ' +
                       (isCurrent
                         ? 'bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40'
-                        : 'hover:bg-orange-50 dark:hover:bg-orange-900/20')
+                        : 'hover:bg-primary-50 dark:hover:bg-primary-900/20')
                     }
                    variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                     <Box layoutClassName="flex items-center justify-between gap-2">
@@ -196,7 +196,7 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
                         {isCurrent ? (
                           <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                         ) : isTopHint ? (
-                          <Sparkles className="h-3.5 w-3.5 shrink-0 text-orange-500" />
+                          <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary-500" />
                         ) : null}
                         <span className="truncate font-medium text-slate-800 dark:text-slate-100">
                           {s.name}
@@ -228,7 +228,7 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
             <Button
               type="button"
               onClick={handleCreateNew}
-              className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2 text-left text-sm text-orange-700 hover:bg-orange-50 dark:border-slate-700 dark:text-orange-300 dark:hover:bg-orange-900/20"
+              className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2 text-left text-sm text-primary-700 hover:bg-primary-50 dark:border-slate-700 dark:text-primary-300 dark:hover:bg-primary-900/20"
              variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
               <Plus className="h-4 w-4" />
               <span>

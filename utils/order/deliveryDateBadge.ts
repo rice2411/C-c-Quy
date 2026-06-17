@@ -30,17 +30,19 @@ const formatVNShort = (d: Date) => {
  *  - done (XAM):   CANCELLED/RETURNED -> Card xam neutral
  *  - none (XAM):   khong co ngay giao -> Card xam neutral
  */
+// Thân thẻ TRUNG TÍNH (trắng/slate) — tone chỉ thể hiện qua VIỀN TRÁI 4px.
+// Badge nổi rõ trên nền trắng, thẻ nhẹ & sạch (không còn wash màu cả thẻ).
 const CARD_CLASS: Record<DeliveryTone, string> = {
   urgent:
-    'bg-red-50 border-red-300 dark:bg-red-950/30 dark:border-red-800',
+    'bg-white border border-l-4 border-slate-200 border-l-red-400 dark:bg-slate-800 dark:border-slate-700 dark:border-l-red-500',
   warning:
-    'bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-800',
+    'bg-white border border-l-4 border-slate-200 border-l-amber-400 dark:bg-slate-800 dark:border-slate-700 dark:border-l-amber-500',
   ok:
-    'bg-emerald-50 border-emerald-300 dark:bg-emerald-950/30 dark:border-emerald-800',
+    'bg-white border border-l-4 border-slate-200 border-l-emerald-400 dark:bg-slate-800 dark:border-slate-700 dark:border-l-emerald-500',
   done:
-    'bg-slate-50 border-slate-200 dark:bg-slate-800 dark:border-slate-700',
+    'bg-white border border-l-4 border-slate-200 border-l-slate-300 dark:bg-slate-800 dark:border-slate-700 dark:border-l-slate-600',
   none:
-    'bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700',
+    'bg-white border border-l-4 border-slate-200 border-l-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:border-l-slate-700',
 };
 
 const STRIP_CLASS: Record<DeliveryTone, string> = {

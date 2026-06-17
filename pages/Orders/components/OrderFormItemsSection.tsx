@@ -104,7 +104,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
         layoutClassName="flex items-center gap-2 uppercase tracking-wider"
         textClassName="text-sm font-semibold"
       >
-        <Package className="h-4 w-4 text-orange-500" /> {t('form.orderInfo')}
+        <Package className="h-4 w-4 text-primary-500" /> {t('form.orderInfo')}
       </Heading>
 
       {onAddItemWithProduct ? (
@@ -115,12 +115,12 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
           onClick={() => setPickerOpen(true)}
           layoutClassName="rounded-xl py-3"
           borderClassName="border-2 border-dashed border-slate-300 dark:border-slate-600"
-          hoverClassName="hover:border-orange-400 hover:bg-orange-50 dark:hover:border-orange-700 dark:hover:bg-orange-950/30"
+          hoverClassName="hover:border-primary-400 hover:bg-primary-50 dark:hover:border-primary-700 dark:hover:bg-primary-950/30"
           leftIcon={<Plus className="h-4 w-4" />}
         >
           <span className="font-medium">Thêm sản phẩm</span>
           {items.length > 0 ? (
-            <span className="ml-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">
+            <span className="ml-1 rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
               {items.reduce((sum, it) => sum + (it.quantity || 0), 0)}
             </span>
           ) : null}
@@ -142,8 +142,8 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                   onClick={() => onAddItemWithProduct(p)}
                   className={`flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs transition-colors ${
                     qty > 0
-                      ? 'border-orange-300 bg-orange-50 dark:border-orange-700 dark:bg-orange-950/30'
-                      : 'border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-orange-700 dark:hover:bg-orange-950/30'
+                      ? 'border-primary-300 bg-primary-50 dark:border-primary-700 dark:bg-primary-950/30'
+                      : 'border-slate-200 bg-white hover:border-primary-300 hover:bg-primary-50 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-primary-700 dark:hover:bg-primary-950/30'
                   }`}
                  variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                   {p.image ? (
@@ -151,11 +151,11 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                   ) : null}
                   <span className="font-medium text-slate-700 dark:text-slate-200">{p.name}</span>
                   {qty > 0 ? (
-                    <span className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    <span className="rounded-full bg-primary-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                       ×{qty}
                     </span>
                   ) : (
-                    <span className="text-orange-600 dark:text-orange-400">{formatVNDOrDash(p.price)}</span>
+                    <span className="text-primary-600 dark:text-primary-400">{formatVNDOrDash(p.price)}</span>
                   )}
                 </Button>
               );
@@ -243,7 +243,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                       )}
                       <span className="text-slate-400">× {item.quantity}</span>
                       <span className="text-slate-400">=</span>
-                      <span className="font-semibold text-orange-600 dark:text-orange-400">
+                      <span className="font-semibold text-primary-600 dark:text-primary-400">
                         {formatVNDOrDash(lineTotal)}
                       </span>
                     </Box>
@@ -384,7 +384,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
         </Typography>
         <Typography
           layoutClassName="text-lg font-bold"
-          textClassName="text-orange-600 dark:text-orange-400"
+          textClassName="text-primary-600 dark:text-primary-400"
         >
           {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}
         </Typography>

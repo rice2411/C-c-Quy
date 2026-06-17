@@ -146,7 +146,7 @@ const App: React.FC = () => {
         toastOptions={{
           duration: 3000,
           className: "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 shadow-lg rounded-xl text-sm px-4 py-3",
-          iconTheme: { primary: "#ea580c", secondary: "#ffffff" },
+          iconTheme: { primary: "#4abab9", secondary: "#ffffff" },
           success: { iconTheme: { primary: "#16a34a", secondary: "#ffffff" } },
           error: { iconTheme: { primary: "#dc2626", secondary: "#ffffff" } },
         }}

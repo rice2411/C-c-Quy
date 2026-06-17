@@ -22,12 +22,12 @@ const StatsBanner: React.FC<StatsBannerProps> = ({ items }) => {
     <Box
       layoutClassName="grid gap-2 rounded-xl border p-2 sm:gap-3 sm:p-3"
       borderClassName="border-slate-200 dark:border-slate-700"
-      backgroundClassName="bg-gradient-to-br from-orange-50/60 via-white to-amber-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800"
+      backgroundClassName="bg-gradient-to-br from-primary-50/60 via-white to-primary-50/40 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800"
       style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
     >
       {items.map((it, idx) => {
         const Icon = it.icon;
-        const accent = it.accent ?? '#ea580c';
+        const accent = it.accent ?? '#4abab9';
         return (
           <Box
             key={idx}

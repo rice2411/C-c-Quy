@@ -194,7 +194,7 @@ const SerpApiMapsTestPage: React.FC = () => {
             <Crosshair className="h-5 w-5 text-emerald-600" />
             <Heading level={3} textClassName="text-base font-semibold">Diem goc (tiem banh)</Heading>
           </Box>
-          <Button type="button" onClick={() => (editingOrigin ? handleSaveOrigin() : setEditingOrigin(true))} className="text-xs font-medium text-orange-600 hover:underline" variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">{editingOrigin ? 'Luu' : 'Sua'}</Button>
+          <Button type="button" onClick={() => (editingOrigin ? handleSaveOrigin() : setEditingOrigin(true))} className="text-xs font-medium text-primary-600 hover:underline" variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">{editingOrigin ? 'Luu' : 'Sua'}</Button>
         </Box>
         {editingOrigin ? (
           <Box layoutClassName="mt-3 space-y-2">
@@ -251,8 +251,8 @@ const SerpApiMapsTestPage: React.FC = () => {
                 const km = place.gps_coordinates ? haversineKm(origin, { name: place.title, lat: place.gps_coordinates.latitude, lng: place.gps_coordinates.longitude }) : null;
                 return (
                   <Button key={place.place_id || place.data_id || idx} type="button" onClick={() => pickPlace(place)}
-                    className="flex w-full items-start gap-3 border-b border-slate-100 px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-orange-50 dark:border-slate-700 dark:hover:bg-orange-900/20" variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
-                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" />
+                    className="flex w-full items-start gap-3 border-b border-slate-100 px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-primary-50 dark:border-slate-700 dark:hover:bg-primary-900/20" variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary-500" />
                     <Box layoutClassName="min-w-0 flex-1">
                       <Typography as="div" size="sm" layoutClassName="font-semibold truncate">{place.title}</Typography>
                       {place.address ? <Typography as="div" size="xs" variant="muted" layoutClassName="truncate">{place.address}</Typography> : null}
@@ -272,7 +272,7 @@ const SerpApiMapsTestPage: React.FC = () => {
         <Card padding="lg">
           <Box layoutClassName="flex items-center justify-between gap-2">
             <Box layoutClassName="flex items-center gap-2">
-              <Truck className="h-5 w-5 text-orange-600" />
+              <Truck className="h-5 w-5 text-primary-600" />
               <Heading level={3} textClassName="text-base font-semibold">Thong tin chuyen giao</Heading>
             </Box>
             {drivingLoading ? (
@@ -331,15 +331,15 @@ const SerpApiMapsTestPage: React.FC = () => {
               {drivingError ? <Typography as="div" size="xs" textClassName="mt-1 text-red-600 dark:text-red-300">{drivingError}</Typography> : null}
             </Box>
 
-            <Box layoutClassName="rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-amber-50 p-3 dark:border-orange-600 dark:from-orange-900/30 dark:to-amber-900/30">
+            <Box layoutClassName="rounded-lg border-2 border-primary-300 bg-gradient-to-br from-primary-50 to-primary-50 p-3 dark:border-primary-600 dark:from-primary-900/30 dark:to-primary-900/30">
               <Box layoutClassName="flex items-center gap-1.5">
-                <Package className="h-3.5 w-3.5 text-orange-600" />
-                <Typography as="span" size="xs" textClassName="uppercase tracking-wide text-orange-700 dark:text-orange-300 font-semibold">Phi ship</Typography>
+                <Package className="h-3.5 w-3.5 text-primary-600" />
+                <Typography as="span" size="xs" textClassName="uppercase tracking-wide text-primary-700 dark:text-primary-300 font-semibold">Phi ship</Typography>
               </Box>
               {shipFeeInfo ? (
                 <>
-                  <Typography as="div" size="xl" layoutClassName="mt-1 font-bold" textClassName="text-orange-700 dark:text-orange-200">{formatVnd(shipFeeInfo.info.fee)}</Typography>
-                  <Typography as="div" size="xs" textClassName="text-orange-600 dark:text-orange-300">{shipFeeInfo.info.tierLabel} - {shipFeeInfo.basisLabel}</Typography>
+                  <Typography as="div" size="xl" layoutClassName="mt-1 font-bold" textClassName="text-primary-700 dark:text-primary-200">{formatVnd(shipFeeInfo.info.fee)}</Typography>
+                  <Typography as="div" size="xs" textClassName="text-primary-600 dark:text-primary-300">{shipFeeInfo.info.tierLabel} - {shipFeeInfo.basisLabel}</Typography>
                 </>
               ) : (
                 <Typography as="div" size="sm" variant="muted" layoutClassName="mt-2">-</Typography>
@@ -354,19 +354,19 @@ const SerpApiMapsTestPage: React.FC = () => {
                 {SHIP_FEE_TIERS.map((tier) => {
                   const active = shipFeeInfo.info.tierLabel === tier.label;
                   return (
-                    <Box key={tier.label} layoutClassName={`flex items-center justify-between rounded px-2 py-1 text-xs ${active ? 'bg-orange-100 font-bold text-orange-800 dark:bg-orange-900/40 dark:text-orange-200' : 'text-slate-600 dark:text-slate-400'}`}>
+                    <Box key={tier.label} layoutClassName={`flex items-center justify-between rounded px-2 py-1 text-xs ${active ? 'bg-primary-100 font-bold text-primary-800 dark:bg-primary-900/40 dark:text-primary-200' : 'text-slate-600 dark:text-slate-400'}`}>
                       <span>{tier.label}</span>
                       <span className="font-mono">{formatVnd(tier.fee)}</span>
                     </Box>
                   );
                 })}
-                <Box layoutClassName={`flex items-center justify-between rounded px-2 py-1 text-xs ${shipFeeInfo.info.tierLabel.startsWith('>') ? 'bg-orange-100 font-bold text-orange-800 dark:bg-orange-900/40 dark:text-orange-200' : 'text-slate-600 dark:text-slate-400'}`}>
+                <Box layoutClassName={`flex items-center justify-between rounded px-2 py-1 text-xs ${shipFeeInfo.info.tierLabel.startsWith('>') ? 'bg-primary-100 font-bold text-primary-800 dark:bg-primary-900/40 dark:text-primary-200' : 'text-slate-600 dark:text-slate-400'}`}>
                   <span>{`> ${SHIP_FEE_TIERS[SHIP_FEE_TIERS.length - 1].maxKm} km`}</span>
                   <span className="font-mono">{formatVnd(SHIP_FEE_TIERS[SHIP_FEE_TIERS.length - 1].fee)} + {formatVnd(EXTRA_PER_KM)}/km</span>
                 </Box>
               </Box>
               {shipFeeInfo.info.tierLabel.startsWith('>') ? (
-                <Typography as="div" size="xs" layoutClassName="mt-2 font-mono" textClassName="text-orange-700 dark:text-orange-300">= {shipFeeInfo.info.breakdown}</Typography>
+                <Typography as="div" size="xs" layoutClassName="mt-2 font-mono" textClassName="text-primary-700 dark:text-primary-300">= {shipFeeInfo.info.breakdown}</Typography>
               ) : null}
             </Box>
           ) : null}

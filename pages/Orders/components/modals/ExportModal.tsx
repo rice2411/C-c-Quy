@@ -64,7 +64,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
 
   // State: Customization
   const [selectedColumnIds, setSelectedColumnIds] = useState<string[]>(AVAILABLE_COLUMNS.map(c => c.id));
-  const [headerColor, setHeaderColor] = useState('#ea580c'); // Default orange
+  const [headerColor, setHeaderColor] = useState('#4abab9'); // Default orange
 
   // State: Preview Tabs
   const [activeSheet, setActiveSheet] = useState<string>('Overall');
@@ -281,7 +281,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
       onClose={onClose}
       title={
         <span className="flex items-center gap-2">
-          <Download className="w-5 h-5 text-orange-600" />
+          <Download className="w-5 h-5 text-primary-600" />
           {t('orders.exportTitle')}
         </span>
       }
@@ -300,9 +300,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
                    </Heading>
                    <div className="space-y-2">
                       {/* Option 1: Single Month */}
-                      <label className={`flex flex-col p-3 border rounded-lg cursor-pointer transition-all ${rangeType === 'month' ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/10 ring-1 ring-orange-500' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}>
+                      <label className={`flex flex-col p-3 border rounded-lg cursor-pointer transition-all ${rangeType === 'month' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/10 ring-1 ring-primary-500' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}>
                         <div className="flex items-center">
-                            <input type="radio" name="range" value="month" checked={rangeType === 'month'} onChange={() => setRangeType('month')} className="w-4 h-4 text-orange-600 focus:ring-orange-500" />
+                            <input type="radio" name="range" value="month" checked={rangeType === 'month'} onChange={() => setRangeType('month')} className="w-4 h-4 text-primary-600 focus:ring-primary-500" />
                             <span className="ml-3 text-sm font-medium text-slate-900 dark:text-white">{t('orders.exportMonth')}</span>
                         </div>
                         {rangeType === 'month' && (
@@ -311,7 +311,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
                                  <select 
                                     value={selectedMonth} 
                                     onChange={(e) => setSelectedMonth(e.target.value)}
-                                    className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 appearance-none cursor-pointer shadow-sm"
+                                    className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer shadow-sm"
                                  >
                                     {monthOptions.map(opt => (
                                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -323,15 +323,15 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
                       </label>
 
                       {/* Option 2: All Time */}
-                      <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${rangeType === 'all' ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/10 ring-1 ring-orange-500' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}>
-                        <input type="radio" name="range" value="all" checked={rangeType === 'all'} onChange={() => setRangeType('all')} className="w-4 h-4 text-orange-600 focus:ring-orange-500" />
+                      <label className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${rangeType === 'all' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/10 ring-1 ring-primary-500' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}>
+                        <input type="radio" name="range" value="all" checked={rangeType === 'all'} onChange={() => setRangeType('all')} className="w-4 h-4 text-primary-600 focus:ring-primary-500" />
                         <span className="ml-3 text-sm font-medium text-slate-900 dark:text-white">{t('orders.exportAllTime')}</span>
                       </label>
 
                       {/* Option 3: Custom Range (Month Selection) */}
-                      <label className={`flex flex-col p-3 border rounded-lg cursor-pointer transition-all ${rangeType === 'custom' ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/10 ring-1 ring-orange-500' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}>
+                      <label className={`flex flex-col p-3 border rounded-lg cursor-pointer transition-all ${rangeType === 'custom' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/10 ring-1 ring-primary-500' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}>
                         <div className="flex items-center">
-                            <input type="radio" name="range" value="custom" checked={rangeType === 'custom'} onChange={() => setRangeType('custom')} className="w-4 h-4 text-orange-600 focus:ring-orange-500" />
+                            <input type="radio" name="range" value="custom" checked={rangeType === 'custom'} onChange={() => setRangeType('custom')} className="w-4 h-4 text-primary-600 focus:ring-primary-500" />
                             <span className="ml-3 text-sm font-medium text-slate-900 dark:text-white">{t('orders.exportCustom')}</span>
                         </div>
                         {rangeType === 'custom' && (
@@ -340,7 +340,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
                                <select 
                                   value={startMonth}
                                   onChange={(e) => setStartMonth(e.target.value)}
-                                  className="w-full pl-2 pr-6 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 appearance-none cursor-pointer"
+                                  className="w-full pl-2 pr-6 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer"
                                >
                                   <option value="" disabled>From</option>
                                   {monthOptions.map(opt => (
@@ -354,7 +354,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
                                <select 
                                   value={endMonth}
                                   onChange={(e) => setEndMonth(e.target.value)}
-                                  className="w-full pl-2 pr-6 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 appearance-none cursor-pointer"
+                                  className="w-full pl-2 pr-6 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer"
                                >
                                   <option value="" disabled>To</option>
                                   {monthOptions.map(opt => (
@@ -389,9 +389,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
                <Heading level={4} textClassName="text-sm font-bold text-slate-900 dark:text-white mb-2">Columns to Export</Heading>
                <div className="overflow-y-auto flex-1 pr-2 grid grid-cols-1 sm:grid-cols-2 gap-2 content-start">
                   {AVAILABLE_COLUMNS.map(col => (
-                     <label key={col.id} className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-600 rounded-lg cursor-pointer hover:border-orange-400 dark:hover:border-orange-500 transition-all">
+                     <label key={col.id} className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-600 rounded-lg cursor-pointer hover:border-primary-400 dark:hover:border-primary-500 transition-all">
                         <span className="text-sm text-slate-700 dark:text-slate-300">{col.label}</span>
-                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shrink-0 ml-2 ${selectedColumnIds.includes(col.id) ? 'bg-orange-500 border-orange-500 text-white' : 'border-slate-300 dark:border-slate-600 text-transparent'}`}>
+                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shrink-0 ml-2 ${selectedColumnIds.includes(col.id) ? 'bg-primary-500 border-primary-500 text-white' : 'border-slate-300 dark:border-slate-600 text-transparent'}`}>
                            <Check className="w-3 h-3" />
                         </div>
                         <Checkbox checked={selectedColumnIds.includes(col.id)} onChange={() => handleToggleColumn(col.id)} className="hidden" />
@@ -425,7 +425,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
                         onClick={() => setActiveSheet('Overall')}
                         className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors border flex items-center gap-1.5 ${
                             activeSheet === 'Overall' 
-                            ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800 shadow-sm' 
+                            ? 'bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-800 shadow-sm' 
                             : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
                         }`}
                      variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
@@ -438,7 +438,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
                             onClick={() => setActiveSheet(m)}
                             className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-colors border ${
                                 activeSheet === m 
-                                ? 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800 shadow-sm' 
+                                ? 'bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-800 shadow-sm' 
                                 : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
                             }`}
                          variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">

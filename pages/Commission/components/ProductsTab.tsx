@@ -93,8 +93,8 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, groups, onSaved, onRem
           <Badge
             size="sm"
             borderClassName="border-transparent"
-            backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
-            textClassName="text-[10px] font-semibold text-orange-700 dark:text-orange-300"
+            backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+            textClassName="text-[10px] font-semibold text-primary-700 dark:text-primary-300"
           >
             {group.name}
           </Badge>
@@ -120,7 +120,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, groups, onSaved, onRem
           sizeClassName="py-1.5 text-sm"
           backgroundClassName="bg-slate-50 dark:bg-slate-700"
           borderClassName="border-slate-200 dark:border-slate-600"
-          focusClassName="focus:border-orange-400 focus:ring-1 focus:ring-orange-400"
+          focusClassName="focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
           textClassName="text-slate-900 dark:text-white"
          />
       </Box>
@@ -134,7 +134,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, groups, onSaved, onRem
         disableVariantTextColor
         layoutClassName="flex shrink-0 items-center gap-1"
         roundedClassName="rounded-lg"
-        backgroundClassName="bg-orange-600 hover:bg-orange-700"
+        backgroundClassName="bg-primary-600 hover:bg-primary-700"
         sizeClassName="px-2.5 py-1.5 text-xs"
         textClassName="font-semibold text-white"
         borderClassName="border-transparent"

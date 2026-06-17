@@ -108,15 +108,21 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                 {/* Body grid: image | customer & items | total */}
                 <Box layoutClassName="grid grid-cols-[120px_1fr_200px] items-stretch">
                   <Box
-                    layoutClassName="flex h-[120px] w-[120px] shrink-0 items-center justify-center overflow-hidden"
-                    borderClassName="border-r border-slate-100 dark:border-slate-700"
-                    backgroundClassName="bg-white/40 dark:bg-slate-900/20"
+                    layoutClassName="flex h-[120px] w-[120px] shrink-0 items-center justify-center p-3"
+                    backgroundClassName="bg-slate-50/50 dark:bg-slate-900/20"
                   >
-                    <img
-                      src={getOrderImage(order)}
-                      alt={order.items?.[0]?.name || 'Order'}
-                      className="h-full w-full object-cover"
-                    />
+                    <Box
+                      layoutClassName="h-full w-full overflow-hidden"
+                      roundedClassName="rounded-xl"
+                      borderClassName="border border-slate-200 dark:border-slate-700"
+                      shadowClassName="shadow-sm"
+                    >
+                      <img
+                        src={getOrderImage(order)}
+                        alt={order.items?.[0]?.name || 'Order'}
+                        className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                      />
+                    </Box>
                   </Box>
 
                   <Box layoutClassName="min-w-0 p-4">
@@ -225,7 +231,7 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                       as="p"
                       size="xl"
                       layoutClassName="mt-1 text-2xl font-extrabold leading-none"
-                      textClassName="text-orange-600 dark:text-orange-400"
+                      textClassName="text-primary-600 dark:text-primary-400"
                     >
                       {formatVND(order.total)}
                     </Typography>

@@ -25,6 +25,6 @@ export interface MarginPalette {
 export const marginColor = (m: number | null): MarginPalette => {
   if (m === null) return { fg: '#94a3b8', bg: '#94a3b822', label: '—' };
   if (m < 0) return { fg: '#dc2626', bg: '#dc262622', label: `${Math.round(m * 100)}% LỖ` };
-  if (m < 0.2) return { fg: '#ea580c', bg: '#ea580c22', label: `${Math.round(m * 100)}%` };
+  if (m < 0.2) return { fg: '#4abab9', bg: '#4abab922', label: `${Math.round(m * 100)}%` };
   return { fg: '#16a34a', bg: '#16a34a22', label: `${Math.round(m * 100)}%` };
 };

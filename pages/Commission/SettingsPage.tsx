@@ -37,8 +37,8 @@ const CommissionSettingsPage: React.FC = () => {
     <Box layoutClassName="flex h-full flex-col space-y-4 sm:space-y-5">
       {/* Header */}
       <Box layoutClassName="flex items-center gap-3">
-        <Box layoutClassName="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/30">
-          <Settings2 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+        <Box layoutClassName="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
+          <Settings2 className="h-5 w-5 text-primary-600 dark:text-primary-400" />
         </Box>
         <Box>
           <Typography as="h1" layoutClassName="text-lg font-bold sm:text-xl" textClassName="text-slate-900 dark:text-white">
@@ -69,7 +69,7 @@ const CommissionSettingsPage: React.FC = () => {
               stateClassName="transition-all"
               backgroundClassName={active ? 'bg-white shadow-sm dark:bg-slate-700' : 'bg-transparent'}
               textClassName={active ? 'font-semibold text-slate-900 dark:text-white' : 'font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}>
-              <Box layoutClassName={active ? 'text-orange-500' : ''}>{icon}</Box>
+              <Box layoutClassName={active ? 'text-primary-500' : ''}>{icon}</Box>
               {label}
             </Button>
           );
@@ -80,7 +80,7 @@ const CommissionSettingsPage: React.FC = () => {
       <Box layoutClassName="flex-1 overflow-y-auto">
         {loading ? (
           <Box layoutClassName="flex justify-center py-16">
-            <Spinner size="lg" textClassName="text-orange-500" />
+            <Spinner size="lg" textClassName="text-primary-500" />
           </Box>
         ) : activeTab === 'groups' ? (
           <GroupsTab groups={groups} products={products} onGroupsChange={setGroups} />

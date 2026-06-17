@@ -106,7 +106,7 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
         sizeClassName="p-4"
         backgroundClassName="hover:bg-slate-50 dark:hover:bg-slate-700/50"
         stateClassName="transition-colors">
-        <Box layoutClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-100 text-sm font-bold text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+        <Box layoutClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-bold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
           {summary.collaboratorName.charAt(0).toUpperCase()}
         </Box>
         <Box layoutClassName="min-w-0 flex-1">
@@ -224,8 +224,8 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
                           <Badge
                             size="sm"
                             borderClassName="border-transparent"
-                            backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
-                            textClassName="text-[10px] font-semibold text-orange-700 dark:text-orange-300"
+                            backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+                            textClassName="text-[10px] font-semibold text-primary-700 dark:text-primary-300"
                           >
                             {p.groupName}
                           </Badge>

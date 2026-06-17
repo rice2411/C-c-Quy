@@ -282,7 +282,7 @@ const ProductDatabaseToolsPanel: React.FC<ProductDatabaseToolsPanelProps> = ({
 
       <Card padding="md" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700">
         <Box layoutClassName="flex items-center gap-2">
-          <ImageIcon className="h-4 w-4 text-orange-500" />
+          <ImageIcon className="h-4 w-4 text-primary-500" />
           <Typography size="sm" layoutClassName="font-semibold">
             Đồng bộ ảnh sản phẩm với đơn hàng
           </Typography>

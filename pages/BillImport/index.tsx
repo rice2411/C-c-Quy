@@ -308,7 +308,7 @@ const BillImportPage: React.FC = () => {
     <Box layoutClassName="space-y-6 animate-fade-in">
       <Box>
         <Heading level={2} textClassName="flex items-center gap-2 text-xl font-semibold">
-          <ScanLine className="h-6 w-6 text-orange-500" />
+          <ScanLine className="h-6 w-6 text-primary-500" />
           {t('header.billImportTitle')}
         </Heading>
         <Typography size="sm" variant="muted" layoutClassName="mt-1">

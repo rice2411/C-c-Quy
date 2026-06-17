@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => {
           short_name: "CucQuy",
           description:
             "Hệ thống quản lý đơn hàng thông minh cho Tiệm bánh Cúc Quy",
-          theme_color: "#ea580c",
+          theme_color: "#4abab9",
           background_color: "#ffffff",
           display: "standalone",
           orientation: "portrait-primary",

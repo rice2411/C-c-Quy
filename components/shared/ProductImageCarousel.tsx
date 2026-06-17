@@ -158,13 +158,13 @@ const ProductImageCarousel: React.FC<ProductImageCarouselProps> = ({
               onClick={() => setIndex(i)}
               className={`relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
                 i === index
-                  ? 'border-orange-500 ring-2 ring-orange-500/30'
+                  ? 'border-primary-500 ring-2 ring-primary-500/30'
                   : 'border-slate-200 dark:border-slate-700 opacity-70 hover:opacity-100'
               }`}
             >
               <img src={src} alt={`${alt} ${i + 1}`} className="h-full w-full object-cover" />
               {i === 0 && (
-                <span className="absolute bottom-0 left-0 right-0 bg-orange-500 py-0.5 text-center text-[8px] font-bold uppercase text-white">
+                <span className="absolute bottom-0 left-0 right-0 bg-primary-500 py-0.5 text-center text-[8px] font-bold uppercase text-white">
                   Chính
                 </span>
               )}

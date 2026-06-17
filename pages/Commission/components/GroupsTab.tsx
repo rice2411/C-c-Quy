@@ -177,12 +177,12 @@ const GroupRow: React.FC<GroupRowProps> = ({ group, products, onUpdate, onDelete
           borderClassName="border border-transparent"
           backgroundClassName={
             groupProducts.length > 0
-              ? 'bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40'
+              ? 'bg-primary-50 hover:bg-primary-100 dark:bg-primary-900/20 dark:hover:bg-primary-900/40'
               : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600'
           }
           textClassName={
             groupProducts.length > 0
-              ? 'font-semibold text-orange-700 dark:text-orange-300'
+              ? 'font-semibold text-primary-700 dark:text-primary-300'
               : 'font-semibold text-slate-500 dark:text-slate-400'
           }
           layoutClassName="inline-flex shrink-0 items-center gap-1"
@@ -204,7 +204,7 @@ const GroupRow: React.FC<GroupRowProps> = ({ group, products, onUpdate, onDelete
           sizeClassName="px-2.5 py-1.5 text-xs"
           roundedClassName="rounded-lg"
           borderClassName="border border-transparent"
-          backgroundClassName={isDirty ? 'bg-orange-600 hover:bg-orange-700' : 'bg-slate-200 dark:bg-slate-700'}
+          backgroundClassName={isDirty ? 'bg-primary-600 hover:bg-primary-700' : 'bg-slate-200 dark:bg-slate-700'}
           textClassName={isDirty ? 'font-semibold text-white' : 'font-semibold text-slate-400 dark:text-slate-500'}
           layoutClassName="inline-flex shrink-0 items-center gap-1"
           stateClassName="transition-colors disabled:cursor-not-allowed"
@@ -493,9 +493,9 @@ const GroupsTab: React.FC<GroupsTabProps> = ({ groups, products, onGroupsChange 
         disableVariantTextColor
         layoutClassName="flex w-full items-center justify-center gap-2"
         roundedClassName="rounded-xl"
-        borderClassName="border-2 border-dashed border-slate-200 hover:border-orange-400 dark:border-slate-600 dark:hover:border-orange-600"
+        borderClassName="border-2 border-dashed border-slate-200 hover:border-primary-400 dark:border-slate-600 dark:hover:border-primary-600"
         sizeClassName="py-3 text-sm"
-        textClassName="font-medium text-slate-500 hover:text-orange-600 dark:text-slate-400 dark:hover:text-orange-400"
+        textClassName="font-medium text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400"
         stateClassName="transition-colors disabled:opacity-50">
         {adding ? <ButtonSpinner className="border-slate-400" /> : <Plus className="h-4 w-4" />}
         Thêm nhóm

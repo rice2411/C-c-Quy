@@ -70,7 +70,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({
             layoutClassName="mb-3 flex items-center gap-2 uppercase tracking-wider"
             textClassName="text-sm font-semibold text-slate-800 dark:text-slate-200"
           >
-            <User className="h-4 w-4 shrink-0 text-orange-500" aria-hidden />
+            <User className="h-4 w-4 shrink-0 text-primary-500" aria-hidden />
             {t('customers.detail.contactSection')}
           </Heading>
 
@@ -80,8 +80,8 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({
                 <Box
                   layoutClassName="flex h-12 w-12 shrink-0 items-center justify-center text-lg font-bold shadow-sm"
                   roundedClassName="rounded-full"
-                  backgroundClassName="bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/45 dark:to-amber-900/25"
-                  textClassName="text-orange-700 dark:text-orange-300"
+                  backgroundClassName="bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/45 dark:to-primary-800/25"
+                  textClassName="text-primary-700 dark:text-primary-300"
                 >
                   {customer.name.charAt(0).toUpperCase()}
                 </Box>
@@ -104,7 +104,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({
                     onChange={(e) => setPhoneDraft(e.target.value)}
                     onBlur={handlePhoneBlur}
                     placeholder={t('customers.phonePlaceholder')}
-                    leftIcon={<Phone className="h-4 w-4 text-orange-500" />}
+                    leftIcon={<Phone className="h-4 w-4 text-primary-500" />}
                     leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
                     containerClassName="min-w-0 flex-1 sm:max-w-xs"
                     borderClassName={
@@ -159,7 +159,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({
             layoutClassName="mb-3 flex items-center gap-2 uppercase tracking-wider"
             textClassName="text-sm font-semibold text-slate-800 dark:text-slate-200"
           >
-            <Package className="h-4 w-4 shrink-0 text-orange-500" aria-hidden />
+            <Package className="h-4 w-4 shrink-0 text-primary-500" aria-hidden />
             {t('customers.detail.ordersHeading').replace('{{n}}', String(orders.length))}
           </Heading>
 
@@ -257,7 +257,7 @@ const CustomerDetailPanel: React.FC<CustomerDetailPanelProps> = ({
                       </Box>
                       <Box layoutClassName="flex justify-between gap-3 border-t border-dashed border-slate-200 pt-3 dark:border-slate-600">
                         <Typography layoutClassName="text-base font-semibold text-slate-900 dark:text-white">{t('detail.total')}</Typography>
-                        <Typography layoutClassName="text-base font-semibold tabular-nums text-orange-600 dark:text-orange-400">
+                        <Typography layoutClassName="text-base font-semibold tabular-nums text-primary-600 dark:text-primary-400">
                           {formatVND(grandTotal)}
                         </Typography>
                       </Box>

@@ -162,7 +162,7 @@ const CategoriesTab: React.FC = () => {
   };
 
   const renderEditor = () => (
-    <div className="rounded-lg border-2 border-orange-300 bg-orange-50 dark:bg-orange-900/20 dark:border-orange-700 p-3 space-y-2">
+    <div className="rounded-lg border-2 border-primary-300 bg-primary-50 dark:bg-primary-900/20 dark:border-primary-700 p-3 space-y-2">
       <div className="flex items-center gap-2">
         <Input
           value={draftIcon}
@@ -175,7 +175,7 @@ const CategoriesTab: React.FC = () => {
           onChange={(e) => setDraftName(e.target.value)}
           placeholder="Tên danh mục"
           autoFocus
-          className="flex-1 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+          className="flex-1 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded text-sm focus:ring-2 focus:ring-primary-500 outline-none"
           onKeyDown={(e) => {
             if (e.key === 'Enter') void saveEdit();
             if (e.key === 'Escape') cancelEdit();
@@ -201,7 +201,7 @@ const CategoriesTab: React.FC = () => {
           type="button"
           onClick={() => void saveEdit()}
           disabled={saving}
-          className="inline-flex items-center gap-1 rounded bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 text-xs font-medium disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded bg-primary-600 hover:bg-primary-700 text-white px-3 py-1 text-xs font-medium disabled:opacity-50"
          variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
           <Save className="h-3 w-3" /> Lưu
         </Button>
@@ -228,7 +228,7 @@ const CategoriesTab: React.FC = () => {
           renderEditor()
         ) : (
           <div
-            className="group flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5 hover:border-orange-300 dark:hover:border-orange-600 transition-colors"
+            className="group flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1.5 hover:border-primary-300 dark:hover:border-primary-600 transition-colors"
             style={{ marginLeft: node.depth * 16 }}
           >
             {hasChildren ? (
@@ -273,7 +273,7 @@ const CategoriesTab: React.FC = () => {
                 type="button"
                 onClick={() => startAddChild(node.id)}
                 title="Thêm danh mục con"
-                className="rounded p-1 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30"
+                className="rounded p-1 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30"
                variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 <FolderPlus className="h-3.5 w-3.5" />
               </Button>
@@ -311,7 +311,7 @@ const CategoriesTab: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
       </div>
     );
   }
@@ -322,7 +322,7 @@ const CategoriesTab: React.FC = () => {
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
             <Heading level={3} textClassName="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Folder className="h-4 w-4 text-orange-500" />
+              <Folder className="h-4 w-4 text-primary-500" />
               Cây danh mục sản phẩm
             </Heading>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -333,7 +333,7 @@ const CategoriesTab: React.FC = () => {
             type="button"
             onClick={() => startAddChild(null)}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 text-xs font-medium disabled:opacity-50 shadow-sm"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 text-xs font-medium disabled:opacity-50 shadow-sm"
            variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             <Plus className="h-3.5 w-3.5" /> Danh mục gốc
           </Button>

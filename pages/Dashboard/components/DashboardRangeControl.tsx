@@ -92,7 +92,7 @@ const DashboardRangeControl: React.FC<DashboardRangeControlProps> = ({
             sizeClassName="px-3 py-1.5"
             textClassName={`text-xs font-medium ${
               timeRange === range
-                ? 'text-orange-600 hover:text-orange-500 dark:text-orange-400 dark:hover:text-orange-300'
+                ? 'text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300'
                 : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
             }`}
             roundedClassName="rounded-md"

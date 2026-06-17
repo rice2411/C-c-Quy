@@ -40,8 +40,8 @@ const GridCard: React.FC<ProductCardCommonProps> = ({
       onClick={onEdit}
       borderClassName={
         selected
-          ? 'border-2 border-orange-400 ring-2 ring-orange-300'
-          : 'border-2 border-slate-200 dark:border-slate-700 hover:border-orange-300'
+          ? 'border-2 border-primary-400 ring-2 ring-primary-300'
+          : 'border-2 border-slate-200 dark:border-slate-700 hover:border-primary-300'
       }
       shadowClassName="shadow-sm hover:shadow-xl"
       stateClassName="cursor-pointer transition-all"
@@ -51,7 +51,7 @@ const GridCard: React.FC<ProductCardCommonProps> = ({
         <Checkbox
           checked={selected}
           onChange={onSelectToggle}
-          className="h-5 w-5 cursor-pointer bg-white text-orange-600 shadow-sm"
+          className="h-5 w-5 cursor-pointer bg-white text-primary-600 shadow-sm"
         />
       </div>
 
@@ -62,7 +62,7 @@ const GridCard: React.FC<ProductCardCommonProps> = ({
         <Link
           to={`/storage/product/${product.id}`}
           title="Xem chi tiết"
-          className="rounded-lg bg-white/95 p-1.5 shadow-sm hover:bg-orange-50 dark:bg-slate-700/95 dark:hover:bg-slate-600"
+          className="rounded-lg bg-white/95 p-1.5 shadow-sm hover:bg-primary-50 dark:bg-slate-700/95 dark:hover:bg-slate-600"
         >
           <ExternalLink className="h-3.5 w-3.5 text-slate-600 dark:text-slate-300" />
         </Link>
@@ -71,7 +71,7 @@ const GridCard: React.FC<ProductCardCommonProps> = ({
           size="sm"
           variant="ghost"
           onClick={onDuplicate}
-          backgroundClassName="bg-white/95 hover:bg-orange-50 dark:bg-slate-700/95 dark:hover:bg-slate-600"
+          backgroundClassName="bg-white/95 hover:bg-primary-50 dark:bg-slate-700/95 dark:hover:bg-slate-600"
           textClassName="text-slate-600 dark:text-slate-300"
           roundedClassName="rounded-lg"
           shadowClassName="shadow-sm"

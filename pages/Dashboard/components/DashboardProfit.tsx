@@ -52,7 +52,7 @@ const DashboardProfit: React.FC<Props> = ({ fromISO, toISO, isDarkMode }) => {
       </Box>
 
       {loading ? (
-        <Box layoutClassName="flex items-center justify-center py-16"><Spinner size="lg" textClassName="text-orange-500" /></Box>
+        <Box layoutClassName="flex items-center justify-center py-16"><Spinner size="lg" textClassName="text-primary-500" /></Box>
       ) : !report ? (
         <Box layoutClassName="px-5 py-10"><Typography as="p" size="sm" variant="muted">Không tải được báo cáo.</Typography></Box>
       ) : (
@@ -60,7 +60,7 @@ const DashboardProfit: React.FC<Props> = ({ fromISO, toISO, isDarkMode }) => {
           {/* 3 chỉ số chính */}
           <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Box layoutClassName="rounded-lg p-3" backgroundClassName="bg-slate-50 dark:bg-slate-900/40">
-              <Box layoutClassName="flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5 text-orange-500" /><Typography as="span" size="xs" variant="muted">Doanh thu</Typography></Box>
+              <Box layoutClassName="flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5 text-primary-500" /><Typography as="span" size="xs" variant="muted">Doanh thu</Typography></Box>
               <Typography as="p" layoutClassName="mt-1 text-xl font-bold" textClassName="text-slate-900 dark:text-white">{formatVND(report.totalRevenue)}</Typography>
             </Box>
             <Box layoutClassName="rounded-lg p-3" backgroundClassName="bg-slate-50 dark:bg-slate-900/40">
@@ -82,7 +82,7 @@ const DashboardProfit: React.FC<Props> = ({ fromISO, toISO, isDarkMode }) => {
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={report.series} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <defs>
-                        <linearGradient id="cRev" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#ea580c" stopOpacity={0.15} /><stop offset="95%" stopColor="#ea580c" stopOpacity={0} /></linearGradient>
+                        <linearGradient id="cRev" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#4abab9" stopOpacity={0.15} /><stop offset="95%" stopColor="#4abab9" stopOpacity={0} /></linearGradient>
                         <linearGradient id="cProfit" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.18} /><stop offset="95%" stopColor="#10b981" stopOpacity={0} /></linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#334155' : '#f1f5f9'} />
@@ -92,7 +92,7 @@ const DashboardProfit: React.FC<Props> = ({ fromISO, toISO, isDarkMode }) => {
                         formatter={(value: number, name: string) => [formatVND(value), name === 'revenue' ? 'Doanh thu' : 'Lợi nhuận']}
                         contentStyle={{ backgroundColor: isDarkMode ? '#1e293b' : '#fff', borderRadius: 8, border: isDarkMode ? '1px solid #334155' : '1px solid #e2e8f0', color: isDarkMode ? '#f8fafc' : '#0f172a' }}
                       />
-                      <Area type="monotone" dataKey="revenue" stroke="#ea580c" strokeWidth={2} fill="url(#cRev)" />
+                      <Area type="monotone" dataKey="revenue" stroke="#4abab9" strokeWidth={2} fill="url(#cRev)" />
                       <Area type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2} fill="url(#cProfit)" />
                     </AreaChart>
                   </ResponsiveContainer>

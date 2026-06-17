@@ -240,7 +240,7 @@ const ProductDetailPage: React.FC = () => {
   if (loading) {
     return (
       <Box layoutClassName="flex items-center justify-center py-20">
-        <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+        <Loader2 className="h-10 w-10 animate-spin text-primary-500" />
       </Box>
     );
   }
@@ -251,7 +251,7 @@ const ProductDetailPage: React.FC = () => {
         <Package className="mx-auto h-16 w-16 text-slate-300" />
         <Heading level={2} textClassName="text-xl font-semibold">Không tìm thấy sản phẩm</Heading>
         <Typography size="sm" variant="muted">ID không tồn tại hoặc đã bị xoá.</Typography>
-        <Link to="/storage" className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-700">
+        <Link to="/storage" className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700">
           <ArrowLeft className="h-4 w-4" /> Về Kho
         </Link>
       </Box>
@@ -268,7 +268,7 @@ const ProductDetailPage: React.FC = () => {
     <Box layoutClassName="mx-auto max-w-6xl space-y-4 p-4 sm:p-6">
       {/* Header */}
       <Box layoutClassName="flex flex-wrap items-center justify-between gap-2">
-        <Link to="/storage" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-orange-600 dark:text-slate-300">
+        <Link to="/storage" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-primary-600 dark:text-slate-300">
           <ArrowLeft className="h-4 w-4" /> Quay lại Kho
         </Link>
         <Box layoutClassName="flex flex-wrap items-center gap-2">
@@ -366,7 +366,7 @@ const ProductDetailPage: React.FC = () => {
             ) : null}
 
             <Box layoutClassName="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <MiniMetric icon={DollarSign} label="Giá bán" value={formatVND(product.price)} accent="#ea580c" />
+              <MiniMetric icon={DollarSign} label="Giá bán" value={formatVND(product.price)} accent="#4abab9" />
               <MiniMetric
                 icon={Percent}
                 label="Margin"
@@ -404,7 +404,7 @@ const ProductDetailPage: React.FC = () => {
               onClick={() => setActiveTab(key)}
               className={`relative inline-flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-semibold transition-colors ${
                 active
-                  ? 'border-orange-500 text-orange-600 dark:text-orange-400'
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
                   : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
              variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">

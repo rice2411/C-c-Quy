@@ -25,7 +25,7 @@ const TransactionsMobileList: React.FC<TransactionsMobileListProps> = ({
         <Box
           key={tr.id}
           onClick={() => onTransactionClick?.(tr)}
-          layoutClassName="group cursor-pointer rounded-xl border border-slate-100 bg-white p-3.5 shadow-sm transition-all hover:border-orange-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-orange-600"
+          layoutClassName="group cursor-pointer rounded-xl border border-slate-100 bg-white p-3.5 shadow-sm transition-all hover:border-primary-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-primary-600"
         >
           {/* Top row: amount + order badge */}
           <Box layoutClassName="mb-2.5 flex items-start justify-between gap-2">
@@ -58,9 +58,9 @@ const TransactionsMobileList: React.FC<TransactionsMobileListProps> = ({
                 <Badge
                   size="sm"
                   layoutClassName="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold font-mono"
-                  borderClassName="border border-orange-200 dark:border-orange-700"
-                  backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
-                  textClassName="text-orange-700 dark:text-orange-300"
+                  borderClassName="border border-primary-200 dark:border-primary-700"
+                  backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+                  textClassName="text-primary-700 dark:text-primary-300"
                 >
                   <ArrowRightLeft className="h-2.5 w-2.5" />
                   {tr.orderNumber}

@@ -30,7 +30,7 @@ const DashboardRecentOrders: React.FC<DashboardRecentOrdersProps> = ({ orders })
     <Card layoutClassName="p-4 sm:p-5">
       <Box layoutClassName="mb-4 flex items-center justify-between">
         <Heading level={3} layoutClassName="flex items-center gap-2" textClassName="text-sm font-semibold text-slate-800 dark:text-white">
-          <Package className="w-4 h-4 text-orange-500" />
+          <Package className="w-4 h-4 text-primary-500" />
           {t('dashboard.recentOrders') || 'Recent orders'}
         </Heading>
         <Typography as="span" size="xs" textClassName="text-[11px] text-slate-500 dark:text-slate-400">
@@ -52,7 +52,7 @@ const DashboardRecentOrders: React.FC<DashboardRecentOrdersProps> = ({ orders })
               </Box>
               <Box layoutClassName="flex min-w-0 flex-col">
                 <Box layoutClassName="flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
-                  <Typography as="span" textClassName="font-mono text-[11px] text-orange-600 dark:text-orange-400">
+                  <Typography as="span" textClassName="font-mono text-[11px] text-primary-600 dark:text-primary-400">
                     #{order.orderNumber}
                   </Typography>
                   <Typography as="span">•</Typography>

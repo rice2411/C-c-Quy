@@ -14,7 +14,7 @@ const OrderSettingsTab: React.FC = () => {
     <Box layoutClassName="space-y-6">
       <Box>
         <Heading level={2} textClassName="flex items-center gap-2 text-xl font-semibold">
-          <ShoppingCart className="h-6 w-6 text-orange-500" />
+          <ShoppingCart className="h-6 w-6 text-primary-500" />
           Cài đặt đơn hàng
         </Heading>
         <Typography size="sm" variant="muted" layoutClassName="mt-1">

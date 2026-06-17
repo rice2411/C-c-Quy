@@ -54,7 +54,7 @@ const UserCard: React.FC<UserCardProps> = ({
       borderClassName="border-slate-100 dark:border-slate-700"
     >
       <Box layoutClassName="mb-4 flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-700">
-        <Box layoutClassName="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-orange-100 dark:border-slate-500 dark:bg-slate-600">
+        <Box layoutClassName="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-primary-100 dark:border-slate-500 dark:bg-slate-600">
           {user.photoURL ? (
             <Image
               src={user.photoURL} 
@@ -62,7 +62,7 @@ const UserCard: React.FC<UserCardProps> = ({
               layoutClassName="h-full w-full object-cover"
             />
           ) : (
-            <Typography as="span" layoutClassName="text-base font-bold" textClassName="text-orange-600 dark:text-orange-400">
+            <Typography as="span" layoutClassName="text-base font-bold" textClassName="text-primary-600 dark:text-primary-400">
               {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
             </Typography>
           )}
@@ -132,7 +132,7 @@ const UserCard: React.FC<UserCardProps> = ({
               onClick={() => onEditCustomName(user)}
               variant="ghost"
               textClassName="text-slate-400"
-              hoverClassName="hover:text-orange-600 dark:hover:text-orange-400"
+              hoverClassName="hover:text-primary-600 dark:hover:text-primary-400"
             >
               <Edit2 className="w-4 h-4" />
             </IconButton>
@@ -193,7 +193,7 @@ const UserCard: React.FC<UserCardProps> = ({
                 onClick={() => onEditRole(user)}
                 variant="ghost"
                 textClassName="text-slate-400"
-                hoverClassName="hover:text-orange-600 dark:hover:text-orange-400"
+                hoverClassName="hover:text-primary-600 dark:hover:text-primary-400"
               >
                 <Edit2 className="w-4 h-4" />
               </IconButton>

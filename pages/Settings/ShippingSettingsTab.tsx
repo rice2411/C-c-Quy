@@ -72,7 +72,7 @@ const ShippingSettingsTab: React.FC = () => {
       {/* Section header — không phải page header (parent OrderSettingsTab đã có). */}
       <Box layoutClassName="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-700">
         <Box layoutClassName="flex items-center gap-2">
-          <Truck className="h-5 w-5 text-orange-500" />
+          <Truck className="h-5 w-5 text-primary-500" />
           <Heading level={3} textClassName="text-base font-semibold">Phí ship</Heading>
         </Box>
         <Button
@@ -82,8 +82,8 @@ const ShippingSettingsTab: React.FC = () => {
           leftIcon={saving ? <Spinner size="sm" textClassName="text-white" borderClassName="border-white" /> : <Save />}
           iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
           sizeClassName="px-4 py-2"
-          backgroundClassName="bg-orange-600"
-          hoverClassName="hover:bg-orange-700"
+          backgroundClassName="bg-primary-600"
+          hoverClassName="hover:bg-primary-700"
           textClassName="text-sm font-medium text-white"
           roundedClassName="rounded-lg"
           layoutClassName="inline-flex items-center gap-2"
@@ -115,10 +115,10 @@ const ShippingSettingsTab: React.FC = () => {
             leftIcon={<Plus />}
             iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
             sizeClassName="px-3 py-1.5"
-            textClassName="text-xs font-medium text-orange-600 dark:text-orange-300"
-            borderClassName="border border-orange-200 dark:border-orange-700"
-            backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
-            hoverClassName="hover:bg-orange-100 dark:hover:bg-orange-900/40"
+            textClassName="text-xs font-medium text-primary-600 dark:text-primary-300"
+            borderClassName="border border-primary-200 dark:border-primary-700"
+            backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+            hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-900/40"
             roundedClassName="rounded-md"
             disableVariantHover
             disableVariantTextColor

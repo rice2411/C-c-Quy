@@ -62,7 +62,7 @@ const OrderFormDecorationSection: React.FC<Props> = ({ materials, decorations, o
         layoutClassName="flex items-center gap-2 uppercase tracking-wider"
         textClassName="text-sm font-semibold"
       >
-        <Sparkles className="h-4 w-4 text-orange-500" /> Trang trí thêm
+        <Sparkles className="h-4 w-4 text-primary-500" /> Trang trí thêm
       </Heading>
 
       <Button
@@ -72,16 +72,16 @@ const OrderFormDecorationSection: React.FC<Props> = ({ materials, decorations, o
         onClick={() => setPickerOpen(true)}
         layoutClassName="rounded-xl py-3"
         borderClassName="border-2 border-dashed border-slate-300 dark:border-slate-600"
-        hoverClassName="hover:border-orange-400 hover:bg-orange-50 dark:hover:border-orange-700 dark:hover:bg-orange-950/30"
+        hoverClassName="hover:border-primary-400 hover:bg-primary-50 dark:hover:border-primary-700 dark:hover:bg-primary-950/30"
         leftIcon={<Plus className="h-4 w-4" />}
       >
         <Typography as="span" size="sm" layoutClassName="font-medium">Thêm trang trí</Typography>
         {totalQty > 0 ? (
           <Box
             layoutClassName="ml-1 inline-flex rounded-full px-2 py-0.5"
-            backgroundClassName="bg-orange-100 dark:bg-orange-900/40"
+            backgroundClassName="bg-primary-100 dark:bg-primary-900/40"
           >
-            <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-orange-700 dark:text-orange-300">{totalQty}</Typography>
+            <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-primary-700 dark:text-primary-300">{totalQty}</Typography>
           </Box>
         ) : null}
       </Button>
@@ -100,7 +100,7 @@ const OrderFormDecorationSection: React.FC<Props> = ({ materials, decorations, o
                   <Box layoutClassName="min-w-0 flex-1">
                     <Typography size="sm" layoutClassName="truncate font-semibold">{d.name}</Typography>
                     <Typography size="xs" textClassName="text-slate-400 dark:text-slate-500">
-                      {d.quantity} × {formatVND(d.price)} = <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-orange-600 dark:text-orange-400">{formatVND(lineTotal)}</Typography>
+                      {d.quantity} × {formatVND(d.price)} = <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-primary-600 dark:text-primary-400">{formatVND(lineTotal)}</Typography>
                     </Typography>
                   </Box>
 
@@ -140,7 +140,7 @@ const OrderFormDecorationSection: React.FC<Props> = ({ materials, decorations, o
 
           <Box layoutClassName="flex items-center justify-between px-1">
             <Typography size="sm" variant="muted">Tổng trang trí</Typography>
-            <Typography size="sm" layoutClassName="font-bold" textClassName="text-orange-600 dark:text-orange-400">
+            <Typography size="sm" layoutClassName="font-bold" textClassName="text-primary-600 dark:text-primary-400">
               {formatVND(total)}
             </Typography>
           </Box>

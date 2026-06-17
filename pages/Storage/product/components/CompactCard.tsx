@@ -27,8 +27,8 @@ const CompactCard: React.FC<CompactCardProps> = ({ product, metric, selected, on
       onClick={onEdit}
       borderClassName={
         selected
-          ? 'border-2 border-orange-400 ring-2 ring-orange-300'
-          : 'border-2 border-slate-200 dark:border-slate-700 hover:border-orange-300'
+          ? 'border-2 border-primary-400 ring-2 ring-primary-300'
+          : 'border-2 border-slate-200 dark:border-slate-700 hover:border-primary-300'
       }
       roundedClassName="rounded-lg"
       shadowClassName="shadow-sm hover:shadow-md"
@@ -68,7 +68,7 @@ const CompactCard: React.FC<CompactCardProps> = ({ product, metric, selected, on
           {product.name}
         </Heading>
         <div className="flex items-center justify-between text-[11px]">
-          <span className="font-bold text-orange-600 dark:text-orange-400">
+          <span className="font-bold text-primary-600 dark:text-primary-400">
             {product.price.toLocaleString('vi-VN')}đ
           </span>
           <span

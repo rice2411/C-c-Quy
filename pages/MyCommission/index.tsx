@@ -95,8 +95,8 @@ const MyCommissionPage: React.FC = () => {
     <Box layoutClassName="flex h-full flex-col space-y-4 sm:space-y-5">
       {/* Header */}
       <Box layoutClassName="flex items-center gap-3">
-        <Box layoutClassName="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/30">
-          <Wallet className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+        <Box layoutClassName="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
+          <Wallet className="h-5 w-5 text-primary-600 dark:text-primary-400" />
         </Box>
         <Box layoutClassName="min-w-0 flex-1">
           <Typography as="p" layoutClassName="text-lg font-bold sm:text-xl" textClassName="text-slate-900 dark:text-white">
@@ -115,7 +115,7 @@ const MyCommissionPage: React.FC = () => {
       <Box layoutClassName="flex-1 overflow-y-auto">
         {loading ? (
           <Box layoutClassName="flex justify-center py-16">
-            <Spinner size="lg" textClassName="text-orange-500" />
+            <Spinner size="lg" textClassName="text-primary-500" />
           </Box>
         ) : !hasAnyOrder ? (
           <Box layoutClassName="flex flex-col items-center justify-center gap-3 py-16" textClassName="text-slate-400 dark:text-slate-500">

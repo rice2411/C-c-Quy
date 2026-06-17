@@ -58,7 +58,7 @@ const DashboardTopProducts: React.FC<DashboardTopProductsProps> = ({
         layoutClassName="flex shrink-0 items-center gap-2 border-b px-5 py-4"
         borderClassName="border-slate-100 dark:border-slate-700"
       >
-        <TrendingUp className="h-5 w-5 text-orange-500" />
+        <TrendingUp className="h-5 w-5 text-primary-500" />
         <Heading level={3} textClassName="text-base font-semibold">
           Top sản phẩm bán chạy
         </Heading>
@@ -83,14 +83,14 @@ const DashboardTopProducts: React.FC<DashboardTopProductsProps> = ({
                 >
                   {/* Bar background — visual rank */}
                   <Box
-                    layoutClassName="absolute inset-y-0 left-0 bg-orange-50 dark:bg-orange-900/20"
+                    layoutClassName="absolute inset-y-0 left-0 bg-primary-50 dark:bg-primary-900/20"
                     stateClassName="transition-all"
                   >
                     <Box layoutClassName="h-full" />
                   </Box>
                   <Box layoutClassName="relative flex items-center justify-between gap-3">
                     <Box layoutClassName="flex min-w-0 items-center gap-2">
-                      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-700 dark:bg-orange-900/40 dark:text-orange-200">
+                      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900/40 dark:text-primary-200">
                         {idx + 1}
                       </span>
                       <Typography
@@ -109,7 +109,7 @@ const DashboardTopProducts: React.FC<DashboardTopProductsProps> = ({
                       <Typography
                         as="span"
                         size="sm"
-                        textClassName="font-bold text-orange-600 dark:text-orange-400"
+                        textClassName="font-bold text-primary-600 dark:text-primary-400"
                       >
                         {formatVND(p.revenue)}
                       </Typography>

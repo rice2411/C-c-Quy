@@ -178,7 +178,7 @@ const CsvImportModal: React.FC<CsvImportModalProps> = ({ existingProducts, onClo
       <div className="w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5 text-orange-500" />
+            <FileSpreadsheet className="h-5 w-5 text-primary-500" />
             <Heading level={2} textClassName="text-base font-bold">Import sản phẩm từ CSV</Heading>
           </div>
           <IconButton label="Đóng" variant="ghost" size="sm" onClick={onClose}>
@@ -209,7 +209,7 @@ const CsvImportModal: React.FC<CsvImportModalProps> = ({ existingProducts, onClo
                     leftIcon={<Upload />}
                     iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
                     sizeClassName="px-4 py-2 text-sm"
-                    backgroundClassName="bg-orange-600 hover:bg-orange-700"
+                    backgroundClassName="bg-primary-600 hover:bg-primary-700"
                     textClassName="font-medium text-white"
                     roundedClassName="rounded-lg"
                     borderClassName="border border-transparent"
@@ -279,10 +279,10 @@ const CsvImportModal: React.FC<CsvImportModalProps> = ({ existingProducts, onClo
 
           {step === 'importing' && (
             <div className="space-y-4 py-8 text-center">
-              <Loader2 className="mx-auto h-12 w-12 animate-spin text-orange-500" />
+              <Loader2 className="mx-auto h-12 w-12 animate-spin text-primary-500" />
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Đang import sản phẩm...</p>
               <div className="mx-auto w-full max-w-md rounded-full bg-slate-200 dark:bg-slate-700 h-2 overflow-hidden">
-                <div className="h-full bg-orange-500 transition-all" style={{ width: `${progress}%` }} />
+                <div className="h-full bg-primary-500 transition-all" style={{ width: `${progress}%` }} />
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">{progress}%</p>
             </div>
@@ -308,7 +308,7 @@ const CsvImportModal: React.FC<CsvImportModalProps> = ({ existingProducts, onClo
               leftIcon={<Check />}
               iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
               sizeClassName="px-4 py-2 text-sm"
-              backgroundClassName="bg-orange-600 hover:bg-orange-700"
+              backgroundClassName="bg-primary-600 hover:bg-primary-700"
               textClassName="font-medium text-white"
               roundedClassName="rounded-lg"
               borderClassName="border border-transparent"

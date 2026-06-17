@@ -23,7 +23,7 @@ const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
 
     const containerClasses = twMerge(
       [
-        'overflow-hidden rounded-full border border-slate-200 bg-orange-100 dark:border-slate-500 dark:bg-slate-600 flex items-center justify-center flex-shrink-0',
+        'overflow-hidden rounded-full border border-slate-200 bg-primary-100 dark:border-slate-500 dark:bg-slate-600 flex items-center justify-center flex-shrink-0',
         sizeClasses[size],
         borderClassName ?? '',
         containerClassName ?? ''

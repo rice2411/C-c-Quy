@@ -15,10 +15,10 @@ export const TAG_COLOR_PALETTES: TagPalette[] = [
     removeHover: 'hover:text-red-900 dark:hover:text-red-100',
   },
   {
-    selected: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700',
-    idle: 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700 hover:border-orange-300 dark:hover:border-orange-600',
-    chip: 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700',
-    removeHover: 'hover:text-orange-900 dark:hover:text-orange-100',
+    selected: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-primary-300 dark:border-primary-700',
+    idle: 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-700 hover:border-primary-300 dark:hover:border-primary-600',
+    chip: 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-700',
+    removeHover: 'hover:text-primary-900 dark:hover:text-primary-100',
   },
   {
     selected: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700',

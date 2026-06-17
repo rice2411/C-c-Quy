@@ -116,7 +116,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                 leftIcon={<GitMerge />}
                 iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
                 sizeClassName="px-3 py-1.5 text-xs"
-                backgroundClassName="bg-gradient-to-r from-orange-600 to-amber-600"
+                backgroundClassName="bg-gradient-to-r from-primary-600 to-primary-600"
                 textClassName="font-semibold text-white"
                 roundedClassName="rounded-lg"
                 layoutClassName="inline-flex items-center gap-1.5"
@@ -155,7 +155,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
               icon: Store,
               label: 'NCC',
               value: String(periodFiltered.length),
-              accent: '#ea580c',
+              accent: '#4abab9',
             },
             {
               icon: ReceiptText,
@@ -211,14 +211,14 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                   layoutClassName={
                     'rounded-xl border p-3 space-y-2 ' +
                     (isChecked
-                      ? 'border-orange-300 bg-orange-50/60 dark:border-orange-700 dark:bg-orange-950/20'
+                      ? 'border-primary-300 bg-primary-50/60 dark:border-primary-700 dark:bg-primary-950/20'
                       : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900')
                   }
                 >
                   <Box layoutClassName="flex gap-3">
                     <Checkbox checked={isChecked}
                       onChange={() => toggleSelect(row.id)}
-                      className="mt-1 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                      className="mt-1 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                     />
                     <Box layoutClassName="min-w-0 flex-1 space-y-1">
                       <Typography size="sm" layoutClassName="font-semibold break-words">
@@ -348,12 +348,12 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                   return (
                     <React.Fragment key={`d-${row.id}`}>
                       <TableRow
-                        layoutClassName={isChecked ? 'bg-orange-50/60 dark:bg-orange-950/20' : undefined}
+                        layoutClassName={isChecked ? 'bg-primary-50/60 dark:bg-primary-950/20' : undefined}
                       >
                         <TableCell>
                           <Checkbox checked={isChecked}
                             onChange={() => toggleSelect(row.id)}
-                            className="h-4 w-4 cursor-pointer rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                            className="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500"
                           />
                         </TableCell>
                         <TableCell>

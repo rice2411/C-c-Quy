@@ -24,7 +24,7 @@ export const getStockStatus = (p: Product): StockStatus => {
   if (p.currentStock <= threshold) {
     return {
       kind: 'low',
-      color: '#ea580c',
+      color: '#4abab9',
       label: `${p.currentStock} ${p.stockUnit || ''}`.trim(),
     };
   }

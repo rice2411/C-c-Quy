@@ -151,7 +151,7 @@ const ExpensesTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
   };
 
   if (loading) {
-    return <Box layoutClassName="flex flex-1 items-center justify-center py-16"><Spinner size="lg" textClassName="text-orange-500" /></Box>;
+    return <Box layoutClassName="flex flex-1 items-center justify-center py-16"><Spinner size="lg" textClassName="text-primary-500" /></Box>;
   }
 
   return (
@@ -176,7 +176,7 @@ const ExpensesTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
       </SectionCard>
 
       {/* Hoa hồng */}
-      <SectionCard icon={<Coins className="h-4 w-4" />} title="Hoa hồng CTV" total={formatVND(totalCommission)} accent="#ea580c">
+      <SectionCard icon={<Coins className="h-4 w-4" />} title="Hoa hồng CTV" total={formatVND(totalCommission)} accent="#4abab9">
         <Box layoutClassName="px-4 py-3">
           <Typography as="p" size="xs" variant="muted">
             {periodCommissionOrders.length} đơn có hoa hồng trong kỳ (theo ngày giao). Chi tiết theo CTV xem ở trang <strong>Hoa hồng</strong>.
@@ -196,10 +196,10 @@ const ExpensesTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
               disableVariantTextColor
               layoutClassName="inline-flex items-center gap-1.5"
               roundedClassName="rounded-lg"
-              borderClassName="border border-dashed border-slate-300 hover:border-orange-400 dark:border-slate-600"
-              backgroundClassName="bg-transparent hover:bg-orange-50 dark:hover:bg-orange-900/20"
+              borderClassName="border border-dashed border-slate-300 hover:border-primary-400 dark:border-slate-600"
+              backgroundClassName="bg-transparent hover:bg-primary-50 dark:hover:bg-primary-900/20"
               sizeClassName="px-3 py-1.5 text-xs"
-              textClassName="font-medium text-slate-600 hover:text-orange-600 dark:text-slate-300"
+              textClassName="font-medium text-slate-600 hover:text-primary-600 dark:text-slate-300"
               stateClassName="transition-colors">
               <Plus className="h-3.5 w-3.5" /> Thêm chi phí
             </Button>
@@ -232,7 +232,7 @@ const ExpensesTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
                   layoutClassName="inline-flex items-center gap-1.5"
                   roundedClassName="rounded-lg"
                   borderClassName="border-transparent"
-                  backgroundClassName="bg-orange-600 hover:bg-orange-700"
+                  backgroundClassName="bg-primary-600 hover:bg-primary-700"
                   sizeClassName="px-3 py-1.5 text-xs"
                   textClassName="font-semibold text-white"
                   stateClassName="transition-colors disabled:opacity-60">
@@ -283,7 +283,7 @@ const ExpensesTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
                     borderClassName="border-transparent"
                     backgroundClassName="bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700"
                     sizeClassName="p-1"
-                    textClassName="text-slate-400 hover:text-orange-500"
+                    textClassName="text-slate-400 hover:text-primary-500"
                     stateClassName="transition-colors"
                     title="Sửa">
                     <Pencil className="h-3.5 w-3.5" />

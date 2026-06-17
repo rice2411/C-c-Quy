@@ -231,12 +231,12 @@ const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
                     layoutClassName="group relative overflow-hidden rounded-xl border transition-all"
                     borderClassName={
                       isInOrder
-                        ? 'border-orange-300 dark:border-orange-700'
+                        ? 'border-primary-300 dark:border-primary-700'
                         : 'border-slate-200 dark:border-slate-700'
                     }
                     backgroundClassName={
                       isInOrder
-                        ? 'bg-orange-50/40 dark:bg-orange-950/30'
+                        ? 'bg-primary-50/40 dark:bg-primary-950/30'
                         : 'bg-white dark:bg-slate-800'
                     }
                   >
@@ -266,7 +266,7 @@ const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
                         {isInOrder ? (
                           <Box
                             layoutClassName="absolute right-1.5 top-1.5 flex h-6 min-w-[1.75rem] items-center justify-center rounded-full px-1.5 text-xs font-bold shadow-md"
-                            backgroundClassName="bg-orange-500"
+                            backgroundClassName="bg-primary-500"
                             textClassName="text-white"
                           >
                             ×{qty}
@@ -285,7 +285,7 @@ const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
                         <Typography
                           size="sm"
                           layoutClassName="mt-0.5 font-bold"
-                          textClassName="text-orange-600 dark:text-orange-400"
+                          textClassName="text-primary-600 dark:text-primary-400"
                         >
                           {formatVNDOrDash(p.price)}
                         </Typography>
@@ -307,7 +307,7 @@ const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
                           type="button"
                           aria-label="Thêm 1"
                           onClick={() => onPickProduct(p)}
-                          className="flex h-6 w-6 items-center justify-center rounded-full text-orange-600 hover:bg-orange-100 dark:text-orange-300 dark:hover:bg-orange-900/40"
+                          className="flex h-6 w-6 items-center justify-center rounded-full text-primary-600 hover:bg-primary-100 dark:text-primary-300 dark:hover:bg-primary-900/40"
                          variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                           <Plus className="h-3.5 w-3.5" />
                         </Button>
@@ -328,7 +328,7 @@ const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
                   if (onPickCustom) onPickCustom(query.trim());
                   setQuery('');
                 }}
-                className="rounded-lg border border-dashed border-orange-300 px-4 py-2 text-sm text-orange-700 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-300 dark:hover:bg-orange-950/30"
+                className="rounded-lg border border-dashed border-primary-300 px-4 py-2 text-sm text-primary-700 hover:bg-primary-50 dark:border-primary-700 dark:text-primary-300 dark:hover:bg-primary-950/30"
                variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 + Tạo item tuỳ chỉnh: <strong>{query.trim()}</strong>
               </Button>
@@ -343,13 +343,13 @@ const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
           backgroundClassName="bg-white dark:bg-slate-900"
         >
           <Box layoutClassName="flex items-center gap-2 text-sm">
-            <ShoppingCart className="h-4 w-4 text-orange-500" />
+            <ShoppingCart className="h-4 w-4 text-primary-500" />
             {cartSummary.count > 0 ? (
               <>
                 <Typography size="sm" layoutClassName="font-semibold">
                   {cartSummary.count} món
                 </Typography>
-                <Typography size="sm" textClassName="text-orange-600 dark:text-orange-400">
+                <Typography size="sm" textClassName="text-primary-600 dark:text-primary-400">
                   {formatVNDOrDash(cartSummary.total)}
                 </Typography>
               </>
@@ -391,7 +391,7 @@ const CategoryChip: React.FC<{
     className={
       'shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium transition-colors ' +
       (active
-        ? 'border-orange-300 bg-orange-100 text-orange-700 dark:border-orange-700 dark:bg-orange-900/40 dark:text-orange-200'
+        ? 'border-primary-300 bg-primary-100 text-primary-700 dark:border-primary-700 dark:bg-primary-900/40 dark:text-primary-200'
         : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700')
     }
    variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">

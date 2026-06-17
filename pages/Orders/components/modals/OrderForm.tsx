@@ -568,8 +568,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         disabled={isSubmitting || loadingOrderNumber}
         leftIcon={isSubmitting ? undefined : <Save />}
         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-        backgroundClassName="bg-orange-600 dark:bg-orange-500"
-        hoverClassName="hover:bg-orange-700 dark:hover:bg-orange-600"
+        backgroundClassName="bg-primary-600 dark:bg-primary-500"
+        hoverClassName="hover:bg-primary-700 dark:hover:bg-primary-600"
         textClassName="text-sm font-medium text-white"
         roundedClassName="rounded-lg"
         shadowClassName="shadow-sm"
@@ -623,7 +623,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
                 />
                 {loadingOrderNumber ? (
                   <Box layoutClassName="absolute right-3 top-2.5">
-                    <Spinner size="sm" textClassName="text-orange-500" />
+                    <Spinner size="sm" textClassName="text-primary-500" />
                   </Box>
                 ) : null}
               </Box>
@@ -727,7 +727,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
             {/* ─── Khuyến mãi ─── */}
             <Box layoutClassName="space-y-2">
               <Box layoutClassName="flex items-center gap-1.5">
-                <Tag className="h-4 w-4 text-orange-500" />
+                <Tag className="h-4 w-4 text-primary-500" />
                 <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-800 dark:text-slate-200">
                   Khuyến mãi
                 </Typography>

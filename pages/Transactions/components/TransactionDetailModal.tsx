@@ -156,8 +156,8 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
                 size="sm"
                 layoutClassName="inline-flex items-center gap-1 px-2 py-1 text-sm font-medium font-mono"
                 borderClassName="border-transparent"
-                backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
-                textClassName="text-orange-700 dark:text-orange-300"
+                backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+                textClassName="text-primary-700 dark:text-primary-300"
               >
                 {transaction.orderNumber}
               </Badge>

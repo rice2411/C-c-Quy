@@ -94,8 +94,9 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
               <Box layoutClassName="grid grid-cols-[80px_1fr] gap-3 p-3">
                 <Box
                   layoutClassName="h-20 w-20 shrink-0 overflow-hidden"
-                  roundedClassName="rounded-md"
+                  roundedClassName="rounded-lg"
                   borderClassName="border border-slate-200 dark:border-slate-600"
+                  shadowClassName="shadow-sm"
                 >
                   <img
                     src={getOrderImage(order)}
@@ -184,7 +185,7 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                   as="div"
                   size="sm"
                   layoutClassName="font-bold"
-                  textClassName="text-orange-600 dark:text-orange-400"
+                  textClassName="text-primary-600 dark:text-primary-400"
                 >
                   {formatVND(order.total)}
                 </Typography>

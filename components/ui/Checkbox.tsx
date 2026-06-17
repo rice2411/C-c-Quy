@@ -13,7 +13,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ label, className, containerClassName, labelClassName, borderClassName, focusClassName, ...props }, ref) => {
     const inputClasses = twMerge(
       [
-        'h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500 dark:border-slate-600',
+        'h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600',
         borderClassName ?? '',
         focusClassName ?? '',
         className ?? ''

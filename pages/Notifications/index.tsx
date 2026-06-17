@@ -178,9 +178,9 @@ const NotificationsPage: React.FC = () => {
           icon: Clock,
           title: t('notifications.pendingOrders'),
           description: t('notifications.pendingOrdersDesc'),
-          color: 'text-orange-600 dark:text-orange-400',
-          bgColor: 'bg-orange-50 dark:bg-orange-900/20',
-          borderColor: 'border-orange-200 dark:border-orange-800',
+          color: 'text-primary-600 dark:text-primary-400',
+          bgColor: 'bg-primary-50 dark:bg-primary-900/20',
+          borderColor: 'border-primary-200 dark:border-primary-800',
         },
         {
           group: 'orders' as const,
@@ -384,7 +384,7 @@ const NotificationsPage: React.FC = () => {
     <Box layoutClassName="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
       <Box layoutClassName="mb-6">
         <Box layoutClassName="mb-2 flex items-center gap-3">
-          <Bell className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+          <Bell className="h-8 w-8 text-primary-600 dark:text-primary-400" />
           <Heading level={1} textClassName="text-2xl sm:text-3xl">
             {t('notifications.title')}
           </Heading>
@@ -405,7 +405,7 @@ const NotificationsPage: React.FC = () => {
           <Box layoutClassName="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
             <Box layoutClassName="flex items-center gap-2">
               <ActiveSectionIcon
-                className="h-5 w-5 shrink-0 text-orange-600 dark:text-orange-400"
+                className="h-5 w-5 shrink-0 text-primary-600 dark:text-primary-400"
                 aria-hidden
               />
               <Heading level={2} textClassName="text-lg font-semibold text-slate-900 dark:text-white">
@@ -457,7 +457,7 @@ const NotificationsPage: React.FC = () => {
                     stateClassName={isSelected ? 'scale-[1.02] transition-all' : 'transition-all'}
                     layoutClassName="flex w-full flex-col items-stretch text-left"
                     textClassName="font-normal"
-                    focusClassName="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
+                    focusClassName="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                     onClick={() => setSelectedType(option.type)}
                   >
                     <Box layoutClassName="flex items-start gap-3 p-4">
@@ -581,8 +581,8 @@ const NotificationsPage: React.FC = () => {
           variant="primary"
           disableVariantHover
           disableVariantTextColor
-          backgroundClassName="bg-orange-600"
-          hoverClassName="hover:bg-orange-700"
+          backgroundClassName="bg-primary-600"
+          hoverClassName="hover:bg-primary-700"
           textClassName="font-semibold text-white"
           roundedClassName="rounded-lg"
           shadowClassName="shadow-sm"

@@ -76,7 +76,7 @@ const UserTable: React.FC<UserTableProps> = ({
               >
                 <TableCell>
                   <Box layoutClassName="flex items-center gap-3">
-                    <Box layoutClassName="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-orange-100 dark:border-slate-500 dark:bg-slate-600">
+                    <Box layoutClassName="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-primary-100 dark:border-slate-500 dark:bg-slate-600">
                       {user.photoURL ? (
                         <Image
                           src={user.photoURL} 
@@ -84,7 +84,7 @@ const UserTable: React.FC<UserTableProps> = ({
                           layoutClassName="h-full w-full object-cover"
                         />
                       ) : (
-                        <Typography as="span" size="sm" layoutClassName="font-bold" textClassName="text-orange-600 dark:text-orange-400">
+                        <Typography as="span" size="sm" layoutClassName="font-bold" textClassName="text-primary-600 dark:text-primary-400">
                           {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
                         </Typography>
                       )}
@@ -149,7 +149,7 @@ const UserTable: React.FC<UserTableProps> = ({
                         variant="ghost"
                         stateClassName="opacity-0 transition-opacity group-hover:opacity-100"
                         textClassName="text-slate-400"
-                        hoverClassName="hover:text-orange-600 dark:hover:text-orange-400"
+                        hoverClassName="hover:text-primary-600 dark:hover:text-primary-400"
                       >
                         <Edit2 className="w-4 h-4" />
                       </IconButton>
@@ -203,7 +203,7 @@ const UserTable: React.FC<UserTableProps> = ({
                           variant="ghost"
                           stateClassName="opacity-0 transition-opacity group-hover:opacity-100"
                           textClassName="text-slate-400"
-                          hoverClassName="hover:text-orange-600 dark:hover:text-orange-400"
+                          hoverClassName="hover:text-primary-600 dark:hover:text-primary-400"
                         >
                           <Edit2 className="w-4 h-4" />
                         </IconButton>

@@ -145,21 +145,21 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
       {busy && progressStage ? (
         <Card
           padding="md"
-          borderClassName="border-orange-200 dark:border-orange-900/50"
-          backgroundClassName="bg-gradient-to-br from-orange-50/90 to-white dark:from-orange-950/40 dark:to-slate-900"
-          layoutClassName="space-y-4 shadow-md shadow-orange-500/10"
+          borderClassName="border-primary-200 dark:border-primary-900/50"
+          backgroundClassName="bg-gradient-to-br from-primary-50/90 to-white dark:from-primary-950/40 dark:to-slate-900"
+          layoutClassName="space-y-4 shadow-md shadow-primary-500/10"
         >
           <Box layoutClassName="flex flex-col gap-4 sm:flex-row sm:items-start">
             <Box
               layoutClassName="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl"
-              backgroundClassName="bg-orange-500 text-white"
+              backgroundClassName="bg-primary-500 text-white"
             >
               <Spinner size="lg" borderClassName="border-white" textClassName="text-white" />
             </Box>
             <Box layoutClassName="min-w-0 flex-1 space-y-3">
               <Typography
                 size="sm"
-                layoutClassName="font-semibold uppercase tracking-wide text-orange-800 dark:text-orange-200"
+                layoutClassName="font-semibold uppercase tracking-wide text-primary-800 dark:text-primary-200"
               >
                 {t('billImport.progressTitle')}
               </Typography>
@@ -177,7 +177,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
               >
                 <Box
                   layoutClassName="h-full rounded-full"
-                  backgroundClassName="bg-gradient-to-r from-orange-400 to-orange-600"
+                  backgroundClassName="bg-gradient-to-r from-primary-400 to-primary-600"
                   stateClassName="transition-[width] duration-700 ease-out"
                   style={{ width: `${progressBarPct}%` }}
                 />
@@ -192,7 +192,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                       className={
                         'flex items-center gap-3 text-sm transition-colors duration-300 ' +
                         (current
-                          ? 'font-semibold text-orange-700 dark:text-orange-300'
+                          ? 'font-semibold text-primary-700 dark:text-primary-300'
                           : done
                             ? 'text-emerald-700 dark:text-emerald-400'
                             : 'text-slate-400 dark:text-slate-500')
@@ -201,7 +201,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                       {done ? (
                         <Check className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
                       ) : current ? (
-                        <Loader2 className="h-5 w-5 shrink-0 animate-spin text-orange-600 dark:text-orange-400" />
+                        <Loader2 className="h-5 w-5 shrink-0 animate-spin text-primary-600 dark:text-primary-400" />
                       ) : (
                         <Circle className="h-4 w-4 shrink-0" strokeWidth={2} />
                       )}
@@ -284,7 +284,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
         <>
           <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-4">
             <Box layoutClassName="flex items-center gap-2">
-              <Store className="h-5 w-5 text-orange-500" />
+              <Store className="h-5 w-5 text-primary-500" />
               <Typography size="sm" layoutClassName="font-semibold">
                 Nhà cung cấp
               </Typography>
@@ -356,7 +356,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
           <Box layoutClassName="grid gap-4 lg:grid-cols-2">
             <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
               <Box layoutClassName="flex items-center gap-2">
-                <Receipt className="h-5 w-5 text-orange-500" />
+                <Receipt className="h-5 w-5 text-primary-500" />
                 <Typography size="sm" layoutClassName="font-semibold">
                   Thông tin phiếu
                 </Typography>
@@ -419,7 +419,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
 
             <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
               <Box layoutClassName="flex items-center gap-2">
-                <Wallet className="h-5 w-5 text-orange-500" />
+                <Wallet className="h-5 w-5 text-primary-500" />
                 <Typography size="sm" layoutClassName="font-semibold">
                   Tài chính
                 </Typography>
@@ -454,23 +454,23 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
 
               <Box
                 layoutClassName="flex items-center justify-between gap-3 rounded-lg border p-3"
-                borderClassName="border-orange-200 dark:border-orange-800"
-                backgroundClassName="bg-orange-50 dark:bg-orange-950/40"
+                borderClassName="border-primary-200 dark:border-primary-800"
+                backgroundClassName="bg-primary-50 dark:bg-primary-950/40"
               >
                 <Box layoutClassName="flex flex-col gap-0.5">
                   <Box layoutClassName="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                    <Typography size="sm" layoutClassName="font-semibold text-orange-900 dark:text-orange-100">
+                    <CreditCard className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                    <Typography size="sm" layoutClassName="font-semibold text-primary-900 dark:text-primary-100">
                       Tổng tiền
                     </Typography>
                   </Box>
-                  <Typography size="xs" textClassName="text-orange-800/70 dark:text-orange-200/70">
+                  <Typography size="xs" textClassName="text-primary-800/70 dark:text-primary-200/70">
                     = Σ mặt hàng + thuế − giảm giá
                   </Typography>
                 </Box>
                 <Typography
                   size="sm"
-                  layoutClassName="text-right font-bold tabular-nums text-orange-900 dark:text-orange-100"
+                  layoutClassName="text-right font-bold tabular-nums text-primary-900 dark:text-primary-100"
                 >
                   {moneyFmt.format(computedTotal)}{' '}
                   <span className="text-xs font-medium opacity-70">

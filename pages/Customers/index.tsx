@@ -113,25 +113,25 @@ const CustomersPage: React.FC = () => {
   return (
     <Box layoutClassName="relative flex h-full flex-col gap-6">
       <Box
-        layoutClassName="relative overflow-hidden rounded-2xl border border-orange-200/70 p-6 sm:p-8 dark:border-orange-900/35"
-        backgroundClassName="bg-gradient-to-br from-orange-50/95 via-white to-amber-50/60 dark:from-slate-900 dark:via-slate-900 dark:to-orange-950/25"
+        layoutClassName="relative overflow-hidden rounded-2xl border border-primary-200/70 p-6 sm:p-8 dark:border-primary-900/35"
+        backgroundClassName="bg-gradient-to-br from-primary-50/95 via-white to-primary-50/60 dark:from-slate-900 dark:via-slate-900 dark:to-primary-950/25"
       >
         <Box
           layoutClassName="pointer-events-none absolute -right-8 -top-12 h-40 w-40 rounded-full blur-3xl"
-          backgroundClassName="bg-orange-300/25 dark:bg-orange-500/15"
+          backgroundClassName="bg-primary-300/25 dark:bg-primary-500/15"
           aria-hidden
         />
         <Box
           layoutClassName="pointer-events-none absolute -bottom-10 left-1/3 h-32 w-32 rounded-full blur-2xl"
-          backgroundClassName="bg-amber-200/30 dark:bg-amber-600/10"
+          backgroundClassName="bg-primary-200/30 dark:bg-primary-600/10"
           aria-hidden
         />
 
         <Box layoutClassName="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <Box layoutClassName="max-w-2xl space-y-3">
-            <Box layoutClassName="inline-flex items-center gap-2 rounded-full border border-orange-200/80 px-3 py-1 dark:border-orange-800/60">
-              <Sparkles className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400" aria-hidden />
-              <Typography size="xs" layoutClassName="font-semibold uppercase tracking-wide text-orange-700 dark:text-orange-300">
+            <Box layoutClassName="inline-flex items-center gap-2 rounded-full border border-primary-200/80 px-3 py-1 dark:border-primary-800/60">
+              <Sparkles className="h-3.5 w-3.5 text-primary-500 dark:text-primary-400" aria-hidden />
+              <Typography size="xs" layoutClassName="font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">
                 {t('customers.title')}
               </Typography>
             </Box>
@@ -146,7 +146,7 @@ const CustomersPage: React.FC = () => {
                 layoutClassName="inline-flex items-center gap-2 rounded-xl border border-white/80 px-3 py-2 shadow-sm dark:border-slate-700/80"
                 backgroundClassName="bg-white/90 dark:bg-slate-800/90"
               >
-                <Users className="h-4 w-4 text-orange-500" aria-hidden />
+                <Users className="h-4 w-4 text-primary-500" aria-hidden />
                 <Typography size="sm" layoutClassName="font-medium text-slate-800 dark:text-slate-100">
                   {pillTotal}
                 </Typography>
@@ -167,11 +167,11 @@ const CustomersPage: React.FC = () => {
             type="button"
             onClick={handleCreate}
             leftIcon={<Plus className="h-4 w-4" />}
-            backgroundClassName="bg-gradient-to-r from-orange-600 to-amber-600"
-            hoverClassName="hover:from-orange-700 hover:to-amber-700"
+            backgroundClassName="bg-gradient-to-r from-primary-600 to-primary-700"
+            hoverClassName="hover:from-primary-700 hover:to-primary-800"
             textClassName="text-sm font-semibold text-white"
             roundedClassName="rounded-xl"
-            shadowClassName="shadow-md shadow-orange-200/60 dark:shadow-none"
+            shadowClassName="shadow-md shadow-primary-200/60 dark:shadow-none"
             layoutClassName="inline-flex w-full shrink-0 items-center justify-center gap-2 px-5 py-3 lg:w-auto lg:self-center"
             stateClassName="transition-all"
           >
@@ -187,23 +187,23 @@ const CustomersPage: React.FC = () => {
         >
           <Box
             layoutClassName="flex h-14 w-14 items-center justify-center rounded-2xl shadow-inner"
-            backgroundClassName="bg-orange-100 dark:bg-orange-900/40"
+            backgroundClassName="bg-primary-100 dark:bg-primary-900/40"
           >
-            <Users className="h-7 w-7 text-orange-600 dark:text-orange-400" aria-hidden />
+            <Users className="h-7 w-7 text-primary-600 dark:text-primary-400" aria-hidden />
           </Box>
-          <Spinner size="md" textClassName="text-orange-500" />
+          <Spinner size="md" textClassName="text-primary-500" />
           <Typography size="sm" variant="muted">
             {t('customers.loadingHint')}
           </Typography>
         </Box>
       ) : customers.length === 0 ? (
         <Box
-          layoutClassName="flex flex-1 flex-col items-center justify-center gap-5 rounded-2xl border border-dashed border-orange-200/80 px-6 py-16 dark:border-orange-900/40"
-          backgroundClassName="bg-gradient-to-b from-orange-50/30 to-transparent dark:from-orange-950/10 dark:to-transparent"
+          layoutClassName="flex flex-1 flex-col items-center justify-center gap-5 rounded-2xl border border-dashed border-primary-200/80 px-6 py-16 dark:border-primary-900/40"
+          backgroundClassName="bg-gradient-to-b from-primary-50/30 to-transparent dark:from-primary-950/10 dark:to-transparent"
         >
           <Box
             layoutClassName="flex h-20 w-20 items-center justify-center rounded-2xl shadow-lg"
-            backgroundClassName="bg-gradient-to-br from-orange-500 to-amber-500"
+            backgroundClassName="bg-gradient-to-br from-primary-500 to-primary-600"
           >
             <Users className="h-10 w-10 text-white opacity-95" aria-hidden />
           </Box>
@@ -219,8 +219,8 @@ const CustomersPage: React.FC = () => {
             type="button"
             onClick={handleCreate}
             leftIcon={<Plus className="h-4 w-4" />}
-            backgroundClassName="bg-orange-600"
-            hoverClassName="hover:bg-orange-700"
+            backgroundClassName="bg-primary-600"
+            hoverClassName="hover:bg-primary-700"
             textClassName="text-sm font-semibold text-white"
             roundedClassName="rounded-xl"
             shadowClassName="shadow-md"

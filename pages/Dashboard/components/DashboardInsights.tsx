@@ -23,7 +23,7 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
   return (
     <Box
       layoutClassName="relative overflow-hidden p-6 text-white lg:col-span-1"
-      backgroundClassName="bg-gradient-to-br from-orange-600 to-rose-600 dark:from-orange-800 dark:to-rose-900"
+      backgroundClassName="bg-gradient-to-br from-primary-600 to-rose-600 dark:from-primary-800 dark:to-rose-900"
       roundedClassName="rounded-xl"
       shadowClassName="shadow-lg"
       stateClassName="transition-colors"
@@ -56,10 +56,10 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
              </Box>
           ) : insight ? (
             <Box layoutClassName="prose prose-sm prose-invert">
-              <Typography textClassName="whitespace-pre-line leading-relaxed text-orange-50">{insight}</Typography>
+              <Typography textClassName="whitespace-pre-line leading-relaxed text-primary-50">{insight}</Typography>
             </Box>
           ) : (
-            <Typography size="sm" textClassName="leading-relaxed text-orange-50">
+            <Typography size="sm" textClassName="leading-relaxed text-primary-50">
               {t('dashboard.aiPlaceholder')}
             </Typography>
           )}

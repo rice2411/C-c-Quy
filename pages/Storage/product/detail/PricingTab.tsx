@@ -32,7 +32,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ product, margin }) => {
   return (
     <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-4">
       <Box layoutClassName="grid gap-3 sm:grid-cols-3">
-        <PriceCard label="Giá bán" value={product.price} accent="#ea580c" />
+        <PriceCard label="Giá bán" value={product.price} accent="#4abab9" />
         <PriceCard label="Giá vốn" value={product.costPrice ?? 0} accent="#64748b" />
         <Box
           layoutClassName="rounded-xl border-2 p-4"

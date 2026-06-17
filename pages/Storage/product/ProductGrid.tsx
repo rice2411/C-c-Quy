@@ -43,7 +43,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, onEdit, on
     return (
       <div className="flex-1 flex items-center justify-center py-12">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
           <p className="text-sm text-slate-500 dark:text-slate-400">{t('inventory.loading') || 'Đang tải...'}</p>
         </div>
       </div>
@@ -67,7 +67,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, onEdit, on
           </div>
           <Button
             onClick={onCreate}
-            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
+            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
            variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             {t('inventory.createFirst') || 'Tạo sản phẩm đầu tiên'}
           </Button>
@@ -82,7 +82,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, onEdit, on
         <div
           key={product.id}
           onClick={() => onEdit(product)}
-          className="group relative bg-white dark:bg-slate-800 rounded-xl border-2 border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl hover:scale-[1.02] hover:border-orange-300 dark:hover:border-orange-600 transition-all duration-200 cursor-pointer overflow-hidden"
+          className="group relative bg-white dark:bg-slate-800 rounded-xl border-2 border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-xl hover:scale-[1.02] hover:border-primary-300 dark:hover:border-primary-600 transition-all duration-200 cursor-pointer overflow-hidden"
         >
           {/* Image Section */}
           <div className="relative aspect-square bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 overflow-hidden">
@@ -191,8 +191,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, onEdit, on
             {/* Price Section */}
             <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700">
               <div className="flex items-center gap-1.5">
-                <DollarSign className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                <span className="font-bold text-lg text-orange-600 dark:text-orange-400">
+                <DollarSign className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                <span className="font-bold text-lg text-primary-600 dark:text-primary-400">
                   {formatVND(product.price)}
                 </span>
               </div>
@@ -203,7 +203,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, onEdit, on
           </div>
 
           {/* Hover Effect Border */}
-          <div className="absolute inset-0 border-2 border-orange-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
+          <div className="absolute inset-0 border-2 border-primary-500 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
         </div>
       ))}
     </div>

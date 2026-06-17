@@ -111,7 +111,7 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
             {receiptDetail.receiptImageBase64 && imageSrc ? (
               <Button
                 type="button"
-                className="group w-full overflow-hidden rounded-lg border border-slate-200 text-left transition ring-offset-2 hover:ring-2 hover:ring-orange-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 dark:border-slate-700"
+                className="group w-full overflow-hidden rounded-lg border border-slate-200 text-left transition ring-offset-2 hover:ring-2 hover:ring-primary-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-slate-700"
                 onClick={(e) => {
                   e.stopPropagation();
                   openImageViewer();

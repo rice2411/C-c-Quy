@@ -232,11 +232,11 @@ const DashboardPage: React.FC = () => {
           size="sm"
           layoutClassName="inline-flex items-center gap-2"
           sizeClassName="px-3 py-1.5"
-          textClassName="text-sm font-medium text-orange-600 dark:text-orange-400"
-          borderClassName="border border-orange-200 dark:border-orange-900/40"
+          textClassName="text-sm font-medium text-primary-600 dark:text-primary-400"
+          borderClassName="border border-primary-200 dark:border-primary-900/40"
           roundedClassName="rounded-lg"
           backgroundClassName="bg-white dark:bg-slate-800"
-          hoverClassName="hover:bg-orange-50 dark:hover:bg-orange-900/20"
+          hoverClassName="hover:bg-primary-50 dark:hover:bg-primary-900/20"
           stateClassName={`transition-colors ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
         >
           <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />

@@ -87,7 +87,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
           }}
           onFocus={() => setShowDropdown(true)}
           disabled={loading || disabled}
-          className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-orange-500 outline-none"
+          className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none"
           placeholder={placeholder}
           autoComplete="off"
         />
@@ -99,11 +99,11 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
               <li
                 key={option.id}
                 onClick={() => handleSelectOption(option)}
-                className="px-4 py-2 hover:bg-orange-50 dark:hover:bg-slate-700 cursor-pointer transition-colors group"
+                className="px-4 py-2 hover:bg-primary-50 dark:hover:bg-slate-700 cursor-pointer transition-colors group"
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-orange-700 dark:group-hover:text-orange-400">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white group-hover:text-primary-700 dark:group-hover:text-primary-400">
                       {option.label}
                     </p>
                     {option.subtitle && (
@@ -113,7 +113,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
                     )}
                   </div>
                   {option.label.toLowerCase() === value.toLowerCase() && (
-                    <Check className="w-4 h-4 text-orange-500" />
+                    <Check className="w-4 h-4 text-primary-500" />
                   )}
                 </div>
               </li>

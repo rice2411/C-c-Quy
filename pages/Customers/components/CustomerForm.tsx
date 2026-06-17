@@ -84,8 +84,8 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ isOpen, initialData, onSave
         disabled={isSubmitting}
         leftIcon={isSubmitting ? undefined : <Save />}
         iconClassName={isSubmitting ? undefined : 'inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4'}
-        backgroundClassName="bg-orange-600 dark:bg-orange-500"
-        hoverClassName="hover:bg-orange-700 dark:hover:bg-orange-600"
+        backgroundClassName="bg-primary-600 dark:bg-primary-500"
+        hoverClassName="hover:bg-primary-700 dark:hover:bg-primary-600"
         textClassName="text-sm font-medium text-white"
         roundedClassName="rounded-lg"
         shadowClassName="shadow-sm"
@@ -127,7 +127,7 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ isOpen, initialData, onSave
             layoutClassName="flex items-center gap-2 uppercase tracking-wider"
             textClassName="text-sm font-semibold text-slate-800 dark:text-slate-100"
           >
-            <User className="h-4 w-4 shrink-0 text-orange-500" aria-hidden />
+            <User className="h-4 w-4 shrink-0 text-primary-500" aria-hidden />
             {t('customers.form.sectionTitle')}
           </Heading>
 

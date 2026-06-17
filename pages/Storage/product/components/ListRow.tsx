@@ -21,9 +21,9 @@ const ListRow: React.FC<ProductCardCommonProps> = ({
     <TableRow
       onClick={onEdit}
       stateClassName="cursor-pointer transition-colors"
-      hoverClassName="hover:bg-orange-50/40 dark:hover:bg-orange-950/20"
+      hoverClassName="hover:bg-primary-50/40 dark:hover:bg-primary-950/20"
       borderClassName="border-b border-slate-100 dark:border-slate-700"
-      layoutClassName={selected ? 'bg-orange-50/60 dark:bg-orange-950/30' : ''}
+      layoutClassName={selected ? 'bg-primary-50/60 dark:bg-primary-950/30' : ''}
     >
       <TableCell layoutClassName="p-2" onClick={(e) => e.stopPropagation()}>
         <Checkbox checked={selected} onChange={onSelectToggle} />

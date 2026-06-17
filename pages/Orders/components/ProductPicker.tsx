@@ -223,7 +223,7 @@ const ProductPicker: React.FC<ProductPickerProps> = ({
                     type="button"
                     key={p.id}
                     onClick={() => handlePick(p)}
-                    className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                    className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm hover:bg-primary-50 dark:hover:bg-primary-900/20"
                    variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                     {p.image ? (
                       <img
@@ -243,7 +243,7 @@ const ProductPicker: React.FC<ProductPickerProps> = ({
                     <Box layoutClassName="min-w-0 flex-1">
                       <Box layoutClassName="flex items-center gap-2">
                         {isTopHint && (
-                          <Sparkles className="h-3.5 w-3.5 shrink-0 text-orange-500" />
+                          <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary-500" />
                         )}
                         <span className="truncate font-medium text-slate-800 dark:text-slate-100">
                           {p.name}
@@ -269,7 +269,7 @@ const ProductPicker: React.FC<ProductPickerProps> = ({
                         ) : null}
                       </Box>
                     </Box>
-                    <span className="shrink-0 text-sm font-semibold text-orange-600 dark:text-orange-400">
+                    <span className="shrink-0 text-sm font-semibold text-primary-600 dark:text-primary-400">
                       {formatVNDOrDash(p.price)}
                     </span>
                   </Button>
@@ -281,7 +281,7 @@ const ProductPicker: React.FC<ProductPickerProps> = ({
             <Button
               type="button"
               onClick={handleCustom}
-              className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2 text-left text-sm text-orange-700 hover:bg-orange-50 dark:border-slate-700 dark:text-orange-300 dark:hover:bg-orange-900/20"
+              className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2 text-left text-sm text-primary-700 hover:bg-primary-50 dark:border-slate-700 dark:text-primary-300 dark:hover:bg-primary-900/20"
              variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
               <span>
                 + Tạo item tuỳ chỉnh: <strong>{query.trim()}</strong>

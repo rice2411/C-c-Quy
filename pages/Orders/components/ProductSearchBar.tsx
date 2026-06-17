@@ -240,7 +240,7 @@ const ProductSearchBar: React.FC<ProductSearchBarProps> = ({
                         'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors ' +
                         (isSelected
                           ? 'bg-emerald-50 dark:bg-emerald-950/30'
-                          : 'hover:bg-orange-50/60 dark:hover:bg-orange-900/20')
+                          : 'hover:bg-primary-50/60 dark:hover:bg-primary-900/20')
                       }
                     >
                       {/* Click vùng này = toggle multi-select */}
@@ -276,13 +276,13 @@ const ProductSearchBar: React.FC<ProductSearchBarProps> = ({
                         <Box layoutClassName="min-w-0 flex-1">
                           <Box layoutClassName="flex items-center gap-2">
                             {isTopHint && (
-                              <Sparkles className="h-3.5 w-3.5 shrink-0 text-orange-500" />
+                              <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary-500" />
                             )}
                             <span className="truncate font-medium text-slate-800 dark:text-slate-100">
                               {p.name}
                             </span>
                             {currentQty > 0 ? (
-                              <span className="shrink-0 rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold text-orange-700 dark:bg-orange-900/60 dark:text-orange-200">
+                              <span className="shrink-0 rounded-full bg-primary-100 px-1.5 py-0.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-900/60 dark:text-primary-200">
                                 ×{currentQty}
                               </span>
                             ) : null}
@@ -308,7 +308,7 @@ const ProductSearchBar: React.FC<ProductSearchBarProps> = ({
                           </Box>
                         </Box>
 
-                        <span className="shrink-0 text-sm font-semibold text-orange-600 dark:text-orange-400">
+                        <span className="shrink-0 text-sm font-semibold text-primary-600 dark:text-primary-400">
                           {formatVNDOrDash(p.price)}
                         </span>
                       </Button>
@@ -335,7 +335,7 @@ const ProductSearchBar: React.FC<ProductSearchBarProps> = ({
                             e.stopPropagation();
                             onPickProduct(p);
                           }}
-                          className="flex h-7 w-7 items-center justify-center rounded-md text-orange-600 hover:bg-orange-100 dark:text-orange-300 dark:hover:bg-orange-900/40"
+                          className="flex h-7 w-7 items-center justify-center rounded-md text-primary-600 hover:bg-primary-100 dark:text-primary-300 dark:hover:bg-primary-900/40"
                          variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -349,7 +349,7 @@ const ProductSearchBar: React.FC<ProductSearchBarProps> = ({
               <Button
                 type="button"
                 onClick={handleCustom}
-                className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2 text-left text-sm text-orange-700 hover:bg-orange-50 dark:border-slate-700 dark:text-orange-300 dark:hover:bg-orange-900/20"
+                className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2 text-left text-sm text-primary-700 hover:bg-primary-50 dark:border-slate-700 dark:text-primary-300 dark:hover:bg-primary-900/20"
                variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 <span>
                   + Tạo item tuỳ chỉnh: <strong>{query.trim()}</strong>

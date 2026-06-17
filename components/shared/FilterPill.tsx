@@ -19,14 +19,14 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, value, options, onChange
     <label
       className={`group relative inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-xs shadow-sm transition-colors ${
         isAll
-          ? 'border-slate-200 bg-white hover:border-orange-300 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-orange-500'
-          : 'border-orange-300 bg-orange-50 dark:border-orange-600 dark:bg-orange-900/30'
+          ? 'border-slate-200 bg-white hover:border-primary-300 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-primary-500'
+          : 'border-primary-300 bg-primary-50 dark:border-primary-600 dark:bg-primary-900/30'
       }`}
     >
       <span className="font-medium text-slate-500 dark:text-slate-400">{label}:</span>
       <span
         className={`font-semibold ${
-          isAll ? 'text-slate-700 dark:text-slate-200' : 'text-orange-700 dark:text-orange-300'
+          isAll ? 'text-slate-700 dark:text-slate-200' : 'text-primary-700 dark:text-primary-300'
         }`}
       >
         {currentLabel}

@@ -156,8 +156,8 @@ const SettingsPage: React.FC = () => {
             layoutClassName="relative pb-2 text-sm font-semibold uppercase tracking-wide"
             textClassName={
               activeTab === 'screens'
-                ? 'text-orange-500 dark:text-orange-400'
-                : 'text-slate-500 hover:text-orange-500 dark:text-slate-300 dark:hover:text-orange-400'
+                ? 'text-primary-500 dark:text-primary-400'
+                : 'text-slate-500 hover:text-primary-500 dark:text-slate-300 dark:hover:text-primary-400'
             }
             stateClassName="transition-colors duration-200"
           >
@@ -166,7 +166,7 @@ const SettingsPage: React.FC = () => {
               <Box
                 layoutClassName="absolute -bottom-[1px] left-0 right-0 h-0.5"
                 roundedClassName="rounded-full"
-                backgroundClassName="bg-orange-500 dark:bg-orange-400"
+                backgroundClassName="bg-primary-500 dark:bg-primary-400"
               />
             )}
           </Button>
@@ -180,8 +180,8 @@ const SettingsPage: React.FC = () => {
             layoutClassName="relative pb-2 text-sm font-semibold uppercase tracking-wide"
             textClassName={
               activeTab === 'database'
-                ? 'text-orange-500 dark:text-orange-400'
-                : 'text-slate-500 hover:text-orange-500 dark:text-slate-300 dark:hover:text-orange-400'
+                ? 'text-primary-500 dark:text-primary-400'
+                : 'text-slate-500 hover:text-primary-500 dark:text-slate-300 dark:hover:text-primary-400'
             }
             stateClassName="transition-colors duration-200"
           >
@@ -190,7 +190,7 @@ const SettingsPage: React.FC = () => {
               <Box
                 layoutClassName="absolute -bottom-[1px] left-0 right-0 h-0.5"
                 roundedClassName="rounded-full"
-                backgroundClassName="bg-orange-500 dark:bg-orange-400"
+                backgroundClassName="bg-primary-500 dark:bg-primary-400"
               />
             )}
           </Button>
@@ -204,8 +204,8 @@ const SettingsPage: React.FC = () => {
             layoutClassName="relative pb-2 text-sm font-semibold uppercase tracking-wide"
             textClassName={
               activeTab === 'zalo'
-                ? 'text-orange-500 dark:text-orange-400'
-                : 'text-slate-500 hover:text-orange-500 dark:text-slate-300 dark:hover:text-orange-400'
+                ? 'text-primary-500 dark:text-primary-400'
+                : 'text-slate-500 hover:text-primary-500 dark:text-slate-300 dark:hover:text-primary-400'
             }
             stateClassName="transition-colors duration-200"
           >
@@ -214,7 +214,7 @@ const SettingsPage: React.FC = () => {
               <Box
                 layoutClassName="absolute -bottom-[1px] left-0 right-0 h-0.5"
                 roundedClassName="rounded-full"
-                backgroundClassName="bg-orange-500 dark:bg-orange-400"
+                backgroundClassName="bg-primary-500 dark:bg-primary-400"
               />
             )}
           </Button>
@@ -228,8 +228,8 @@ const SettingsPage: React.FC = () => {
             layoutClassName="relative pb-2 text-sm font-semibold uppercase tracking-wide"
             textClassName={
               activeTab === 'order'
-                ? 'text-orange-500 dark:text-orange-400'
-                : 'text-slate-500 hover:text-orange-500 dark:text-slate-300 dark:hover:text-orange-400'
+                ? 'text-primary-500 dark:text-primary-400'
+                : 'text-slate-500 hover:text-primary-500 dark:text-slate-300 dark:hover:text-primary-400'
             }
             stateClassName="transition-colors duration-200"
           >
@@ -238,7 +238,7 @@ const SettingsPage: React.FC = () => {
               <Box
                 layoutClassName="absolute -bottom-[1px] left-0 right-0 h-0.5"
                 roundedClassName="rounded-full"
-                backgroundClassName="bg-orange-500 dark:bg-orange-400"
+                backgroundClassName="bg-primary-500 dark:bg-primary-400"
               />
             )}
           </Button>
@@ -252,8 +252,8 @@ const SettingsPage: React.FC = () => {
             layoutClassName="relative pb-2 text-sm font-semibold uppercase tracking-wide"
             textClassName={
               activeTab === 'badges'
-                ? 'text-orange-500 dark:text-orange-400'
-                : 'text-slate-500 hover:text-orange-500 dark:text-slate-300 dark:hover:text-orange-400'
+                ? 'text-primary-500 dark:text-primary-400'
+                : 'text-slate-500 hover:text-primary-500 dark:text-slate-300 dark:hover:text-primary-400'
             }
             stateClassName="transition-colors duration-200"
           >
@@ -262,7 +262,7 @@ const SettingsPage: React.FC = () => {
               <Box
                 layoutClassName="absolute -bottom-[1px] left-0 right-0 h-0.5"
                 roundedClassName="rounded-full"
-                backgroundClassName="bg-orange-500 dark:bg-orange-400"
+                backgroundClassName="bg-primary-500 dark:bg-primary-400"
               />
             )}
           </Button>
@@ -276,8 +276,8 @@ const SettingsPage: React.FC = () => {
             layoutClassName="relative pb-2 text-sm font-semibold uppercase tracking-wide"
             textClassName={
               activeTab === 'categories'
-                ? 'text-orange-500 dark:text-orange-400'
-                : 'text-slate-500 hover:text-orange-500 dark:text-slate-300 dark:hover:text-orange-400'
+                ? 'text-primary-500 dark:text-primary-400'
+                : 'text-slate-500 hover:text-primary-500 dark:text-slate-300 dark:hover:text-primary-400'
             }
             stateClassName="transition-colors duration-200"
           >
@@ -286,7 +286,7 @@ const SettingsPage: React.FC = () => {
               <Box
                 layoutClassName="absolute -bottom-[1px] left-0 right-0 h-0.5"
                 roundedClassName="rounded-full"
-                backgroundClassName="bg-orange-500 dark:bg-orange-400"
+                backgroundClassName="bg-primary-500 dark:bg-primary-400"
               />
             )}
           </Button>
@@ -312,7 +312,7 @@ const SettingsPage: React.FC = () => {
           ) : (
             <>
               <Heading level={2} textClassName="flex items-center gap-2 text-xl font-semibold">
-                <MessageCircle className="h-6 w-6 text-orange-500" />
+                <MessageCircle className="h-6 w-6 text-primary-500" />
                 Cấu hình Zalo
               </Heading>
               <Typography size="sm" variant="muted" layoutClassName="mt-1">
@@ -329,8 +329,8 @@ const SettingsPage: React.FC = () => {
             leftIcon={saving ? <Spinner size="sm" textClassName="text-white" borderClassName="border-white" /> : <Save />}
             iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
             sizeClassName="px-4 py-2"
-            backgroundClassName="bg-orange-600"
-            hoverClassName="hover:bg-orange-700"
+            backgroundClassName="bg-primary-600"
+            hoverClassName="hover:bg-primary-700"
             textClassName="text-sm font-medium text-white"
             roundedClassName="rounded-lg"
             layoutClassName="inline-flex items-center gap-2"
@@ -440,7 +440,7 @@ const SettingsPage: React.FC = () => {
             backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
           >
             <Typography size="sm" layoutClassName="flex items-center gap-2 font-semibold">
-              <Database className="h-4 w-4 text-orange-500" />
+              <Database className="h-4 w-4 text-primary-500" />
               Database Explorer
             </Typography>
             <Typography size="xs" variant="muted" layoutClassName="mt-1">
@@ -484,13 +484,13 @@ const SettingsPage: React.FC = () => {
                       roundedClassName="rounded-lg"
                       borderClassName={
                         active
-                          ? 'border border-orange-200 dark:border-orange-700'
-                          : 'border border-slate-200 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-700'
+                          ? 'border border-primary-200 dark:border-primary-700'
+                          : 'border border-slate-200 dark:border-slate-700 hover:border-primary-200 dark:hover:border-primary-700'
                       }
-                      backgroundClassName={active ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-white dark:bg-slate-800'}
+                      backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/20' : 'bg-white dark:bg-slate-800'}
                       textClassName={
                         active
-                          ? 'text-sm text-orange-700 dark:text-orange-300'
+                          ? 'text-sm text-primary-700 dark:text-primary-300'
                           : 'text-sm text-slate-700 dark:text-slate-300'
                       }
                       layoutClassName="w-full items-center justify-between"

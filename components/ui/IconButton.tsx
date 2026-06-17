@@ -23,9 +23,9 @@ export interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEl
 
 const variantClasses: Record<IconButtonVariant, string> = {
   ghost:
-    'border border-transparent bg-transparent text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus:ring-orange-500 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200',
+    'border border-transparent bg-transparent text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus:ring-primary-500 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200',
   secondary:
-    'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 focus:ring-orange-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
+    'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700',
   danger:
     'border border-transparent bg-red-50 text-red-600 hover:bg-red-100 focus:ring-red-500 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/30'
 };

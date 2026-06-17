@@ -40,7 +40,7 @@ const SalesTab: React.FC<SalesTabProps> = ({ dailySales, metrics30, topBuyers })
             return (
               <Box
                 key={d.date}
-                layoutClassName="group relative flex-1 min-w-[8px] rounded-t bg-orange-200 hover:bg-orange-400 dark:bg-orange-900/40 dark:hover:bg-orange-700 transition-colors"
+                layoutClassName="group relative flex-1 min-w-[8px] rounded-t bg-primary-200 hover:bg-primary-400 dark:bg-primary-900/40 dark:hover:bg-primary-700 transition-colors"
                 style={{ height: `${Math.max(h, 2)}%` }}
                 title={`${d.date}: ${d.units} sp · ${formatVND(d.revenue)}`}
               >
@@ -60,7 +60,7 @@ const SalesTab: React.FC<SalesTabProps> = ({ dailySales, metrics30, topBuyers })
           </Box>
           <Box>
             <Typography size="xs" variant="muted">Doanh thu 30 ngày</Typography>
-            <Typography size="sm" layoutClassName="font-bold text-orange-600">
+            <Typography size="sm" layoutClassName="font-bold text-primary-600">
               {formatVND(metrics30?.revenue ?? 0)}
             </Typography>
           </Box>
@@ -83,7 +83,7 @@ const SalesTab: React.FC<SalesTabProps> = ({ dailySales, metrics30, topBuyers })
                 layoutClassName="flex items-center justify-between rounded-lg border border-slate-100 p-2 dark:border-slate-700"
               >
                 <Box layoutClassName="flex items-center gap-2">
-                  <Box layoutClassName="inline-flex h-7 w-7 items-center justify-center rounded-full bg-orange-100 text-xs font-bold text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">
+                  <Box layoutClassName="inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
                     {idx + 1}
                   </Box>
                   <Box>
@@ -91,7 +91,7 @@ const SalesTab: React.FC<SalesTabProps> = ({ dailySales, metrics30, topBuyers })
                     <Typography size="xs" variant="muted">{b.count} đơn · {b.units} sp</Typography>
                   </Box>
                 </Box>
-                <Typography size="sm" layoutClassName="font-bold text-orange-600">{formatVND(b.revenue)}</Typography>
+                <Typography size="sm" layoutClassName="font-bold text-primary-600">{formatVND(b.revenue)}</Typography>
               </Box>
             ))}
           </Box>

@@ -247,7 +247,7 @@ const PromotionsPage: React.FC = () => {
   if (loading) {
     return (
       <Box layoutClassName="flex flex-1 items-center justify-center py-16">
-        <Spinner size="lg" textClassName="text-orange-500" />
+        <Spinner size="lg" textClassName="text-primary-500" />
       </Box>
     );
   }
@@ -256,7 +256,7 @@ const PromotionsPage: React.FC = () => {
     <Box layoutClassName="space-y-4 p-4">
       <Box layoutClassName="flex items-center justify-between gap-3">
         <Box layoutClassName="flex items-center gap-2">
-          <Tag className="h-5 w-5 text-orange-500" />
+          <Tag className="h-5 w-5 text-primary-500" />
           <Heading level={4}>Khuyến mãi</Heading>
           <Badge size="sm" borderClassName="border-transparent" backgroundClassName="bg-slate-100 dark:bg-slate-700" textClassName="text-slate-500 dark:text-slate-300">
             {promotions.length}
@@ -420,7 +420,7 @@ const PromotionsPage: React.FC = () => {
                   <Box layoutClassName="flex flex-wrap items-center gap-2">
                     <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">{p.name}</Typography>
                     {p.applyMode === 'CODE' && p.code ? (
-                      <Badge size="sm" borderClassName="border-transparent" backgroundClassName="bg-orange-100 dark:bg-orange-900/30" textClassName="font-mono text-orange-700 dark:text-orange-300">{p.code}</Badge>
+                      <Badge size="sm" borderClassName="border-transparent" backgroundClassName="bg-primary-100 dark:bg-primary-900/30" textClassName="font-mono text-primary-700 dark:text-primary-300">{p.code}</Badge>
                     ) : (
                       <Badge size="sm" borderClassName="border-transparent" backgroundClassName="bg-sky-100 dark:bg-sky-900/30" textClassName="text-sky-700 dark:text-sky-300">tự áp</Badge>
                     )}
@@ -435,7 +435,7 @@ const PromotionsPage: React.FC = () => {
                     {p.maxUses != null ? ` · ${p.usedCount}/${p.maxUses} lượt` : ` · ${p.usedCount} lượt`}
                   </Typography>
                 </Box>
-                <Button variant="ghost" size="sm" onClick={() => startEdit(p)} title="Sửa" textClassName="text-slate-400 hover:text-orange-500">
+                <Button variant="ghost" size="sm" onClick={() => startEdit(p)} title="Sửa" textClassName="text-slate-400 hover:text-primary-500">
                   <Pencil className="h-4 w-4" />
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => handleDelete(p)} title="Xoá" textClassName="text-slate-400 hover:text-red-500">

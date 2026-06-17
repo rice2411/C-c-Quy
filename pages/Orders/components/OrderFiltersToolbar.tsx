@@ -63,7 +63,7 @@ const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
     >
       <Box layoutClassName="flex items-center gap-2">
         <Heading level={2} layoutClassName="flex items-center gap-2" textClassName="text-lg font-semibold">
-          <Filter className="h-5 w-5 text-orange-500" />
+          <Filter className="h-5 w-5 text-primary-500" />
           {t('orders.recent')}
         </Heading>
       </Box>

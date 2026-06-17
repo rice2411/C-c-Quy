@@ -227,7 +227,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
         leftIcon={isSubmitting ? <Loader2 className="animate-spin" /> : <Save />}
         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
         sizeClassName="px-6 py-2"
-        backgroundClassName="bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600"
+        backgroundClassName="bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
         textClassName="text-sm font-medium text-white"
         roundedClassName="rounded-lg"
         borderClassName="border border-transparent"

@@ -68,13 +68,13 @@ const Layout: React.FC = () => {
         to={item.disabled ? '#' : item.path}
         className={`w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${indented ? 'pl-10' : ''} ${
           active
-            ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 shadow-sm'
+            ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 shadow-sm'
             : item.disabled
               ? 'text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-60'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
         }`}
       >
-        <Icon className={`${indented ? 'w-4 h-4' : 'w-5 h-5'} mr-3 ${active ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'}`} />
+        <Icon className={`${indented ? 'w-4 h-4' : 'w-5 h-5'} mr-3 ${active ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500'}`} />
         {t(item.labelKey)}
         {item.disabled && <span className="ml-auto text-[10px] font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">Bảo trì</span>}
       </Link>
@@ -96,7 +96,7 @@ const Layout: React.FC = () => {
     if (location.pathname === '/customers') return t('header.customersTitle');
     if (location.pathname === '/users') return t('header.usersTitle');
     if (location.pathname === '/admin/request-logs') return t('nav.requestLogs');
-    return 'CucQuyBakery';
+    return 'Tiệm Bánh Cúc Quy';
   };
 
   return (
@@ -104,10 +104,10 @@ const Layout: React.FC = () => {
       {/* Sidebar - Desktop */}
       <aside className="hidden md:flex w-64 flex-col bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 z-20 transition-colors duration-200">
         <div className="h-16 flex items-center px-6 border-b border-slate-100 dark:border-slate-700">
-          <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white font-bold mr-3 shadow-sm shadow-orange-300 dark:shadow-none">
+          <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold mr-3 shadow-sm shadow-primary-300 dark:shadow-none">
             C
           </div>
-          <span className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">CucQuy<span className="text-orange-600 dark:text-orange-500">Bakery</span></span>
+          <span className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Tiệm Bánh <span className="text-primary-600 dark:text-primary-500">Cúc Quy</span></span>
         </div>
 
         <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
@@ -124,11 +124,11 @@ const Layout: React.FC = () => {
                   onClick={() => setOpenGroups(prev => ({ ...prev, [node.group.key]: !isOpen }))}
                   className={`w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                     groupActive
-                      ? 'text-orange-700 dark:text-orange-400'
+                      ? 'text-primary-700 dark:text-primary-400'
                       : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  <GroupIcon className={`w-5 h-5 mr-3 ${groupActive ? 'text-orange-600 dark:text-orange-400' : 'text-slate-400 dark:text-slate-500'}`} />
+                  <GroupIcon className={`w-5 h-5 mr-3 ${groupActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500'}`} />
                   {t(node.group.labelKey)}
                   <ChevronDown className={`ml-auto w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
@@ -159,10 +159,10 @@ const Layout: React.FC = () => {
         <header className="h-16 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 md:px-8 z-10 sticky top-0 transition-colors duration-200">
           <div className="flex items-center gap-3">
             <div className="md:hidden flex items-center gap-2">
-              <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm shadow-orange-300 dark:shadow-none">
+              <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm shadow-primary-300 dark:shadow-none">
                 C
               </div>
-              <span className="text-lg font-bold text-slate-800 dark:text-white">CucQuyBakery</span>
+              <span className="text-lg font-bold text-slate-800 dark:text-white">Tiệm Bánh <span className="text-primary-600 dark:text-primary-500">Cúc Quy</span></span>
             </div>
             <div className="hidden md:block">
               <h1 className="text-xl font-bold text-slate-800 dark:text-white">
@@ -203,11 +203,11 @@ const Layout: React.FC = () => {
                       {currentUser?.email || 'admin@cucquy.com'}
                     </p>
                  </div>
-                 <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-slate-700 overflow-hidden border border-slate-300 dark:border-slate-600 flex items-center justify-center">
+                 <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-slate-700 overflow-hidden border border-slate-300 dark:border-slate-600 flex items-center justify-center">
                     {currentUser?.photoURL ? (
                       <img src={currentUser.photoURL} alt="User" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-orange-600 font-bold">
+                      <span className="text-primary-600 font-bold">
                         {currentUser?.displayName?.charAt(0).toUpperCase() || 'A'}
                       </span>
                     )}

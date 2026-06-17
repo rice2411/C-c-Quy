@@ -239,7 +239,7 @@ const RequestLogsPage: React.FC = () => {
       {/* Thống kê tổng quan */}
       <Box layoutClassName="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          icon={<Activity className="w-5 h-5 text-orange-600 dark:text-orange-500" />}
+          icon={<Activity className="w-5 h-5 text-primary-600 dark:text-primary-500" />}
           label="Tổng request"
           value={stats ? stats.total.toLocaleString('vi-VN') : '—'}
         />

@@ -61,10 +61,10 @@ const Tabs: React.FC<TabsProps> = ({ items, value, onChange, className }) => {
               disabled={isDisabled}
               className={`relative pb-2 text-sm font-semibold tracking-wide uppercase transition-colors duration-200 ${
                 isActive
-                  ? 'text-orange-500 dark:text-orange-400'
+                  ? 'text-primary-500 dark:text-primary-400'
                   : isDisabled
                     ? 'cursor-not-allowed text-slate-400 dark:text-slate-500'
-                    : 'text-slate-500 hover:text-orange-500 dark:text-slate-300 dark:hover:text-orange-400'
+                    : 'text-slate-500 hover:text-primary-500 dark:text-slate-300 dark:hover:text-primary-400'
               }`}
             >
               {item.label}
@@ -73,7 +73,7 @@ const Tabs: React.FC<TabsProps> = ({ items, value, onChange, className }) => {
           );
         })}
         <span
-          className="absolute bottom-0 h-0.5 rounded-full bg-orange-500 transition-all duration-300 ease-out dark:bg-orange-400"
+          className="absolute bottom-0 h-0.5 rounded-full bg-primary-500 transition-all duration-300 ease-out dark:bg-primary-400"
           style={{
             left: `${indicatorStyle.left}px`,
             width: `${indicatorStyle.width}px`

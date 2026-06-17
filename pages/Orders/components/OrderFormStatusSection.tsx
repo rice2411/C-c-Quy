@@ -175,7 +175,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
                 <Typography as="span" size="xs" layoutClassName="min-w-[60px] font-medium uppercase text-slate-500">
                   {t('qr.amount')}
                 </Typography>
-                <Typography as="span" layoutClassName="font-bold text-orange-600 dark:text-orange-400">
+                <Typography as="span" layoutClassName="font-bold text-primary-600 dark:text-primary-400">
                   {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}
                 </Typography>
               </Box>

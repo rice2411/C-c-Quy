@@ -182,11 +182,11 @@ const OrdersPage: React.FC = () => {
             onClick={handleCreateNewOrder}
             leftIcon={<Plus />}
             iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-            backgroundClassName="bg-orange-600"
-            hoverClassName="hover:bg-orange-700"
+            backgroundClassName="bg-primary-600"
+            hoverClassName="hover:bg-primary-700"
             textClassName="text-sm font-medium text-white"
             roundedClassName="rounded-lg"
-            shadowClassName="shadow-sm shadow-orange-200 dark:shadow-none"
+            shadowClassName="shadow-sm shadow-primary-200 dark:shadow-none"
             sizeClassName="px-3 py-2"
             layoutClassName="flex-1 gap-2 sm:flex-none"
             stateClassName="transition-colors"
@@ -209,8 +209,8 @@ const OrdersPage: React.FC = () => {
           <Button
             type="button"
             onClick={handleCreateNewOrder}
-            backgroundClassName="bg-orange-600"
-            hoverClassName="hover:bg-orange-700"
+            backgroundClassName="bg-primary-600"
+            hoverClassName="hover:bg-primary-700"
             textClassName="text-sm text-white"
             roundedClassName="rounded-lg"
             sizeClassName="px-4 py-2"

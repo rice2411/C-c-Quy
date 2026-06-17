@@ -181,9 +181,9 @@ const MappingRow: React.FC<MappingRowProps> = ({
                         <Box layoutClassName="flex flex-wrap items-center gap-1.5">
                           {order.orderNumber && (
                             <Badge size="sm" layoutClassName="px-2 py-0.5 text-[10px] font-semibold font-mono"
-                              borderClassName="border-orange-200 dark:border-orange-700"
-                              backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
-                              textClassName="text-orange-700 dark:text-orange-300">
+                              borderClassName="border-primary-200 dark:border-primary-700"
+                              backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+                              textClassName="text-primary-700 dark:text-primary-300">
                               {order.orderNumber}
                             </Badge>
                           )}
@@ -242,12 +242,12 @@ const MappingRow: React.FC<MappingRowProps> = ({
                           disableVariantTextColor
                           layoutClassName="flex items-center gap-1.5"
                           roundedClassName="rounded-lg"
-                          borderClassName="border border-orange-300 dark:border-orange-600"
-                          backgroundClassName="bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40"
+                          borderClassName="border border-primary-300 dark:border-primary-600"
+                          backgroundClassName="bg-primary-50 hover:bg-primary-100 dark:bg-primary-900/20 dark:hover:bg-primary-900/40"
                           sizeClassName="px-3 py-1.5 text-xs"
-                          textClassName="font-semibold text-orange-700 dark:text-orange-300"
+                          textClassName="font-semibold text-primary-700 dark:text-primary-300"
                           stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50">
-                          {isLinking ? <InlineSpinner className="border-orange-400" /> : <ArrowRight className="h-3.5 w-3.5" />}
+                          {isLinking ? <InlineSpinner className="border-primary-400" /> : <ArrowRight className="h-3.5 w-3.5" />}
                           Liên kết
                         </Button>
                       )}
@@ -301,10 +301,10 @@ const ExternalRow: React.FC<ExternalRowProps> = ({ transaction, onUnmark, format
         disableVariantTextColor
         layoutClassName="flex shrink-0 items-center gap-1.5"
         roundedClassName="rounded-lg"
-        borderClassName="border border-slate-200 hover:border-orange-300 dark:border-slate-600 dark:hover:border-orange-600"
+        borderClassName="border border-slate-200 hover:border-primary-300 dark:border-slate-600 dark:hover:border-primary-600"
         backgroundClassName="bg-white dark:bg-slate-700"
         sizeClassName="px-2.5 py-1.5 text-xs"
-        textClassName="font-medium text-slate-500 hover:text-orange-600 dark:text-slate-400 dark:hover:text-orange-400"
+        textClassName="font-medium text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400"
         stateClassName="transition-colors disabled:opacity-50">
         {loading ? <InlineSpinner /> : <RotateCcw className="h-3.5 w-3.5" />}
         Khôi phục

@@ -101,7 +101,7 @@ const MaterialPickerModal: React.FC<MaterialPickerModalProps> = ({
         >
           <Box>
             <Typography size="sm" layoutClassName="flex items-center gap-1.5 font-semibold">
-              <Sparkles className="h-4 w-4 text-orange-500" /> Chọn nguyên liệu trang trí
+              <Sparkles className="h-4 w-4 text-primary-500" /> Chọn nguyên liệu trang trí
             </Typography>
             <Typography size="xs" variant="muted">
               Bấm để thêm — nguyên liệu đã chọn hiển thị ×N. Giá lấy theo giá nhập trung bình.
@@ -160,8 +160,8 @@ const MaterialPickerModal: React.FC<MaterialPickerModalProps> = ({
                   <Box
                     key={m.id}
                     layoutClassName="flex items-center gap-3 rounded-xl border p-2.5 transition-colors"
-                    borderClassName={isPicked ? 'border-orange-300 dark:border-orange-700' : 'border-slate-200 dark:border-slate-700'}
-                    backgroundClassName={isPicked ? 'bg-orange-50/40 dark:bg-orange-950/30' : 'bg-white dark:bg-slate-800'}
+                    borderClassName={isPicked ? 'border-primary-300 dark:border-primary-700' : 'border-slate-200 dark:border-slate-700'}
+                    backgroundClassName={isPicked ? 'bg-primary-50/40 dark:bg-primary-950/30' : 'bg-white dark:bg-slate-800'}
                   >
                     <Button
                       type="button"
@@ -175,12 +175,12 @@ const MaterialPickerModal: React.FC<MaterialPickerModalProps> = ({
                     >
                       <Box layoutClassName="min-w-0">
                         <Typography size="sm" layoutClassName="truncate font-medium">{m.name}</Typography>
-                        <Typography size="xs" textClassName="text-orange-600 dark:text-orange-400">{formatVND(m.unitPrice)}</Typography>
+                        <Typography size="xs" textClassName="text-primary-600 dark:text-primary-400">{formatVND(m.unitPrice)}</Typography>
                       </Box>
                       {isPicked ? (
                         <Box
                           layoutClassName="flex h-6 min-w-[1.75rem] shrink-0 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-                          backgroundClassName="bg-orange-500"
+                          backgroundClassName="bg-primary-500"
                           textClassName="text-white"
                         >
                           ×{qty}
@@ -217,8 +217,8 @@ const MaterialPickerModal: React.FC<MaterialPickerModalProps> = ({
                           roundedClassName="rounded-full"
                           sizeClassName="h-6 w-6"
                           layoutClassName="flex items-center justify-center"
-                          textClassName="text-orange-600 dark:text-orange-300"
-                          hoverClassName="hover:bg-orange-100 dark:hover:bg-orange-900/40"
+                          textClassName="text-primary-600 dark:text-primary-300"
+                          hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-900/40"
                         >
                           <Plus className="h-3.5 w-3.5" />
                         </Button>
@@ -235,9 +235,9 @@ const MaterialPickerModal: React.FC<MaterialPickerModalProps> = ({
                         roundedClassName="rounded-full"
                         sizeClassName="h-7 w-7"
                         layoutClassName="flex shrink-0 items-center justify-center"
-                        backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
-                        textClassName="text-orange-600 dark:text-orange-300"
-                        hoverClassName="hover:bg-orange-100 dark:hover:bg-orange-900/40"
+                        backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+                        textClassName="text-primary-600 dark:text-primary-300"
+                        hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-900/40"
                       >
                         <Plus className="h-4 w-4" />
                       </Button>

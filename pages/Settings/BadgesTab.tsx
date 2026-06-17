@@ -107,7 +107,7 @@ function BadgeEditor<T extends { name: string; color: string; icon?: string }>({
   onChange,
   onClose,
   extra,
-  accent = '#ea580c',
+  accent = '#4abab9',
 }: EditorProps<T>) {
   return (
     <Box
@@ -289,7 +289,7 @@ const BadgesTab: React.FC = () => {
       <Box layoutClassName="flex flex-wrap items-center justify-between gap-3">
         <Box>
           <Heading level={2} textClassName="flex items-center gap-2 text-xl font-semibold">
-            <Tag className="h-6 w-6 text-orange-500" />
+            <Tag className="h-6 w-6 text-primary-500" />
             Quản lý Badges
           </Heading>
           <Typography size="sm" variant="muted" layoutClassName="mt-1">
@@ -303,7 +303,7 @@ const BadgesTab: React.FC = () => {
           leftIcon={saving ? <Spinner size="sm" textClassName="text-white" borderClassName="border-white" /> : <Save />}
           iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
           sizeClassName="px-4 py-2"
-          backgroundClassName="bg-gradient-to-r from-orange-600 to-amber-600"
+          backgroundClassName="bg-gradient-to-r from-primary-600 to-primary-600"
           textClassName="text-sm font-semibold text-white"
           roundedClassName="rounded-xl"
           layoutClassName="inline-flex items-center gap-2 disabled:opacity-50"
@@ -319,7 +319,7 @@ const BadgesTab: React.FC = () => {
         <Box layoutClassName="flex flex-wrap items-center justify-between gap-2">
           <Box>
             <Typography size="sm" layoutClassName="flex items-center gap-2 font-bold uppercase tracking-wider">
-              <Tag className="h-4 w-4 text-orange-500" />
+              <Tag className="h-4 w-4 text-primary-500" />
               Badges cho đơn
             </Typography>
             <Typography size="xs" variant="muted">
@@ -332,9 +332,9 @@ const BadgesTab: React.FC = () => {
             leftIcon={<Plus />}
             iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
             sizeClassName="px-3 py-1.5 text-xs"
-            backgroundClassName="bg-orange-50 dark:bg-orange-900/20"
-            textClassName="font-semibold text-orange-700 dark:text-orange-300"
-            borderClassName="border border-orange-200 dark:border-orange-800"
+            backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+            textClassName="font-semibold text-primary-700 dark:text-primary-300"
+            borderClassName="border border-primary-200 dark:border-primary-800"
             roundedClassName="rounded-lg"
             layoutClassName="inline-flex items-center gap-1.5"
             disableVariantHover
