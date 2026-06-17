@@ -13,7 +13,6 @@
     <circle cx="256" cy="172" r="88"/>
     <rect x="182" y="250" width="148" height="120" rx="24"/>
   </g>
-  <!-- Pleats (teal) gợi nếp gấp mũ -->
   <g stroke="#4abab9" stroke-width="9" stroke-linecap="round" opacity="0.9">
     <line x1="224" y1="280" x2="224" y2="352"/>
     <line x1="256" y1="278" x2="256" y2="354"/>

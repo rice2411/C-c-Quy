@@ -26,8 +26,8 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: "autoUpdate",
         includeAssets: [
-          "icon.svg",
-          "icon.png",
+          "icon-v2.svg",
+          "icon-v2.png",
           "og-image.jpg",
           "banner.jpg",
         ],
@@ -43,9 +43,14 @@ export default defineConfig(({ mode }) => {
           start_url: "/",
           icons: [
             {
-              src: "./icon.svg",
+              src: "./icon-v2.svg",
               sizes: "any",
               type: "image/svg+xml",
+            },
+            {
+              src: "./icon-v2.png",
+              sizes: "512x512",
+              type: "image/png",
             },
           ],
         },
