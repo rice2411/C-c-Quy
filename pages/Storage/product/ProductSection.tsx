@@ -39,8 +39,10 @@ import toast from 'react-hot-toast';
 import type { Order, Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { fetchBadgesConfiguration } from '@/services/badgeService';
+import { fetchCategories } from '@/services/categoryService';
 import { updateProduct, deleteProduct } from '@/services/productService';
 import type { ProductBadge } from '@/types/badge';
+import type { ProductCategory } from '@/types/category';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { getTagPalette } from '@/utils/product/productTagPalette';
 import { computeProductMetrics, type ProductSalesMetric } from '@/pages/Storage/product/productStats';
@@ -136,6 +138,24 @@ const ProductSection: React.FC<Props> = ({
     productBadges.forEach((b) => m.set(b.name, b));
     return m;
   }, [productBadges]);
+
+  // ===== Categories from config (để hiển thị chip màu/icon) =====
+  const [categoryConfig, setCategoryConfig] = useState<ProductCategory[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const cats = await fetchCategories();
+        if (!cancelled) setCategoryConfig(cats);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, []);
+  const categoryByName = useMemo(() => {
+    const m = new Map<string, ProductCategory>();
+    categoryConfig.forEach((c) => m.set(c.name, c));
+    return m;
+  }, [categoryConfig]);
 
   // ===== Sales metrics =====
   const metrics = useMemo(() => computeProductMetrics(orders, products, 30), [orders, products]);
@@ -303,6 +323,22 @@ const ProductSection: React.FC<Props> = ({
           return <Badge key={`${idx}-${tag}`} className={palette.chip}>{tag}</Badge>;
         })}
       </div>
+    );
+  };
+
+  const renderCategoryChip = (category?: string) => {
+    if (!category) return null;
+    const c = categoryByName.get(category);
+    const color = c?.color || '#64748b';
+    return (
+      <span
+        className="inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
+        style={{ backgroundColor: color + '22', color, border: `1px solid ${color}55` }}
+        title={`Danh mục: ${category}`}
+      >
+        <span>{c?.icon || '🏷️'}</span>
+        {category}
+      </span>
     );
   };
 
@@ -569,6 +605,7 @@ const ProductSection: React.FC<Props> = ({
               onUpdatePrice={(n) => handleUpdatePrice(p.id, n)}
               onToggleStatus={() => handleToggleStatus(p.id)}
               renderBadges={renderBadgeChips}
+              renderCategory={renderCategoryChip}
             />
           ))}
         </div>

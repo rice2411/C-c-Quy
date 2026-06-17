@@ -25,10 +25,12 @@ export interface ProductCardCommonProps {
   onUpdatePrice: (n: number) => void;
   onToggleStatus: () => void;
   renderBadges: (tags?: string[]) => React.ReactNode;
+  /** Render chip danh mục (màu/icon theo config). Optional để không vỡ các nơi gọi cũ. */
+  renderCategory?: (category?: string) => React.ReactNode;
 }
 
 const GridCard: React.FC<ProductCardCommonProps> = ({
-  product, metric, selected, onSelectToggle, onEdit, onDuplicate, onUpdatePrice, onToggleStatus, renderBadges,
+  product, metric, selected, onSelectToggle, onEdit, onDuplicate, onUpdatePrice, onToggleStatus, renderBadges, renderCategory,
 }) => {
   const m = calcMargin(product);
   const marg = marginColor(m);
@@ -109,6 +111,7 @@ const GridCard: React.FC<ProductCardCommonProps> = ({
         <Heading level={3} textClassName="line-clamp-1 text-sm font-bold text-slate-900 dark:text-white" title={product.name}>
           {product.name}
         </Heading>
+        {renderCategory ? renderCategory(product.category) : null}
         {renderBadges(product.tags)}
         <div className="flex items-center justify-between pt-1">
           <InlinePriceEditor value={product.price} onSave={onUpdatePrice} />
