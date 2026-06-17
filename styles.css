@@ -1,3 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens "Nhân Hòa" — biến CSS cho chart (recharts)/inline style */
+:root {
+  --color-primary: #4abab9;
+  --color-primary-600: #3a9897;
+  --color-primary-700: #327c7b;
+  --color-primary-foreground: #ffffff;
+  --color-brand-red: #e40014;
+  --radius: 0.625rem;
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-info: #3b82f6;
+  --color-warning: #f59e0b;
+  --chart-1: #4abab9;
+  --chart-2: #009588;
+  --chart-3: #104e64;
+  --chart-4: #fcbb00;
+  --chart-5: #f99c00;
+}
+
 body {
   font-family: "Inter", sans-serif;
 }

@@ -68,13 +68,8 @@
     <link rel="apple-touch-icon" href="/icon.png" />
 
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Design system Nhân Hòa: cấu hình Tailwind (thang màu primary teal, radius, font) -->
-    <script src="/styles/tailwind.config.js"></script>
+    <!-- Tailwind nay đã cài build-time (postcss/vite); CSS nạp qua import './styles.css' trong index.tsx -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <!-- Design tokens (biến CSS cho chart/inline style) -->
-    <link rel="stylesheet" href="/styles/tokens.css" />
-    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 antialiased transition-colors duration-200">
     <div id="root"></div>
