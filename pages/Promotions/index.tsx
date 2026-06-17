@@ -20,9 +20,9 @@ import {
   deletePromotion,
 } from '@/services/promotionService';
 import { fetchProducts } from '@/services/productService';
-import { fetchBadgesConfiguration } from '@/services/badgeService';
+import { fetchCategories } from '@/services/categoryService';
 import { Product } from '@/types';
-import { ProductBadge } from '@/types/badge';
+import { ProductCategory } from '@/types/category';
 import { formatVND } from '@/utils/format/currencyUtil';
 import ProductAutocomplete from './components/ProductAutocomplete';
 import Box from '@/components/ui/Box';
@@ -44,7 +44,7 @@ interface FormState {
   discountType: DiscountType;
   discountValue: string;
   maxDiscount: string;
-  groupBadgeId: string;
+  groupCategoryId: string;
   buyQuantity: string;
   getQuantity: string;
   scope: PromotionScope;
@@ -64,7 +64,7 @@ const emptyForm = (): FormState => ({
   discountType: 'PERCENT',
   discountValue: '',
   maxDiscount: '',
-  groupBadgeId: '',
+  groupCategoryId: '',
   buyQuantity: '3',
   getQuantity: '1',
   scope: 'ALL',
@@ -89,7 +89,7 @@ const PromotionsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [badges, setBadges] = useState<ProductBadge[]>([]);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [form, setForm] = useState<FormState>(emptyForm());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -101,13 +101,13 @@ const PromotionsPage: React.FC = () => {
     Promise.all([
       fetchPromotions(),
       fetchProducts().catch(() => []),
-      fetchBadgesConfiguration().catch(() => null),
+      fetchCategories().catch(() => []),
     ])
-      .then(([list, prods, badgeCfg]) => {
+      .then(([list, prods, cats]) => {
         if (!alive) return;
         setPromotions(list);
         setProducts(prods as Product[]);
-        setBadges(badgeCfg?.productBadges ?? []);
+        setCategories(cats as ProductCategory[]);
       })
       .catch(() => toast.error('Không tải được danh sách khuyến mãi'))
       .finally(() => {
@@ -132,7 +132,7 @@ const PromotionsPage: React.FC = () => {
       discountType: p.discountType,
       discountValue: p.discountValue != null ? String(p.discountValue) : '',
       maxDiscount: p.maxDiscount != null ? String(p.maxDiscount) : '',
-      groupBadgeId: p.groupBadgeId ?? '',
+      groupCategoryId: p.groupCategoryId ?? '',
       buyQuantity: p.buyQuantity != null ? String(p.buyQuantity) : '3',
       getQuantity: p.getQuantity != null ? String(p.getQuantity) : '1',
       scope: p.scope,
@@ -170,8 +170,8 @@ const PromotionsPage: React.FC = () => {
       toast.error('Nhập giá trị giảm');
       return;
     }
-    if (form.discountType === 'BUY_X_GET_Y' && !form.groupBadgeId) {
-      toast.error('Chọn nhóm (badge) cho khuyến mãi mua N tặng M');
+    if (form.discountType === 'BUY_X_GET_Y' && !form.groupCategoryId) {
+      toast.error('Chọn danh mục nhóm cho khuyến mãi mua N tặng M');
       return;
     }
 
@@ -184,7 +184,8 @@ const PromotionsPage: React.FC = () => {
       discountValue: num(form.discountValue),
       maxDiscount:
         form.discountType === 'PERCENT' ? (num(form.maxDiscount) ?? null) : null,
-      groupBadgeId: isBxgy ? form.groupBadgeId : null,
+      groupCategoryId: isBxgy ? form.groupCategoryId : null,
+      groupBadgeId: null, // chuyển hẳn sang gom nhóm theo danh mục
       buyQuantity: isBxgy ? (num(form.buyQuantity) ?? 3) : undefined,
       getQuantity: isBxgy ? (num(form.getQuantity) ?? 1) : undefined,
       scope: form.scope,
@@ -238,8 +239,8 @@ const PromotionsPage: React.FC = () => {
     if (p.discountType === 'FIXED') return formatVND(p.discountValue ?? 0);
     if (p.discountType === 'FREE_SHIP') return 'Miễn ship';
     if (p.discountType === 'BUY_X_GET_Y') {
-      const bn = badges.find((b) => b.id === p.groupBadgeId)?.name;
-      return `Mua ${p.buyQuantity ?? 3} tặng ${p.getQuantity ?? 1}${bn ? ` · nhóm ${bn}` : ''}`;
+      const gn = p.groupCategoryId;
+      return `Mua ${p.buyQuantity ?? 3} tặng ${p.getQuantity ?? 1}${gn ? ` · nhóm ${gn}` : ''}`;
     }
     return '—';
   };
@@ -312,17 +313,17 @@ const PromotionsPage: React.FC = () => {
               </Box>
             )}
 
-            {/* Mua N tặng M theo nhóm (badge) — món rẻ nhất trong nhóm thành 0đ */}
+            {/* Mua N tặng M theo nhóm (danh mục) — món rẻ nhất trong nhóm thành 0đ */}
             {form.discountType === 'BUY_X_GET_Y' && (
               <Box layoutClassName="space-y-3 rounded-lg p-3" backgroundClassName="bg-slate-50 dark:bg-slate-900/40">
                 <Field
-                  label="Nhóm sản phẩm (badge)"
+                  label="Nhóm sản phẩm (danh mục)"
                   required
-                  hint="Mua đủ (N+M) món trong nhóm → M món RẺ NHẤT miễn phí. Nhớ gắn badge này cho các sản phẩm thuộc nhóm."
+                  hint="Mua đủ (N+M) món cùng danh mục → M món RẺ NHẤT miễn phí. Sản phẩm phải thuộc danh mục này (Cài đặt → Danh mục)."
                 >
-                  <Select value={form.groupBadgeId} onChange={(e) => setForm((f) => ({ ...f, groupBadgeId: e.target.value }))} fullWidth>
-                    <option value="">— Chọn nhóm —</option>
-                    {badges.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  <Select value={form.groupCategoryId} onChange={(e) => setForm((f) => ({ ...f, groupCategoryId: e.target.value }))} fullWidth>
+                    <option value="">— Chọn danh mục —</option>
+                    {categories.map((c) => <option key={c.id} value={c.name}>{`${c.icon ?? ''} ${c.name}`.trim()}</option>)}
                   </Select>
                 </Field>
                 <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -333,9 +334,9 @@ const PromotionsPage: React.FC = () => {
                     <Input type="number" min={1} value={form.getQuantity} onChange={(e) => setForm((f) => ({ ...f, getQuantity: e.target.value }))} placeholder="1" fullWidth />
                   </Field>
                 </Box>
-                {badges.length === 0 && (
+                {categories.length === 0 && (
                   <Typography as="p" size="xs" variant="muted">
-                    Chưa có badge sản phẩm. Tạo ở Cài đặt → Badge rồi gắn cho sản phẩm.
+                    Chưa có danh mục. Tạo ở Cài đặt → Danh mục rồi gán cho sản phẩm.
                   </Typography>
                 )}
               </Box>

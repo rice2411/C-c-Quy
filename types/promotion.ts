@@ -13,8 +13,9 @@ export interface Promotion {
   discountType: DiscountType;
   discountValue?: number;
   maxDiscount?: number | null;
-  // Mua N tặng M theo nhóm (badge): món rẻ nhất trong nhóm thành 0đ
-  groupBadgeId?: string | null;
+  // Mua N tặng M theo nhóm: món rẻ nhất trong nhóm thành 0đ
+  groupCategoryId?: string | null; // TÊN danh mục gom nhóm (ưu tiên)
+  groupBadgeId?: string | null; // (legacy) badge gom nhóm — fallback
   buyQuantity?: number;
   getQuantity?: number;
   // legacy (không dùng)
