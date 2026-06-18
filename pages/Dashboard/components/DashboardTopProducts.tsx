@@ -94,11 +94,13 @@ const DashboardTopProducts: React.FC<DashboardTopProductsProps> = ({
       if (!revDate || revDate < startDate || revDate > endDate) continue;
       if (!Array.isArray(o.items)) continue;
       for (const item of o.items) {
-        const key = item.id || item.name;
+        // Gom theo SẢN PHẨM (productId), KHÔNG theo item.id — vì item.id là id dòng đơn
+        // (unique mỗi dòng, do genItemId), nên cùng 1 sản phẩm ở nhiều đơn sẽ không cộng dồn.
+        const key = item.productId || item.name;
         if (!key) continue;
         const prev =
           agg.get(key) ??
-          { name: item.name || '(không tên)', qty: 0, revenue: 0, image: '', productId: '' };
+          { name: item.name || '(không tên)', qty: 0, revenue: 0, image: '', productId: item.productId || '' };
         prev.qty += Number(item.quantity) || 0;
         prev.revenue += (Number(item.quantity) || 0) * (Number(item.price) || 0);
         if (!prev.image && item.image) prev.image = item.image;
@@ -210,15 +212,16 @@ const DashboardTopProducts: React.FC<DashboardTopProductsProps> = ({
                         ) : null}
                       </Box>
                     </Box>
-                    <Box layoutClassName="flex shrink-0 items-center gap-3 text-right">
-                      <Typography as="span" size="xs" variant="muted">
-                        {p.qty} cái
-                      </Typography>
+                    <Box layoutClassName="flex shrink-0 flex-col items-end">
+                      {/* Con số CHÍNH = tổng số lượng item bán được (không phải giá tiền) */}
                       <Typography
                         as="span"
                         size="sm"
                         textClassName="font-bold text-primary-600 dark:text-primary-400"
                       >
+                        {p.qty} sản phẩm
+                      </Typography>
+                      <Typography as="span" size="xs" variant="muted">
                         {formatVND(p.revenue)}
                       </Typography>
                     </Box>
