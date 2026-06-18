@@ -94,17 +94,19 @@ const DashboardTopProducts: React.FC<DashboardTopProductsProps> = ({
       if (!revDate || revDate < startDate || revDate > endDate) continue;
       if (!Array.isArray(o.items)) continue;
       for (const item of o.items) {
-        // Gom theo SẢN PHẨM (productId), KHÔNG theo item.id — vì item.id là id dòng đơn
-        // (unique mỗi dòng, do genItemId), nên cùng 1 sản phẩm ở nhiều đơn sẽ không cộng dồn.
-        const key = item.productId || item.name;
+        // Gom theo SẢN PHẨM. LƯU Ý dữ liệu thật: product id được lưu ở `item.id`
+        // (OrderForm lưu `id: item.productId`), còn `item.productId` thường UNDEFINED.
+        // → ưu tiên productId (dữ liệu tương lai), fallback item.id (product id hiện tại), rồi name.
+        const productKey = item.productId || item.id;
+        const key = productKey || item.name;
         if (!key) continue;
         const prev =
           agg.get(key) ??
-          { name: item.name || '(không tên)', qty: 0, revenue: 0, image: '', productId: item.productId || '' };
+          { name: item.name || '(không tên)', qty: 0, revenue: 0, image: '', productId: productKey || '' };
         prev.qty += Number(item.quantity) || 0;
         prev.revenue += (Number(item.quantity) || 0) * (Number(item.price) || 0);
         if (!prev.image && item.image) prev.image = item.image;
-        if (!prev.productId && item.productId) prev.productId = item.productId;
+        if (!prev.productId && productKey) prev.productId = productKey;
         agg.set(key, prev);
       }
     }
