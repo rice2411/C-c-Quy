@@ -27,18 +27,3 @@ export const deleteProduct = async (id: string): Promise<void> => {
 export const fetchProductVersions = async (productId: string): Promise<ProductVersion[]> => {
   return (await apiClient.get(`/products/${productId}/versions`)).data as ProductVersion[];
 };
-
-/**
- * Đồng bộ thủ công: với mọi đơn hàng, ghi đè item.image (và optionally item.name)
- * bằng giá trị hiện tại của product nếu khác.
- *
- * Trả về thống kê: số order quét, số order được update, số item được sửa.
- */
-export async function syncAllProductImagesToOrders(options?: {
-  includeName?: boolean;
-}): Promise<{ ordersScanned: number; ordersUpdated: number; itemsFixed: number }> {
-  const includeName = options?.includeName ?? true;
-  return (
-    await apiClient.post('/admin-db/sync-product-images', { includeName })
-  ).data as { ordersScanned: number; ordersUpdated: number; itemsFixed: number };
-}

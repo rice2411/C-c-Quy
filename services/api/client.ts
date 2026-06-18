@@ -43,7 +43,33 @@ const isTsLike = (v: any): boolean =>
   (typeof v._seconds === 'number' || typeof v.seconds === 'number') &&
   (typeof v._nanoseconds === 'number' || typeof v.nanoseconds === 'number');
 
+// Chuỗi ISO datetime do Postgres (timestamptz) sinh ra: có 'T' + giây + offset/Z.
+// (date-only "yyyy-mm-dd" hoặc chuỗi SePay tự do KHÔNG khớp → giữ nguyên string.)
+const PG_ISO_TS = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:?\d{2})$/;
+
+const tsLikeFromMs = (ms: number) => {
+  const seconds = Math.floor(ms / 1000);
+  const nanoseconds = (ms % 1000) * 1e6;
+  return {
+    seconds,
+    nanoseconds,
+    _seconds: seconds,
+    _nanoseconds: nanoseconds,
+    toDate: () => new Date(ms),
+    toMillis: () => ms,
+  };
+};
+
 const reviveTimestamps = (input: any): any => {
+  // Postgres trả timestamp dạng ISO string → hồi sinh thành Timestamp-like (có .toDate())
+  // để tương thích code FE cũ (giống hệt khi BE còn trả {_seconds} từ Firestore).
+  if (typeof input === 'string') {
+    if (PG_ISO_TS.test(input)) {
+      const ms = Date.parse(input);
+      if (!Number.isNaN(ms)) return tsLikeFromMs(ms);
+    }
+    return input;
+  }
   if (Array.isArray(input)) return input.map(reviveTimestamps);
   if (input && typeof input === 'object') {
     if (isTsLike(input)) {

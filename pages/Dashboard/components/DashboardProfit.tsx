@@ -19,7 +19,7 @@ interface Props {
   isDarkMode: boolean;
 }
 
-const COST_COLORS = ['#0ea5e9', '#f59e0b', '#a855f7']; // nhập kho / hoa hồng / chi phí khác
+const COST_COLORS = ['#0ea5e9', '#f59e0b']; // nhập kho / hoa hồng
 
 /** Lợi nhuận & biên (P&L): doanh thu, lợi nhuận, margin + biểu đồ 2 đường + donut cơ cấu chi phí. */
 const DashboardProfit: React.FC<Props> = ({ fromISO, toISO, isDarkMode }) => {
@@ -40,7 +40,6 @@ const DashboardProfit: React.FC<Props> = ({ fromISO, toISO, isDarkMode }) => {
     ? [
         { name: 'Nhập kho', value: report.costBreakdown.stockIn, color: COST_COLORS[0] },
         { name: 'Hoa hồng', value: report.costBreakdown.commission, color: COST_COLORS[1] },
-        { name: 'Chi phí khác', value: report.costBreakdown.expenses, color: COST_COLORS[2] },
       ].filter((d) => d.value > 0)
     : [];
 

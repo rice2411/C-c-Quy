@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { DEFAULT_SHIPPING_CONFIG } from '@/types/shippingConfig';
 import type { ShippingConfiguration } from '@/types/shippingConfig';
 import { fetchShippingConfiguration, saveShippingConfiguration } from '@/services/configurationService';
+import { useAuth } from './AuthContext';
 
 export interface CalcShipFeeResult {
   fee: number;
@@ -47,6 +48,7 @@ interface ShippingConfigContextValue {
 const ShippingConfigContext = createContext<ShippingConfigContextValue | null>(null);
 
 export const ShippingConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { currentUser } = useAuth();
   const [config, setConfig] = useState<ShippingConfiguration>(DEFAULT_SHIPPING_CONFIG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,9 +67,11 @@ export const ShippingConfigProvider: React.FC<{ children: React.ReactNode }> = (
     }
   }, []);
 
+  // Chỉ tải khi ĐÃ đăng nhập (tránh gọi API 401 ở màn login).
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    if (currentUser) refresh();
+    else setLoading(false);
+  }, [currentUser, refresh]);
 
   const save = useCallback(async (next: ShippingConfiguration, updatedBy?: string | null) => {
     setSaving(true);

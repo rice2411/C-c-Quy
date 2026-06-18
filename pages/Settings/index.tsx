@@ -1,12 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, Database, MessageCircle, Save, Settings, Trash2 } from 'lucide-react';
-import { DATABASE_COLLECTIONS } from '@/config/databaseCollections';
+import { MessageCircle, Save, Settings } from 'lucide-react';
 import { getRouteConfigKey, routes, storageTabRoutes } from '@/config/routes';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
 import { ScreenVisibilityMap } from '@/types';
 import toast from 'react-hot-toast';
-import { apiClient } from '@/services/api/client';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -19,24 +17,12 @@ import ZaloSettingsTab from '@/pages/Settings/ZaloSettingsTab';
 import OrderSettingsTab from '@/pages/Settings/OrderSettingsTab';
 import BadgesTab from '@/pages/Settings/BadgesTab';
 import CategoriesTab from '@/pages/Settings/CategoriesTab';
-import ProductDatabaseToolsPanel from '@/pages/Settings/ProductDatabaseToolsPanel';
-
-interface DbRecord {
-  id: string;
-  data: Record<string, any>;
-}
 
 const SettingsPage: React.FC = () => {
   const { t } = useLanguage();
   const { screenVisibility, loading, saving, saveVisibility } = useScreenConfig();
   const [draftVisibility, setDraftVisibility] = useState<ScreenVisibilityMap>({});
-  const [activeTab, setActiveTab] = useState<'screens' | 'database' | 'zalo' | 'order' | 'badges' | 'categories'>('screens');
-  const [selectedCollection, setSelectedCollection] = useState<string>(DATABASE_COLLECTIONS[0].id);
-  const [collectionRecords, setCollectionRecords] = useState<Record<string, DbRecord[]>>({});
-  const [loadingCollectionId, setLoadingCollectionId] = useState<string | null>(null);
-  const [deletingCollectionId, setDeletingCollectionId] = useState<string | null>(null);
-  const [productToolsStatsNonce, setProductToolsStatsNonce] = useState(0);
-  const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'screens' | 'zalo' | 'order' | 'badges' | 'categories'>('screens');
 
   useEffect(() => {
     setDraftVisibility(screenVisibility);
@@ -82,54 +68,6 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const loadCollectionRecords = async (collectionId: string) => {
-    setLoadingCollectionId(collectionId);
-    try {
-      const records = ((await apiClient.get(`/admin-db/${collectionId}`)).data || []) as DbRecord[];
-      setCollectionRecords((prev) => ({ ...prev, [collectionId]: records }));
-    } catch (error) {
-      console.error(`Failed to load collection ${collectionId}`, error);
-      toast.error(`Không thể tải bảng ${collectionId}`);
-    } finally {
-      setLoadingCollectionId(null);
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab !== 'database') return;
-    if (collectionRecords[selectedCollection]) return;
-    loadCollectionRecords(selectedCollection);
-  }, [activeTab, selectedCollection]);
-
-  const selectedRecords = collectionRecords[selectedCollection] || [];
-
-  const handleDeleteEntireCollection = async () => {
-    const collectionId = selectedCollection;
-    const label = DATABASE_COLLECTIONS.find((c) => c.id === collectionId)?.label ?? collectionId;
-    const count = selectedRecords.length;
-
-    const msg1 = `Xóa HẾT document trong bảng "${label}" (${collectionId})?\nHiện có ${count} record (theo lần tải gần nhất).\n\nThao tác không hoàn tác.`;
-    if (!window.confirm(msg1)) return;
-    if (!window.confirm('Xác nhận lần 2: tiếp tục xóa toàn bộ document trong bảng này?')) return;
-
-    setDeletingCollectionId(collectionId);
-    try {
-      const res = ((await apiClient.delete(`/admin-db/${collectionId}`)).data || {}) as { deleted?: number };
-      const deleted = typeof res.deleted === 'number' ? res.deleted : count;
-      setCollectionRecords((prev) => ({ ...prev, [collectionId]: [] }));
-      setExpandedRecordId(null);
-      if (collectionId === 'products') {
-        setProductToolsStatsNonce((n) => n + 1);
-      }
-      toast.success(`Đã xóa ${deleted} document trong ${collectionId}`);
-    } catch (error) {
-      console.error(`Failed to delete collection ${collectionId}`, error);
-      toast.error(`Không thể xóa bảng ${collectionId}`);
-    } finally {
-      setDeletingCollectionId(null);
-    }
-  };
-
   if (loading) {
     return (
       <Box
@@ -163,30 +101,6 @@ const SettingsPage: React.FC = () => {
           >
             Màn hình
             {activeTab === 'screens' && (
-              <Box
-                layoutClassName="absolute -bottom-[1px] left-0 right-0 h-0.5"
-                roundedClassName="rounded-full"
-                backgroundClassName="bg-primary-500 dark:bg-primary-400"
-              />
-            )}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => setActiveTab('database')}
-            variant="ghost"
-            disableVariantHover
-            disableVariantTextColor
-            roundedClassName="rounded-none"
-            layoutClassName="relative pb-2 text-sm font-semibold uppercase tracking-wide"
-            textClassName={
-              activeTab === 'database'
-                ? 'text-primary-500 dark:text-primary-400'
-                : 'text-slate-500 hover:text-primary-500 dark:text-slate-300 dark:hover:text-primary-400'
-            }
-            stateClassName="transition-colors duration-200"
-          >
-            Database
-            {activeTab === 'database' && (
               <Box
                 layoutClassName="absolute -bottom-[1px] left-0 right-0 h-0.5"
                 roundedClassName="rounded-full"
@@ -300,13 +214,6 @@ const SettingsPage: React.FC = () => {
               <Heading level={2} textClassName="text-xl font-semibold">Quản lý màn hình</Heading>
               <Typography size="sm" variant="muted" layoutClassName="mt-1">
                 Bật/tắt quyền hiển thị các màn hình trên menu điều hướng.
-              </Typography>
-            </>
-          ) : activeTab === 'database' ? (
-            <>
-              <Heading level={2} textClassName="text-xl font-semibold">Quản lý database</Heading>
-              <Typography size="sm" variant="muted" layoutClassName="mt-1">
-                Theo dõi cấu hình dữ liệu hệ thống và các bộ sưu tập đang dùng.
               </Typography>
             </>
           ) : (
@@ -427,198 +334,7 @@ const SettingsPage: React.FC = () => {
             );
           })}
         </Card>
-      ) : (
-        <Card
-          padding="none"
-          borderClassName="border-slate-200 dark:border-slate-700"
-          layoutClassName="space-y-4 p-4 md:p-5"
-        >
-          <Card
-            padding="md"
-            roundedClassName="rounded-lg"
-            borderClassName="border-slate-200 dark:border-slate-700"
-            backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
-          >
-            <Typography size="sm" layoutClassName="flex items-center gap-2 font-semibold">
-              <Database className="h-4 w-4 text-primary-500" />
-              Database Explorer
-            </Typography>
-            <Typography size="xs" variant="muted" layoutClassName="mt-1">
-              Danh sách bảng và record bên trái; công cụ bulk cho collection{' '}
-              <span className="font-mono text-[11px] text-slate-600 dark:text-slate-400">products</span> bên phải — màn hẹp: cuộn xuống để dùng cả hai.
-            </Typography>
-          </Card>
-
-          <Box layoutClassName="grid grid-cols-1 items-start gap-4 lg:grid-cols-12">
-            <Box layoutClassName="min-w-0 space-y-4 lg:col-span-7">
-          <Box layoutClassName="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <Card padding="none" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="overflow-hidden">
-              <Box
-                layoutClassName="border-b px-3 py-2"
-                borderClassName="border-slate-200 dark:border-slate-700"
-                backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
-              >
-                <Typography size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-600 dark:text-slate-300">
-                  Bảng dữ liệu
-                </Typography>
-              </Box>
-              <Box layoutClassName="max-h-[500px] space-y-1 overflow-y-auto p-2">
-                {DATABASE_COLLECTIONS.map((item) => {
-                  const active = selectedCollection === item.id;
-                  const loadedCount = collectionRecords[item.id]?.length;
-                  return (
-                    <Button
-                      key={item.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedCollection(item.id);
-                        setExpandedRecordId(null);
-                        if (!collectionRecords[item.id]) {
-                          loadCollectionRecords(item.id);
-                        }
-                      }}
-                      variant="ghost"
-                      disableVariantHover
-                      disableVariantTextColor
-                      sizeClassName="px-3 py-2"
-                      roundedClassName="rounded-lg"
-                      borderClassName={
-                        active
-                          ? 'border border-primary-200 dark:border-primary-700'
-                          : 'border border-slate-200 dark:border-slate-700 hover:border-primary-200 dark:hover:border-primary-700'
-                      }
-                      backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/20' : 'bg-white dark:bg-slate-800'}
-                      textClassName={
-                        active
-                          ? 'text-sm text-primary-700 dark:text-primary-300'
-                          : 'text-sm text-slate-700 dark:text-slate-300'
-                      }
-                      layoutClassName="w-full items-center justify-between"
-                      stateClassName="transition-colors"
-                    >
-                      <Typography as="span" layoutClassName="font-medium text-left">{item.label}</Typography>
-                      <Typography as="span" size="xs" variant="muted">{loadedCount != null ? loadedCount : '-'}</Typography>
-                    </Button>
-                  );
-                })}
-              </Box>
-            </Card>
-
-            <Card padding="none" roundedClassName="rounded-lg" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="overflow-hidden lg:col-span-2">
-              <Box
-                layoutClassName="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2"
-                borderClassName="border-slate-200 dark:border-slate-700"
-                backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
-              >
-                <Typography size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-600 dark:text-slate-300">
-                  Records: {selectedCollection}
-                </Typography>
-                <Box layoutClassName="flex flex-wrap items-center justify-end gap-2">
-                  {loadingCollectionId === selectedCollection ? (
-                    <Typography size="xs" variant="muted">Đang tải...</Typography>
-                  ) : (
-                    <Typography size="xs" variant="muted">{selectedRecords.length} record</Typography>
-                  )}
-                  <Button
-                    type="button"
-                    variant="danger"
-                    size="sm"
-                    onClick={() => void handleDeleteEntireCollection()}
-                    disabled={
-                      loadingCollectionId === selectedCollection || deletingCollectionId === selectedCollection
-                    }
-                    leftIcon={
-                      deletingCollectionId === selectedCollection ? (
-                        <Spinner size="sm" textClassName="text-white" borderClassName="border-white" />
-                      ) : (
-                        <Trash2 />
-                      )
-                    }
-                    iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                    sizeClassName="px-2.5 py-1 text-xs"
-                    roundedClassName="rounded-md"
-                    layoutClassName="inline-flex items-center gap-1.5"
-                    stateClassName="disabled:cursor-not-allowed disabled:opacity-50"
-                    disableVariantHover
-                    disableVariantTextColor
-                  >
-                    Xóa bảng
-                  </Button>
-                </Box>
-              </Box>
-              <Box layoutClassName="max-h-[500px] overflow-y-auto">
-                {selectedRecords.length === 0 && loadingCollectionId !== selectedCollection ? (
-                  <Typography size="sm" variant="muted" layoutClassName="p-4">
-                    Không có record hoặc chưa tải dữ liệu.
-                  </Typography>
-                ) : (
-                  <Box layoutClassName="divide-y divide-slate-100 dark:divide-slate-700">
-                    {selectedRecords.map((record) => {
-                      const expanded = expandedRecordId === record.id;
-                      const previewKeys = Object.keys(record.data).slice(0, 3);
-                      return (
-                        <Box key={record.id}>
-                          <Button
-                            type="button"
-                            onClick={() => setExpandedRecordId(expanded ? null : record.id)}
-                            variant="ghost"
-                            disableVariantHover
-                            disableVariantTextColor
-                            sizeClassName="px-4 py-3"
-                            layoutClassName="w-full justify-start text-left"
-                            hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700/40"
-                            stateClassName="transition-colors"
-                          >
-                            <Box layoutClassName="flex w-full items-center justify-between gap-3 text-left">
-                              <Box layoutClassName="min-w-0">
-                                <Typography size="sm" layoutClassName="truncate font-semibold">{record.id}</Typography>
-                                <Typography size="xs" variant="muted" layoutClassName="truncate">
-                                  {previewKeys.length > 0 ? previewKeys.join(', ') : '(no fields)'}
-                                </Typography>
-                              </Box>
-                              {expanded ? (
-                                <ChevronDown className="h-4 w-4 text-slate-400" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4 text-slate-400" />
-                              )}
-                            </Box>
-                          </Button>
-                          {expanded && (
-                            <Box layoutClassName="px-4 pb-4">
-                              <Box
-                                layoutClassName="overflow-auto p-3 text-xs"
-                                roundedClassName="rounded-lg"
-                                backgroundClassName="bg-slate-900"
-                                textClassName="text-slate-100"
-                              >
-                                <pre>{JSON.stringify(record.data, null, 2)}</pre>
-                              </Box>
-                            </Box>
-                          )}
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                )}
-              </Box>
-            </Card>
-          </Box>
-            </Box>
-
-            <Box
-              layoutClassName="min-w-0 lg:col-span-5 lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:pr-1"
-              borderClassName="lg:border-l lg:border-slate-200 lg:pl-4 lg:dark:border-slate-700"
-            >
-              <ProductDatabaseToolsPanel
-                refreshStatsNonce={productToolsStatsNonce}
-                onMutate={() => {
-                  void loadCollectionRecords('products');
-                }}
-              />
-            </Box>
-          </Box>
-        </Card>
-      )}
+      ) : null}
     </Box>
   );
 };

@@ -6,10 +6,9 @@ import Tabs from '@/components/ui/Tabs';
 import PeriodFilter, { DatePreset, computePresetRange } from './PeriodFilter';
 import OverviewTab from './OverviewTab';
 import RevenueTab from './RevenueTab';
-import ExpensesTab from './ExpensesTab';
 import ReconciliationTab from './ReconciliationTab';
 
-type TopTab = 'overview' | 'revenue' | 'expenses' | 'reconcile';
+type TopTab = 'overview' | 'revenue' | 'reconcile';
 
 const fmtRange = (d: string) => (d ? d.split('-').reverse().join('/') : '');
 
@@ -32,7 +31,6 @@ const TransactionsPage: React.FC = () => {
   const tabItems = [
     { id: 'overview', label: 'Tổng quan' },
     { id: 'revenue', label: 'Doanh thu' },
-    { id: 'expenses', label: 'Chi phí' },
     { id: 'reconcile', label: 'Đối soát NH' },
   ];
 
@@ -70,7 +68,6 @@ const TransactionsPage: React.FC = () => {
       <Box layoutClassName="flex-1 overflow-y-auto">
         {tab === 'overview' && <OverviewTab fromDate={fromDate} toDate={toDate} />}
         {tab === 'revenue' && <RevenueTab fromDate={fromDate} toDate={toDate} />}
-        {tab === 'expenses' && <ExpensesTab fromDate={fromDate} toDate={toDate} />}
         {tab === 'reconcile' && <ReconciliationTab fromDate={fromDate} toDate={toDate} />}
       </Box>
     </Box>

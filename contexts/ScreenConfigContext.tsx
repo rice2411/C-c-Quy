@@ -33,14 +33,18 @@ export const ScreenConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       const config = await fetchScreenConfiguration();
       setScreenVisibility(config.screenVisibility || {});
+    } catch {
+      // Chưa đăng nhập / lỗi tạm → bỏ qua, không crash màn login.
     } finally {
       setLoading(false);
     }
   };
 
+  // Chỉ tải cấu hình khi ĐÃ đăng nhập (tránh gọi API 401 ở màn login).
   useEffect(() => {
-    refresh();
-  }, []);
+    if (currentUser) refresh();
+    else setLoading(false);
+  }, [currentUser]);
 
   const saveVisibility = async (nextVisibility: ScreenVisibilityMap) => {
     setSaving(true);
