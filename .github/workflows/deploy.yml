@@ -1,0 +1,67 @@
+name: build-and-deploy
+
+# Merge/push vào staging hoặc production → CI gate (tsc) → build image amd64
+# (native trên runner ubuntu) → push GHCR. KHÔNG deploy ở đây:
+# keel (k3s @ ricevps) poll GHCR @every 1m (policy=force) và TỰ rollout:
+#   - production → :latest  (VITE_API_URL=api.cucquy.site)         → ns cucquy
+#   - staging    → :staging (VITE_API_URL=api-staging.cucquy.site) → ns cucquy-staging
+# VITE_API_URL bake lúc build nên mỗi nhánh build 1 image riêng.
+# Không cần kubeconfig/SSH trong CI. Push GHCR bằng GITHUB_TOKEN (packages: write).
+on:
+  push:
+    branches: [staging, production]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-frontend-${{ github.ref_name }}
+  cancel-in-progress: true
+
+env:
+  IMAGE: ghcr.io/cucquy/cucquy-frontend
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  build-push:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve env theo nhánh
+        id: env
+        run: |
+          if [ "${{ github.ref_name }}" = "production" ]; then
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+            echo "api=https://api.cucquy.site/api" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=staging" >> "$GITHUB_OUTPUT"
+            echo "api=https://api-staging.cucquy.site/api" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            VITE_API_URL=${{ steps.env.outputs.api }}
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.env.outputs.tag }}
+            ${{ env.IMAGE }}:${{ github.sha }}
+      - run: echo "Pushed ${IMAGE}:${{ steps.env.outputs.tag }} (+sha). keel tự rollout trong ~1 phút."
