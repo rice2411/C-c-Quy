@@ -7,7 +7,7 @@ import { ComputeResult, Promotion } from '@/types/promotion';
 import { useAuth } from '@/contexts/AuthContext';
 import { collaboratorHasZaloGroup } from '@/services/configurationService';
 import { UserRole } from '@/types/user';
-import { useCustomers } from '@/contexts/CustomerContext';
+import { useCustomers } from '@/hooks/useCustomers';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getNextOrderNumber } from '@/services/orderService';
 import { fetchProducts } from '@/services/productService';
