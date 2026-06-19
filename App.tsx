@@ -5,7 +5,6 @@ import { OrderProvider } from "./contexts/OrderContext";
 import { CustomerProvider } from "./contexts/CustomerContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ScreenConfigProvider } from "./contexts/ScreenConfigContext";
-import { ShippingConfigProvider } from "./contexts/ShippingConfigContext";
 import { useOfflineDetector } from "./hooks/useOfflineDetector";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -43,7 +42,6 @@ const App: React.FC = () => {
     <HashRouter>
       <AuthProvider>
         <ScreenConfigProvider>
-          <ShippingConfigProvider>
             <LanguageProvider>
               <OrderProvider>
                 <CustomerProvider>
@@ -162,7 +160,6 @@ const App: React.FC = () => {
                 </CustomerProvider>
               </OrderProvider>
             </LanguageProvider>
-          </ShippingConfigProvider>
         </ScreenConfigProvider>
       </AuthProvider>
       <Toaster
