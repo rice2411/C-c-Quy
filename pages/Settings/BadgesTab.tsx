@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Check, Package, Plus, Save, Tag, Trash2, Users, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchBadgesConfiguration, saveBadgesConfiguration } from '@/services/badgeService';
+import { useBadges, useSaveBadges } from '@/hooks/queries/useBadgesQuery';
 import {
   DEFAULT_BADGE_COLORS,
   type CustomerBadgeOperator,
@@ -155,46 +155,43 @@ function BadgeEditor<T extends { name: string; color: string; icon?: string }>({
 // ============ BadgesTab main ============
 const BadgesTab: React.FC = () => {
   const { currentUser } = useAuth();
+  const { badges, loading, error } = useBadges();
+  const { saveBadges, saving } = useSaveBadges();
+
   const [orderBadges, setOrderBadges] = useState<OrderBadge[]>([]);
   const [productBadges, setProductBadges] = useState<ProductBadge[]>([]);
   const [customerRules, setCustomerRules] = useState<CustomerBadgeRule[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
 
   // Which one is being edited inline. Format: 'order:<id>' | 'product:<id>' | 'customer:<id>'
   const [editingKey, setEditingKey] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const cfg = await fetchBadgesConfiguration();
-      setOrderBadges(cfg.orderBadges);
-      setProductBadges(cfg.productBadges);
-      setCustomerRules(cfg.customerRules);
-      setDirty(false);
-    } catch (e) {
-      console.error(e);
-      toast.error('Không tải được cấu hình Badge');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Seed local editable state từ query (chỉ khi chưa chỉnh sửa dở — tránh đè data đang nhập).
+  useEffect(() => {
+    if (dirty) return;
+    setOrderBadges(badges.orderBadges);
+    setProductBadges(badges.productBadges);
+    setCustomerRules(badges.customerRules);
+  }, [badges, dirty]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (error) toast.error('Không tải được cấu hình Badge');
+  }, [error]);
 
   const handleSave = async () => {
-    setSaving(true);
     try {
-      await saveBadgesConfiguration(orderBadges, productBadges, customerRules, currentUser?.uid ?? null);
+      await saveBadges({
+        orderBadges,
+        productBadges,
+        customerRules,
+        updatedBy: currentUser?.uid ?? null,
+      });
       toast.success('Đã lưu cấu hình badge');
       setDirty(false);
       setEditingKey(null);
     } catch (e: any) {
       console.error(e);
       toast.error(e?.message || 'Không lưu được');
-    } finally {
-      setSaving(false);
     }
   };
 

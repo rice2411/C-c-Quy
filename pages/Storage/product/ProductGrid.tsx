@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Package, Tag, Loader2, Image as ImageIcon, DollarSign, Boxes } from 'lucide-react';
 import { Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { getTagPalette } from '@/utils/product/productTagPalette';
-import { fetchBadgesConfiguration } from '@/services/badgeService';
+import { useBadges } from '@/hooks/queries/useBadgesQuery';
 import type { ProductBadge } from '@/types/badge';
 import Badge from '@/components/ui/Badge';
 
@@ -21,17 +21,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products, loading, onEdit, on
   const { t } = useLanguage();
 
   // Load product badges từ config để hiển thị chip có màu đúng cấu hình
-  const [productBadges, setProductBadges] = useState<ProductBadge[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const cfg = await fetchBadgesConfiguration();
-        if (!cancelled) setProductBadges(cfg.productBadges);
-      } catch {}
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  const { productBadges } = useBadges();
 
   const badgeByName = useMemo(() => {
     const m = new Map<string, ProductBadge>();

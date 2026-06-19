@@ -3,14 +3,13 @@ import { AlertCircle, AlignLeft, DollarSign, Image, Loader2, Save, Tag, Upload }
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Tabs from '@/components/ui/Tabs';
 import Textarea from '@/components/ui/Textarea';
-import type { Product, ProductVersion } from '@/types';
+import type { Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getProductImagePath, uploadImage } from '@/services/imageService';
-import { fetchProductVersions } from '@/services/productService';
-import { fetchBadgesConfiguration } from '@/services/badgeService';
-import { fetchCategories } from '@/services/categoryService';
+import { useBadges } from '@/hooks/queries/useBadgesQuery';
+import { useCategories } from '@/hooks/queries/useCategoriesQuery';
+import { useProductVersions } from '@/hooks/queries/useProductsQuery';
 import type { ProductBadge } from '@/types/badge';
-import type { ProductCategory } from '@/types/category';
 import GallerySection from '@/pages/Storage/product/components/GallerySection';
 import CategoryPicker from '@/pages/Storage/product/components/CategoryPicker';
 import TagPicker from '@/pages/Storage/product/components/TagPicker';
@@ -50,28 +49,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
 
   // Tabs + history
   const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
-  const [versions, setVersions] = useState<ProductVersion[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
 
-  // Configs (badges + categories)
-  const [productBadges, setProductBadges] = useState<ProductBadge[]>([]);
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  // Configs (badges + categories) qua React Query
+  const { productBadges } = useBadges();
+  const { categories } = useCategories();
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const [cfg, cats] = await Promise.all([fetchBadgesConfiguration(), fetchCategories()]);
-        if (!cancelled) {
-          setProductBadges(cfg.productBadges);
-          setCategories(cats);
-        }
-      } catch (e) {
-        console.error('Không tải được config:', e);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  // Lịch sử version — chỉ fetch khi mở tab history + có sản phẩm
+  const { versions, loading: historyLoading } = useProductVersions(
+    initialData?.id,
+    activeTab === 'history',
+  );
 
   const badgeByName = useMemo(() => {
     const m = new Map<string, ProductBadge>();
@@ -104,19 +91,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
   }, [initialData, productBadges]);
 
   useEffect(() => { setActiveTab('details'); }, [initialData?.id]);
-
-  // Load history
-  useEffect(() => {
-    if (!initialData?.id || activeTab !== 'history') return;
-    (async () => {
-      setHistoryLoading(true);
-      try {
-        setVersions(await fetchProductVersions(initialData.id));
-      } finally {
-        setHistoryLoading(false);
-      }
-    })();
-  }, [activeTab, initialData?.id]);
 
   // === Primary image upload ===
   const handleImageUpload = async (file: File) => {
