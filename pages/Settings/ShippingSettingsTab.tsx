@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Save, Trash2, Truck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useShippingConfig } from '@/contexts/ShippingConfigContext';
+import { useShippingConfig } from '@/hooks/useShippingConfig';
 import type { ShippingConfiguration, ShippingTier } from '@/types/shippingConfig';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';

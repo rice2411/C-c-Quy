@@ -3,7 +3,7 @@ import { Crosshair, Loader2, MapPin, Package, Route, Search } from 'lucide-react
 import Box from '@/components/ui/Box';
 import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
-import { useShippingConfig } from '@/contexts/ShippingConfigContext';
+import { useShippingConfig } from '@/hooks/useShippingConfig';
 import { getDirections, searchGoogleMaps, SerpApiDirectionsTrip } from '@/services/serpApiService';
 
 const haversineKm = (a: { lat: number; lng: number }, b: { lat: number; lng: number }): number => {
