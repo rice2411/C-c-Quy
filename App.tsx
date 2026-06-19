@@ -2,7 +2,6 @@ import React from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { OrderProvider } from "./contexts/OrderContext";
-import { CustomerProvider } from "./contexts/CustomerContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ScreenConfigProvider } from "./contexts/ScreenConfigContext";
 import { useOfflineDetector } from "./hooks/useOfflineDetector";
@@ -44,7 +43,6 @@ const App: React.FC = () => {
         <ScreenConfigProvider>
             <LanguageProvider>
               <OrderProvider>
-                <CustomerProvider>
                   <Routes>
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/" element={
@@ -157,7 +155,6 @@ const App: React.FC = () => {
                     </Route>
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
-                </CustomerProvider>
               </OrderProvider>
             </LanguageProvider>
         </ScreenConfigProvider>

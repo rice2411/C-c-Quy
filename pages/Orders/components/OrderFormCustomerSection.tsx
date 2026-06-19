@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Globe, Package, Store, Truck, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useCustomers } from '@/contexts/CustomerContext';
+import { useCustomers } from '@/hooks/useCustomers';
 import AddressMapInput, { type ShipInfoSnapshot } from '@/components/AddressMapInput';
 import AutocompleteInput, { AutocompleteOption } from '@/components/AutocompleteInput';
 import Box from '@/components/ui/Box';
