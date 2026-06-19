@@ -42,15 +42,19 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
     let shipToday = 0;
 
     for (const o of orders) {
-      const created = o.createdAt?.toDate ? o.createdAt.toDate() : new Date(o.createdAt as any);
+      const createdRaw = o.createdAt?.toDate ? o.createdAt.toDate() : (o.createdAt ? new Date(o.createdAt as any) : null);
+      // Guard Invalid Date → coi như không có ngày tạo (không tính vào today/yesterday)
+      const created = createdRaw && !Number.isNaN(createdRaw.getTime()) ? createdRaw : null;
       // Mốc doanh thu: ưu tiên deliveryDate, fallback createdAt
       const revDate = getOrderRevenueDate(o);
       const isPaidDelivered =
         o.paymentStatus === PaymentStatus.PAID && o.status === OrderStatus.DELIVERED;
 
       // Đơn mới (theo ngày TẠO — không đổi)
-      if (created >= startToday && created <= endToday) newToday++;
-      else if (created >= startYesterday && created <= endYesterday) newYesterday++;
+      if (created) {
+        if (created >= startToday && created <= endToday) newToday++;
+        else if (created >= startYesterday && created <= endYesterday) newYesterday++;
+      }
 
       // Doanh thu (PAID+DELIVERED, theo deliveryDate || createdAt)
       if (isPaidDelivered && revDate) {
@@ -88,11 +92,14 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
     };
   }, [orders]);
 
+  // So sánh % chỉ có nghĩa khi hôm qua > 0. Hôm qua = 0 → không bịa "+100%":
+  //   - hôm nay > 0  → coi là "mới" (isNew), KHÔNG hiện %.
+  //   - hôm nay = 0  → không có gì để so sánh → "—".
   const pctDiff = (cur: number, prev: number): number | null => {
-    if (prev === 0 && cur === 0) return 0;
-    if (prev === 0) return 100;
+    if (prev === 0) return null;
     return Math.round(((cur - prev) / prev) * 100);
   };
+  const isNew = (cur: number, prev: number): boolean => prev === 0 && cur > 0;
 
   const items: {
     key: string;
@@ -100,6 +107,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
     label: string;
     value: string;
     diff: number | null;
+    isNew: boolean;
     onClick?: () => void;
     iconBg: string;
     iconText: string;
@@ -110,6 +118,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       label: 'Doanh thu hôm nay',
       value: formatVND(stats.revenueToday),
       diff: pctDiff(stats.revenueToday, stats.revenueYesterday),
+      isNew: isNew(stats.revenueToday, stats.revenueYesterday),
       onClick: () => navigate('/orders?quick=paid'),
       iconBg: 'bg-emerald-50 dark:bg-emerald-900/20',
       iconText: 'text-emerald-600 dark:text-emerald-300',
@@ -120,6 +129,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       label: 'Đơn mới',
       value: String(stats.newToday),
       diff: pctDiff(stats.newToday, stats.newYesterday),
+      isNew: isNew(stats.newToday, stats.newYesterday),
       onClick: () => navigate('/orders'),
       iconBg: 'bg-blue-50 dark:bg-blue-900/20',
       iconText: 'text-blue-600 dark:text-blue-300',
@@ -130,6 +140,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       label: 'Đã giao',
       value: String(stats.deliveredToday),
       diff: pctDiff(stats.deliveredToday, stats.deliveredYesterday),
+      isNew: isNew(stats.deliveredToday, stats.deliveredYesterday),
       iconBg: 'bg-violet-50 dark:bg-violet-900/20',
       iconText: 'text-violet-600 dark:text-violet-300',
     },
@@ -139,6 +150,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       label: 'Cần ship',
       value: String(stats.shipToday),
       diff: null,
+      isNew: false,
       onClick: () => navigate('/orders?quick=today'),
       iconBg: 'bg-primary-50 dark:bg-primary-900/20',
       iconText: 'text-primary-600 dark:text-primary-300',
@@ -201,9 +213,16 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
                     {diff}%
                   </Typography>
                 </Box>
+              ) : it.isNew ? (
+                <Box layoutClassName="flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  <Typography as="span" size="xs" textClassName="font-medium text-emerald-600 dark:text-emerald-400">
+                    mới
+                  </Typography>
+                </Box>
               ) : (
-                <Typography as="span" size="xs" variant="muted" layoutClassName="opacity-0">
-                  —
+                <Typography as="span" size="xs" variant="muted">
+                  — so với hôm qua
                 </Typography>
               )}
             </>
