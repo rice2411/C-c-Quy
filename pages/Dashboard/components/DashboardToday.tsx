@@ -245,10 +245,13 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
                   </Typography>
                 </Box>
               ) : it.behind ? (
-                <Box layoutClassName="flex w-full min-w-0 items-center gap-1">
+                <Box
+                  layoutClassName="flex w-full min-w-0 items-center gap-1"
+                  title={`Hôm qua: ${it.yesterdayLabel}`}
+                >
                   <TrendingDown className="h-3 w-3 shrink-0 text-red-500 dark:text-red-400" />
                   <Typography as="span" size="xs" textClassName="font-medium text-red-500 dark:text-red-400" layoutClassName="min-w-0 truncate">
-                    hôm qua: {it.yesterdayLabel}
+                    {it.yesterdayLabel}
                   </Typography>
                 </Box>
               ) : it.compare ? (
