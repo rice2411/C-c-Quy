@@ -44,6 +44,7 @@ import { updateProduct, deleteProduct } from '@/services/productService';
 import type { ProductBadge } from '@/types/badge';
 import type { ProductCategory } from '@/types/category';
 import { formatVND } from '@/utils/format/currencyUtil';
+import { parseDateValue } from '@/utils/format/dateUtil';
 import { getTagPalette } from '@/utils/product/productTagPalette';
 import { computeProductMetrics, type ProductSalesMetric } from '@/pages/Storage/product/productStats';
 import CsvImportModal from '@/pages/Storage/product/CsvImportModal';
@@ -199,8 +200,15 @@ const ProductSection: React.FC<Props> = ({
         case 'margin-desc': return (calcMargin(b) ?? -999) - (calcMargin(a) ?? -999);
         case 'popular': return (metrics[b.id]?.unitsSold ?? 0) - (metrics[a.id]?.unitsSold ?? 0);
         case 'recent':
-        default:
-          return (b.createdAt || '').localeCompare(a.createdAt || '');
+        default: {
+          // createdAt có thể là string, Date, hoặc Firestore Timestamp (có .toDate()) →
+          // KHÔNG dùng .localeCompare (crash khi là object). So bằng timestamp số cho an toàn.
+          const toTime = (v: any): number => {
+            const d = v?.toDate ? v.toDate() : parseDateValue(v);
+            return d instanceof Date && !Number.isNaN(d.getTime()) ? d.getTime() : 0;
+          };
+          return toTime(b.createdAt) - toTime(a.createdAt);
+        }
       }
     });
     return out;
