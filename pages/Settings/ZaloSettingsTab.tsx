@@ -443,6 +443,15 @@ const ZaloSettingsTab: React.FC = () => {
 
   return (
     <Box layoutClassName="space-y-6">
+      <Box>
+        <Heading level={2} textClassName="flex items-center gap-2 text-xl font-semibold">
+          <MessageCircle className="h-6 w-6 text-primary-500" />
+          Cấu hình Zalo
+        </Heading>
+        <Typography size="sm" variant="muted" layoutClassName="mt-1">
+          Nhóm gửi thông báo Zalo và gán CTV theo từng nhóm.
+        </Typography>
+      </Box>
       {/* ╭─────── SECTION: GROUP ───────╮ */}
       <Box layoutClassName="flex items-center gap-2">
         <Users className="h-5 w-5 text-primary-600" />
