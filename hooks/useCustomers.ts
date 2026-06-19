@@ -1,66 +1,24 @@
-import { useEffect, useSyncExternalStore } from 'react';
-import { Customer } from '@/types';
-import { fetchCustomers, addCustomer, updateCustomer, deleteCustomer } from '@/services/customerService';
-
 /**
- * Store khách hàng dùng chung (module-level) — KHÔNG còn global context/provider.
- * Fetch ON-DEMAND khi consumer đầu tiên mount (Customers page / form đơn), thay vì
- * eager mỗi lần đăng nhập. Dùng useSyncExternalStore để mọi consumer co-mount
- * (OrderForm + OrderFormCustomerSection) cùng re-render khi list đổi (CRUD).
+ * Hook khách hàng qua React Query (epic #58 — issue #67, migrate domain Customer).
+ *
+ * Trước đây dùng store module-level + useSyncExternalStore (customers/loading/loaded/
+ * inflight/subscribers/emit + ensureLoaded + CRUD module-level). Nay thay HOÀN TOÀN
+ * bằng React Query:
+ * - `useQuery(qk.customers.all, fetchCustomers, { enabled: !!currentUser })` — fetch
+ *   ON-DEMAND khi consumer mount + auth ready, nhiều consumer cùng key được dedup,
+ *   share cache (OrderForm + OrderFormCustomerSection + Customers page cùng 1 list).
+ * - 3 useMutation (add/update/delete) → onSuccess invalidate `qk.customers.all`.
+ * - queryFn/mutationFn GỌI THẲNG customerService, KHÔNG viết lại HTTP.
+ * - KHÔNG nuốt lỗi: mutateAsync reject lên caller để component toast (rule firestore-safety).
+ *
+ * GIỮ NGUYÊN signature `UseCustomersResult` → consumer không phải đổi.
  */
-let customers: Customer[] = [];
-let loading = false;
-let loaded = false;
-let inflight: Promise<void> | null = null;
-const subscribers = new Set<() => void>();
-const emit = () => subscribers.forEach((fn) => fn());
-
-const subscribe = (cb: () => void) => {
-  subscribers.add(cb);
-  return () => subscribers.delete(cb);
-};
-
-async function fetchInto() {
-  try {
-    customers = await fetchCustomers();
-    loaded = true;
-  } catch (err) {
-    // QUAN TRỌNG: nuốt lỗi nhưng vẫn tắt loading → không spinner quay mãi.
-    console.error('useCustomers load error:', err);
-  } finally {
-    loading = false;
-    inflight = null;
-    emit();
-  }
-}
-
-function ensureLoaded() {
-  if (loaded || inflight) return;
-  loading = true;
-  emit();
-  inflight = fetchInto();
-}
-
-async function refreshCustomers() {
-  if (inflight) return inflight;
-  inflight = fetchInto();
-  return inflight;
-}
-
-const createNewCustomer = async (data: Omit<Customer, 'id'>) => {
-  await addCustomer(data);
-  await refreshCustomers();
-};
-
-const modifyCustomer = async (id: string, data: Partial<Customer>) => {
-  await updateCustomer(id, data);
-  await refreshCustomers();
-};
-
-const removeCustomer = async (id: string) => {
-  await deleteCustomer(id);
-  await refreshCustomers();
-};
+import { useCallback } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Customer } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { qk } from '@/hooks/queryKeys';
+import { fetchCustomers, addCustomer, updateCustomer, deleteCustomer } from '@/services/customerService';
 
 export interface UseCustomersResult {
   customers: Customer[];
@@ -72,16 +30,58 @@ export interface UseCustomersResult {
 }
 
 export const useCustomers = (): UseCustomersResult => {
-  const list = useSyncExternalStore(subscribe, () => customers);
-  const isLoading = useSyncExternalStore(subscribe, () => loading);
+  const { currentUser } = useAuth();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    ensureLoaded();
-  }, []);
+  const query = useQuery({
+    queryKey: qk.customers.all,
+    queryFn: fetchCustomers,
+    enabled: !!currentUser,
+  });
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: qk.customers.all });
+
+  const addMutation = useMutation({
+    mutationFn: (data: Omit<Customer, 'id'>) => addCustomer(data),
+    onSuccess: invalidate,
+  });
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Customer> }) => updateCustomer(id, data),
+    onSuccess: invalidate,
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteCustomer(id),
+    onSuccess: invalidate,
+  });
+
+  const refreshCustomers = useCallback(async () => {
+    await query.refetch();
+  }, [query]);
+
+  const createNewCustomer = useCallback(
+    async (data: Omit<Customer, 'id'>) => {
+      await addMutation.mutateAsync(data);
+    },
+    [addMutation],
+  );
+
+  const modifyCustomer = useCallback(
+    async (id: string, data: Partial<Customer>) => {
+      await updateMutation.mutateAsync({ id, data });
+    },
+    [updateMutation],
+  );
+
+  const removeCustomer = useCallback(
+    async (id: string) => {
+      await deleteMutation.mutateAsync(id);
+    },
+    [deleteMutation],
+  );
 
   return {
-    customers: list,
-    loading: isLoading,
+    customers: query.data ?? [],
+    loading: query.isLoading,
     refreshCustomers,
     createNewCustomer,
     modifyCustomer,
