@@ -41,6 +41,7 @@ import Spinner from '@/components/ui/Spinner';
 import Textarea from '@/components/ui/Textarea';
 import Typography from '@/components/ui/Typography';
 import Tabs, { TabsItem } from '@/components/ui/Tabs';
+import EmptyState from '@/components/ui/EmptyState';
 
 type NotificationType = 'unpaid' | 'pending' | 'delivery' | 'custom' | 'production-tomorrow' | 'stuck-pending' | 'daily-summary' | 'health-check';
 
@@ -418,14 +419,10 @@ const NotificationsPage: React.FC = () => {
           </Box>
 
           {tabPanelItems.length === 0 ? (
-            <Box
-              layoutClassName="rounded-xl border border-dashed border-slate-200 px-4 py-10 dark:border-slate-600"
-              backgroundClassName="bg-slate-50/80 dark:bg-slate-800/40"
-            >
-              <Typography size="sm" variant="muted" layoutClassName="text-center">
-                {t('notifications.groups.empty')}
-              </Typography>
-            </Box>
+            <EmptyState
+              icon={<Bell className="h-6 w-6" />}
+              title={t('notifications.groups.empty')}
+            />
           ) : (
             <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2">
               {tabPanelItems.map((option) => {

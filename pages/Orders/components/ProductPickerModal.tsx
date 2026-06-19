@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Minus, Plus, Search, ShoppingCart, X } from 'lucide-react';
+import { Check, Minus, Package, Plus, Search, ShoppingCart, X } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import EmptyState from '@/components/ui/EmptyState';
 import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
 import type { Product } from '@/types';
@@ -217,13 +218,19 @@ const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
         {/* Grid body */}
         <Box layoutClassName="min-h-0 flex-1 overflow-auto p-3 sm:p-4">
           {sorted.length === 0 && !showCreateRow ? (
-            <Box layoutClassName="flex h-full flex-col items-center justify-center gap-2 p-6">
-              <Typography size="sm" variant="muted">
-                {query
-                  ? `Không tìm thấy sản phẩm khớp "${query}"`
-                  : 'Không có sản phẩm nào trong danh mục này.'}
-              </Typography>
-            </Box>
+            query ? (
+              <EmptyState
+                icon={<Search className="h-6 w-6" />}
+                title={`Không tìm thấy sản phẩm khớp "${query}"`}
+                layoutClassName="!min-h-0"
+              />
+            ) : (
+              <EmptyState
+                icon={<Package className="h-6 w-6" />}
+                title="Không có sản phẩm nào trong danh mục này."
+                layoutClassName="!min-h-0"
+              />
+            )
           ) : (
             <Box layoutClassName="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-5">
               {sorted.map((p) => {

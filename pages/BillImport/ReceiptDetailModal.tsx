@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Minus, Plus, X } from 'lucide-react';
+import { FileText, Minus, Package, Plus, X } from 'lucide-react';
 import type { SavedStockReceiptDetail } from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
+import EmptyState from '@/components/ui/EmptyState';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 
 import Button from '@/components/ui/Button';
@@ -94,9 +95,10 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
             Đang tải chi tiết...
           </Typography>
         ) : !receiptDetail ? (
-          <Typography size="sm" variant="muted">
-            Không tìm thấy dữ liệu bill.
-          </Typography>
+          <EmptyState
+            icon={<FileText className="h-6 w-6" />}
+            title="Không tìm thấy dữ liệu bill."
+          />
         ) : (
           <Box layoutClassName="space-y-3">
             <Box layoutClassName="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
@@ -136,9 +138,10 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
               </Box>
               <Box layoutClassName="space-y-2 p-3">
                 {receiptDetail.lineItems.length === 0 ? (
-                  <Typography size="sm" variant="muted">
-                    Không có dòng sản phẩm.
-                  </Typography>
+                  <EmptyState
+                    icon={<Package className="h-6 w-6" />}
+                    title="Không có dòng sản phẩm."
+                  />
                 ) : (
                   receiptDetail.lineItems.map((item, idx) => (
                     <Box
