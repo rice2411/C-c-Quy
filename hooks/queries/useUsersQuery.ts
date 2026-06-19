@@ -1,20 +1,27 @@
 /**
- * React Query hook cho domain Users (epic #58 — P7, dùng cho Dashboard).
+ * React Query hooks cho domain Users (epic #58 — P8).
  *
- * - queryFn GỌI THẲNG userService (getAllUsers) — KHÔNG viết lại HTTP.
- * - Query `enabled: !!currentUser` (tránh chạy trước auth → 401).
- * - KHÔNG nuốt lỗi: caller dùng `error` để xử lý.
+ * - queryFn/mutationFn GỌI THẲNG service hiện có (userService) — KHÔNG viết lại HTTP.
+ * - Query `enabled: !!currentUser` để tránh gọi API 401 ở màn login.
+ * - Mọi mutation (status / customName / role) invalidate `qk.users.all`.
+ * - KHÔNG nuốt lỗi: caller (component) bắt error → toast.
  */
-import { useQuery } from '@tanstack/react-query';
-import type { UserData } from '@/types/user';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { UserData, UserRole, UserStatus } from '@/types/user';
 import { useAuth } from '@/contexts/AuthContext';
 import { qk } from '@/hooks/queryKeys';
-import { getAllUsers } from '@/services/userService';
+import {
+  getAllUsers,
+  updateUserCustomName,
+  updateUserRole,
+  updateUserStatus,
+} from '@/services/userService';
 
 export interface UseUsersResult {
   users: UserData[];
   loading: boolean;
   error: Error | null;
+  refetch: () => Promise<void>;
 }
 
 export const useUsers = (): UseUsersResult => {
@@ -28,5 +35,53 @@ export const useUsers = (): UseUsersResult => {
     users: query.data ?? [],
     loading: query.isLoading,
     error: query.error,
+    refetch: async () => {
+      await query.refetch();
+    },
+  };
+};
+
+export interface UpdateUserStatusArgs {
+  uid: string;
+  status: UserStatus;
+}
+
+export interface UpdateUserCustomNameArgs {
+  uid: string;
+  customName: string;
+}
+
+export interface UpdateUserRoleArgs {
+  uid: string;
+  role: UserRole;
+}
+
+export interface UseUserMutationsResult {
+  updateStatus: (args: UpdateUserStatusArgs) => Promise<void>;
+  updateCustomName: (args: UpdateUserCustomNameArgs) => Promise<void>;
+  updateRole: (args: UpdateUserRoleArgs) => Promise<void>;
+}
+
+export const useUserMutations = (): UseUserMutationsResult => {
+  const queryClient = useQueryClient();
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: qk.users.all });
+
+  const statusMutation = useMutation({
+    mutationFn: ({ uid, status }: UpdateUserStatusArgs) => updateUserStatus(uid, status),
+    onSuccess: invalidate,
+  });
+  const customNameMutation = useMutation({
+    mutationFn: ({ uid, customName }: UpdateUserCustomNameArgs) => updateUserCustomName(uid, customName),
+    onSuccess: invalidate,
+  });
+  const roleMutation = useMutation({
+    mutationFn: ({ uid, role }: UpdateUserRoleArgs) => updateUserRole(uid, role),
+    onSuccess: invalidate,
+  });
+
+  return {
+    updateStatus: (args) => statusMutation.mutateAsync(args),
+    updateCustomName: (args) => customNameMutation.mutateAsync(args),
+    updateRole: (args) => roleMutation.mutateAsync(args),
   };
 };

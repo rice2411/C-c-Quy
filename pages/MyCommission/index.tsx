@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Wallet, Award } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { OrderStatus } from '@/types/enums';
-import { CollaboratorCommissionSummary, fetchMyCommission } from '@/services/commissionService';
+import { useMyCommission } from '@/hooks/queries/useCommissionQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Spinner from '@/components/ui/Spinner';
@@ -37,21 +37,15 @@ const SummaryCard: React.FC<{ label: string; value: string; valueClassName?: str
 
 const MyCommissionPage: React.FC = () => {
   const { userData } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [summary, setSummary] = useState<CollaboratorCommissionSummary | null>(null);
+  const { summary, loading, error } = useMyCommission(userData?.uid);
   const [period, setPeriod] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   });
 
   useEffect(() => {
-    if (!userData?.uid) return;
-    setLoading(true);
-    fetchMyCommission()
-      .then(setSummary)
-      .catch((e: any) => toast.error(e?.message || 'Không thể tải hoa hồng của bạn'))
-      .finally(() => setLoading(false));
-  }, [userData?.uid]);
+    if (error) toast.error(error.message || 'Không thể tải hoa hồng của bạn');
+  }, [error]);
 
   // Danh sách tháng (mới nhất lên đầu), luôn có tháng đang chọn + "Tất cả"
   const periodOptions = useMemo(() => {
