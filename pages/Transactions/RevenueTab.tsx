@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Download, Receipt } from 'lucide-react';
 import * as XLSX from 'xlsx-js-style';
 import toast from 'react-hot-toast';
-import { useOrders } from '@/contexts/OrderContext';
+import { useOrders } from '@/hooks/useOrders';
 import { OrderStatus } from '@/types/enums';
 import { revenueOrdersInPeriod } from '@/services/revenueService';
 import { formatVND } from '@/utils/format/currencyUtil';
