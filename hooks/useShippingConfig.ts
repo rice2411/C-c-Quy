@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { DEFAULT_SHIPPING_CONFIG } from '@/types/shippingConfig';
 import type { ShippingConfiguration } from '@/types/shippingConfig';
+import { useAuth } from '@/contexts/AuthContext';
+import { qk } from '@/hooks/queryKeys';
 import { fetchShippingConfiguration, saveShippingConfiguration } from '@/services/configurationService';
 
 export interface CalcShipFeeResult {
@@ -31,12 +34,6 @@ export const enrichAddressWithConfig = (
   return `${addr}, ${config.shopOrigin.city}`;
 };
 
-// Cache module-level: chỉ fetch 1 lần dù nhiều consumer mount; save cập nhật cache.
-// KHÔNG còn là global context/provider — fetch ON-DEMAND khi consumer (Settings ship /
-// ô địa chỉ trong form đơn) thực sự mount, thay vì eager mỗi lần đăng nhập.
-let cachedConfig: ShippingConfiguration | null = null;
-let inflight: Promise<ShippingConfiguration> | null = null;
-
 export interface UseShippingConfigResult {
   config: ShippingConfiguration;
   loading: boolean;
@@ -48,73 +45,64 @@ export interface UseShippingConfigResult {
   save: (next: ShippingConfiguration, updatedBy?: string | null) => Promise<void>;
 }
 
+/**
+ * Cấu hình phí ship qua React Query (epic #58).
+ * - Cache tay (module-level cachedConfig/inflight) trước đây được thay bằng React Query
+ *   cache: nhiều consumer mount cùng `qk.shippingConfig.all` → chỉ fetch 1 lần (dedup),
+ *   ON-DEMAND (chỉ chạy khi có consumer mount + auth ready).
+ * - Default khi chưa có data: `DEFAULT_SHIPPING_CONFIG`.
+ * - `calcShipFee`/`enrichAddress` vẫn dùng config hiện tại (pure helper bên trên).
+ */
 export const useShippingConfig = (): UseShippingConfigResult => {
-  const [config, setConfig] = useState<ShippingConfiguration>(cachedConfig ?? DEFAULT_SHIPPING_CONFIG);
-  const [loading, setLoading] = useState<boolean>(!cachedConfig);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { currentUser } = useAuth();
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: qk.shippingConfig.all,
+    queryFn: fetchShippingConfiguration,
+    enabled: !!currentUser,
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: ({ next, updatedBy }: { next: ShippingConfiguration; updatedBy?: string | null }) =>
+      saveShippingConfiguration(next, updatedBy ?? null),
+    onSuccess: (_data, { next }) => {
+      // Cập nhật cache ngay (tránh nháy data cũ) + invalidate để đồng bộ với server.
+      queryClient.setQueryData(qk.shippingConfig.all, next);
+      queryClient.invalidateQueries({ queryKey: qk.shippingConfig.all });
+    },
+  });
+
+  const config = query.data ?? DEFAULT_SHIPPING_CONFIG;
 
   const refresh = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const remote = await fetchShippingConfiguration();
-      cachedConfig = remote;
-      setConfig(remote);
-    } catch (err: any) {
-      setError(err?.message || 'Không tải được cấu hình phí ship');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    await query.refetch();
+  }, [query]);
 
-  useEffect(() => {
-    if (cachedConfig) {
-      setConfig(cachedConfig);
-      setLoading(false);
-      return;
-    }
-    let alive = true;
-    setLoading(true);
-    inflight = inflight ?? fetchShippingConfiguration();
-    inflight
-      .then((remote) => {
-        cachedConfig = remote;
-        inflight = null;
-        if (alive) {
-          setConfig(remote);
-          setLoading(false);
-        }
-      })
-      .catch((err: any) => {
-        inflight = null;
-        if (alive) {
-          setError(err?.message || 'Không tải được cấu hình phí ship');
-          setLoading(false);
-        }
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  const save = useCallback(async (next: ShippingConfiguration, updatedBy?: string | null) => {
-    setSaving(true);
-    setError(null);
-    try {
-      await saveShippingConfiguration(next, updatedBy ?? null);
-      cachedConfig = next;
-      setConfig(next);
-    } catch (err: any) {
-      setError(err?.message || 'Không lưu được cấu hình phí ship');
-      throw err;
-    } finally {
-      setSaving(false);
-    }
-  }, []);
+  const save = useCallback(
+    async (next: ShippingConfiguration, updatedBy?: string | null) => {
+      await saveMutation.mutateAsync({ next, updatedBy });
+    },
+    [saveMutation],
+  );
 
   const calcShipFee = useCallback((km: number) => calcShipFeeWithConfig(km, config), [config]);
   const enrichAddress = useCallback((addr: string) => enrichAddressWithConfig(addr, config), [config]);
 
-  return { config, loading, saving, error, calcShipFee, enrichAddress, refresh, save };
+  const error = query.error
+    ? (query.error as Error)?.message || 'Không tải được cấu hình phí ship'
+    : saveMutation.error
+      ? (saveMutation.error as Error)?.message || 'Không lưu được cấu hình phí ship'
+      : null;
+
+  return {
+    config,
+    loading: query.isLoading,
+    saving: saveMutation.isPending,
+    error,
+    calcShipFee,
+    enrichAddress,
+    refresh,
+    save,
+  };
 };

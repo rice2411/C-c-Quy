@@ -38,8 +38,8 @@ import {
 import toast from 'react-hot-toast';
 import type { Order, Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { fetchBadgesConfiguration } from '@/services/badgeService';
-import { fetchCategories } from '@/services/categoryService';
+import { useBadges } from '@/hooks/queries/useBadgesQuery';
+import { useCategories } from '@/hooks/queries/useCategoriesQuery';
 import { updateProduct, deleteProduct } from '@/services/productService';
 import type { ProductBadge } from '@/types/badge';
 import type { ProductCategory } from '@/types/category';
@@ -123,17 +123,7 @@ const ProductSection: React.FC<Props> = ({
   const clearSelection = () => setSelected(new Set());
 
   // ===== Product badges from config =====
-  const [productBadges, setProductBadges] = useState<ProductBadge[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const cfg = await fetchBadgesConfiguration();
-        if (!cancelled) setProductBadges(cfg.productBadges);
-      } catch {}
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  const { productBadges } = useBadges();
   const badgeByName = useMemo(() => {
     const m = new Map<string, ProductBadge>();
     productBadges.forEach((b) => m.set(b.name, b));
@@ -141,17 +131,7 @@ const ProductSection: React.FC<Props> = ({
   }, [productBadges]);
 
   // ===== Categories from config (để hiển thị chip màu/icon) =====
-  const [categoryConfig, setCategoryConfig] = useState<ProductCategory[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const cats = await fetchCategories();
-        if (!cancelled) setCategoryConfig(cats);
-      } catch {}
-    })();
-    return () => { cancelled = true; };
-  }, []);
+  const { categories: categoryConfig } = useCategories();
   const categoryByName = useMemo(() => {
     const m = new Map<string, ProductCategory>();
     categoryConfig.forEach((c) => m.set(c.name, c));

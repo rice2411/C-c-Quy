@@ -2,7 +2,7 @@
  * Product Detail page — route /storage/product/:id
  * 5 tabs: Info / Pricing & Cost / Materials / Sales / History
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -20,16 +20,14 @@ import {
   Users,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import type { Order, Product, ProductVersion } from '@/types';
+import type { Order, Product } from '@/types';
 import { useOrders } from '@/hooks/useOrders';
 import {
-  addProduct,
-  deleteProduct,
-  fetchProducts,
-  fetchProductVersions,
-  updateProduct,
-} from '@/services/productService';
-import { fetchBadgesConfiguration } from '@/services/badgeService';
+  useProducts,
+  useProductMutations,
+  useProductVersions,
+} from '@/hooks/queries/useProductsQuery';
+import { useBadges } from '@/hooks/queries/useBadgesQuery';
 import type { ProductBadge } from '@/types/badge';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { calcMargin } from '@/utils/product/productMargin';
@@ -88,51 +86,17 @@ const ProductDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { orders } = useOrders();
 
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>('info');
-  const [versions, setVersions] = useState<ProductVersion[]>([]);
-  const [versionsLoading, setVersionsLoading] = useState(false);
-  const [productBadges, setProductBadges] = useState<ProductBadge[]>([]);
 
-  useEffect(() => {
-    if (!id) return;
-    (async () => {
-      setLoading(true);
-      try {
-        const all = await fetchProducts();
-        setProduct(all.find((p) => p.id === id) ?? null);
-      } catch (e) {
-        console.error(e);
-        toast.error('Không tải được sản phẩm');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [id]);
+  const { products, loading } = useProducts();
+  const { addProduct, deleteProduct, updateProduct } = useProductMutations();
+  const { productBadges } = useBadges();
+  const { versions, loading: versionsLoading } = useProductVersions(id, activeTab === 'history');
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const cfg = await fetchBadgesConfiguration();
-        if (!cancelled) setProductBadges(cfg.productBadges);
-      } catch {}
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
-  useEffect(() => {
-    if (!id || activeTab !== 'history') return;
-    (async () => {
-      setVersionsLoading(true);
-      try {
-        setVersions(await fetchProductVersions(id));
-      } finally {
-        setVersionsLoading(false);
-      }
-    })();
-  }, [id, activeTab]);
+  const product = useMemo<Product | null>(
+    () => products.find((p) => p.id === id) ?? null,
+    [products, id],
+  );
 
   // ===== Metrics =====
   const metrics30: ProductSalesMetric | undefined = useMemo(() => {
@@ -203,8 +167,7 @@ const ProductDetailPage: React.FC = () => {
     if (!product) return;
     const next = product.status === 'active' ? 'inactive' : 'active';
     try {
-      await updateProduct(product.id, { ...product, status: next });
-      setProduct({ ...product, status: next });
+      await updateProduct({ id: product.id, data: { ...product, status: next } });
       toast.success(`Đã đổi sang ${next === 'active' ? 'Hoạt động' : 'Tạm dừng'}`);
     } catch (e: any) {
       toast.error(e?.message || 'Lỗi');
