@@ -5,7 +5,7 @@ import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import { Order, OrderStatus, PaymentStatus } from '@/types';
-import { formatVND } from '@/utils/format/currencyUtil';
+import { formatVND, formatVNDCompact } from '@/utils/format/currencyUtil';
 import { parseDateValue } from '@/utils/format/dateUtil';
 import { getOrderRevenueDate, getOrderTotal } from '@/utils/order/orderUtils';
 
@@ -106,6 +106,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
     icon: React.ReactNode;
     label: string;
     value: string;
+    valueTitle?: string;
     diff: number | null;
     isNew: boolean;
     onClick?: () => void;
@@ -115,8 +116,9 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
     {
       key: 'revenue',
       icon: <DollarSign className="h-4 w-4" />,
-      label: 'Doanh thu hôm nay',
-      value: formatVND(stats.revenueToday),
+      label: 'Doanh thu',
+      value: formatVNDCompact(stats.revenueToday),
+      valueTitle: formatVND(stats.revenueToday),
       diff: pctDiff(stats.revenueToday, stats.revenueYesterday),
       isNew: isNew(stats.revenueToday, stats.revenueYesterday),
       onClick: () => navigate('/orders?quick=paid'),
@@ -189,7 +191,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
 
           const inner = (
             <>
-              <Box layoutClassName="flex items-center gap-2">
+              <Box layoutClassName="flex w-full min-w-0 items-center gap-2">
                 <Box
                   layoutClassName="inline-flex h-7 w-7 shrink-0 items-center justify-center"
                   roundedClassName="rounded-lg"
@@ -198,11 +200,17 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
                 >
                   {it.icon}
                 </Box>
-                <Typography as="span" size="xs" variant="muted" layoutClassName="truncate">
+                <Typography as="span" size="xs" variant="muted" layoutClassName="min-w-0 truncate">
                   {it.label}
                 </Typography>
               </Box>
-              <Typography as="div" size="lg" textClassName="font-bold text-slate-900 dark:text-white" layoutClassName="tabular-nums">
+              <Typography
+                as="div"
+                size="lg"
+                title={it.valueTitle ?? it.value}
+                textClassName="font-bold text-slate-900 dark:text-white"
+                layoutClassName="w-full min-w-0 max-w-full truncate tabular-nums"
+              >
                 {it.value}
               </Typography>
               {diff != null ? (
@@ -236,7 +244,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
               variant="ghost"
               disableVariantHover
               disableVariantTextColor
-              layoutClassName="flex h-full flex-col items-start gap-1 px-5 py-4 text-left"
+              layoutClassName="flex h-full min-w-0 flex-col items-start gap-1 px-4 py-4 text-left"
               backgroundClassName="bg-white dark:bg-slate-800"
               hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700/40"
               borderClassName="border-transparent"
@@ -249,7 +257,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
           ) : (
             <Box
               key={it.key}
-              layoutClassName="flex h-full flex-col items-start gap-1 px-5 py-4"
+              layoutClassName="flex h-full min-w-0 flex-col items-start gap-1 px-4 py-4"
               backgroundClassName="bg-white dark:bg-slate-800"
             >
               {inner}
