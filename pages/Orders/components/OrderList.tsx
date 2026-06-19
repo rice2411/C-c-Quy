@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { qk } from '@/hooks/queryKeys';
 import { Order } from '@/types';
 import { getAllUsers } from '@/services/userService';
 import { parseDateValue } from '@/utils/format/dateUtil';
@@ -24,6 +27,7 @@ interface OrderListProps {
 
 const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
   const { t } = useLanguage();
+  const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
 
@@ -40,7 +44,20 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
   // Synthetic filter: đơn quá hạn = deliveryDate < today AND status in {PENDING, PROCESSING}
   const [isOverdueFilter, setIsOverdueFilter] = useState<boolean>(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-  const [creatorOptions, setCreatorOptions] = useState<string[]>([]);
+
+  // Danh sách người tạo (cho filter) — lấy users qua React Query rồi derive.
+  const { data: usersData } = useQuery({
+    queryKey: qk.users.all,
+    queryFn: getAllUsers,
+    enabled: !!currentUser,
+  });
+  const creatorOptions = useMemo(() => {
+    const creators = (usersData ?? [])
+      .map((user) => user.customName || user.displayName || user.email)
+      .filter((name): name is string => Boolean(name && name.trim()))
+      .map((name) => name.trim());
+    return Array.from(new Set(creators)).sort((a, b) => a.localeCompare(b, 'vi'));
+  }, [usersData]);
 
   // Helper: YYYY-MM-DD string của hôm nay (dùng cho pill "Ship hôm nay")
   const todayStr = useMemo(() => {
@@ -75,19 +92,6 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
-  useEffect(() => {
-    const loadCreatorOptions = async () => {
-      const users = await getAllUsers();
-      const creators = users
-        .map((user) => user.customName || user.displayName || user.email)
-        .filter((name): name is string => Boolean(name && name.trim()))
-        .map((name) => name.trim());
-      const uniqueCreators = Array.from(new Set(creators)).sort((a, b) => a.localeCompare(b, 'vi'));
-      setCreatorOptions(uniqueCreators);
-    };
-    loadCreatorOptions();
-  }, []);
 
   const filteredOrders = useMemo(() => {
     return orders
