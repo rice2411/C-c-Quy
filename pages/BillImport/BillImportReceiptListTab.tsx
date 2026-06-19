@@ -98,7 +98,6 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
                 sizeClassName="px-4 py-2"
                 layoutClassName="inline-flex items-center gap-2 whitespace-nowrap"
                 disableVariantHover
-                disableVariantTextColor
               >
                 Chụp ảnh
               </Button>
@@ -166,7 +165,6 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
                     iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
                     layoutClassName="inline-flex items-center gap-1.5"
                     disableVariantHover
-                    disableVariantTextColor
                   >
                     Chụp ảnh
                   </Button>

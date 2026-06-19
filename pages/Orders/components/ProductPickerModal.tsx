@@ -383,7 +383,6 @@ const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
             sizeClassName="px-4 py-2"
             layoutClassName="inline-flex items-center gap-2"
             disableVariantHover
-            disableVariantTextColor
           >
             Xong
           </Button>
