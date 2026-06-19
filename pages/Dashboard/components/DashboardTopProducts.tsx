@@ -6,6 +6,7 @@ import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import AvatarImage from '@/components/ui/AvatarImage';
 import Badge from '@/components/ui/Badge';
+import EmptyState from '@/components/ui/EmptyState';
 import { Order, OrderStatus, PaymentStatus } from '@/types';
 import { Product } from '@/types/product';
 import { ProductCategory } from '@/types/category';
@@ -138,11 +139,7 @@ const DashboardTopProducts: React.FC<DashboardTopProductsProps> = ({
 
       <Box layoutClassName="flex-1 p-3">
         {topProducts.length === 0 ? (
-          <Box layoutClassName="flex h-full items-center justify-center p-6">
-            <Typography as="span" size="sm" variant="muted" layoutClassName="text-center">
-              Chưa có dữ liệu trong khoảng này
-            </Typography>
-          </Box>
+          <EmptyState icon={<Package className="h-6 w-6" />} title="Chưa có dữ liệu trong khoảng này" />
         ) : (
           <Box layoutClassName="space-y-1.5">
             {topProducts.map((p, idx) => {
