@@ -12,8 +12,8 @@ import {
   itemCommissionAtRate,
   getGroupTiers,
 } from '@/types/commissionGroup';
-import { fetchProducts } from '@/services/productService';
-import { fetchCommissionGroups } from '@/services/commissionGroupService';
+import { useProducts } from '@/hooks/queries/useProductsQuery';
+import { useCommissionGroups } from '@/hooks/queries/useCommissionQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/user';
 import { formatVND } from '@/utils/format/currencyUtil';
@@ -290,16 +290,13 @@ const CommissionGuidePage: React.FC = () => {
   const canSeeCost =
     userData?.role === UserRole.SUPER_ADMIN || userData?.role === UserRole.ADMIN;
 
-  const [loading, setLoading] = useState(true);
-  const [groups, setGroups] = useState<CommissionGroup[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const { groups, loading: groupsLoading, error: groupsError } = useCommissionGroups();
+  const { products, loading: productsLoading, error: productsError } = useProducts();
+  const loading = groupsLoading || productsLoading;
 
   useEffect(() => {
-    Promise.all([fetchCommissionGroups(), fetchProducts()])
-      .then(([g, p]) => { setGroups(g); setProducts(p); })
-      .catch(() => toast.error('Không thể tải dữ liệu hướng dẫn'))
-      .finally(() => setLoading(false));
-  }, []);
+    if (groupsError || productsError) toast.error('Không thể tải dữ liệu hướng dẫn');
+  }, [groupsError, productsError]);
 
   return (
     <Box layoutClassName="flex h-full flex-col space-y-4 sm:space-y-5">
