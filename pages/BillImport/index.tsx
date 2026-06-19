@@ -1,24 +1,22 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ScanLine } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type {
   BillLineItem,
   BillValidationResult,
-  ImportedMaterialSummary,
   ImportedSupplierSummary,
   SavedStockReceiptDetail,
-  SavedStockReceiptSummary,
   StockReceiptStructured,
   SupplierContactInfo,
 } from '@/types/billReceipt';
 import {
-  fetchImportedMaterials,
-  fetchImportedSuppliers,
-  fetchStockReceiptDetail,
-  fetchStockReceiptSummaries,
-  saveStockReceiptDraft,
-} from '@/services/stockReceiptService';
+  useImportedMaterials,
+  useImportedSuppliers,
+  useStockReceiptDetail,
+  useStockReceiptMutations,
+  useStockReceiptSummaries,
+} from '@/hooks/queries/useStockReceiptQuery';
 import { runBillImportPipeline } from '@/services/billReceiptPipeline';
 import { useAuth } from '@/contexts/AuthContext';
 import Box from '@/components/ui/Box';
@@ -52,20 +50,37 @@ const BillImportPage: React.FC = () => {
   const [progressStage, setProgressStage] = useState<UiProgressStage | null>(null);
   const [activeTab, setActiveTab] = useState<BillImportTabId>('receipts');
   const [importModalOpen, setImportModalOpen] = useState(false);
-  const [masterLoading, setMasterLoading] = useState(false);
-  const [receiptLoading, setReceiptLoading] = useState(false);
-  const [receiptRows, setReceiptRows] = useState<SavedStockReceiptSummary[]>([]);
-  const [receiptDetail, setReceiptDetail] = useState<SavedStockReceiptDetail | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailReceiptId, setDetailReceiptId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [supplierRows, setSupplierRows] = useState<ImportedSupplierSummary[]>([]);
-  const [materialRows, setMaterialRows] = useState<ImportedMaterialSummary[]>([]);
   const [receiptSearch, setReceiptSearch] = useState('');
   const [supplierSearch, setSupplierSearch] = useState('');
   const [materialSearch, setMaterialSearch] = useState('');
 
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [supplierContact, setSupplierContact] = useState<SupplierContactInfo>(EMPTY_CONTACT);
+
+  // Data qua React Query (epic #58 — P8). queryFn gọi thẳng stockReceiptService.
+  const receiptsQuery = useStockReceiptSummaries();
+  const suppliersQuery = useImportedSuppliers();
+  const materialsQuery = useImportedMaterials();
+  const detailQuery = useStockReceiptDetail(detailReceiptId);
+  const { saveDraft } = useStockReceiptMutations();
+
+  const receiptRows = receiptsQuery.receipts;
+  const supplierRows = suppliersQuery.suppliers;
+  const materialRows = materialsQuery.materials;
+  const receiptLoading = receiptsQuery.loading;
+  const masterLoading = suppliersQuery.loading || materialsQuery.loading;
+  const receiptDetail: SavedStockReceiptDetail | null = detailQuery.detail;
+  const detailLoading = detailQuery.loading;
+
+  const loadReceipts = useCallback(async () => {
+    await receiptsQuery.refetch();
+  }, [receiptsQuery]);
+
+  const loadMasters = useCallback(async () => {
+    await Promise.all([suppliersQuery.refetch(), materialsQuery.refetch()]);
+  }, [suppliersQuery, materialsQuery]);
 
   const resetOutput = useCallback(() => {
     setOcrText('');
@@ -136,30 +151,6 @@ const BillImportPage: React.FC = () => {
     [runPipelineForFile, t],
   );
 
-  const loadMasters = useCallback(async () => {
-    setMasterLoading(true);
-    try {
-      const [suppliers, materials] = await Promise.all([
-        fetchImportedSuppliers(),
-        fetchImportedMaterials(),
-      ]);
-      setSupplierRows(suppliers);
-      setMaterialRows(materials);
-    } finally {
-      setMasterLoading(false);
-    }
-  }, []);
-
-  const loadReceipts = useCallback(async () => {
-    setReceiptLoading(true);
-    try {
-      const receipts = await fetchStockReceiptSummaries();
-      setReceiptRows(receipts);
-    } finally {
-      setReceiptLoading(false);
-    }
-  }, []);
-
   const handleSaveDraft = async () => {
     if (!draftStructured || !validation || !ocrText) {
       toast.error(t('billImport.missingSaveData'));
@@ -178,7 +169,7 @@ const BillImportPage: React.FC = () => {
         ...draftStructured,
         totalAmount: lineSum + taxV - discountV,
       };
-      await saveStockReceiptDraft({
+      await saveDraft({
         structured: structuredForSave,
         validation,
         ocrText,
@@ -189,8 +180,6 @@ const BillImportPage: React.FC = () => {
         supplierContact,
       });
       toast.success(t('billImport.saved'));
-      void loadReceipts();
-      void loadMasters();
       setImportModalOpen(false);
       resetAndClosePreview();
     } catch (error) {
@@ -212,20 +201,14 @@ const BillImportPage: React.FC = () => {
     }
   };
 
-  const openReceiptDetail = useCallback(async (receiptId: string) => {
+  const openReceiptDetail = useCallback((receiptId: string) => {
+    setDetailReceiptId(receiptId);
     setDetailOpen(true);
-    setDetailLoading(true);
-    try {
-      const detail = await fetchStockReceiptDetail(receiptId);
-      setReceiptDetail(detail);
-    } finally {
-      setDetailLoading(false);
-    }
   }, []);
 
   const closeReceiptDetail = useCallback(() => {
     setDetailOpen(false);
-    setReceiptDetail(null);
+    setDetailReceiptId(null);
   }, []);
 
   const updateDraftField = <K extends keyof StockReceiptStructured>(key: K, value: StockReceiptStructured[K]) => {
@@ -268,11 +251,6 @@ const BillImportPage: React.FC = () => {
   const closeImportModal = useCallback(() => {
     setImportModalOpen(false);
   }, []);
-
-  useEffect(() => {
-    void loadReceipts();
-    void loadMasters();
-  }, [loadReceipts, loadMasters]);
 
   const filteredReceipts = receiptRows.filter((row) => {
     const q = normalizeSearchText(receiptSearch);

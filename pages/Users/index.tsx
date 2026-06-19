@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Users } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { UserData, UserStatus, UserRole } from '@/types/user';
-import { getAllUsers, updateUserStatus, updateUserCustomName, updateUserRole } from '@/services/userService';
+import { useUsers, useUserMutations } from '@/hooks/queries/useUsersQuery';
 import toast from 'react-hot-toast';
 import UserStats from './components/UserStats';
 import UserFilters from './components/UserFilters';
@@ -14,8 +14,8 @@ import Typography from '@/components/ui/Typography';
 
 const UsersPage: React.FC = () => {
   const { t } = useLanguage();
-  const [users, setUsers] = useState<UserData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { users, loading, error } = useUsers();
+  const { updateStatus, updateCustomName, updateRole } = useUserMutations();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
@@ -23,28 +23,17 @@ const UsersPage: React.FC = () => {
   const [customName, setCustomName] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.COLABORATOR);
 
-  const loadUsers = async () => {
-    setLoading(true);
-    try {
-      const data = await getAllUsers();
-      setUsers(data);
-    } catch (error) {
+  useEffect(() => {
+    if (error) {
       console.error('Error loading users:', error);
       toast.error(t('users.messages.loadError'));
-    } finally {
-      setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadUsers();
-  }, []);
+  }, [error, t]);
 
   const handleStatusChange = async (uid: string, newStatus: UserStatus) => {
     try {
-      await updateUserStatus(uid, newStatus);
+      await updateStatus({ uid, status: newStatus });
       toast.success(t('users.messages.statusUpdated'));
-      await loadUsers();
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error(t('users.messages.updateStatusError'));
@@ -60,11 +49,10 @@ const UsersPage: React.FC = () => {
     if (!editingUser) return;
     
     try {
-      await updateUserCustomName(editingUser.uid, customName);
+      await updateCustomName({ uid: editingUser.uid, customName });
       toast.success(t('users.messages.customNameUpdated'));
       setEditingUser(null);
       setCustomName('');
-      await loadUsers();
     } catch (error) {
       console.error('Error updating custom name:', error);
       toast.error(t('users.messages.updateCustomNameError'));
@@ -85,10 +73,9 @@ const UsersPage: React.FC = () => {
     if (!editingRoleUser) return;
     
     try {
-      await updateUserRole(editingRoleUser.uid, selectedRole);
+      await updateRole({ uid: editingRoleUser.uid, role: selectedRole });
       toast.success(t('users.messages.roleUpdated'));
       setEditingRoleUser(null);
-      await loadUsers();
     } catch (error) {
       console.error('Error updating role:', error);
       toast.error(t('users.messages.updateRoleError'));
