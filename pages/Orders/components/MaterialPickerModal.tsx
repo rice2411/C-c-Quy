@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Minus, Plus, Search, Sparkles, X } from 'lucide-react';
+import { Check, Minus, Package, Plus, Search, Sparkles, X } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import EmptyState from '@/components/ui/EmptyState';
 import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
 import type { MaterialPriceOption } from '@/services/stockReceiptService';
@@ -144,13 +145,19 @@ const MaterialPickerModal: React.FC<MaterialPickerModalProps> = ({
         {/* List */}
         <Box layoutClassName="min-h-0 flex-1 overflow-auto p-3 sm:p-4">
           {filtered.length === 0 ? (
-            <Box layoutClassName="flex h-full flex-col items-center justify-center gap-2 p-6">
-              <Typography size="sm" variant="muted">
-                {materials.length === 0
-                  ? 'Chưa có nguyên liệu nào (nhập kho từ hoá đơn trước).'
-                  : `Không tìm thấy nguyên liệu khớp "${query}"`}
-              </Typography>
-            </Box>
+            materials.length === 0 ? (
+              <EmptyState
+                icon={<Package className="h-6 w-6" />}
+                title="Chưa có nguyên liệu nào (nhập kho từ hoá đơn trước)."
+                layoutClassName="!min-h-0"
+              />
+            ) : (
+              <EmptyState
+                icon={<Search className="h-6 w-6" />}
+                title={`Không tìm thấy nguyên liệu khớp "${query}"`}
+                layoutClassName="!min-h-0"
+              />
+            )
           ) : (
             <Box layoutClassName="space-y-2">
               {filtered.map((m) => {

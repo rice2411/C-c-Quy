@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Globe,
+  Inbox,
   RefreshCw,
   Search,
 } from 'lucide-react';
@@ -17,6 +18,7 @@ import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Spinner from '@/components/ui/Spinner';
+import EmptyState from '@/components/ui/EmptyState';
 import {
   Table,
   TableBody,
@@ -349,9 +351,10 @@ const RequestLogsPage: React.FC = () => {
             <Typography textClassName="text-red-600 dark:text-red-400">{error}</Typography>
           </Box>
         ) : visibleLogs.length === 0 ? (
-          <Box layoutClassName="flex items-center justify-center py-16">
-            <Typography variant="muted">Không có request nào khớp bộ lọc.</Typography>
-          </Box>
+          <EmptyState
+            icon={<Inbox className="h-6 w-6" />}
+            title="Không có request nào khớp bộ lọc."
+          />
         ) : (
           <>
             {/* Desktop */}

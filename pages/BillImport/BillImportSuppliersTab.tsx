@@ -11,6 +11,7 @@ import {
   Store,
   Tag,
   TrendingUp,
+  Truck,
   User,
   X,
 } from 'lucide-react';
@@ -35,6 +36,7 @@ import {
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import SupplierEditModal from '@/pages/BillImport/SupplierEditModal';
 import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/BillImport/MergeItemsModal';
+import EmptyState from '@/components/ui/EmptyState';
 
 import Checkbox from '@/components/ui/Checkbox';
 export interface BillImportSuppliersTabProps {
@@ -198,9 +200,10 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
         {/* ===== MOBILE: card layout ===== */}
         <Box layoutClassName="max-h-[60vh] space-y-2 overflow-auto md:hidden">
           {sortedSuppliers.length === 0 ? (
-            <Typography size="sm" variant="muted" layoutClassName="p-3">
-              Không có nhà cung cấp phù hợp.
-            </Typography>
+            <EmptyState
+              icon={<Truck className="h-6 w-6" />}
+              title="Không có nhà cung cấp phù hợp."
+            />
           ) : (
             sortedSuppliers.map((row) => {
               const isChecked = selected.has(row.id);
@@ -323,9 +326,10 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
         {/* ===== DESKTOP: table layout ===== */}
         <Box layoutClassName="hidden max-h-[560px] overflow-auto rounded-lg border border-slate-100 dark:border-slate-800 md:block">
           {sortedSuppliers.length === 0 ? (
-            <Typography size="sm" variant="muted" layoutClassName="p-3">
-              Không có nhà cung cấp phù hợp.
-            </Typography>
+            <EmptyState
+              icon={<Truck className="h-6 w-6" />}
+              title="Không có nhà cung cấp phù hợp."
+            />
           ) : (
             <Table>
               <TableHead>

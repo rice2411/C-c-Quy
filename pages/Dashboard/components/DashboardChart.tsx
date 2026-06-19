@@ -12,6 +12,7 @@ import { BarChart } from "lucide-react";
 import Box from "@/components/ui/Box";
 import Heading from "@/components/ui/Heading";
 import Typography from "@/components/ui/Typography";
+import EmptyState from "@/components/ui/EmptyState";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatVND } from "@/utils/format/currencyUtil";
 
@@ -120,13 +121,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ data, isDarkMode }) => 
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <Box
-            layoutClassName="flex h-full w-full flex-col items-center justify-center"
-            textClassName="text-slate-400 dark:text-slate-500"
-          >
-            <BarChart size={40} className="mb-2 opacity-20" />
-            <Typography size="sm">No data for this period</Typography>
-          </Box>
+          <EmptyState icon={<BarChart className="h-6 w-6" />} title="Không có dữ liệu trong kỳ này" />
         )}
       </Box>
     </Box>

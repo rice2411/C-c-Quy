@@ -5,6 +5,7 @@ import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
+import EmptyState from '@/components/ui/EmptyState';
 import DonutTooltip from '@/pages/Dashboard/components/DonutTooltip';
 import { Order, OrderStatus } from '@/types';
 
@@ -57,7 +58,7 @@ const DashboardOrderStatus: React.FC<Props> = ({ orders, startDate, endDate, isD
         <Typography as="span" size="xs" variant="muted" layoutClassName="ml-auto">{total} đơn</Typography>
       </Box>
       {data.length === 0 ? (
-        <Box layoutClassName="px-5 py-10"><Typography as="p" size="sm" variant="muted">Không có đơn trong kỳ.</Typography></Box>
+        <EmptyState icon={<ListChecks className="h-6 w-6" />} title="Không có đơn trong kỳ." layoutClassName="flex-1" />
       ) : (
         <Box layoutClassName="flex items-center gap-4 p-5">
           <Box layoutClassName="h-40 w-40 shrink-0">

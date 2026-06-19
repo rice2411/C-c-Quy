@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Coins, TrendingUp, Users, CheckCircle2, Clock } from 'lucide-react';
+import { Coins, TrendingUp, Users, CheckCircle2, Clock, Award, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { OrderStatus } from '@/types/enums';
 import { CollaboratorCommissionSummary, fetchCommissionSummaries } from '@/services/commissionService';
@@ -8,6 +8,7 @@ import Spinner from '@/components/ui/Spinner';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
+import EmptyState from '@/components/ui/EmptyState';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import StatsBanner from '@/pages/BillImport/StatsBanner';
 import CollabRow from './components/CollabRow';
@@ -168,17 +169,18 @@ const CommissionPage: React.FC = () => {
             <Spinner size="lg" textClassName="text-primary-500" />
           </Box>
         ) : !summaries.length ? (
-          <Box layoutClassName="flex flex-col items-center justify-center gap-3 py-16" textClassName="text-slate-400 dark:text-slate-500">
-            <Box layoutClassName="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-              <TrendingUp className="h-8 w-8 opacity-30" />
-            </Box>
-            <Typography as="p" size="sm" variant="muted">Chưa có đơn nào có hoa hồng CTV</Typography>
-            <Typography as="p" size="xs" textClassName="text-slate-300 dark:text-slate-600">Cài đặt nhóm &amp; giá cost cho sản phẩm trước</Typography>
-          </Box>
+          <EmptyState
+            icon={<Award className="h-6 w-6" />}
+            title="Chưa có đơn nào có hoa hồng CTV"
+            description="Cài đặt nhóm & giá cost cho sản phẩm trước"
+            layoutClassName="flex-1"
+          />
         ) : !visible.length ? (
-          <Box layoutClassName="py-16 text-center" textClassName="text-sm text-slate-400 dark:text-slate-500">
-            Không tìm thấy CTV phù hợp
-          </Box>
+          <EmptyState
+            icon={<Search className="h-6 w-6" />}
+            title="Không tìm thấy CTV phù hợp"
+            layoutClassName="flex-1"
+          />
         ) : (
           <Box layoutClassName="space-y-3">
             {visible.map(s => <CollabRow key={s.collaboratorUid} summary={s} onRefresh={() => load()} />)}

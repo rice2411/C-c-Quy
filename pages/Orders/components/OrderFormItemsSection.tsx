@@ -11,6 +11,7 @@ import IconButton from '@/components/ui/IconButton';
 import Image from '@/components/ui/Image';
 import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
+import EmptyState from '@/components/ui/EmptyState';
 import ProductPickerModal from '@/pages/Orders/components/ProductPickerModal';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import { getRecentProductIds } from '@/utils/product/recentProducts';
@@ -172,11 +173,10 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
       ) : null}
 
       {items.length === 0 && recentChips.length === 0 ? (
-        <Box layoutClassName="rounded-xl border-2 border-dashed border-slate-200 p-4 dark:border-slate-700">
-          <Typography size="sm" variant="muted" layoutClassName="text-center">
-            Chưa có sản phẩm nào — bấm "Thêm sản phẩm" để chọn.
-          </Typography>
-        </Box>
+        <EmptyState
+          icon={<Package className="h-6 w-6" />}
+          title='Chưa có sản phẩm nào — bấm "Thêm sản phẩm" để chọn.'
+        />
       ) : items.length > 0 ? (
         <Box layoutClassName="space-y-2">
           {items.map((item, index) => {

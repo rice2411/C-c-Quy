@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/Table';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/BillImport/MergeItemsModal';
+import EmptyState from '@/components/ui/EmptyState';
 
 import Checkbox from '@/components/ui/Checkbox';
 export interface BillImportMaterialsTabProps {
@@ -179,9 +180,10 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
         {/* ===== MOBILE: card layout ===== */}
         <Box layoutClassName="max-h-[60vh] space-y-2 overflow-auto md:hidden">
           {sortedMaterials.length === 0 ? (
-            <Typography size="sm" variant="muted" layoutClassName="p-3">
-              Không có nguyên vật liệu phù hợp.
-            </Typography>
+            <EmptyState
+              icon={<Package className="h-6 w-6" />}
+              title="Không có nguyên vật liệu phù hợp."
+            />
           ) : (
             sortedMaterials.map((row) => {
               const isChecked = selected.has(row.id);
@@ -233,9 +235,10 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
         {/* ===== DESKTOP: table layout ===== */}
         <Box layoutClassName="hidden max-h-[480px] overflow-auto rounded-lg border border-slate-100 dark:border-slate-800 md:block">
           {sortedMaterials.length === 0 ? (
-            <Typography size="sm" variant="muted" layoutClassName="p-3">
-              Không có nguyên vật liệu phù hợp.
-            </Typography>
+            <EmptyState
+              icon={<Package className="h-6 w-6" />}
+              title="Không có nguyên vật liệu phù hợp."
+            />
           ) : (
             <Table>
               <TableHead>

@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import {
-  BookOpen, Coins, Percent, Calculator, TrendingUp, Search,
+  BookOpen, Coins, Percent, Calculator, TrendingUp, Search, Award, Package,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Product } from '@/types';
@@ -24,6 +24,7 @@ import Image from '@/components/ui/Image';
 import Typography from '@/components/ui/Typography';
 import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
+import EmptyState from '@/components/ui/EmptyState';
 
 /* ════════════════════════════════════════ HƯỚNG DẪN HOA HỒNG ════════════ */
 const Section: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({
@@ -63,7 +64,7 @@ const GroupTable: React.FC<{ groups: CommissionGroup[]; loading: boolean; canSee
     return <Box layoutClassName="flex justify-center py-6"><Spinner size="md" textClassName="text-primary-500" /></Box>;
   }
   if (groups.length === 0) {
-    return <Typography as="p" size="xs" variant="muted">Chưa có nhóm hoa hồng.</Typography>;
+    return <EmptyState icon={<Award className="h-6 w-6" />} title="Chưa có nhóm hoa hồng." />;
   }
   const sorted = [...groups].sort((a, b) => a.order - b.order);
   return (
@@ -170,9 +171,10 @@ const SelfCalculator: React.FC<{
 
   if (examples.length === 0) {
     return (
-      <Box layoutClassName="rounded-lg bg-slate-50 p-3 dark:bg-slate-900/40">
-        <Typography as="p" size="xs" variant="muted">Chưa có sản phẩm nào được cấu hình hoa hồng để thử tính.</Typography>
-      </Box>
+      <EmptyState
+        icon={<Package className="h-6 w-6" />}
+        title="Chưa có sản phẩm nào được cấu hình hoa hồng để thử tính."
+      />
     );
   }
 
@@ -201,9 +203,7 @@ const SelfCalculator: React.FC<{
 
         <Box layoutClassName="divide-y divide-slate-50 dark:divide-slate-700/50">
           {visibleRows.length === 0 && (
-            <Box layoutClassName="px-3 py-6 text-center">
-              <Typography as="p" size="xs" variant="muted">Không tìm thấy sản phẩm phù hợp</Typography>
-            </Box>
+            <EmptyState icon={<Search className="h-6 w-6" />} title="Không tìm thấy sản phẩm phù hợp" />
           )}
           {visibleRows.map(({ product, group, perUnit, q, line, rate, eff }) => (
             <Box

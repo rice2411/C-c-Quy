@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AlertCircle, Calendar, Clock, Hash, Save, Tag } from 'lucide-react';
+import { AlertCircle, Calendar, Clock, Hash, Megaphone, Save, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { previewPromotion, fetchPromotions } from '@/services/promotionService';
@@ -20,6 +20,7 @@ import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Checkbox from '@/components/ui/Checkbox';
+import EmptyState from '@/components/ui/EmptyState';
 import Field from '@/components/ui/Field';
 import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
@@ -760,7 +761,11 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
                   </Box>
                 </Box>
               ) : (
-                <Typography as="p" size="xs" variant="muted">Không có chiến dịch nào đang chạy.</Typography>
+                <EmptyState
+                  icon={<Megaphone className="h-6 w-6" />}
+                  title="Không có chiến dịch nào đang chạy."
+                  layoutClassName="!min-h-0"
+                />
               )}
 
               <Box layoutClassName="flex items-center gap-2">

@@ -9,6 +9,7 @@ import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
+import EmptyState from '@/components/ui/EmptyState';
 import DonutTooltip from '@/pages/Dashboard/components/DonutTooltip';
 import { fetchRevenueReport, RevenueReport } from '@/services/revenueService';
 import { formatVND } from '@/utils/format/currencyUtil';
@@ -96,7 +97,7 @@ const DashboardProfit: React.FC<Props> = ({ fromISO, toISO, isDarkMode }) => {
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
-                  <Box layoutClassName="flex h-full items-center justify-center"><Typography size="sm" variant="muted">Không có dữ liệu kỳ này</Typography></Box>
+                  <EmptyState icon={<TrendingUp className="h-6 w-6" />} title="Không có dữ liệu kỳ này" layoutClassName="!min-h-0" />
                 )}
               </Box>
             </Box>
@@ -115,7 +116,7 @@ const DashboardProfit: React.FC<Props> = ({ fromISO, toISO, isDarkMode }) => {
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
-                  <Box layoutClassName="flex h-full items-center justify-center"><Typography size="sm" variant="muted">Chưa có chi phí</Typography></Box>
+                  <EmptyState icon={<Wallet className="h-6 w-6" />} title="Chưa có chi phí" layoutClassName="!min-h-0" />
                 )}
               </Box>
               <Box layoutClassName="mt-1 space-y-0.5">
