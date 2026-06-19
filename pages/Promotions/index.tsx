@@ -13,16 +13,9 @@ import {
   PROMOTION_SCOPES,
   discountTypeLabel,
 } from '@/types/promotion';
-import {
-  fetchPromotions,
-  addPromotion,
-  updatePromotion,
-  deletePromotion,
-} from '@/services/promotionService';
-import { fetchProducts } from '@/services/productService';
-import { fetchCategories } from '@/services/categoryService';
-import { Product } from '@/types';
-import { ProductCategory } from '@/types/category';
+import { usePromotions, usePromotionMutations } from '@/hooks/queries/usePromotionsQuery';
+import { useProducts } from '@/hooks/queries/useProductsQuery';
+import { useCategories } from '@/hooks/queries/useCategoriesQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import ProductAutocomplete from './components/ProductAutocomplete';
 import Box from '@/components/ui/Box';
@@ -86,37 +79,18 @@ const idList = (s: string): string[] =>
 
 const PromotionsPage: React.FC = () => {
   const { userData } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const { promotions, loading, error } = usePromotions();
+  const { products } = useProducts();
+  const { categories } = useCategories();
+  const { addPromotion, updatePromotion, deletePromotion } = usePromotionMutations();
   const [form, setForm] = useState<FormState>(emptyForm());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    Promise.all([
-      fetchPromotions(),
-      fetchProducts().catch(() => []),
-      fetchCategories().catch(() => []),
-    ])
-      .then(([list, prods, cats]) => {
-        if (!alive) return;
-        setPromotions(list);
-        setProducts(prods as Product[]);
-        setCategories(cats as ProductCategory[]);
-      })
-      .catch(() => toast.error('Không tải được danh sách khuyến mãi'))
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
+    if (error) toast.error('Không tải được danh sách khuyến mãi');
+  }, [error]);
 
   const startAdd = () => {
     setForm(emptyForm());
@@ -201,17 +175,10 @@ const PromotionsPage: React.FC = () => {
     setSaving(true);
     try {
       if (editingId) {
-        await updatePromotion(editingId, payload);
-        setPromotions((prev) =>
-          prev.map((p) => (p.id === editingId ? { ...p, ...payload } as Promotion : p)),
-        );
+        await updatePromotion({ id: editingId, data: payload });
         toast.success('Đã cập nhật khuyến mãi');
       } else {
-        const { id } = await addPromotion({ ...payload, createdBy: userData?.uid });
-        setPromotions((prev) => [
-          { id, usedCount: 0, ...(payload as Promotion) },
-          ...prev,
-        ]);
+        await addPromotion({ ...payload, createdBy: userData?.uid });
         toast.success('Đã tạo khuyến mãi');
       }
       cancelForm();
@@ -226,7 +193,6 @@ const PromotionsPage: React.FC = () => {
     if (!window.confirm(`Xoá khuyến mãi "${p.name}"?`)) return;
     try {
       await deletePromotion(p.id);
-      setPromotions((prev) => prev.filter((x) => x.id !== p.id));
       toast.success('Đã xoá khuyến mãi');
     } catch {
       toast.error('Không thể xoá');
