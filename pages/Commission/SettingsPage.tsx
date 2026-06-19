@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Settings2, Percent, DollarSign } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Product } from '@/types';
-import { CommissionGroup } from '@/types/commissionGroup';
-import { fetchProducts } from '@/services/productService';
-import { fetchCommissionGroups } from '@/services/commissionGroupService';
+import { useProducts } from '@/hooks/queries/useProductsQuery';
+import { useCommissionGroups } from '@/hooks/queries/useCommissionQuery';
 import Spinner from '@/components/ui/Spinner';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
@@ -17,16 +15,13 @@ type SettingsTab = 'groups' | 'products';
 /* ════════════════════════════════════════ CÀI ĐẶT HOA HỒNG (super admin) ════ */
 const CommissionSettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('groups');
-  const [groups, setGroups] = useState<CommissionGroup[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { groups, loading: groupsLoading, error: groupsError } = useCommissionGroups();
+  const { products, loading: productsLoading, error: productsError } = useProducts();
+  const loading = groupsLoading || productsLoading;
 
   useEffect(() => {
-    Promise.all([fetchCommissionGroups(), fetchProducts()])
-      .then(([g, p]) => { setGroups(g); setProducts(p); })
-      .catch(() => toast.error('Không thể tải dữ liệu'))
-      .finally(() => setLoading(false));
-  }, []);
+    if (groupsError || productsError) toast.error('Không thể tải dữ liệu');
+  }, [groupsError, productsError]);
 
   const tabs: { key: SettingsTab; label: string; icon: React.ReactNode }[] = [
     { key: 'groups',   label: 'Nhóm HH',  icon: <Percent className="h-3.5 w-3.5" /> },
@@ -83,9 +78,9 @@ const CommissionSettingsPage: React.FC = () => {
             <Spinner size="lg" textClassName="text-primary-500" />
           </Box>
         ) : activeTab === 'groups' ? (
-          <GroupsTab groups={groups} products={products} onGroupsChange={setGroups} />
+          <GroupsTab groups={groups} products={products} />
         ) : (
-          <ProductsTab groups={groups} products={products} onProductsChange={setProducts} />
+          <ProductsTab groups={groups} products={products} />
         )}
       </Box>
     </Box>

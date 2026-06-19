@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Coins, TrendingUp, Users, CheckCircle2, Clock, Award, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { OrderStatus } from '@/types/enums';
-import { CollaboratorCommissionSummary, fetchCommissionSummaries } from '@/services/commissionService';
+import { CollaboratorCommissionSummary } from '@/services/commissionService';
+import { useCommissionSummaries } from '@/hooks/queries/useCommissionQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Spinner from '@/components/ui/Spinner';
 import Box from '@/components/ui/Box';
@@ -30,28 +31,16 @@ const monthKeyOf = (dateStr?: string): string | null => {
 
 /* ════════════════════════════════════════ TRANG CHỦ: Thống kê hoa hồng CTV ════ */
 const CommissionPage: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [summaries, setSummaries] = useState<CollaboratorCommissionSummary[]>([]);
+  const { summaries, loading, error } = useCommissionSummaries();
 
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('commission');
   const [onlyPending, setOnlyPending] = useState(false);
   const [period, setPeriod] = useState('all');
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      setSummaries(await fetchCommissionSummaries());
-    } catch (e: any) {
-      toast.error(e?.message || 'Không thể tải dữ liệu hoa hồng');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    load();
-  }, []);
+  React.useEffect(() => {
+    if (error) toast.error(error.message || 'Không thể tải dữ liệu hoa hồng');
+  }, [error]);
 
   // Danh sách tháng có đơn (mới nhất lên đầu)
   const periodOptions = useMemo(() => {
@@ -183,7 +172,7 @@ const CommissionPage: React.FC = () => {
           />
         ) : (
           <Box layoutClassName="space-y-3">
-            {visible.map(s => <CollabRow key={s.collaboratorUid} summary={s} onRefresh={() => load()} />)}
+            {visible.map(s => <CollabRow key={s.collaboratorUid} summary={s} />)}
           </Box>
         )}
       </Box>

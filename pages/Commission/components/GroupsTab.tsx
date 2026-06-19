@@ -18,11 +18,7 @@ import {
   findGroupForMargin,
   getGroupTiers,
 } from '@/types/commissionGroup';
-import {
-  createCommissionGroup,
-  updateCommissionGroup,
-  deleteCommissionGroup,
-} from '@/services/commissionGroupService';
+import { useCommissionGroupMutations } from '@/hooks/queries/useCommissionQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Box from '@/components/ui/Box';
 import Image from '@/components/ui/Image';
@@ -420,21 +416,19 @@ const GroupRow: React.FC<GroupRowProps> = ({ group, products, onUpdate, onDelete
 interface GroupsTabProps {
   groups: CommissionGroup[];
   products: Product[];
-  onGroupsChange: (groups: CommissionGroup[]) => void;
 }
 
-const GroupsTab: React.FC<GroupsTabProps> = ({ groups, products, onGroupsChange }) => {
+const GroupsTab: React.FC<GroupsTabProps> = ({ groups, products }) => {
+  const { createGroup, updateGroup, deleteGroup } = useCommissionGroupMutations();
   const [adding, setAdding] = useState(false);
 
   const handleUpdate = async (id: string, data: Partial<Omit<CommissionGroup, 'id'>>) => {
-    await updateCommissionGroup(id, data);
-    onGroupsChange(groups.map(g => g.id === id ? { ...g, ...data } : g));
+    await updateGroup({ id, data });
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Xoá nhóm này?')) return;
-    await deleteCommissionGroup(id);
-    onGroupsChange(groups.filter(g => g.id !== id));
+    await deleteGroup(id);
     toast.success('Đã xoá nhóm');
   };
 
@@ -442,7 +436,7 @@ const GroupsTab: React.FC<GroupsTabProps> = ({ groups, products, onGroupsChange 
     setAdding(true);
     try {
       const maxOrder = Math.max(0, ...groups.map(g => g.order));
-      const newGroup = await createCommissionGroup({
+      await createGroup({
         name: 'Nhóm mới',
         minMargin: 0,
         maxMargin: 1,
@@ -450,7 +444,6 @@ const GroupsTab: React.FC<GroupsTabProps> = ({ groups, products, onGroupsChange 
         tiers: [{ minQty: 1, profitShareRate: 0.1 }, { minQty: 30, profitShareRate: 0.15 }],
         order: maxOrder + 1,
       });
-      onGroupsChange([...groups, newGroup]);
       toast.success('Đã tạo nhóm mới');
     } catch {
       toast.error('Không thể tạo nhóm');

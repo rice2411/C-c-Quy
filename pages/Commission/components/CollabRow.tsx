@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, CheckCircle2, RotateCcw, ListOrdered, Package } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { OrderStatus } from '@/types/enums';
-import { CollaboratorCommissionSummary, markCommissionPaid, markCommissionPending } from '@/services/commissionService';
+import { CollaboratorCommissionSummary } from '@/services/commissionService';
+import { useCommissionMutations } from '@/hooks/queries/useCommissionQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Box from '@/components/ui/Box';
 import Image from '@/components/ui/Image';
@@ -14,7 +15,6 @@ import { CommissionBadge, ButtonSpinner } from './commissionUi';
 
 interface CollabRowProps {
   summary: CollaboratorCommissionSummary;
-  onRefresh: () => void;
 }
 
 /** Một dòng sản phẩm đã gộp của CTV */
@@ -36,7 +36,8 @@ const pctLabel = (rates: Set<number>): string => {
   return `${vals[0]}–${vals[vals.length - 1]}%`;
 };
 
-const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
+const CollabRow: React.FC<CollabRowProps> = ({ summary }) => {
+  const { markPaid, markPending } = useCommissionMutations();
   const [expanded, setExpanded] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -75,9 +76,8 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
     if (!ids.length) return;
     setBusy(true);
     try {
-      await markCommissionPaid(ids);
+      await markPaid(ids);
       toast.success(`Đã trả HH cho ${summary.collaboratorName} (${ids.length} đơn)`);
-      onRefresh();
     } catch { toast.error('Không thể cập nhật'); }
     finally { setBusy(false); }
   };
@@ -87,9 +87,8 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
     if (!ids.length) return;
     setBusy(true);
     try {
-      await markCommissionPending(ids);
+      await markPending(ids);
       toast.success('Đã đặt lại thành chưa trả');
-      onRefresh();
     } catch { toast.error('Không thể cập nhật'); }
     finally { setBusy(false); }
   };
