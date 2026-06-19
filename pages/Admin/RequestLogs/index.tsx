@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Activity,
   AlertTriangle,
@@ -28,12 +28,10 @@ import {
   TableRow,
 } from '@/components/ui/Table';
 import {
-  fetchRequestLogs,
-  fetchRequestLogStats,
   RequestLog,
   RequestLogQuery,
-  RequestLogStats,
 } from '@/services/requestLogService';
+import { useRequestLogs, useRequestLogStats } from '@/hooks/queries/useRequestLogsQuery';
 
 const PAGE_SIZE = 50;
 
@@ -152,12 +150,6 @@ const RequestLogsPage: React.FC = () => {
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [applied, setApplied] = useState<Filters>(emptyFilters);
   const [page, setPage] = useState(1);
-
-  const [logs, setLogs] = useState<RequestLog[]>([]);
-  const [hasMore, setHasMore] = useState(false);
-  const [stats, setStats] = useState<RequestLogStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const toggleExpand = (id: string) => setExpandedId((cur) => (cur === id ? null : id));
@@ -176,30 +168,24 @@ const RequestLogsPage: React.FC = () => {
     [],
   );
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const query = buildQuery(applied, page);
-      const [logsRes, statsRes] = await Promise.all([
-        fetchRequestLogs(query),
-        page === 1
-          ? fetchRequestLogStats({ from: query.from, to: query.to })
-          : Promise.resolve(null),
-      ]);
-      setLogs(logsRes.items);
-      setHasMore(logsRes.hasMore);
-      if (statsRes) setStats(statsRes);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không tải được nhật ký');
-    } finally {
-      setLoading(false);
-    }
-  }, [applied, page, buildQuery]);
+  const query = useMemo(() => buildQuery(applied, page), [buildQuery, applied, page]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const logsQuery = useRequestLogs(query);
+  // Stats chỉ tải ở trang đầu (giữ hành vi cũ: không tải lại stats khi lật trang).
+  const statsQuery = useRequestLogStats({ from: query.from, to: query.to }, page === 1);
+
+  const logs = logsQuery.data?.items ?? [];
+  const hasMore = logsQuery.data?.hasMore ?? false;
+  const stats = statsQuery.data ?? null;
+  const loading = logsQuery.loading || logsQuery.fetching;
+  const error = logsQuery.error
+    ? logsQuery.error.message || 'Không tải được nhật ký'
+    : null;
+
+  const load = useCallback(() => {
+    void logsQuery.refetch();
+    if (page === 1) void statsQuery.refetch();
+  }, [logsQuery, statsQuery, page]);
 
   const handleApply = () => {
     setPage(1);

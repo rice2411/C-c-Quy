@@ -9,7 +9,7 @@ import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 import type { ImportedSupplierSummary } from '@/types/billReceipt';
-import { updateSupplier } from '@/services/stockReceiptService';
+import { useStockReceiptMutations } from '@/hooks/queries/useStockReceiptQuery';
 import { formatDateISO } from '@/utils/format/dateUtil';
 
 interface FormState {
@@ -81,6 +81,7 @@ const SupplierEditModal: React.FC<SupplierEditModalProps> = ({
 }) => {
   const [form, setForm] = useState<FormState>(emptyForm());
   const [saving, setSaving] = useState(false);
+  const { updateSupplierInfo } = useStockReceiptMutations();
 
   useEffect(() => {
     if (supplier) setForm(fromSupplier(supplier));
@@ -118,15 +119,18 @@ const SupplierEditModal: React.FC<SupplierEditModalProps> = ({
     }
     setSaving(true);
     try {
-      await updateSupplier(supplier.id, {
-        name,
-        phone: form.phone,
-        contactPerson: form.contactPerson,
-        email: form.email,
-        taxCode: form.taxCode,
-        address: form.address,
-        category: form.category,
-        notes: form.notes,
+      await updateSupplierInfo({
+        id: supplier.id,
+        patch: {
+          name,
+          phone: form.phone,
+          contactPerson: form.contactPerson,
+          email: form.email,
+          taxCode: form.taxCode,
+          address: form.address,
+          category: form.category,
+          notes: form.notes,
+        },
       });
       toast.success('Đã cập nhật nhà cung cấp');
       onSaved();
