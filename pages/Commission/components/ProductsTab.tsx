@@ -3,7 +3,7 @@ import { Trash2, Save, DollarSign, Award } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Product } from '@/types';
 import { CommissionGroup, calcItemCommission, findGroupForMargin } from '@/types/commissionGroup';
-import { updateProduct, removeProductCostPrice } from '@/services/productService';
+import { useProductMutations } from '@/hooks/queries/useProductsQuery';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Card from '@/components/ui/Card';
@@ -19,11 +19,11 @@ import { pct, ButtonSpinner } from './commissionUi';
 interface ProductRowProps {
   product: Product;
   groups: CommissionGroup[];
-  onSaved: (id: string, costPrice: number | undefined) => void;
-  onRemoved: (id: string) => void;
+  onSave: (id: string, costPrice: number | undefined) => Promise<void>;
+  onRemove: (id: string) => Promise<void>;
 }
 
-const ProductRow: React.FC<ProductRowProps> = ({ product, groups, onSaved, onRemoved }) => {
+const ProductRow: React.FC<ProductRowProps> = ({ product, groups, onSave, onRemove }) => {
   const [costInput, setCostInput] = useState<string>(
     product.costPrice !== undefined ? String(product.costPrice) : '',
   );
@@ -49,8 +49,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, groups, onSaved, onRem
     if (!dirty) return;
     setSaving(true);
     try {
-      await updateProduct(product.id, { costPrice: costNum });
-      onSaved(product.id, costNum);
+      await onSave(product.id, costNum);
       setDirty(false);
       toast.success(`Đã lưu cost "${product.name}"`);
     } catch {
@@ -64,8 +63,7 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, groups, onSaved, onRem
     if (!window.confirm(`Xoá "${product.name}" khỏi danh sách đã có hoa hồng?`)) return;
     setRemoving(true);
     try {
-      await removeProductCostPrice(product.id);
-      onRemoved(product.id);
+      await onRemove(product.id);
       setCostInput('');
       setDirty(false);
       toast.success(`Đã xoá hoa hồng "${product.name}"`);
@@ -170,10 +168,10 @@ const ProductRow: React.FC<ProductRowProps> = ({ product, groups, onSaved, onRem
 interface ProductsTabProps {
   groups: CommissionGroup[];
   products: Product[];
-  onProductsChange: (products: Product[]) => void;
 }
 
-const ProductsTab: React.FC<ProductsTabProps> = ({ groups, products, onProductsChange }) => {
+const ProductsTab: React.FC<ProductsTabProps> = ({ groups, products }) => {
+  const { updateProduct, removeCostPrice } = useProductMutations();
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -184,13 +182,10 @@ const ProductsTab: React.FC<ProductsTabProps> = ({ groups, products, onProductsC
   const withCost = filtered.filter(p => p.costPrice !== undefined);
   const withoutCost = filtered.filter(p => p.costPrice === undefined);
 
-  const handleSaved = (id: string, costPrice: number | undefined) => {
-    onProductsChange(products.map(p => p.id === id ? { ...p, costPrice } : p));
-  };
+  const handleSave = (id: string, costPrice: number | undefined) =>
+    updateProduct({ id, data: { costPrice } });
 
-  const handleRemoved = (id: string) => {
-    onProductsChange(products.map(p => p.id === id ? { ...p, costPrice: undefined } : p));
-  };
+  const handleRemove = (id: string) => removeCostPrice(id);
 
   return (
     <Box layoutClassName="space-y-4">
@@ -214,7 +209,7 @@ const ProductsTab: React.FC<ProductsTabProps> = ({ groups, products, onProductsC
           <Typography size="xs" variant="muted" layoutClassName="px-1 font-semibold uppercase tracking-wide">
             Đã có giá cost ({withCost.length})
           </Typography>
-          {withCost.map(p => <ProductRow key={p.id} product={p} groups={groups} onSaved={handleSaved} onRemoved={handleRemoved} />)}
+          {withCost.map(p => <ProductRow key={p.id} product={p} groups={groups} onSave={handleSave} onRemove={handleRemove} />)}
         </Box>
       )}
 
@@ -223,7 +218,7 @@ const ProductsTab: React.FC<ProductsTabProps> = ({ groups, products, onProductsC
           <Typography size="xs" variant="muted" layoutClassName="px-1 font-semibold uppercase tracking-wide">
             Chưa có giá cost ({withoutCost.length})
           </Typography>
-          {withoutCost.map(p => <ProductRow key={p.id} product={p} groups={groups} onSaved={handleSaved} onRemoved={handleRemoved} />)}
+          {withoutCost.map(p => <ProductRow key={p.id} product={p} groups={groups} onSave={handleSave} onRemove={handleRemove} />)}
         </Box>
       )}
 
