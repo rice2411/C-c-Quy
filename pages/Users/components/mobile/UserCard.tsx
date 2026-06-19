@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDateOnly } from '@/utils/format/dateUtil';
 import { CheckCircle, XCircle, Edit2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Box from '@/components/ui/Box';
@@ -220,7 +221,7 @@ const UserCard: React.FC<UserCardProps> = ({
           </Typography>
         </Box>
         <Typography as="span" size="sm" textClassName="text-slate-600 dark:text-slate-300">
-          {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString('vi-VN') : '-'}
+          {user.lastLoginAt ? formatDateOnly(user.lastLoginAt) : '-'}
         </Typography>
       </Box>
 

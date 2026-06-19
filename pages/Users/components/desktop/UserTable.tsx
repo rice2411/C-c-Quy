@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDateOnly } from '@/utils/format/dateUtil';
 import { CheckCircle, XCircle, Edit2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Box from '@/components/ui/Box';
@@ -218,7 +219,7 @@ const UserTable: React.FC<UserTableProps> = ({
                   layoutClassName="hidden md:table-cell"
                   textClassName="text-slate-500 dark:text-slate-400"
                 >
-                  {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString('vi-VN') : '-'}
+                  {user.lastLoginAt ? formatDateOnly(user.lastLoginAt) : '-'}
                 </TableCell>
                 <TableCell textClassName="text-right">
                   <Box layoutClassName="flex items-center justify-end gap-2">

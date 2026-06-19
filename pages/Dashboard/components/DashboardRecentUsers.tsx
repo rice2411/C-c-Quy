@@ -8,6 +8,7 @@ import Typography from '@/components/ui/Typography';
 import { UserData } from '@/types/user';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getAllUsers } from '@/services/userService';
+import { parseDateValue, formatDateTime } from '@/utils/format/dateUtil';
 
 const DashboardRecentUsers: React.FC = () => {
   const { t } = useLanguage();
@@ -31,23 +32,14 @@ const DashboardRecentUsers: React.FC = () => {
         .filter((u) => u.lastLoginAt)
         .sort(
           (a, b) =>
-            new Date(b.lastLoginAt).getTime() - new Date(a.lastLoginAt).getTime()
+            (parseDateValue(b.lastLoginAt)?.getTime() ?? 0) -
+            (parseDateValue(a.lastLoginAt)?.getTime() ?? 0)
         )
         .slice(0, 5),
     [users]
   );
 
   if (recentUsers.length === 0) return null;
-
-  const formatDate = (value: string) => {
-    try {
-      return new Date(value).toLocaleString(
-        t('language') === 'vi' ? 'vi-VN' : 'en-US'
-      );
-    } catch {
-      return value;
-    }
-  };
 
   const getInitials = (user: UserData) => {
     const name = user.customName || user.displayName || user.email || '';
@@ -102,7 +94,7 @@ const DashboardRecentUsers: React.FC = () => {
             <Box layoutClassName="flex flex-shrink-0 items-center gap-2">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
               <Typography as="span" textClassName="text-[11px] text-slate-500 dark:text-slate-400">
-                {formatDate(user.lastLoginAt)}
+                {formatDateTime(user.lastLoginAt)}
               </Typography>
             </Box>
           </Box>
