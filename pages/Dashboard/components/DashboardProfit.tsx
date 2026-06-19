@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -11,7 +11,7 @@ import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
 import DonutTooltip from '@/pages/Dashboard/components/DonutTooltip';
-import { fetchRevenueReport, RevenueReport } from '@/services/revenueService';
+import { useRevenueReport } from '@/hooks/queries/useTransactionsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 
 interface Props {
@@ -24,18 +24,8 @@ const COST_COLORS = ['#0ea5e9', '#f59e0b']; // nhập kho / hoa hồng
 
 /** Lợi nhuận & biên (P&L): doanh thu, lợi nhuận, margin + biểu đồ 2 đường + donut cơ cấu chi phí. */
 const DashboardProfit: React.FC<Props> = ({ fromISO, toISO, isDarkMode }) => {
-  const [report, setReport] = useState<RevenueReport | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    fetchRevenueReport(fromISO, toISO)
-      .then((r) => { if (alive) setReport(r); })
-      .catch(() => { if (alive) setReport(null); })
-      .finally(() => { if (alive) setLoading(false); });
-    return () => { alive = false; };
-  }, [fromISO, toISO]);
+  // queryKey theo {from,to}; lỗi → report=null (degrade êm như trước)
+  const { report, loading } = useRevenueReport({ from: fromISO, to: toISO });
 
   const costData = report
     ? [
