@@ -92,14 +92,16 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
     };
   }, [orders]);
 
-  // So sánh % chỉ có nghĩa khi hôm qua > 0. Hôm qua = 0 → không bịa "+100%":
-  //   - hôm nay > 0  → coi là "mới" (isNew), KHÔNG hiện %.
-  //   - hôm nay = 0  → không có gì để so sánh → "—".
+  // % chỉ có nghĩa khi CẢ hôm nay & hôm qua > 0:
+  //   - hôm qua=0, hôm nay>0  → "mới"
+  //   - hôm nay=0, hôm qua>0  → "↓ hôm qua: <mốc>" (đang thua, KHÔNG bịa -100%)
+  //   - cả hai = 0            → "— so với hôm qua"
   const pctDiff = (cur: number, prev: number): number | null => {
-    if (prev === 0) return null;
+    if (prev === 0 || cur === 0) return null;
     return Math.round(((cur - prev) / prev) * 100);
   };
   const isNew = (cur: number, prev: number): boolean => prev === 0 && cur > 0;
+  const isBehind = (cur: number, prev: number): boolean => cur === 0 && prev > 0;
 
   const items: {
     key: string;
@@ -109,6 +111,8 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
     valueTitle?: string;
     diff: number | null;
     isNew: boolean;
+    behind: boolean;
+    yesterdayLabel?: string;
     onClick?: () => void;
     iconBg: string;
     iconText: string;
@@ -121,6 +125,8 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       valueTitle: formatVND(stats.revenueToday),
       diff: pctDiff(stats.revenueToday, stats.revenueYesterday),
       isNew: isNew(stats.revenueToday, stats.revenueYesterday),
+      behind: isBehind(stats.revenueToday, stats.revenueYesterday),
+      yesterdayLabel: formatVNDCompact(stats.revenueYesterday),
       onClick: () => navigate('/orders?quick=paid'),
       iconBg: 'bg-emerald-50 dark:bg-emerald-900/20',
       iconText: 'text-emerald-600 dark:text-emerald-300',
@@ -132,6 +138,8 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       value: String(stats.newToday),
       diff: pctDiff(stats.newToday, stats.newYesterday),
       isNew: isNew(stats.newToday, stats.newYesterday),
+      behind: isBehind(stats.newToday, stats.newYesterday),
+      yesterdayLabel: String(stats.newYesterday),
       onClick: () => navigate('/orders'),
       iconBg: 'bg-blue-50 dark:bg-blue-900/20',
       iconText: 'text-blue-600 dark:text-blue-300',
@@ -143,6 +151,8 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       value: String(stats.deliveredToday),
       diff: pctDiff(stats.deliveredToday, stats.deliveredYesterday),
       isNew: isNew(stats.deliveredToday, stats.deliveredYesterday),
+      behind: isBehind(stats.deliveredToday, stats.deliveredYesterday),
+      yesterdayLabel: String(stats.deliveredYesterday),
       iconBg: 'bg-violet-50 dark:bg-violet-900/20',
       iconText: 'text-violet-600 dark:text-violet-300',
     },
@@ -153,6 +163,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       value: String(stats.shipToday),
       diff: null,
       isNew: false,
+      behind: false,
       onClick: () => navigate('/orders?quick=today'),
       iconBg: 'bg-primary-50 dark:bg-primary-900/20',
       iconText: 'text-primary-600 dark:text-primary-300',
@@ -226,6 +237,13 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
                   <TrendingUp className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                   <Typography as="span" size="xs" textClassName="font-medium text-emerald-600 dark:text-emerald-400">
                     mới
+                  </Typography>
+                </Box>
+              ) : it.behind ? (
+                <Box layoutClassName="flex w-full min-w-0 items-center gap-1">
+                  <TrendingDown className="h-3 w-3 shrink-0 text-red-500 dark:text-red-400" />
+                  <Typography as="span" size="xs" textClassName="font-medium text-red-500 dark:text-red-400" layoutClassName="min-w-0 truncate">
+                    hôm qua: {it.yesterdayLabel}
                   </Typography>
                 </Box>
               ) : (
