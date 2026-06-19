@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Award } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
@@ -6,8 +6,9 @@ import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
-import { fetchCommissionSummaries, CollaboratorCommissionSummary } from '@/services/commissionService';
+import { useCommissionSummaries } from '@/hooks/queries/useCommissionQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
+import { parseDateValue } from '@/utils/format/dateUtil';
 
 interface Props {
   startDate: Date;
@@ -19,18 +20,8 @@ const RANK = ['bg-primary-400', 'bg-slate-300', 'bg-primary-300', 'bg-slate-200'
 
 /** Top CTV theo hoa hồng trong kỳ (lọc đơn theo deliveryDate). */
 const DashboardTopCollaborators: React.FC<Props> = ({ startDate, endDate, limit = 5 }) => {
-  const [summaries, setSummaries] = useState<CollaboratorCommissionSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    fetchCommissionSummaries()
-      .then((s) => { if (alive) setSummaries(s); })
-      .catch(() => { if (alive) setSummaries([]); })
-      .finally(() => { if (alive) setLoading(false); });
-    return () => { alive = false; };
-  }, []);
+  // queryKey qk.commission.summaries; lỗi → summaries=[] (degrade êm như trước)
+  const { summaries, loading } = useCommissionSummaries();
 
   const top = useMemo(() => {
     return summaries
@@ -40,8 +31,8 @@ const DashboardTopCollaborators: React.FC<Props> = ({ startDate, endDate, limit 
         let orderCount = 0;
         for (const o of s.orders || []) {
           if (!o.deliveryDate) continue;
-          const d = new Date(o.deliveryDate);
-          if (Number.isNaN(d.getTime()) || d < startDate || d > endDate) continue;
+          const d = parseDateValue(o.deliveryDate);
+          if (!d || d < startDate || d > endDate) continue;
           commission += o.commissionAmount ?? 0;
           sales += o.total ?? 0;
           orderCount += 1;

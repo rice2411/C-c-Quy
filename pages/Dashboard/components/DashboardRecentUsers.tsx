@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Clock, User } from 'lucide-react';
 import AvatarImage from '@/components/ui/AvatarImage';
 import Box from '@/components/ui/Box';
@@ -7,24 +7,12 @@ import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import { UserData } from '@/types/user';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getAllUsers } from '@/services/userService';
+import { useUsers } from '@/hooks/queries/useUsersQuery';
 import { parseDateValue, formatDateTime } from '@/utils/format/dateUtil';
 
 const DashboardRecentUsers: React.FC = () => {
   const { t } = useLanguage();
-  const [users, setUsers] = useState<UserData[]>([]);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await getAllUsers();
-        setUsers(data);
-      } catch (e) {
-        console.error('Error loading recent users for dashboard:', e);
-      }
-    };
-    load();
-  }, []);
+  const { users } = useUsers();
 
   const recentUsers = useMemo(
     () =>
