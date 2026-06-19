@@ -373,7 +373,6 @@ const ProductSearchBar: React.FC<ProductSearchBarProps> = ({
                 sizeClassName="px-3 py-1.5 text-xs"
                 layoutClassName="inline-flex items-center gap-1.5"
                 disableVariantHover
-                disableVariantTextColor
               >
                 Thêm {selectedIds.size} sản phẩm
               </Button>
