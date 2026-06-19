@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useOrders } from '@/contexts/OrderContext';
+import { useOrders } from '@/hooks/useOrders';
 import { fetchTransactions, markTransactionExternal, linkTransactionOrder } from '@/services/transactionService';
 import { PaymentStatus } from '@/types/enums';
 import { Transaction } from '@/types';

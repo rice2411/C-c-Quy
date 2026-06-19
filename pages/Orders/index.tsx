@@ -3,7 +3,7 @@ import { Download, Package, Plus, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useOrders } from '@/contexts/OrderContext';
+import { useOrders } from '@/hooks/useOrders';
 import { Order } from '@/types';
 import { UserRole } from '@/types/user';
 import { ORDER_EDIT_DENIED } from '@/services/orderService';
