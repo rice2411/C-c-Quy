@@ -112,6 +112,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
     diff: number | null;
     isNew: boolean;
     behind: boolean;
+    compare: boolean;
     yesterdayLabel?: string;
     onClick?: () => void;
     iconBg: string;
@@ -126,6 +127,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       diff: pctDiff(stats.revenueToday, stats.revenueYesterday),
       isNew: isNew(stats.revenueToday, stats.revenueYesterday),
       behind: isBehind(stats.revenueToday, stats.revenueYesterday),
+      compare: true,
       yesterdayLabel: formatVNDCompact(stats.revenueYesterday),
       onClick: () => navigate('/orders?quick=paid'),
       iconBg: 'bg-emerald-50 dark:bg-emerald-900/20',
@@ -139,6 +141,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       diff: pctDiff(stats.newToday, stats.newYesterday),
       isNew: isNew(stats.newToday, stats.newYesterday),
       behind: isBehind(stats.newToday, stats.newYesterday),
+      compare: true,
       yesterdayLabel: String(stats.newYesterday),
       onClick: () => navigate('/orders'),
       iconBg: 'bg-blue-50 dark:bg-blue-900/20',
@@ -152,6 +155,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       diff: pctDiff(stats.deliveredToday, stats.deliveredYesterday),
       isNew: isNew(stats.deliveredToday, stats.deliveredYesterday),
       behind: isBehind(stats.deliveredToday, stats.deliveredYesterday),
+      compare: true,
       yesterdayLabel: String(stats.deliveredYesterday),
       iconBg: 'bg-violet-50 dark:bg-violet-900/20',
       iconText: 'text-violet-600 dark:text-violet-300',
@@ -164,6 +168,7 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
       diff: null,
       isNew: false,
       behind: false,
+      compare: false,
       onClick: () => navigate('/orders?quick=today'),
       iconBg: 'bg-primary-50 dark:bg-primary-900/20',
       iconText: 'text-primary-600 dark:text-primary-300',
@@ -246,9 +251,13 @@ const DashboardToday: React.FC<DashboardTodayProps> = ({ orders }) => {
                     hôm qua: {it.yesterdayLabel}
                   </Typography>
                 </Box>
-              ) : (
+              ) : it.compare ? (
                 <Typography as="span" size="xs" variant="muted">
                   — so với hôm qua
+                </Typography>
+              ) : (
+                <Typography as="span" size="xs" variant="muted" layoutClassName="opacity-0">
+                  —
                 </Typography>
               )}
             </>
