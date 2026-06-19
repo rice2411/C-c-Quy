@@ -10,6 +10,7 @@ import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 import type { ImportedSupplierSummary } from '@/types/billReceipt';
 import { updateSupplier } from '@/services/stockReceiptService';
+import { formatDateISO } from '@/utils/format/dateUtil';
 
 interface FormState {
   name: string;
@@ -196,7 +197,7 @@ const SupplierEditModal: React.FC<SupplierEditModalProps> = ({
               <>
                 <Typography size="xs" textClassName="text-slate-400">·</Typography>
                 <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">
-                  lần cuối {supplier.lastReceiptDate.slice(0, 10)}
+                  lần cuối {formatDateISO(supplier.lastReceiptDate)}
                 </Typography>
               </>
             ) : null}

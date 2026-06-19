@@ -39,6 +39,7 @@ import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/BillImport/Me
 import EmptyState from '@/components/ui/EmptyState';
 
 import Checkbox from '@/components/ui/Checkbox';
+import { formatDateISO } from '@/utils/format/dateUtil';
 export interface BillImportSuppliersTabProps {
   supplierSearch: string;
   onSupplierSearchChange: (value: string) => void;
@@ -251,7 +252,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                         </Typography>
                         {row.lastReceiptDate ? (
                           <Typography size="xs" variant="muted">
-                            🕒 {row.lastReceiptDate.slice(0, 10)}
+                            🕒 {formatDateISO(row.lastReceiptDate)}
                           </Typography>
                         ) : null}
                       </Box>
@@ -404,7 +405,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                         <TableCell>{formatVNDOrDash(row.totalAmount)}</TableCell>
                         <TableCell>
                           <Typography size="xs" variant="muted">
-                            {row.lastReceiptDate ? row.lastReceiptDate.slice(0, 10) : '—'}
+                            {row.lastReceiptDate ? formatDateISO(row.lastReceiptDate) : '—'}
                           </Typography>
                         </TableCell>
                         <TableCell>

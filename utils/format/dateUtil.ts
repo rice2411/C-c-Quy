@@ -10,6 +10,19 @@ export const formatDateOnly = (value: any) => {
 };
 
 /**
+ * Ngày dạng `YYYY-MM-DD` an toàn cho MỌI kiểu (string ISO, Date, Firestore Timestamp object).
+ * Thay cho `value.slice(0, 10)` — vốn crash khi value là object (Timestamp). Trả `—` nếu không parse được.
+ */
+export const formatDateISO = (value: any): string => {
+  const d = parseDateValue(value);
+  if (!d) return "—";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
+/**
  * Format ngày tháng thời gian
  * @param value - Giá trị ngày tháng thời gian
  * @returns Ngày tháng thời gian
