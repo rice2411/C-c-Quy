@@ -1,52 +1,31 @@
-import { useEffect, useSyncExternalStore } from 'react';
+import { useCallback } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Order } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchOrders, addOrder, updateOrder, deleteOrder } from '@/services/orderService';
+import { qk } from '@/hooks/queryKeys';
+import {
+  fetchOrders,
+  addOrder,
+  updateOrder,
+  deleteOrder,
+  type OrderUpdateEditor,
+} from '@/services/orderService';
 
 /**
- * Store đơn hàng dùng chung (module-level) — KHÔNG còn global context/provider.
- * LAZY: chỉ fetch khi consumer đầu tiên mount (Dashboard/Orders/...) thay vì eager
- * mỗi lần đăng nhập (deep-link vào /settings... không kéo cả list đơn nữa).
- * useSyncExternalStore → mọi consumer cùng re-render khi list đổi (CRUD).
+ * Domain ORDERS qua React Query (epic #58 — P4).
+ *
+ * - queryFn/mutationFn GỌI THẲNG orderService — KHÔNG viết lại HTTP. Service vẫn
+ *   tự revive Timestamp + gửi Zalo notify ở tầng dưới.
+ * - `enabled: !!currentUser` để tránh fetch trước khi auth ready (token chưa sẵn → 401).
+ * - Sau mỗi mutation invalidate `qk.orders.all` (prefix match → xoá luôn key con
+ *   như next-number). Caller (page) tự toast khi lỗi (rule firestore-safety).
+ * - structuralSharing:false set global trong queryClient → RQ KHÔNG phá `.toDate()`
+ *   của Timestamp object trong order. Field ngày dùng helper dateUtil ở tầng UI.
+ * - GIỮ NGUYÊN signature cũ (orders/loading/refreshOrders/createNewOrder/
+ *   modifyOrder/removeOrder) để mọi consumer không phải đổi.
+ * - `buildEditor()` cần auth → định nghĩa trong hook, truyền vào update/delete
+ *   mutationFn (BE check quyền + ghi history theo editor).
  */
-let orders: Order[] = [];
-let loading = false;
-let loaded = false;
-let inflight: Promise<void> | null = null;
-const subscribers = new Set<() => void>();
-const emit = () => subscribers.forEach((fn) => fn());
-const subscribe = (cb: () => void) => {
-  subscribers.add(cb);
-  return () => subscribers.delete(cb);
-};
-
-async function fetchInto() {
-  try {
-    orders = await fetchOrders();
-    loaded = true;
-  } catch (err) {
-    // Nuốt lỗi nhưng vẫn tắt loading → không spinner quay mãi (token chưa sẵn lần đầu).
-    console.error('useOrders load error:', err);
-  } finally {
-    loading = false;
-    inflight = null;
-    emit();
-  }
-}
-
-function ensureLoaded() {
-  if (loaded || inflight) return;
-  loading = true;
-  emit();
-  inflight = fetchInto();
-}
-
-async function refreshOrders() {
-  if (inflight) return inflight;
-  inflight = fetchInto();
-  return inflight;
-}
-
 export interface UseOrdersResult {
   orders: Order[];
   loading: boolean;
@@ -58,15 +37,18 @@ export interface UseOrdersResult {
 
 export const useOrders = (): UseOrdersResult => {
   const { currentUser, userData } = useAuth();
-  const list = useSyncExternalStore(subscribe, () => orders);
-  const isLoading = useSyncExternalStore(subscribe, () => loading);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    ensureLoaded();
-  }, []);
+  const query = useQuery({
+    queryKey: qk.orders.all,
+    queryFn: fetchOrders,
+    enabled: !!currentUser,
+  });
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: qk.orders.all });
 
   // buildEditor cần auth → định nghĩa trong hook (không phải module-level).
-  const buildEditor = () => {
+  const buildEditor = (): OrderUpdateEditor => {
     const uid = currentUser?.uid ?? userData?.uid ?? '';
     const displayName =
       (userData as any)?.customName ||
@@ -77,24 +59,48 @@ export const useOrders = (): UseOrdersResult => {
     return { uid, role: userData?.role, displayName, email };
   };
 
-  const createNewOrder = async (data: any) => {
-    await addOrder(data);
-    await refreshOrders();
-  };
+  const addMutation = useMutation({
+    mutationFn: (data: any) => addOrder(data),
+    onSuccess: invalidate,
+  });
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      updateOrder(id, data, buildEditor()),
+    onSuccess: invalidate,
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteOrder(id, buildEditor()),
+    onSuccess: invalidate,
+  });
 
-  const modifyOrder = async (id: string, data: any) => {
-    await updateOrder(id, data, buildEditor());
-    await refreshOrders();
-  };
+  const refreshOrders = useCallback(async () => {
+    await query.refetch();
+  }, [query]);
 
-  const removeOrder = async (id: string) => {
-    await deleteOrder(id, buildEditor());
-    await refreshOrders();
-  };
+  const createNewOrder = useCallback(
+    async (data: any) => {
+      await addMutation.mutateAsync(data);
+    },
+    [addMutation],
+  );
+
+  const modifyOrder = useCallback(
+    async (id: string, data: any) => {
+      await updateMutation.mutateAsync({ id, data });
+    },
+    [updateMutation],
+  );
+
+  const removeOrder = useCallback(
+    async (id: string) => {
+      await deleteMutation.mutateAsync(id);
+    },
+    [deleteMutation],
+  );
 
   return {
-    orders: list,
-    loading: isLoading,
+    orders: query.data ?? [],
+    loading: query.isLoading,
     refreshOrders,
     createNewOrder,
     modifyOrder,
