@@ -1,8 +1,7 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DEFAULT_SHIPPING_CONFIG } from '@/types/shippingConfig';
 import type { ShippingConfiguration } from '@/types/shippingConfig';
 import { fetchShippingConfiguration, saveShippingConfiguration } from '@/services/configurationService';
-import { useAuth } from './AuthContext';
 
 export interface CalcShipFeeResult {
   fee: number;
@@ -32,25 +31,26 @@ export const enrichAddressWithConfig = (
   return `${addr}, ${config.shopOrigin.city}`;
 };
 
-interface ShippingConfigContextValue {
+// Cache module-level: chỉ fetch 1 lần dù nhiều consumer mount; save cập nhật cache.
+// KHÔNG còn là global context/provider — fetch ON-DEMAND khi consumer (Settings ship /
+// ô địa chỉ trong form đơn) thực sự mount, thay vì eager mỗi lần đăng nhập.
+let cachedConfig: ShippingConfiguration | null = null;
+let inflight: Promise<ShippingConfiguration> | null = null;
+
+export interface UseShippingConfigResult {
   config: ShippingConfiguration;
   loading: boolean;
   saving: boolean;
   error: string | null;
-  /** Tính phí ship đã bind config hiện tại. */
   calcShipFee: (km: number) => CalcShipFeeResult;
-  /** Enrich address với city từ config hiện tại. */
   enrichAddress: (addr: string) => string;
   refresh: () => Promise<void>;
   save: (next: ShippingConfiguration, updatedBy?: string | null) => Promise<void>;
 }
 
-const ShippingConfigContext = createContext<ShippingConfigContextValue | null>(null);
-
-export const ShippingConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
-  const [config, setConfig] = useState<ShippingConfiguration>(DEFAULT_SHIPPING_CONFIG);
-  const [loading, setLoading] = useState(true);
+export const useShippingConfig = (): UseShippingConfigResult => {
+  const [config, setConfig] = useState<ShippingConfiguration>(cachedConfig ?? DEFAULT_SHIPPING_CONFIG);
+  const [loading, setLoading] = useState<boolean>(!cachedConfig);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,6 +59,7 @@ export const ShippingConfigProvider: React.FC<{ children: React.ReactNode }> = (
     setError(null);
     try {
       const remote = await fetchShippingConfiguration();
+      cachedConfig = remote;
       setConfig(remote);
     } catch (err: any) {
       setError(err?.message || 'Không tải được cấu hình phí ship');
@@ -67,17 +68,42 @@ export const ShippingConfigProvider: React.FC<{ children: React.ReactNode }> = (
     }
   }, []);
 
-  // Chỉ tải khi ĐÃ đăng nhập (tránh gọi API 401 ở màn login).
   useEffect(() => {
-    if (currentUser) refresh();
-    else setLoading(false);
-  }, [currentUser, refresh]);
+    if (cachedConfig) {
+      setConfig(cachedConfig);
+      setLoading(false);
+      return;
+    }
+    let alive = true;
+    setLoading(true);
+    inflight = inflight ?? fetchShippingConfiguration();
+    inflight
+      .then((remote) => {
+        cachedConfig = remote;
+        inflight = null;
+        if (alive) {
+          setConfig(remote);
+          setLoading(false);
+        }
+      })
+      .catch((err: any) => {
+        inflight = null;
+        if (alive) {
+          setError(err?.message || 'Không tải được cấu hình phí ship');
+          setLoading(false);
+        }
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const save = useCallback(async (next: ShippingConfiguration, updatedBy?: string | null) => {
     setSaving(true);
     setError(null);
     try {
       await saveShippingConfiguration(next, updatedBy ?? null);
+      cachedConfig = next;
       setConfig(next);
     } catch (err: any) {
       setError(err?.message || 'Không lưu được cấu hình phí ship');
@@ -90,20 +116,5 @@ export const ShippingConfigProvider: React.FC<{ children: React.ReactNode }> = (
   const calcShipFee = useCallback((km: number) => calcShipFeeWithConfig(km, config), [config]);
   const enrichAddress = useCallback((addr: string) => enrichAddressWithConfig(addr, config), [config]);
 
-  const value = useMemo<ShippingConfigContextValue>(() => ({
-    config, loading, saving, error,
-    calcShipFee, enrichAddress, refresh, save,
-  }), [config, loading, saving, error, calcShipFee, enrichAddress, refresh, save]);
-
-  return (
-    <ShippingConfigContext.Provider value={value}>
-      {children}
-    </ShippingConfigContext.Provider>
-  );
-};
-
-export const useShippingConfig = (): ShippingConfigContextValue => {
-  const ctx = useContext(ShippingConfigContext);
-  if (!ctx) throw new Error('useShippingConfig phải dùng trong <ShippingConfigProvider>');
-  return ctx;
+  return { config, loading, saving, error, calcShipFee, enrichAddress, refresh, save };
 };
