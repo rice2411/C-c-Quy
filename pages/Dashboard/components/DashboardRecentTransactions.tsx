@@ -1,29 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { ArrowRightLeft, Calendar, CreditCard, Building2 } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
-import { Transaction } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { fetchTransactions } from '@/services/transactionService';
+import { useTransactions } from '@/hooks/queries/useTransactionsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
+import { formatDateTime } from '@/utils/format/dateUtil';
 
 const DashboardRecentTransactions: React.FC = () => {
   const { t } = useLanguage();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await fetchTransactions();
-        setTransactions(data);
-      } catch (e) {
-        console.error('Error loading recent transactions for dashboard:', e);
-      }
-    };
-    load();
-  }, []);
+  const { transactions } = useTransactions();
 
   const recentTransactions = useMemo(
     () =>
@@ -63,9 +51,7 @@ const DashboardRecentTransactions: React.FC = () => {
                 <Box layoutClassName="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400">
                   <Calendar className="w-3 h-3" />
                   <Typography as="span" layoutClassName="truncate">
-                    {new Date(tr.transactionDate).toLocaleString(
-                      t('language') === 'vi' ? 'vi-VN' : 'en-US'
-                    )}
+                    {formatDateTime(tr.transactionDate)}
                   </Typography>
                 </Box>
               </Box>

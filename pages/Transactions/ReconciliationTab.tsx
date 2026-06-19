@@ -12,7 +12,7 @@ import {
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/hooks/useOrders';
-import { fetchTransactions, markTransactionExternal, linkTransactionOrder } from '@/services/transactionService';
+import { useTransactions, useTransactionMutations } from '@/hooks/queries/useTransactionsQuery';
 import { PaymentStatus } from '@/types/enums';
 import { Transaction } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
@@ -147,39 +147,26 @@ const RevenueChart: React.FC<{ transactions: Transaction[]; fromDate: string; to
 const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, toDate }) => {
   const { t } = useLanguage();
   const { orders, modifyOrder } = useOrders();
+  const { transactions, loading, isRefreshing, error, refetch } = useTransactions();
+  const { markExternal, linkOrder } = useTransactionMutations();
 
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('all');
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setTransactions(await fetchTransactions());
-    } catch {
-      toast.error(t('transactions.loadError') || 'Không tải được giao dịch');
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    if (error) toast.error(t('transactions.loadError') || 'Không tải được giao dịch');
+  }, [error, t]);
 
   const handleRefresh = async () => {
-    setIsRefreshing(true);
     try {
-      setTransactions(await fetchTransactions());
+      await refetch();
       toast.success(t('transactions.refreshSuccess') || 'Đã làm mới');
     } catch {
       toast.error(t('transactions.refreshError') || 'Làm mới thất bại');
-    } finally {
-      setIsRefreshing(false);
     }
   };
-
-  useEffect(() => { loadData(); }, []);
 
   const formatDate = (dateStr: string) => {
     try {
@@ -240,9 +227,9 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
         sepayId: transaction.sepayId,
         paymentStatus: order.paymentStatus === PaymentStatus.PAID ? order.paymentStatus : PaymentStatus.PAID,
       });
-      // Ghi orderNumber xuống transaction để F5 vẫn giữ trạng thái đã khớp
-      await linkTransactionOrder(transaction.id, linkedNumber);
-      setTransactions(prev => prev.map(tr => tr.id === transaction.id ? { ...tr, orderNumber: linkedNumber } : tr));
+      // Ghi orderNumber xuống transaction để F5 vẫn giữ trạng thái đã khớp;
+      // mutation invalidate qk.transactions.all → list tự refetch trạng thái mới.
+      await linkOrder({ transactionId: transaction.id, orderNumber: linkedNumber });
       toast.success(`Đã liên kết GD #${transaction.sepayId} → ${order.orderNumber}`);
     } catch (err: any) {
       toast.error(err?.message || 'Không liên kết được');
@@ -252,8 +239,7 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
 
   const handleMarkExternal = async (transaction: Transaction) => {
     try {
-      await markTransactionExternal(transaction.id, true);
-      setTransactions(prev => prev.map(tr => tr.id === transaction.id ? { ...tr, isExternal: true } : tr));
+      await markExternal({ transactionId: transaction.id, isExternal: true });
       toast.success('Đã chuyển sang "Ngoài hệ thống"');
     } catch (err: any) {
       toast.error(err?.message || 'Không thể đánh dấu');
@@ -263,8 +249,7 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
 
   const handleUnmarkExternal = async (transaction: Transaction) => {
     try {
-      await markTransactionExternal(transaction.id, false);
-      setTransactions(prev => prev.map(tr => tr.id === transaction.id ? { ...tr, isExternal: false } : tr));
+      await markExternal({ transactionId: transaction.id, isExternal: false });
       toast.success('Đã khôi phục giao dịch');
     } catch (err: any) {
       toast.error(err?.message || 'Không thể khôi phục');

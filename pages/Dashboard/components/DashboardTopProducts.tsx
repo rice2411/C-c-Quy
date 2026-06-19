@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { TrendingUp, Package } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
@@ -10,8 +10,8 @@ import EmptyState from '@/components/ui/EmptyState';
 import { Order, OrderStatus, PaymentStatus } from '@/types';
 import { Product } from '@/types/product';
 import { ProductCategory } from '@/types/category';
-import { fetchProducts } from '@/services/productService';
-import { fetchCategories } from '@/services/categoryService';
+import { useProducts } from '@/hooks/queries/useProductsQuery';
+import { useCategories } from '@/hooks/queries/useCategoriesQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { getOrderRevenueDate } from '@/utils/order/orderUtils';
 
@@ -48,26 +48,9 @@ const DashboardTopProducts: React.FC<DashboardTopProductsProps> = ({
   endDate,
   limit = 5,
 }) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
-
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        const [ps, cs] = await Promise.all([fetchProducts(), fetchCategories()]);
-        if (!alive) return;
-        setProducts(Array.isArray(ps) ? ps : []);
-        setCategories(Array.isArray(cs) ? cs : []);
-      } catch (err) {
-        // Degrade êm: thiếu products/categories thì vẫn hiện ảnh + tên, ẩn chip danh mục
-        console.error('DashboardTopProducts: tải products/categories lỗi', err);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, []);
+  // Degrade êm: lỗi products/categories → mảng rỗng (vẫn hiện ảnh + tên, ẩn chip danh mục)
+  const { products } = useProducts();
+  const { categories } = useCategories();
 
   const productById = useMemo(() => {
     const m = new Map<string, Product>();

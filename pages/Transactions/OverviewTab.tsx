@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   Wallet, Coins, Boxes, TrendingUp, Banknote, PieChart as PieIcon, LineChart as LineIcon,
 } from 'lucide-react';
@@ -7,7 +7,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell,
 } from 'recharts';
-import { fetchRevenueReport, RevenueReport } from '@/services/revenueService';
+import { useRevenueReport } from '@/hooks/queries/useTransactionsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
@@ -18,19 +18,12 @@ import StatsBanner from '@/pages/BillImport/StatsBanner';
 const pctText = (v: number) => `${(v * 100).toFixed(1)}%`;
 
 const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, toDate }) => {
-  const [report, setReport] = useState<RevenueReport | null>(null);
-  const [loading, setLoading] = useState(true);
+  // BE tự fetch mọi nguồn & tính; báo cáo nạp lại khi đổi khoảng thời gian (queryKey theo from/to)
+  const { report, loading, error } = useRevenueReport({ from: fromDate, to: toDate });
 
-  // BE tự fetch mọi nguồn & tính; báo cáo nạp lại khi đổi khoảng thời gian
   useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    fetchRevenueReport(fromDate, toDate)
-      .then(r => { if (alive) setReport(r); })
-      .catch(() => toast.error('Không tải được dữ liệu doanh thu'))
-      .finally(() => { if (alive) setLoading(false); });
-    return () => { alive = false; };
-  }, [fromDate, toDate]);
+    if (error) toast.error('Không tải được dữ liệu doanh thu');
+  }, [error]);
 
   if (loading || !report) {
     return <Box layoutClassName="flex flex-1 items-center justify-center py-16"><Spinner size="lg" textClassName="text-primary-500" /></Box>;
