@@ -3,6 +3,7 @@ import {
   Check,
   Circle,
   CreditCard,
+  FileText,
   Loader2,
   Receipt,
   Store,
@@ -33,6 +34,7 @@ import {
 } from '@/components/ui/Table';
 import { PIPELINE_STAGES, type UiProgressStage } from '@/pages/BillImport/constants';
 import SupplierPicker from '@/pages/BillImport/SupplierPicker';
+import EmptyState from '@/components/ui/EmptyState';
 
 export interface BillImportEntryTabProps {
   busy: boolean;
@@ -489,9 +491,10 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
             {/* ===== MOBILE: card layout (mỗi line = 1 card với labels) ===== */}
             <Box layoutClassName="space-y-3 md:hidden">
               {draftStructured.lineItems.length === 0 ? (
-                <Typography size="sm" variant="muted">
-                  {t('billImport.emptyLines')}
-                </Typography>
+                <EmptyState
+                  icon={<FileText className="h-6 w-6" />}
+                  title={t('billImport.emptyLines')}
+                />
               ) : (
                 draftStructured.lineItems.map((it, idx) => (
                   <Box
@@ -558,8 +561,11 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                 <TableBody>
                   {draftStructured.lineItems.length === 0 ? (
                     <TableRow>
-                      <TableCell layoutClassName="text-slate-500" colSpan={6}>
-                        {t('billImport.emptyLines')}
+                      <TableCell colSpan={6}>
+                        <EmptyState
+                          icon={<FileText className="h-6 w-6" />}
+                          title={t('billImport.emptyLines')}
+                        />
                       </TableCell>
                     </TableRow>
                   ) : (

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Wallet, Receipt } from 'lucide-react';
+import { Wallet, Award } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { OrderStatus } from '@/types/enums';
 import { CollaboratorCommissionSummary, fetchMyCommission } from '@/services/commissionService';
@@ -8,6 +8,7 @@ import { formatVND } from '@/utils/format/currencyUtil';
 import Spinner from '@/components/ui/Spinner';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
+import EmptyState from '@/components/ui/EmptyState';
 import Typography from '@/components/ui/Typography';
 import FilterPill from '@/components/shared/FilterPill';
 import { CommissionBadge } from '../Commission/components/commissionUi';
@@ -118,12 +119,10 @@ const MyCommissionPage: React.FC = () => {
             <Spinner size="lg" textClassName="text-primary-500" />
           </Box>
         ) : !hasAnyOrder ? (
-          <Box layoutClassName="flex flex-col items-center justify-center gap-3 py-16" textClassName="text-slate-400 dark:text-slate-500">
-            <Box layoutClassName="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-              <Receipt className="h-8 w-8 opacity-30" />
-            </Box>
-            <Typography as="p" size="sm" variant="muted">Bạn chưa có đơn nào được tính hoa hồng</Typography>
-          </Box>
+          <EmptyState
+            icon={<Award className="h-6 w-6" />}
+            title="Bạn chưa có đơn nào được tính hoa hồng"
+          />
         ) : (
           <Box layoutClassName="space-y-4">
             {/* Summary cards */}
@@ -139,9 +138,10 @@ const MyCommissionPage: React.FC = () => {
 
             {/* Order list */}
             {view.orders.length === 0 ? (
-              <Box layoutClassName="py-12 text-center" textClassName="text-sm text-slate-400 dark:text-slate-500">
-                Không có đơn nào trong tháng này
-              </Box>
+              <EmptyState
+                icon={<Award className="h-6 w-6" />}
+                title="Không có đơn nào trong tháng này"
+              />
             ) : (
               <Card padding="none" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700" layoutClassName="overflow-hidden">
                 <Box layoutClassName="border-b border-slate-100 px-4 py-2.5 dark:border-slate-700/60">

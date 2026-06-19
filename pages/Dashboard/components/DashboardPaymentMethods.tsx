@@ -5,6 +5,7 @@ import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
+import EmptyState from '@/components/ui/EmptyState';
 import DonutTooltip from '@/pages/Dashboard/components/DonutTooltip';
 import { Order, PaymentMethod } from '@/types';
 import { getOrderTotal } from '@/utils/order/orderUtils';
@@ -56,7 +57,7 @@ const DashboardPaymentMethods: React.FC<Props> = ({ orders, startDate, endDate, 
         <Heading level={3} textClassName="text-lg font-semibold text-slate-800 dark:text-white">Phương thức thanh toán</Heading>
       </Box>
       {data.length === 0 ? (
-        <Box layoutClassName="px-5 py-10"><Typography as="p" size="sm" variant="muted">Không có đơn trong kỳ.</Typography></Box>
+        <EmptyState icon={<CreditCard className="h-6 w-6" />} title="Không có đơn trong kỳ." layoutClassName="flex-1" />
       ) : (
         <Box layoutClassName="flex items-center gap-4 p-5">
           <Box layoutClassName="h-40 w-40 shrink-0">

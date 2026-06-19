@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Phone, User as UserIcon, Users } from 'lucide-react';
+import EmptyState from '@/components/ui/EmptyState';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
@@ -75,11 +76,7 @@ const DashboardTopCustomers: React.FC<DashboardTopCustomersProps> = ({
 
       <Box layoutClassName="flex-1 p-3">
         {topCustomers.length === 0 ? (
-          <Box layoutClassName="flex h-full items-center justify-center p-6">
-            <Typography as="span" size="sm" variant="muted" layoutClassName="text-center">
-              Chưa có dữ liệu trong khoảng này
-            </Typography>
-          </Box>
+          <EmptyState icon={<Users className="h-6 w-6" />} title="Chưa có dữ liệu trong khoảng này" />
         ) : (
           <Box layoutClassName="space-y-1.5">
             {topCustomers.map((c, idx) => (
@@ -87,9 +84,14 @@ const DashboardTopCustomers: React.FC<DashboardTopCustomersProps> = ({
                 key={c.phone + idx}
                 layoutClassName="flex items-center gap-3 rounded-lg border border-slate-100 px-3 py-2 dark:border-slate-700"
               >
-                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700 dark:bg-violet-900/40 dark:text-violet-200">
+                <Box
+                  layoutClassName="inline-flex h-7 w-7 shrink-0 items-center justify-center text-xs font-bold"
+                  roundedClassName="rounded-full"
+                  backgroundClassName="bg-violet-100 dark:bg-violet-900/40"
+                  textClassName="text-violet-700 dark:text-violet-200"
+                >
                   {idx + 1}
-                </span>
+                </Box>
                 <Box layoutClassName="flex min-w-0 flex-1 flex-col">
                   <Box layoutClassName="flex items-center gap-1.5">
                     <UserIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />

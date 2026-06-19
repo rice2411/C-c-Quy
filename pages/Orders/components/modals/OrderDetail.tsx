@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import {
+  Clock,
   Copy,
   CreditCard,
   FileText,
@@ -30,6 +31,7 @@ import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
+import EmptyState from '@/components/ui/EmptyState';
 import Heading from '@/components/ui/Heading';
 import IconButton from '@/components/ui/IconButton';
 import Typography from '@/components/ui/Typography';
@@ -992,12 +994,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
                           {isEmpty ? (
                             /* Empty placeholder */
-                            <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-700/30 py-8 px-4 text-center">
-                              <Icon className="h-6 w-6 text-slate-300 dark:text-slate-600" />
-                              <p className="text-xs text-slate-500 dark:text-slate-400">
-                                Chưa có lịch sử cho mục này
-                              </p>
-                            </div>
+                            <EmptyState
+                              icon={<Clock className="h-6 w-6" />}
+                              title="Chưa có lịch sử cho mục này"
+                              layoutClassName="!min-h-0"
+                            />
                           ) : (
                             /* Timeline */
                             <ol className="relative space-y-4 border-l-2 border-slate-200 dark:border-slate-700 pl-5">
