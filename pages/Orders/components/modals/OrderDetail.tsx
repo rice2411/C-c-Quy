@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
 import {
   Clock,
   Copy,
@@ -21,7 +22,9 @@ import {
   X
 } from 'lucide-react';
 import { STATUS_COLORS } from '@/constant/order';
+import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { qk } from '@/hooks/queryKeys';
 import { ORDER_EDIT_DENIED } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber } from '@/services/transactionService';
 import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction } from '@/types';
@@ -59,37 +62,34 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   onUpdateOrder,
 }) => {
   const { t } = useLanguage();
+  const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [crMode, setCrMode] = useState<CancelRefundMode | null>(null);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [localOrder, setLocalOrder] = useState(order);
-  // Transactions của đơn hiện tại — load lazy khi panel mở. Mỗi transaction
-  // sẽ render thành 1 entry trong block "Lịch sử nhận tiền".
-  const [relatedTransactions, setRelatedTransactions] = useState<Transaction[]>([]);
+
+  // Transactions của đơn hiện tại qua React Query — chỉ chạy khi có orderNumber.
+  // Mỗi transaction render thành 1 entry trong block "Lịch sử nhận tiền".
+  const orderNumberForTx = order?.orderNumber ?? '';
+  const txQuery = useQuery({
+    queryKey: qk.transactions.byOrderNumber(orderNumberForTx),
+    queryFn: () => fetchTransactionsByOrderNumber(orderNumberForTx),
+    enabled: !!currentUser && !!orderNumberForTx,
+  });
+  const relatedTransactions: Transaction[] = txQuery.data ?? [];
 
   React.useEffect(() => {
     setLocalOrder(order);
   }, [order]);
 
+  // Khi trạng thái thanh toán / sepayId của đơn đổi (vd sau khi ghi nhận thanh
+  // toán) → refetch transactions để cập nhật "Lịch sử nhận tiền" như cũ.
   React.useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      if (!order?.orderNumber) {
-        setRelatedTransactions([]);
-        return;
-      }
-      const txs = await fetchTransactionsByOrderNumber(order.orderNumber);
-      if (!cancelled) {
-        setRelatedTransactions(txs);
-      }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [order?.orderNumber, order?.paymentStatus, order?.sepayId]);
+    if (orderNumberForTx) void txQuery.refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.paymentStatus, order?.sepayId]);
 
   const currentOrder = localOrder || order;
   if (!currentOrder) return null;

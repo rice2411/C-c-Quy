@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Calendar, Clock, Hash, Megaphone, Save, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useQuery } from '@tanstack/react-query';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { previewPromotion, fetchPromotions } from '@/services/promotionService';
 import { ComputeResult, Promotion } from '@/types/promotion';
@@ -8,9 +9,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { collaboratorHasZaloGroup } from '@/services/configurationService';
 import { UserRole } from '@/types/user';
 import { useCustomers } from '@/hooks/useCustomers';
+import { useProducts } from '@/hooks/queries/useProductsQuery';
+import { qk } from '@/hooks/queryKeys';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getNextOrderNumber } from '@/services/orderService';
-import { fetchProducts } from '@/services/productService';
 import { fetchCommissionGroups } from '@/services/commissionGroupService';
 import { calcItemCommission } from '@/types/commissionGroup';
 import { getUserByUid } from '@/services/userService';
@@ -57,7 +59,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const [pendingOrderData, setPendingOrderData] = useState<any>(null);
 
   const [orderNumber, setOrderNumber] = useState('');
-  const [loadingOrderNumber, setLoadingOrderNumber] = useState(false);
   const [recentlyAddedId, setRecentlyAddedId] = useState<string | null>(null);
 
   // Helper: flash highlight 1 item trong list trong ~1.4s rồi tự clear.
@@ -73,10 +74,18 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   
   // New: Multiple Items State
   const [items, setItems] = useState<FormItem[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
 
-  // Trang trí thêm: vật phẩm chọn từ nguyên liệu (materials)
-  const [materials, setMaterials] = useState<MaterialPriceOption[]>([]);
+  // Products: lấy từ React Query (P2 useProducts) thay vì tự fetch.
+  const { products } = useProducts();
+
+  // Trang trí thêm: vật phẩm chọn từ nguyên liệu (materials) — React Query.
+  const { data: materialsData } = useQuery({
+    queryKey: qk.stockReceipt.materialPriceOptions,
+    queryFn: fetchMaterialPriceOptions,
+    enabled: !!currentUser && isOpen,
+  });
+  const materials: MaterialPriceOption[] = materialsData ?? [];
+
   const [decorations, setDecorations] = useState<OrderDecoration[]>([]);
 
   const [shippingCost, setShippingCost] = useState(0);
@@ -96,50 +105,33 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const [promoCode, setPromoCode] = useState('');
   const [promoPreview, setPromoPreview] = useState<ComputeResult | null>(null);
   const [loadingPromo, setLoadingPromo] = useState(false);
-  const [campaigns, setCampaigns] = useState<Promotion[]>([]); // chiến dịch đang chạy (đề xuất)
   const [selectedPromoIds, setSelectedPromoIds] = useState<string[]>([]);
 
-  // Tải chiến dịch đang trong thời gian hoạt động (active + trong khoảng start/end).
-  useEffect(() => {
-    let alive = true;
-    fetchPromotions()
-      .then((list) => {
-        if (!alive) return;
-        const now = Date.now();
-        setCampaigns(
-          list.filter(
-            (p) =>
-              p.status === 'active' &&
-              (!p.startAt || now >= Date.parse(p.startAt)) &&
-              (!p.endAt || now <= Date.parse(p.endAt)),
-          ),
-        );
-      })
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
-  }, []);
+  // Tất cả chiến dịch (React Query) — lọc "đang chạy" qua useMemo bên dưới.
+  const { data: promotionsData } = useQuery({
+    queryKey: qk.promotions.all,
+    queryFn: fetchPromotions,
+    enabled: !!currentUser && isOpen,
+  });
+  // Chiến dịch đang trong thời gian hoạt động (active + trong khoảng start/end).
+  const campaigns: Promotion[] = useMemo(() => {
+    const list = promotionsData ?? [];
+    const now = Date.now();
+    return list.filter(
+      (p) =>
+        p.status === 'active' &&
+        (!p.startAt || now >= Date.parse(p.startAt)) &&
+        (!p.endAt || now <= Date.parse(p.endAt)),
+    );
+  }, [promotionsData]);
 
-  // Load products from inventory
-  useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        const data = await fetchProducts();
-        setProducts(data);
-      } catch (error) {
-        console.error('Failed to load products', error);
-      }
-    };
-    loadProducts();
-  }, []);
-
-  // Load nguyên liệu (cho mục trang trí thêm)
-  useEffect(() => {
-    fetchMaterialPriceOptions()
-      .then(setMaterials)
-      .catch((error) => console.error('Failed to load materials', error));
-  }, []);
+  // Số đơn kế tiếp — chỉ fetch khi mở form TẠO MỚI (không có initialData).
+  const isCreating = isOpen && !initialData;
+  const { data: nextOrderNumberData, isFetching: loadingOrderNumber } = useQuery({
+    queryKey: qk.orders.nextNumber(),
+    queryFn: getNextOrderNumber,
+    enabled: !!currentUser && isCreating,
+  });
 
   // Initialize or reset form when panel opens; reset fully when opening for new order
   useEffect(() => {
@@ -188,18 +180,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         }]);
       }
     } else {
-      const fetchNextId = async () => {
-        setLoadingOrderNumber(true);
-        try {
-          const nextId = await getNextOrderNumber();
-          setOrderNumber(nextId);
-        } catch (e) {
-          console.error("Failed to fetch next ID");
-        } finally {
-          setLoadingOrderNumber(false);
-        }
-      };
-      fetchNextId();
+      // orderNumber cho đơn mới được set từ React Query (effect riêng bên dưới).
       setCustomerName('');
       setPhone('');
       setAddress('');
@@ -220,6 +201,13 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setSelectedPromoIds([]);
     }
   }, [initialData, isOpen]);
+
+  // Đơn TẠO MỚI: đổ orderNumber từ React Query vào ô (đã reset rỗng ở effect trên).
+  useEffect(() => {
+    if (isCreating && nextOrderNumberData) {
+      setOrderNumber(nextOrderNumberData);
+    }
+  }, [isCreating, nextOrderNumberData]);
 
   // Đơn mới mở → để rỗng; user search trong ProductSearchBar và click để add.
   // Không auto-add product đầu tiên nữa.
