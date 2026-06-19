@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { fetchScreenConfiguration, saveScreenConfiguration } from '@/services/configurationService';
+import React, { createContext, useContext, useMemo } from 'react';
 import { ScreenVisibilityMap } from '@/types';
+import { useSaveScreenConfig, useScreenConfigQuery } from '@/hooks/queries/useConfigQuery';
 import { useAuth } from './AuthContext';
 
 interface ScreenConfigContextType {
@@ -22,52 +22,31 @@ export const useScreenConfig = () => {
   return context;
 };
 
+/**
+ * Provider GIỮ NGUYÊN context API (consumer dùng useScreenConfig() không đổi),
+ * nhưng RUỘT fetch qua React Query (qk.screenConfig.all) thay cho useEffect/useState.
+ * Vẫn wrap routing ở App.tsx như cũ — chỉ đổi cách lấy/lưu data.
+ */
 export const ScreenConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser } = useAuth();
-  const [screenVisibility, setScreenVisibility] = useState<ScreenVisibilityMap>({});
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const { config, loading, refetch } = useScreenConfigQuery();
+  const { save, saving } = useSaveScreenConfig();
 
-  const refresh = async () => {
-    setLoading(true);
-    try {
-      const config = await fetchScreenConfiguration();
-      setScreenVisibility(config.screenVisibility || {});
-    } catch {
-      // Chưa đăng nhập / lỗi tạm → bỏ qua, không crash màn login.
-    } finally {
-      setLoading(false);
-    }
-  };
+  const screenVisibility = config?.screenVisibility ?? {};
 
-  // Chỉ tải cấu hình khi ĐÃ đăng nhập (tránh gọi API 401 ở màn login).
-  useEffect(() => {
-    if (currentUser) refresh();
-    else setLoading(false);
-  }, [currentUser]);
-
-  const saveVisibility = async (nextVisibility: ScreenVisibilityMap) => {
-    setSaving(true);
-    try {
-      await saveScreenConfiguration(nextVisibility, currentUser?.uid);
-      setScreenVisibility(nextVisibility);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const value = useMemo(
+  const value = useMemo<ScreenConfigContextType>(
     () => ({
       screenVisibility,
       loading,
       saving,
-      refresh,
+      refresh: refetch,
       isScreenEnabled: (path: string) => screenVisibility[path] !== false,
-      saveVisibility,
+      saveVisibility: async (nextVisibility: ScreenVisibilityMap) => {
+        await save({ screenVisibility: nextVisibility, updatedBy: currentUser?.uid });
+      },
     }),
-    [screenVisibility, loading, saving]
+    [screenVisibility, loading, saving, refetch, save, currentUser?.uid]
   );
 
   return <ScreenConfigContext.Provider value={value}>{children}</ScreenConfigContext.Provider>;
 };
-
