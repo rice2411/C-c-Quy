@@ -16,6 +16,9 @@ import {
   Activity,
   ShieldCheck,
   Tag,
+  Monitor,
+  MessageSquare,
+  Award,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { ScreenVisibilityMap } from "@/types";
@@ -144,9 +147,37 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/settings",
-    labelKey: "nav.settings",
-    icon: Settings,
+    path: "/settings/screens",
+    labelKey: "nav.settingsScreens",
+    icon: Monitor,
+    roles: [UserRole.SUPER_ADMIN],
+  },
+  {
+    type: "page",
+    path: "/settings/zalo",
+    labelKey: "nav.settingsZalo",
+    icon: MessageSquare,
+    roles: [UserRole.SUPER_ADMIN],
+  },
+  {
+    type: "page",
+    path: "/settings/order",
+    labelKey: "nav.settingsOrder",
+    icon: ShoppingCart,
+    roles: [UserRole.SUPER_ADMIN],
+  },
+  {
+    type: "page",
+    path: "/settings/badges",
+    labelKey: "nav.settingsBadges",
+    icon: Award,
+    roles: [UserRole.SUPER_ADMIN],
+  },
+  {
+    type: "page",
+    path: "/settings/categories",
+    labelKey: "nav.settingsCategories",
+    icon: Tag,
     roles: [UserRole.SUPER_ADMIN],
   },
 ];
@@ -269,6 +300,18 @@ export const navGroups: NavGroupConfig[] = [
     icon: ShieldCheck,
     childPaths: [
       "/admin/request-logs",
+    ],
+  },
+  {
+    key: "settings",
+    labelKey: "nav.settingsGroup",
+    icon: Settings,
+    childPaths: [
+      "/settings/screens",
+      "/settings/zalo",
+      "/settings/order",
+      "/settings/badges",
+      "/settings/categories",
     ],
   },
 ];
