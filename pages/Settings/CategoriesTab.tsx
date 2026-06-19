@@ -13,14 +13,17 @@ import {
   type CategoryNode,
   type ProductCategory,
 } from '@/types/category';
-import { fetchCategories, generateCategoryId, saveCategories } from '@/services/categoryService';
+import { generateCategoryId } from '@/services/categoryService';
+import { useCategories, useSaveCategories } from '@/hooks/queries/useCategoriesQuery';
 
 import Heading from '@/components/ui/Heading';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 const CategoriesTab: React.FC = () => {
+  const { categories, loading, error } = useCategories();
+  const { saveCategories } = useSaveCategories();
   const [items, setItems] = useState<ProductCategory[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [seeded, setSeeded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -30,21 +33,18 @@ const CategoriesTab: React.FC = () => {
   const [draftColor, setDraftColor] = useState(DEFAULT_CATEGORY_COLORS[0]);
   const [showAddRoot, setShowAddRoot] = useState(false);
 
+  // Seed local editable state từ query lần đầu có data (giữ items như draft để CRUD inline).
   useEffect(() => {
-    (async () => {
-      try {
-        const data = await fetchCategories();
-        setItems(data);
-        // Expand root nodes by default
-        const rootIds = data.filter((c) => !c.parentId).map((c) => c.id);
-        setExpandedIds(new Set(rootIds));
-      } catch (e: any) {
-        toast.error(e?.message || 'Không tải được danh mục');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
+    if (seeded || loading) return;
+    setItems(categories);
+    const rootIds = categories.filter((c) => !c.parentId).map((c) => c.id);
+    setExpandedIds(new Set(rootIds));
+    setSeeded(true);
+  }, [categories, loading, seeded]);
+
+  useEffect(() => {
+    if (error) toast.error('Không tải được danh mục');
+  }, [error]);
 
   const tree = useMemo(() => buildCategoryTree(items), [items]);
 

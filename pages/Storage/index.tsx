@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Product } from '@/types';
-import { fetchProducts, addProduct, updateProduct } from '@/services/productService';
 import { useOrders } from '@/hooks/useOrders';
+import { useProducts, useProductMutations } from '@/hooks/queries/useProductsQuery';
 import TabsHeader from '@/pages/Storage/TabsHeader';
 import { ProductForm } from '@/pages/Storage/product';
 import ProductStatsBanner from '@/pages/Storage/product/ProductStatsBanner';
@@ -20,24 +20,13 @@ const InventoryPage: React.FC = () => {
   const storedUser = React.useMemo(() => getUserFromLocalStorage(), []);
   const userRole = userData?.role || storedUser?.role;
   const { orders } = useOrders();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { products, loading, refetch: loadProducts } = useProducts();
+  const { addProduct, updateProduct } = useProductMutations();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<string>('products');
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | undefined>(undefined);
-
-  const loadProducts = async () => {
-    setLoading(true);
-    const data = await fetchProducts();
-    setProducts(data);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    loadProducts();
-  }, []);
 
   const handleCreate = () => {
     setEditingProduct(undefined);
@@ -51,13 +40,12 @@ const InventoryPage: React.FC = () => {
 
   const handleSave = async (data: any) => {
     if (data.id) {
-      await updateProduct(data.id, data);
+      await updateProduct({ id: data.id, data });
     } else {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { id, ...productData } = data;
       await addProduct(productData);
     }
-    await loadProducts();
     setIsFormOpen(false);
   };
 
