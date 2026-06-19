@@ -4,7 +4,7 @@ import { Order, OrderStatus, PaymentStatus } from '@/types';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useOrders } from '@/contexts/OrderContext';
+import { useOrders } from '@/hooks/useOrders';
 import { getOrderRevenueDate, getOrderTotal } from '@/utils/order/orderUtils';
 import DashboardSection from '@/pages/Dashboard/components/DashboardSection';
 import DashboardRangeControl from '@/pages/Dashboard/components/DashboardRangeControl';

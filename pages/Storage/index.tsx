@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Product } from '@/types';
 import { fetchProducts, addProduct, updateProduct } from '@/services/productService';
-import { useOrders } from '@/contexts/OrderContext';
+import { useOrders } from '@/hooks/useOrders';
 import TabsHeader from '@/pages/Storage/TabsHeader';
 import { ProductForm } from '@/pages/Storage/product';
 import ProductStatsBanner from '@/pages/Storage/product/ProductStatsBanner';

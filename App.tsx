@@ -1,7 +1,6 @@
 import React from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
-import { OrderProvider } from "./contexts/OrderContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ScreenConfigProvider } from "./contexts/ScreenConfigContext";
 import { useOfflineDetector } from "./hooks/useOfflineDetector";
@@ -41,9 +40,8 @@ const App: React.FC = () => {
     <HashRouter>
       <AuthProvider>
         <ScreenConfigProvider>
-            <LanguageProvider>
-              <OrderProvider>
-                  <Routes>
+          <LanguageProvider>
+            <Routes>
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/" element={
                       <ProtectedRoute>
@@ -155,8 +153,7 @@ const App: React.FC = () => {
                     </Route>
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
-              </OrderProvider>
-            </LanguageProvider>
+          </LanguageProvider>
         </ScreenConfigProvider>
       </AuthProvider>
       <Toaster

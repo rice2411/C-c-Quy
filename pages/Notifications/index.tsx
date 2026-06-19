@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useOrders } from '@/contexts/OrderContext';
+import { useOrders } from '@/hooks/useOrders';
 import {
   sendCustomNotification,
   sendDailySummaryNotification,

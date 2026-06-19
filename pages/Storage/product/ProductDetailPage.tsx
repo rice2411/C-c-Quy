@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import type { Order, Product, ProductVersion } from '@/types';
-import { useOrders } from '@/contexts/OrderContext';
+import { useOrders } from '@/hooks/useOrders';
 import {
   addProduct,
   deleteProduct,
