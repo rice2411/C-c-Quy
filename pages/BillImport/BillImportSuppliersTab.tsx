@@ -498,7 +498,6 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                                   iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
                                   layoutClassName="inline-flex items-center gap-1.5"
                                   disableVariantHover
-                                  disableVariantTextColor
                                 >
                                   Sửa thông tin NCC
                                 </Button>
