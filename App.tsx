@@ -25,7 +25,11 @@ import CustomersPage from "./pages/Customers/index";
 import UsersPage from "./pages/Users/index";
 import RequestLogsPage from "./pages/Admin/RequestLogs/index";
 import NotificationsPage from "./pages/Notifications/index";
-import SettingsPage from "./pages/Settings/index";
+import ScreenVisibilityTab from "./pages/Settings/ScreenVisibilityTab";
+import ZaloSettingsTab from "./pages/Settings/ZaloSettingsTab";
+import OrderSettingsTab from "./pages/Settings/OrderSettingsTab";
+import BadgesTab from "./pages/Settings/BadgesTab";
+import CategoriesTab from "./pages/Settings/CategoriesTab";
 import LoginPage from "./pages/Login/index";
 import SerpApiMapsTestPage from "./pages/Test/SerpApiMaps/index";
 import { routes } from "./config/routes";
@@ -125,9 +129,30 @@ const App: React.FC = () => {
                           <NotificationsPage />
                         </RoleBasedRoute>
                       } />
-                      <Route path="settings" element={
-                        <RoleBasedRoute requiredRole={routes.find(r => r.path === '/settings')?.roles}>
-                          <SettingsPage />
+                      <Route path="settings" element={<Navigate to="/settings/screens" replace />} />
+                      <Route path="settings/screens" element={
+                        <RoleBasedRoute requiredRole={routes.find(r => r.path === '/settings/screens')?.roles}>
+                          <ScreenVisibilityTab />
+                        </RoleBasedRoute>
+                      } />
+                      <Route path="settings/zalo" element={
+                        <RoleBasedRoute requiredRole={routes.find(r => r.path === '/settings/zalo')?.roles}>
+                          <ZaloSettingsTab />
+                        </RoleBasedRoute>
+                      } />
+                      <Route path="settings/order" element={
+                        <RoleBasedRoute requiredRole={routes.find(r => r.path === '/settings/order')?.roles}>
+                          <OrderSettingsTab />
+                        </RoleBasedRoute>
+                      } />
+                      <Route path="settings/badges" element={
+                        <RoleBasedRoute requiredRole={routes.find(r => r.path === '/settings/badges')?.roles}>
+                          <BadgesTab />
+                        </RoleBasedRoute>
+                      } />
+                      <Route path="settings/categories" element={
+                        <RoleBasedRoute requiredRole={routes.find(r => r.path === '/settings/categories')?.roles}>
+                          <CategoriesTab />
                         </RoleBasedRoute>
                       } />
                       <Route path="test/serpapi-maps" element={<SerpApiMapsTestPage />} />
