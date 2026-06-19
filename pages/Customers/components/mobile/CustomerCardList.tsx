@@ -1,9 +1,9 @@
 import React from 'react';
-import { Search } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { Customer } from '@/types';
 import CustomerCard from './CustomerCard';
 import Box from '@/components/ui/Box';
-import Typography from '@/components/ui/Typography';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface CustomerCardListProps {
   customers: Customer[];
@@ -49,20 +49,11 @@ const CustomerCardList: React.FC<CustomerCardListProps> = ({
           ))}
         </Box>
       ) : (
-        <Box
-          layoutClassName="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 py-14 dark:border-slate-600"
-          backgroundClassName="bg-white/80 dark:bg-slate-800/50"
-        >
-          <Box
-            layoutClassName="flex h-12 w-12 items-center justify-center rounded-xl"
-            backgroundClassName="bg-primary-100 dark:bg-primary-900/35"
-          >
-            <Search className="h-5 w-5 text-primary-600 dark:text-primary-400" aria-hidden />
-          </Box>
-          <Typography size="sm" layoutClassName="max-w-xs px-4 text-center leading-relaxed text-slate-600 dark:text-slate-300">
-            {emptyMessage}
-          </Typography>
-        </Box>
+        <EmptyState
+          icon={<Users className="h-6 w-6" />}
+          title={emptyMessage}
+          layoutClassName="flex-1 !min-h-0"
+        />
       )}
     </Box>
   );

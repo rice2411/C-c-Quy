@@ -29,6 +29,7 @@ import Image from '@/components/ui/Image';
 import Typography from '@/components/ui/Typography';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import EmptyState from '@/components/ui/EmptyState';
 import { pct, ButtonSpinner } from './commissionUi';
 
 /** Dạng tier đang chỉnh sửa (string để nhập liệu mượt) */
@@ -379,9 +380,10 @@ const GroupRow: React.FC<GroupRowProps> = ({ group, products, onUpdate, onDelete
       {showProducts && (
         <Box layoutClassName="border-t border-slate-100 dark:border-slate-700">
           {groupProducts.length === 0 ? (
-            <Typography as="p" size="xs" layoutClassName="px-4 py-3" textClassName="text-slate-400 dark:text-slate-500">
-              Chưa có sản phẩm nào thuộc nhóm này (cần nhập giá cost ở tab Sản phẩm)
-            </Typography>
+            <EmptyState
+              icon={<Package className="h-6 w-6" />}
+              title="Chưa có sản phẩm nào thuộc nhóm này (cần nhập giá cost ở tab Sản phẩm)"
+            />
           ) : (
             <Box layoutClassName="divide-y divide-slate-50 dark:divide-slate-700/50">
               {groupProducts.map((p) => {

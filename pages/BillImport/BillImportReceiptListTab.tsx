@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Camera, RotateCw, Upload } from 'lucide-react';
+import { Camera, FileText, RotateCw, Upload } from 'lucide-react';
 import type { SavedStockReceiptSummary } from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/Table';
 import { formatImportedAt } from '@/utils/format/dateUtil';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
+import EmptyState from '@/components/ui/EmptyState';
 
 export interface BillImportReceiptListTabProps {
   receiptSearch: string;
@@ -150,9 +151,10 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
         <Box layoutClassName="max-h-[560px] overflow-auto rounded-lg border border-slate-100 dark:border-slate-800">
           {filteredReceipts.length === 0 ? (
             <Box layoutClassName="flex flex-col items-center gap-3 p-6 text-center">
-              <Typography size="sm" variant="muted">
-                Chưa có bill nào.
-              </Typography>
+              <EmptyState
+                icon={<FileText className="h-6 w-6" />}
+                title="Chưa có bill nào."
+              />
               {onFileSelected ? (
                 <Box layoutClassName="flex flex-wrap items-center justify-center gap-2">
                   <Button

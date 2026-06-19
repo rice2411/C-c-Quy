@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, CheckCircle2, RotateCcw, ListOrdered } from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckCircle2, RotateCcw, ListOrdered, Package } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { OrderStatus } from '@/types/enums';
 import { CollaboratorCommissionSummary, markCommissionPaid, markCommissionPending } from '@/services/commissionService';
@@ -9,6 +9,7 @@ import Image from '@/components/ui/Image';
 import Badge from '@/components/ui/Badge';
 import Typography from '@/components/ui/Typography';
 import Button from '@/components/ui/Button';
+import EmptyState from '@/components/ui/EmptyState';
 import { CommissionBadge, ButtonSpinner } from './commissionUi';
 
 interface CollabRowProps {
@@ -200,9 +201,7 @@ const CollabRow: React.FC<CollabRowProps> = ({ summary, onRefresh }) => {
 
           {/* Gộp theo sản phẩm */}
           {products.length === 0 ? (
-            <Typography as="p" size="xs" layoutClassName="px-4 py-3" textClassName="text-slate-400 dark:text-slate-500">
-              Không có sản phẩm tính hoa hồng
-            </Typography>
+            <EmptyState icon={<Package className="h-6 w-6" />} title="Không có sản phẩm tính hoa hồng" />
           ) : (
             <Box layoutClassName="divide-y divide-slate-50 dark:divide-slate-700/50">
               {products.map(p => {

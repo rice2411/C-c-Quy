@@ -5,6 +5,7 @@ import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
+import EmptyState from '@/components/ui/EmptyState';
 import { fetchCommissionSummaries, CollaboratorCommissionSummary } from '@/services/commissionService';
 import { formatVND } from '@/utils/format/currencyUtil';
 
@@ -61,7 +62,7 @@ const DashboardTopCollaborators: React.FC<Props> = ({ startDate, endDate, limit 
       {loading ? (
         <Box layoutClassName="flex items-center justify-center py-12"><Spinner size="lg" textClassName="text-primary-500" /></Box>
       ) : top.length === 0 ? (
-        <Box layoutClassName="px-5 py-10"><Typography as="p" size="sm" variant="muted">Chưa có CTV bán trong kỳ.</Typography></Box>
+        <EmptyState icon={<Award className="h-6 w-6" />} title="Chưa có CTV bán trong kỳ." layoutClassName="flex-1" />
       ) : (
         <Box layoutClassName="divide-y divide-slate-50 dark:divide-slate-700/50">
           {top.map((c, i) => (

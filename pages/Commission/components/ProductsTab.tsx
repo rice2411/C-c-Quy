@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Trash2, Save, DollarSign } from 'lucide-react';
+import { Trash2, Save, DollarSign, Award } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Product } from '@/types';
 import { CommissionGroup, calcItemCommission, findGroupForMargin } from '@/types/commissionGroup';
@@ -13,6 +13,7 @@ import Image from '@/components/ui/Image';
 import Typography from '@/components/ui/Typography';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import EmptyState from '@/components/ui/EmptyState';
 import { pct, ButtonSpinner } from './commissionUi';
 
 interface ProductRowProps {
@@ -202,9 +203,10 @@ const ProductsTab: React.FC<ProductsTabProps> = ({ groups, products, onProductsC
       </Card>
 
       {groups.length === 0 && (
-        <Box layoutClassName="rounded-xl border border-amber-100 bg-amber-50 p-3 text-xs dark:border-amber-900/30 dark:bg-amber-900/10" textClassName="text-amber-700 dark:text-amber-300">
-          Chưa có nhóm hoa hồng. Vui lòng cài đặt nhóm trước ở tab <strong>Nhóm HH</strong>.
-        </Box>
+        <EmptyState
+          icon={<Award className="h-6 w-6" />}
+          title="Chưa có nhóm hoa hồng. Vui lòng cài đặt nhóm trước ở tab Nhóm HH."
+        />
       )}
 
       {withCost.length > 0 && (
