@@ -17,9 +17,9 @@ import {
   UserPlus,
   Users,
 } from 'lucide-react';
-import { fetchZaloGroupsConfiguration, saveZaloGroupsConfiguration } from '@/services/configurationService';
 import { sendZaloTestMessage } from '@/services/zaloService';
-import { getAllUsers, updateUserRole } from '@/services/userService';
+import { useSaveZaloGroups, useZaloGroups } from '@/hooks/queries/useConfigQuery';
+import { useUsers, useUserMutations } from '@/hooks/queries/useUsersQuery';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserData, UserRole } from '@/types/user';
 import { ZALO_TRACKABLE_FIELDS, ZaloGroupConfig } from '@/types';
@@ -102,9 +102,11 @@ const UserAvatar: React.FC<{
 
 const ZaloSettingsTab: React.FC = () => {
   const { currentUser } = useAuth();
+  const { data: zaloConfig, loading: zaloLoading, error: zaloError } = useZaloGroups();
+  const { users, loading: usersLoading } = useUsers();
+  const { save: saveZaloGroups } = useSaveZaloGroups();
+  const { updateRole: updateUserRoleMut } = useUserMutations();
   const [groups, setGroups] = useState<ZaloGroupConfig[]>([]);
-  const [users, setUsers] = useState<UserData[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [mainGroupId, setMainGroupId] = useState('');
   const [mainNotifyOnCreate, setMainNotifyOnCreate] = useState(true);
@@ -124,28 +126,26 @@ const ZaloSettingsTab: React.FC = () => {
   const userPickerAnchorRef = useRef<HTMLButtonElement>(null);
   const userPickerDropdownRef = useRef<HTMLDivElement>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [cfg, list] = await Promise.all([fetchZaloGroupsConfiguration(), getAllUsers()]);
-      setGroups(cfg.groups);
-      setMainGroupId(cfg.mainGroupId ?? '');
-      setMainNotifyOnCreate(cfg.mainNotifyOnCreate !== false);
-      setMainNotifyOnUpdate(cfg.mainNotifyOnUpdate !== false);
-      setMainNotifyOnDelete(cfg.mainNotifyOnDelete !== false);
-      setMainUpdateFieldWhitelist(cfg.mainUpdateFieldWhitelist ?? []);
-      setUsers(list);
-    } catch (e) {
-      console.error(e);
-      toast.error('Không tải được cấu hình Zalo');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const loading = zaloLoading || usersLoading;
+
+  // Seed local (optimistic) state từ React Query khi config tải xong / refetch.
+  // Component vẫn giữ local copy vì mutate nhiều state cục bộ trước khi persist.
+  useEffect(() => {
+    if (!zaloConfig) return;
+    setGroups(zaloConfig.groups);
+    setMainGroupId(zaloConfig.mainGroupId ?? '');
+    setMainNotifyOnCreate(zaloConfig.mainNotifyOnCreate !== false);
+    setMainNotifyOnUpdate(zaloConfig.mainNotifyOnUpdate !== false);
+    setMainNotifyOnDelete(zaloConfig.mainNotifyOnDelete !== false);
+    setMainUpdateFieldWhitelist(zaloConfig.mainUpdateFieldWhitelist ?? []);
+  }, [zaloConfig]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (zaloError) {
+      console.error(zaloError);
+      toast.error('Không tải được cấu hình Zalo');
+    }
+  }, [zaloError]);
 
   const userByUid = useMemo(() => {
     const m = new Map<string, UserData>();
@@ -219,12 +219,16 @@ const ZaloSettingsTab: React.FC = () => {
   };
 
   const persistGroups = async (next: ZaloGroupConfig[]) => {
-    await saveZaloGroupsConfiguration(next, currentUser?.uid ?? null, {
-      mainGroupId,
-      mainNotifyOnCreate,
-      mainNotifyOnUpdate,
-      mainNotifyOnDelete,
-      mainUpdateFieldWhitelist,
+    await saveZaloGroups({
+      groups: next,
+      updatedBy: currentUser?.uid ?? null,
+      mainSettings: {
+        mainGroupId,
+        mainNotifyOnCreate,
+        mainNotifyOnUpdate,
+        mainNotifyOnDelete,
+        mainUpdateFieldWhitelist,
+      },
     });
     setGroups(next);
   };
@@ -337,10 +341,9 @@ const ZaloSettingsTab: React.FC = () => {
         const target = userMap.get(uid);
         if (!target) continue;
         if (target.role !== UserRole.COLABORATOR) {
-          await updateUserRole(uid, UserRole.COLABORATOR);
-          const updated = { ...target, role: UserRole.COLABORATOR as const };
-          userMap.set(uid, updated);
-          setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, role: UserRole.COLABORATOR } : u)));
+          await updateUserRoleMut({ uid, role: UserRole.COLABORATOR });
+          // Cập nhật map cục bộ trong vòng lặp; React Query sẽ refetch users sau invalidate.
+          userMap.set(uid, { ...target, role: UserRole.COLABORATOR as const });
         }
       }
 
