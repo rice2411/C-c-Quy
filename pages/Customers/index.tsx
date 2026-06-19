@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, Sparkles, UserCheck, Users } from 'lucide-react';
-import { useCustomers } from '@/contexts/CustomerContext';
+import { useCustomers } from '@/hooks/useCustomers';
 import { useOrders } from '@/contexts/OrderContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Customer } from '@/types';
