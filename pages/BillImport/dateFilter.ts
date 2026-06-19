@@ -1,3 +1,4 @@
+import { parseDateValue } from '@/utils/format/dateUtil';
 /**
  * Filter helpers theo period cho danh sách NCC / NVL.
  * Field date: `lastReceiptDate` (ISO string).
@@ -43,7 +44,7 @@ export const filterByPeriod = <T extends { lastReceiptDate?: string }>(
 
   return arr.filter((x) => {
     if (!x.lastReceiptDate) return false;
-    const d = new Date(x.lastReceiptDate);
+    const d = parseDateValue(x.lastReceiptDate);
     if (Number.isNaN(d.getTime())) return false;
     if (d < from) return false;
     if (to && d > to) return false;

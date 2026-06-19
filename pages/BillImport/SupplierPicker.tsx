@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
 import type { ImportedSupplierSummary } from '@/types/billReceipt';
 import { normalizeSearchText } from '@/utils/format/stringUtil';
+import { formatDateISO } from '@/utils/format/dateUtil';
 
 const MAX_RESULTS = 8;
 const moneyFmt = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
@@ -216,7 +217,7 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
                       {s.address ? <span className="truncate">📍 {s.address}</span> : null}
                       {s.category ? <span>🏷️ {s.category}</span> : null}
                       {s.lastReceiptDate ? (
-                        <span>Lần cuối: {s.lastReceiptDate.slice(0, 10)}</span>
+                        <span>Lần cuối: {formatDateISO(s.lastReceiptDate)}</span>
                       ) : null}
                     </Box>
                   </Button>
@@ -259,7 +260,7 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
             <>
               <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">·</Typography>
               <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">
-                lần cuối {selectedSupplier.lastReceiptDate.slice(0, 10)}
+                lần cuối {formatDateISO(selectedSupplier.lastReceiptDate)}
               </Typography>
             </>
           ) : null}
