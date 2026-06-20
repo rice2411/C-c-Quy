@@ -102,7 +102,7 @@ const PillDropdown: React.FC<{
 };
 
 const FilterToolbar: React.FC<FilterToolbarProps> = ({
-  search, onSearchChange, searchPlaceholder = 'Tìm kiếm…',
+  search, onSearchChange, searchPlaceholder = '',
   period, periodOptions, onPeriodChange,
   sortBy, sortOptions, onSortChange,
   pills,
