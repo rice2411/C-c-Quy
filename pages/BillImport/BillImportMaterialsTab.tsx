@@ -5,6 +5,7 @@ import { mergeMaterials } from '@/services/stockReceiptService';
 import StatsBanner from '@/pages/BillImport/StatsBanner';
 import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/BillImport/dateFilter';
 import FilterToolbar from '@/components/shared/FilterToolbar';
+import { useLanguage } from '@/contexts/LanguageContext';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -38,6 +39,7 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
   onRefresh,
   filteredMaterials,
 }) => {
+  const { t } = useLanguage();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mergeOpen, setMergeOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'amount' | 'name' | 'count'>('recent');
@@ -156,16 +158,16 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
         <FilterToolbar
           search={materialSearch}
           onSearchChange={onMaterialSearchChange}
-          searchPlaceholder="Tìm nguyên vật liệu theo tên..."
+          searchPlaceholder={t('billImport.materialsSearch')}
           period={period}
           periodOptions={PERIOD_OPTIONS as any}
           onPeriodChange={(v) => setPeriod(v as DatePeriod)}
           sortBy={sortBy}
           sortOptions={[
-            { value: 'recent', label: 'Mới nhất' },
-            { value: 'amount', label: 'Chi nhiều nhất' },
-            { value: 'count', label: 'Nhập nhiều nhất' },
-            { value: 'name', label: 'Tên A-Z' },
+            { value: 'recent', label: t('billImport.sort.recent') },
+            { value: 'amount', label: t('billImport.sort.amount') },
+            { value: 'count', label: t('billImport.sort.materialCount') },
+            { value: 'name', label: t('billImport.sort.name') },
           ]}
           onSortChange={(v) => setSortBy(v as any)}
           onClearAll={() => { setPeriod('all'); onMaterialSearchChange(''); }}

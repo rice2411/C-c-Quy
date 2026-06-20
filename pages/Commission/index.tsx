@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { OrderStatus } from '@/types/enums';
 import { CollaboratorCommissionSummary } from '@/services/commissionService';
 import { useCommissionSummaries } from '@/hooks/queries/useCommissionQuery';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Spinner from '@/components/ui/Spinner';
 import Box from '@/components/ui/Box';
@@ -16,11 +17,6 @@ import CollabRow from './components/CollabRow';
 
 type SortKey = 'commission' | 'name';
 
-const SORT_OPTIONS = [
-  { value: 'commission', label: 'Tổng HH cao nhất' },
-  { value: 'name', label: 'Tên A-Z' },
-];
-
 /** Khoá tháng "YYYY-MM" từ ngày giao của đơn (null nếu không có ngày hợp lệ) */
 const monthKeyOf = (dateStr?: string): string | null => {
   if (!dateStr) return null;
@@ -32,6 +28,12 @@ const monthKeyOf = (dateStr?: string): string | null => {
 /* ════════════════════════════════════════ TRANG CHỦ: Thống kê hoa hồng CTV ════ */
 const CommissionPage: React.FC = () => {
   const { summaries, loading, error } = useCommissionSummaries();
+  const { t } = useLanguage();
+
+  const SORT_OPTIONS = [
+    { value: 'commission', label: t('commission.sort.commission') },
+    { value: 'name', label: t('commission.sort.name') },
+  ];
 
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('commission');
@@ -120,7 +122,7 @@ const CommissionPage: React.FC = () => {
         <FilterToolbar
           search={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Tìm CTV theo tên..."
+          searchPlaceholder={t('commission.searchPlaceholder')}
           period={period}
           periodOptions={periodOptions}
           onPeriodChange={setPeriod}
