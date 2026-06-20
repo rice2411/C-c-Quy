@@ -7,6 +7,7 @@ import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import Input from '@/components/ui/Input';
 import FilterToolbar from '@/components/shared/FilterToolbar';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Table,
   TableBody,
@@ -38,6 +39,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
   onRowClick,
   onFileSelected,
 }) => {
+  const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -145,7 +147,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
         <FilterToolbar
           search={receiptSearch}
           onSearchChange={onReceiptSearchChange}
-          searchPlaceholder="Tìm theo NCC, ngày bill, ngày nhập, mã phiếu..."
+          searchPlaceholder={t('billImport.receiptsSearch')}
         />
         <Box layoutClassName="max-h-[560px] overflow-auto rounded-lg border border-slate-100 dark:border-slate-800">
           {filteredReceipts.length === 0 ? (

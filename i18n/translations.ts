@@ -4,7 +4,8 @@ export const translations = {
     common: {
       apply: "Apply",
       cancel: "Cancel",
-      reset: "Reset"
+      reset: "Reset",
+      searchPlaceholder: "Search…"
     },
     nav: {
       dashboard: "Dashboard",
@@ -134,6 +135,16 @@ export const translations = {
         unpaidOrders: "Unpaid orders",
         unpaidHint: "Awaiting payment (excludes cancelled)",
       },
+      sort: {
+        newest: "Newest",
+        oldest: "Oldest",
+        totalDesc: "Total high→low",
+        totalAsc: "Total low→high",
+        deliveryAsc: "Delivery soonest",
+        deliveryDesc: "Delivery latest",
+        status: "Status",
+        payment: "Payment"
+      },
     },
     notifications: {
       title: "Notification Management",
@@ -238,7 +249,17 @@ export const translations = {
       stageVision: "Reading text from image (Google Vision)…",
       stageValidate: "Checking if this looks like a purchase receipt (Gemini)…",
       stageStructure: "Extracting line items and totals (Gemini)…",
-      progressTitle: "Processing your receipt"
+      progressTitle: "Processing your receipt",
+      suppliersSearch: "Search supplier by name, phone, category...",
+      materialsSearch: "Search material by name...",
+      receiptsSearch: "Search by supplier, bill date, import date, receipt #...",
+      sort: {
+        recent: "Newest",
+        amount: "Highest spend",
+        supplierCount: "Most receipts",
+        materialCount: "Most imports",
+        name: "Name A-Z"
+      }
     },
     customers: {
       title: "Customers",
@@ -353,6 +374,7 @@ export const translations = {
     transactions: {
       title: "Transactions",
       searchPlaceholder: "Search order #, content...",
+      searchRevenue: "Search order #, customer...",
       noData: "No transactions found.",
       refresh: "Refresh",
       refreshSuccess: "Transactions refreshed successfully",
@@ -375,6 +397,14 @@ export const translations = {
         content: "Content",
         gateway: "Gateway",
         account: "Account"
+      }
+    },
+    commission: {
+      searchPlaceholder: "Search collaborator by name...",
+      productSearchPlaceholder: "Search products...",
+      sort: {
+        commission: "Highest commission",
+        name: "Name A-Z"
       }
     },
     form: {
@@ -472,7 +502,8 @@ export const translations = {
     common: {
       apply: "Áp dụng",
       cancel: "Hủy",
-      reset: "Đặt lại"
+      reset: "Đặt lại",
+      searchPlaceholder: "Tìm kiếm…"
     },
     nav: {
       dashboard: "Tổng quan",
@@ -602,6 +633,16 @@ export const translations = {
         unpaidOrders: "Đơn chưa thanh toán",
         unpaidHint: "Chờ thanh toán (không tính đơn đã hủy)",
       },
+      sort: {
+        newest: "Mới nhất",
+        oldest: "Cũ nhất",
+        totalDesc: "Tổng tiền cao→thấp",
+        totalAsc: "Tổng tiền thấp→cao",
+        deliveryAsc: "Ngày giao sớm nhất",
+        deliveryDesc: "Ngày giao xa nhất",
+        status: "Trạng thái",
+        payment: "Thanh toán"
+      },
     },
     notifications: {
       title: "Quản lý thông báo",
@@ -706,7 +747,17 @@ export const translations = {
       stageVision: "Đang đọc chữ từ ảnh (Google Vision)…",
       stageValidate: "Đang kiểm tra có phải bill mua hàng (Gemini)…",
       stageStructure: "Đang trích xuất dòng hàng và tổng tiền (Gemini)…",
-      progressTitle: "Đang xử lý bill"
+      progressTitle: "Đang xử lý bill",
+      suppliersSearch: "Tìm NCC theo tên, SĐT, danh mục...",
+      materialsSearch: "Tìm nguyên vật liệu theo tên...",
+      receiptsSearch: "Tìm theo NCC, ngày bill, ngày nhập, mã phiếu...",
+      sort: {
+        recent: "Mới nhất",
+        amount: "Chi nhiều nhất",
+        supplierCount: "Nhiều phiếu",
+        materialCount: "Nhập nhiều nhất",
+        name: "Tên A-Z"
+      }
     },
     customers: {
       title: "Khách hàng",
@@ -821,6 +872,7 @@ export const translations = {
     transactions: {
       title: "Giao dịch",
       searchPlaceholder: "Tìm mã đơn, nội dung...",
+      searchRevenue: "Tìm mã đơn, khách hàng...",
       noData: "Chưa có giao dịch nào.",
       refresh: "Làm mới",
       refreshSuccess: "Đã làm mới danh sách giao dịch",
@@ -843,6 +895,14 @@ export const translations = {
         content: "Nội dung",
         gateway: "Cổng TT",
         account: "Tài khoản"
+      }
+    },
+    commission: {
+      searchPlaceholder: "Tìm CTV theo tên...",
+      productSearchPlaceholder: "Tìm sản phẩm...",
+      sort: {
+        commission: "Tổng HH cao nhất",
+        name: "Tên A-Z"
       }
     },
     form: {
