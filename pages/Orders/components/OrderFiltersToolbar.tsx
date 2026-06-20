@@ -18,17 +18,6 @@ export type OrderSortKey =
   | 'deliveryDate-asc' | 'deliveryDate-desc'
   | 'status-asc' | 'paymentStatus-asc';
 
-const SORT_OPTIONS: ToolbarOption[] = [
-  { value: 'date-desc',         label: 'Mới nhất' },
-  { value: 'date-asc',          label: 'Cũ nhất' },
-  { value: 'total-desc',        label: 'Tổng tiền cao→thấp' },
-  { value: 'total-asc',         label: 'Tổng tiền thấp→cao' },
-  { value: 'deliveryDate-asc',  label: 'Ngày giao sớm nhất' },
-  { value: 'deliveryDate-desc', label: 'Ngày giao xa nhất' },
-  { value: 'status-asc',        label: 'Trạng thái' },
-  { value: 'paymentStatus-asc', label: 'Thanh toán' },
-];
-
 interface OrderFiltersToolbarProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
@@ -50,6 +39,16 @@ const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
   sortKey, onSortChange, onClearAll,
 }) => {
   const { t } = useLanguage();
+  const SORT_OPTIONS: ToolbarOption[] = [
+    { value: 'date-desc',         label: t('orders.sort.newest') },
+    { value: 'date-asc',          label: t('orders.sort.oldest') },
+    { value: 'total-desc',        label: t('orders.sort.totalDesc') },
+    { value: 'total-asc',         label: t('orders.sort.totalAsc') },
+    { value: 'deliveryDate-asc',  label: t('orders.sort.deliveryAsc') },
+    { value: 'deliveryDate-desc', label: t('orders.sort.deliveryDesc') },
+    { value: 'status-asc',        label: t('orders.sort.status') },
+    { value: 'paymentStatus-asc', label: t('orders.sort.payment') },
+  ];
   const pills: ToolbarPill[] = [
     { id: 'pending',  label: 'Cần xử lý',       active: !!quickPills?.pending,  onClick: onTogglePending ?? (() => {}),  icon: Clock },
     { id: 'today',    label: 'Ship hôm nay',    active: !!quickPills?.today,    onClick: onToggleToday ?? (() => {}),    icon: Truck },

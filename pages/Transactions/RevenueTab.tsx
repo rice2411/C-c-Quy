@@ -3,6 +3,7 @@ import { Download, Receipt } from 'lucide-react';
 import * as XLSX from 'xlsx-js-style';
 import toast from 'react-hot-toast';
 import { useOrders } from '@/hooks/useOrders';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { OrderStatus } from '@/types/enums';
 import { revenueOrdersInPeriod } from '@/services/revenueService';
 import { formatVND } from '@/utils/format/currencyUtil';
@@ -30,6 +31,7 @@ const fmtDate = (s?: string) => {
 
 const RevenueTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, toDate }) => {
   const { orders } = useOrders();
+  const { t } = useLanguage();
   const [search, setSearch] = useState('');
 
   const periodOrders = useMemo(
@@ -67,26 +69,28 @@ const RevenueTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, 
 
   return (
     <Box layoutClassName="space-y-4">
-      <Box layoutClassName="flex items-center gap-2">
-        <Box layoutClassName="min-w-0 flex-1">
-          <FilterToolbar search={search} onSearchChange={setSearch} searchPlaceholder="Tìm mã đơn, khách hàng..." />
-        </Box>
-        <Button
-          type="button"
-          onClick={exportExcel}
-          variant="ghost"
-          disableVariantHover
-          disableVariantTextColor
-          layoutClassName="flex shrink-0 items-center gap-1.5"
-          roundedClassName="rounded-xl"
-          borderClassName="border border-slate-200 hover:border-emerald-300 dark:border-slate-700"
-          backgroundClassName="bg-white hover:bg-emerald-50 dark:bg-slate-800"
-          sizeClassName="px-3 py-2.5 text-xs"
-          textClassName="font-medium text-slate-600 hover:text-emerald-600 dark:text-slate-300"
-          stateClassName="transition-colors">
-          <Download className="h-4 w-4" /> Xuất Excel
-        </Button>
-      </Box>
+      <FilterToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder={t('transactions.searchRevenue')}
+        actions={
+          <Button
+            type="button"
+            onClick={exportExcel}
+            variant="ghost"
+            disableVariantHover
+            disableVariantTextColor
+            layoutClassName="flex shrink-0 items-center gap-1.5"
+            roundedClassName="rounded-xl"
+            borderClassName="border border-slate-200 hover:border-emerald-300 dark:border-slate-700"
+            backgroundClassName="bg-white hover:bg-emerald-50 dark:bg-slate-800"
+            sizeClassName="px-3 py-2.5 text-xs"
+            textClassName="font-medium text-slate-600 hover:text-emerald-600 dark:text-slate-300"
+            stateClassName="transition-colors">
+            <Download className="h-4 w-4" /> Xuất Excel
+          </Button>
+        }
+      />
 
       {view.length === 0 ? (
         <Box layoutClassName="flex flex-col items-center justify-center gap-3 py-16" textClassName="text-slate-400 dark:text-slate-500">

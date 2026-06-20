@@ -5,6 +5,7 @@ import { Product } from '@/types';
 import { CommissionGroup, calcItemCommission, findGroupForMargin } from '@/types/commissionGroup';
 import { useProductMutations } from '@/hooks/queries/useProductsQuery';
 import FilterToolbar from '@/components/shared/FilterToolbar';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Card from '@/components/ui/Card';
 import Box from '@/components/ui/Box';
@@ -172,6 +173,7 @@ interface ProductsTabProps {
 
 const ProductsTab: React.FC<ProductsTabProps> = ({ groups, products }) => {
   const { updateProduct, removeCostPrice } = useProductMutations();
+  const { t } = useLanguage();
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
@@ -193,7 +195,7 @@ const ProductsTab: React.FC<ProductsTabProps> = ({ groups, products }) => {
         <FilterToolbar
           search={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Tìm sản phẩm..."
+          searchPlaceholder={t('commission.productSearchPlaceholder')}
         />
       </Card>
 

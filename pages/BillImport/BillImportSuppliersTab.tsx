@@ -20,6 +20,7 @@ import { mergeSuppliers } from '@/services/stockReceiptService';
 import StatsBanner from '@/pages/BillImport/StatsBanner';
 import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/BillImport/dateFilter';
 import FilterToolbar from '@/components/shared/FilterToolbar';
+import { useLanguage } from '@/contexts/LanguageContext';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -55,6 +56,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
   onRefresh,
   filteredSuppliers,
 }) => {
+  const { t } = useLanguage();
   const [expanded, setExpanded] = useState<string | null>(null);
   const [editing, setEditing] = useState<ImportedSupplierSummary | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -177,16 +179,16 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
         <FilterToolbar
           search={supplierSearch}
           onSearchChange={onSupplierSearchChange}
-          searchPlaceholder="Tìm NCC theo tên, SĐT, danh mục..."
+          searchPlaceholder={t('billImport.suppliersSearch')}
           period={period}
           periodOptions={PERIOD_OPTIONS as any}
           onPeriodChange={(v) => setPeriod(v as DatePeriod)}
           sortBy={sortBy}
           sortOptions={[
-            { value: 'recent', label: 'Mới nhất' },
-            { value: 'amount', label: 'Chi nhiều nhất' },
-            { value: 'count', label: 'Nhiều phiếu' },
-            { value: 'name', label: 'Tên A-Z' },
+            { value: 'recent', label: t('billImport.sort.recent') },
+            { value: 'amount', label: t('billImport.sort.amount') },
+            { value: 'count', label: t('billImport.sort.supplierCount') },
+            { value: 'name', label: t('billImport.sort.name') },
           ]}
           onSortChange={(v) => setSortBy(v as any)}
           onClearAll={() => { setPeriod('all'); onSupplierSearchChange(''); }}
