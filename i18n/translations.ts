@@ -430,6 +430,23 @@ export const translations = {
       saving: "Saving...",
       saveProduct: "Save Product"
     },
+    surchargeTags: {
+      title: "Surcharge tags",
+      subtitle: "Click a chip to edit, X to remove (disabling keeps the label on old orders). Don't forget to save.",
+      add: "Add tag",
+      empty: "No tags yet.",
+      name: "Tag name",
+      namePlaceholder: "Tag name...",
+      preset: "Suggested amount (VND)",
+      active: "Active",
+      inactive: "Inactive",
+      done: "Done",
+      save: "Save tags",
+      saving: "Saving...",
+      saveSuccess: "Surcharge tags saved",
+      saveFailed: "Could not save",
+      loadFailed: "Could not load surcharge tags"
+    },
     detail: {
       orderId: "Order #",
       placedOn: "Placed on",
@@ -929,6 +946,23 @@ export const translations = {
       edit: "Chỉnh sửa",
       saving: "Đang lưu...",
       saveProduct: "Lưu sản phẩm"
+    },
+    surchargeTags: {
+      title: "Tag phụ thu",
+      subtitle: "Click vào chip để chỉnh, X để xoá (tắt vẫn giữ nhãn ở đơn cũ). Đừng quên bấm Lưu.",
+      add: "Thêm tag",
+      empty: "Chưa có tag nào.",
+      name: "Tên tag",
+      namePlaceholder: "Tên tag...",
+      preset: "Mức gợi ý (VND)",
+      active: "Đang dùng",
+      inactive: "Đã tắt",
+      done: "Xong",
+      save: "Lưu tag",
+      saving: "Đang lưu...",
+      saveSuccess: "Đã lưu tag phụ thu",
+      saveFailed: "Không lưu được",
+      loadFailed: "Không tải được tag phụ thu"
     },
     detail: {
       orderId: "Đơn hàng #",

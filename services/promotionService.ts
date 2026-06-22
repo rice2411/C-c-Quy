@@ -1,6 +1,5 @@
 import { apiClient } from '@/services/api/client';
 import { ComputeResult, Promotion } from '@/types/promotion';
-import { SurchargeTag } from '@/types/order';
 
 const PATH = '/promotions';
 
@@ -34,8 +33,8 @@ export const previewPromotion = async (cart: {
   decorations?: { price: number; quantity: number }[];
   /** Phụ thu cả đơn (VND) — cộng vào subtotal trước giảm. */
   surchargeAmount?: number;
-  /** Nhãn phụ thu. */
-  surchargeTag?: SurchargeTag;
+  /** Nhãn phụ thu (`key` của tag động). */
+  surchargeTag?: string;
   shippingCost?: number;
   code?: string;
   promotionIds?: string[];

@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { PAYMENT_METHOD_COLORS, PAYMENT_STATUS_COLORS, STATUS_COLORS } from '@/constant/order';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
+import { surchargeTagLabel } from '@/types/order';
 import { Order } from '@/types';
 import { DeliveryType } from '@/types/enums';
 
@@ -37,6 +39,7 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
   onSelectOrder,
 }) => {
   const { t } = useLanguage();
+  const { surchargeTags } = useSurchargeTags();
 
   const getItemsPreview = (order: Order) => {
     if (!order.items || order.items.length === 0) return '';
@@ -214,7 +217,7 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                           backgroundClassName="bg-primary-50 dark:bg-primary-900/30"
                           textClassName="text-primary-700 dark:text-primary-300"
                         >
-                          Phụ thu {formatVND(order.surchargeAmount)}
+                          {surchargeTagLabel(order.surchargeTag, surchargeTags)} {formatVND(order.surchargeAmount)}
                         </Badge>
                       ) : null}
                       {order.createdBy ? (
