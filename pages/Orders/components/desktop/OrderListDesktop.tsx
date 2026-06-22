@@ -206,6 +206,17 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                           KM −{formatVND(order.discountAmount)}
                         </Badge>
                       ) : null}
+                      {order.surchargeAmount && order.surchargeAmount > 0 ? (
+                        <Badge
+                          size="sm"
+                          layoutClassName="px-2 py-0.5 text-[11px] font-semibold"
+                          borderClassName="border-primary-200 dark:border-primary-800"
+                          backgroundClassName="bg-primary-50 dark:bg-primary-900/30"
+                          textClassName="text-primary-700 dark:text-primary-300"
+                        >
+                          Phụ thu {formatVND(order.surchargeAmount)}
+                        </Badge>
+                      ) : null}
                       {order.createdBy ? (
                         <Typography
                           as="span"

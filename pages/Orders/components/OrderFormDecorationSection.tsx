@@ -1,59 +1,63 @@
-import React, { useMemo, useState } from 'react';
-import { Sparkles, Plus, Trash2 } from 'lucide-react';
-import { OrderDecoration } from '@/types/order';
-import { MaterialPriceOption } from '@/services/stockReceiptService';
+import React, { useMemo } from 'react';
+import { Sparkles, Pencil } from 'lucide-react';
+import { SurchargeTag, SURCHARGE_TAGS, surchargeTagLabel } from '@/types/order';
+import { allocateSurcharge } from '@/utils/order/orderUtils';
+import { formatVND } from '@/utils/format/currencyUtil';
+import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
-import IconButton from '@/components/ui/IconButton';
 import Input from '@/components/ui/Input';
+import Label from '@/components/ui/Label';
+import Select from '@/components/ui/Select';
 import Typography from '@/components/ui/Typography';
-import MaterialPickerModal from '@/pages/Orders/components/MaterialPickerModal';
-import { formatVND } from '@/utils/format/currencyUtil';
 
-interface Props {
-  materials: MaterialPriceOption[];
-  decorations: OrderDecoration[];
-  onChange: (decorations: OrderDecoration[]) => void;
+/** Dòng SP tối thiểu để tính + hiển thị preview chia phụ thu. */
+export interface SurchargeItem {
+  name: string;
+  quantity: number;
 }
 
-const OrderFormDecorationSection: React.FC<Props> = ({ materials, decorations, onChange }) => {
-  const [pickerOpen, setPickerOpen] = useState(false);
+interface Props {
+  surchargeAmount: number;
+  surchargeTag?: SurchargeTag;
+  items: SurchargeItem[];
+  onAmountChange: (amount: number) => void;
+  onTagChange: (tag: SurchargeTag | undefined) => void;
+}
 
-  // Map materialId → tổng SL trong đơn (cho badge ×N trong modal)
-  const currentQuantities = useMemo(() => {
-    const map: Record<string, number> = {};
-    decorations.forEach((d) => {
-      map[d.materialId] = (map[d.materialId] ?? 0) + d.quantity;
-    });
-    return map;
-  }, [decorations]);
+const OrderFormDecorationSection: React.FC<Props> = ({
+  surchargeAmount,
+  surchargeTag,
+  items,
+  onAmountChange,
+  onTagChange,
+}) => {
+  const totalQty = useMemo(
+    () => items.reduce((s, it) => s + Number(it.quantity || 0), 0),
+    [items],
+  );
 
-  // Bấm chọn nguyên liệu: đã có → +1, chưa có → thêm dòng mới (giá nhập TB)
-  const handlePick = (m: MaterialPriceOption) => {
-    const idx = decorations.findIndex((d) => d.materialId === m.id);
-    if (idx >= 0) {
-      onChange(decorations.map((d, i) => (i === idx ? { ...d, quantity: d.quantity + 1 } : d)));
-    } else {
-      onChange([...decorations, { materialId: m.id, name: m.name, quantity: 1, price: m.unitPrice }]);
-    }
+  // Chia phụ thu theo qty (preview) — khớp BE allocateSurcharge.
+  const shares = useMemo(
+    () => allocateSurcharge(surchargeAmount, items),
+    [surchargeAmount, items],
+  );
+
+  const perProduct = totalQty > 0 ? Math.round(surchargeAmount / totalQty) : 0;
+
+  // "Sửa tay": tổng phụ thu khác mức gợi ý của nhãn đang chọn.
+  const presetOfTag = SURCHARGE_TAGS.find((s) => s.value === surchargeTag)?.preset;
+  const isManual =
+    surchargeTag != null && presetOfTag != null && surchargeAmount !== presetOfTag;
+
+  // Bấm chip preset: điền cả nhãn + mức gợi ý.
+  const handlePreset = (tag: SurchargeTag, preset: number) => {
+    onTagChange(tag);
+    onAmountChange(preset);
   };
 
-  const handleDecrement = (materialId: string) => {
-    const idx = decorations.findIndex((d) => d.materialId === materialId);
-    if (idx < 0) return;
-    const cur = decorations[idx];
-    if (cur.quantity <= 1) onChange(decorations.filter((_, i) => i !== idx));
-    else onChange(decorations.map((d, i) => (i === idx ? { ...d, quantity: d.quantity - 1 } : d)));
-  };
-
-  const handleRemove = (index: number) => onChange(decorations.filter((_, i) => i !== index));
-
-  const updateRow = (index: number, patch: Partial<OrderDecoration>) =>
-    onChange(decorations.map((d, i) => (i === index ? { ...d, ...patch } : d)));
-
-  const totalQty = decorations.reduce((s, d) => s + d.quantity, 0);
-  const total = decorations.reduce((s, d) => s + d.price * d.quantity, 0);
+  const hasSurcharge = surchargeAmount > 0;
 
   return (
     <Box layoutClassName="space-y-3">
@@ -62,99 +66,158 @@ const OrderFormDecorationSection: React.FC<Props> = ({ materials, decorations, o
         layoutClassName="flex items-center gap-2 uppercase tracking-wider"
         textClassName="text-sm font-semibold"
       >
-        <Sparkles className="h-4 w-4 text-primary-500" /> Trang trí thêm
+        <Sparkles className="h-4 w-4 text-primary-500" /> Phụ thu
       </Heading>
 
-      <Button
-        type="button"
-        variant="secondary"
-        fullWidth
-        onClick={() => setPickerOpen(true)}
-        layoutClassName="rounded-xl py-3"
-        borderClassName="border-2 border-dashed border-slate-300 dark:border-slate-600"
-        hoverClassName="hover:border-primary-400 hover:bg-primary-50 dark:hover:border-primary-700 dark:hover:bg-primary-950/30"
-        leftIcon={<Plus className="h-4 w-4" />}
-      >
-        <Typography as="span" size="sm" layoutClassName="font-medium">Thêm trang trí</Typography>
-        {totalQty > 0 ? (
-          <Box
-            layoutClassName="ml-1 inline-flex rounded-full px-2 py-0.5"
-            backgroundClassName="bg-primary-100 dark:bg-primary-900/40"
-          >
-            <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-primary-700 dark:text-primary-300">{totalQty}</Typography>
-          </Box>
-        ) : null}
-      </Button>
-
-      {decorations.length > 0 ? (
-        <Box layoutClassName="space-y-2">
-          {decorations.map((d, idx) => {
-            const lineTotal = d.price * d.quantity;
-            return (
-              <Box
-                key={`${d.materialId}-${idx}`}
-                layoutClassName="rounded-xl border border-slate-100 p-3 dark:border-slate-700"
-                backgroundClassName="bg-slate-50 dark:bg-slate-700/30"
+      <Box layoutClassName="flex flex-col gap-3 sm:flex-row">
+        <Box layoutClassName="min-w-0 sm:flex-[1.2]">
+          <Label htmlFor="order-form-surcharge-amount">
+            Tổng phụ thu (cả đơn)
+            {isManual ? (
+              <Badge
+                size="sm"
+                layoutClassName="ml-2 align-middle"
+                borderClassName="border-slate-200 dark:border-slate-600"
+                backgroundClassName="bg-slate-100 dark:bg-slate-700"
+                textClassName="text-slate-500 dark:text-slate-300"
               >
-                <Box layoutClassName="flex items-center gap-3">
-                  <Box layoutClassName="min-w-0 flex-1">
-                    <Typography size="sm" layoutClassName="truncate font-semibold">{d.name}</Typography>
-                    <Typography size="xs" textClassName="text-slate-400 dark:text-slate-500">
-                      {d.quantity} × {formatVND(d.price)} = <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-primary-600 dark:text-primary-400">{formatVND(lineTotal)}</Typography>
-                    </Typography>
-                  </Box>
+                <Pencil className="h-3 w-3" /> sửa tay
+              </Badge>
+            ) : null}
+          </Label>
+          <Input
+            id="order-form-surcharge-amount"
+            type="number"
+            min={0}
+            step={1000}
+            value={surchargeAmount}
+            onChange={(e) => onAmountChange(Math.max(0, Number(e.target.value) || 0))}
+            sizeClassName="py-2 text-right text-sm font-semibold"
+          />
+        </Box>
+        <Box layoutClassName="min-w-0 sm:flex-1">
+          <Label htmlFor="order-form-surcharge-tag">Nhãn</Label>
+          <Select
+            id="order-form-surcharge-tag"
+            fullWidth
+            value={surchargeTag ?? ''}
+            onChange={(e) =>
+              onTagChange(e.target.value ? (e.target.value as SurchargeTag) : undefined)
+            }
+          >
+            <option value="">— Chọn nhãn —</option>
+            {SURCHARGE_TAGS.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </Select>
+        </Box>
+      </Box>
 
-                  <Box layoutClassName="w-24">
-                    <Input
-                      type="number"
-                      min={0}
-                      step={1000}
-                      value={d.price}
-                      onChange={(e) => updateRow(idx, { price: Math.max(0, Number(e.target.value) || 0) })}
-                      sizeClassName="py-1.5 text-right text-sm"
-                    />
-                  </Box>
-                  <Box layoutClassName="w-16">
-                    <Input
-                      type="number"
-                      min={1}
-                      value={d.quantity}
-                      onChange={(e) => updateRow(idx, { quantity: Math.max(1, Math.floor(Number(e.target.value) || 1)) })}
-                      sizeClassName="py-1.5 text-center text-sm"
-                    />
-                  </Box>
-                  <IconButton
-                    type="button"
-                    label="Xoá trang trí"
-                    variant="ghost"
-                    layoutClassName="shrink-0 rounded-lg"
-                    hoverClassName="hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                    onClick={() => handleRemove(idx)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </IconButton>
-                </Box>
-              </Box>
-            );
-          })}
+      <Box layoutClassName="flex flex-wrap gap-2">
+        {SURCHARGE_TAGS.map((s) => {
+          const active = surchargeTag === s.value;
+          return (
+            <Button
+              key={s.value}
+              type="button"
+              variant="ghost"
+              onClick={() => handlePreset(s.value, s.preset)}
+              sizeClassName="px-3 py-1"
+              roundedClassName="rounded-full"
+              shadowClassName=""
+              borderClassName={
+                active
+                  ? 'border border-primary-300 dark:border-primary-700'
+                  : 'border border-slate-200 dark:border-slate-600'
+              }
+              backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
+              textClassName={
+                active
+                  ? 'text-xs font-medium text-primary-700 dark:text-primary-300'
+                  : 'text-xs font-medium text-slate-600 dark:text-slate-300'
+              }
+              hoverClassName="hover:border-primary-300 dark:hover:border-primary-700"
+              stateClassName="transition-colors"
+            >
+              {s.label}
+              <Typography
+                as="span"
+                size="xs"
+                layoutClassName="ml-1"
+                textClassName={active ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500'}
+              >
+                · {s.preset > 0 ? formatVND(s.preset) : '0đ'}
+              </Typography>
+            </Button>
+          );
+        })}
+      </Box>
 
-          <Box layoutClassName="flex items-center justify-between px-1">
-            <Typography size="sm" variant="muted">Tổng trang trí</Typography>
-            <Typography size="sm" layoutClassName="font-bold" textClassName="text-primary-600 dark:text-primary-400">
-              {formatVND(total)}
+      {hasSurcharge ? (
+        <Box
+          layoutClassName="space-y-2 rounded-xl p-3"
+          borderClassName="border border-dashed border-primary-300 dark:border-primary-700"
+          backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+        >
+          <Box layoutClassName="flex items-center justify-between gap-2">
+            <Box layoutClassName="flex items-center gap-2">
+              <Badge
+                size="sm"
+                borderClassName="border-primary-300 dark:border-primary-700"
+                backgroundClassName="bg-white dark:bg-slate-800"
+                textClassName="text-primary-700 dark:text-primary-300"
+              >
+                <Sparkles className="h-3 w-3" /> {surchargeTagLabel(surchargeTag)}
+              </Badge>
+              <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-primary-700 dark:text-primary-300">
+                chia đều
+              </Typography>
+            </Box>
+            <Typography as="span" size="sm" layoutClassName="font-bold" textClassName="text-primary-700 dark:text-primary-300">
+              {formatVND(surchargeAmount)}
             </Typography>
           </Box>
-        </Box>
-      ) : null}
 
-      <MaterialPickerModal
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        materials={materials}
-        currentQuantities={currentQuantities}
-        onPick={handlePick}
-        onDecrement={handleDecrement}
-      />
+          {totalQty > 0 ? (
+            <>
+              <Typography as="p" size="xs" textClassName="text-primary-600 dark:text-primary-400">
+                {formatVND(surchargeAmount)} ÷ {totalQty} sản phẩm ≈ {formatVND(perProduct)}/SP · làm tròn, dồn dư vào SP cuối
+              </Typography>
+              <Box
+                layoutClassName="space-y-1 pt-2"
+                borderClassName="border-t border-primary-200 dark:border-primary-800"
+              >
+                {items.map((it, idx) => (
+                  <Box key={`${it.name}-${idx}`} layoutClassName="flex items-center justify-between gap-2">
+                    <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-300">
+                      {it.name} × {it.quantity}
+                    </Typography>
+                    <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-primary-700 dark:text-primary-300">
+                      +{formatVND(shares[idx] ?? 0)}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </>
+          ) : (
+            <Typography as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">
+              Thêm sản phẩm để chia phụ thu theo từng món.
+            </Typography>
+          )}
+        </Box>
+      ) : (
+        <Box
+          layoutClassName="rounded-lg p-3 text-center"
+          borderClassName="border border-slate-200 dark:border-slate-700"
+          backgroundClassName="bg-slate-50 dark:bg-slate-800/40"
+        >
+          <Typography as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">
+            Chọn nhãn để điền mức gợi ý, hoặc nhập tổng tay. Phụ thu sẽ tự chia đều cho các sản phẩm.
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 };

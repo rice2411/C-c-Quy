@@ -6,19 +6,51 @@ import { UserData, UserRole } from '@/types/user';
 import { parseDateValue } from '../format/dateUtil';
 
 /**
+ * Chia phụ thu tổng đơn theo số lượng từng dòng SP — thuật toán PHẢI khớp BE.
+ * Làm tròn tới đồng (Math.round), dồn phần dư vào SP CUỐI để tổng share = total.
+ * Σqty === 0 → trả mảng rỗng (phụ thu vẫn ở cấp đơn, không chia được).
+ *
+ * @param total - Tổng phụ thu (VND)
+ * @param items - Danh sách dòng có `quantity`
+ * @returns Mảng tiền phụ thu cho từng dòng (cùng thứ tự, cùng độ dài items)
+ */
+export const allocateSurcharge = (
+  total: number,
+  items: { quantity: number }[],
+): number[] => {
+  const totalNum = Number(total) || 0;
+  const totalQty = items.reduce((s, it) => s + Number(it.quantity || 0), 0);
+  if (totalQty <= 0 || totalNum <= 0) return items.map(() => 0);
+
+  const shares: number[] = [];
+  let running = 0;
+  for (let i = 0; i < items.length - 1; i++) {
+    const share = Math.round((totalNum * Number(items[i].quantity || 0)) / totalQty);
+    shares.push(share);
+    running += share;
+  }
+  // SP cuối gánh phần dư để tổng khớp đúng total
+  shares.push(totalNum - running);
+  return shares;
+};
+
+/**
  * Tính tổng giá trị đơn hàng từ items và shipping cost
  * @param items - Danh sách items trong đơn hàng
  * @param shippingCost - Chi phí vận chuyển
+ * @param decorations - Trang trí cũ (đơn cũ, backward compat)
+ * @param surchargeAmount - Phụ thu tổng đơn (mô hình mới) — cộng vào subtotal trước giảm
  * @returns Tổng giá trị đơn hàng
  */
 export const calculateOrderTotal = (
   items: OrderItem[],
   shippingCost: number = 0,
   decorations: OrderDecoration[] = [],
+  surchargeAmount: number = 0,
 ): number => {
   const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0);
   const decorationsTotal = decorations.reduce((sum, d) => sum + (Number(d.price) * Number(d.quantity)), 0);
-  return subtotal + Number(shippingCost) + decorationsTotal;
+  return subtotal + Number(shippingCost) + decorationsTotal + Number(surchargeAmount || 0);
 };
 
 /**
@@ -30,7 +62,12 @@ export const getOrderTotal = (order: Order): number => {
   if (order.total && order.total > 0) {
     return Number(order.total);
   }
-  return calculateOrderTotal(order.items || [], order.shippingCost || 0, order.decorations || []);
+  return calculateOrderTotal(
+    order.items || [],
+    order.shippingCost || 0,
+    order.decorations || [],
+    order.surchargeAmount || 0,
+  );
 };
 
 /**
