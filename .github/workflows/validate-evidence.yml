@@ -1,0 +1,92 @@
+name: validate-evidence
+
+# Gác cổng "Evidence" của CucQuy:
+#   • ISSUE  → bắt buộc có Evidence TRƯỚC (ảnh hoặc code/diff).  (comment + label needs-evidence)
+#   • PR/MR  → bắt buộc Evidence TRƯỚC + SAU (ảnh hoặc code/diff).  (FAIL check nếu thiếu)
+# BỎ QUA: PR promote (head = staging/production) hoặc PR có nhãn `skip-evidence`.
+
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const MARK = '<!-- evidence-bot -->';
+            const isPR = context.eventName === 'pull_request_target';
+            const obj = isPR ? context.payload.pull_request : context.payload.issue;
+            const num = obj.number;
+            const body = obj.body || '';
+
+            // --- heuristics ---
+            const hasImg  = /!\[[^\]]*\]\([^)]+\)/.test(body) || /<img\s/i.test(body);
+            const hasCode = /```/.test(body);
+            const hasEvd  = /(evidence|bằng chứng|📸)/i.test(body);
+            const hasBefore = /(trước|before)/i.test(body);
+            const hasAfter  = /(sau|after)/i.test(body);
+            const proof = hasImg || hasCode;
+
+            async function setComment(text) {
+              const list = await github.rest.issues.listComments(
+                { ...context.repo, issue_number: num, per_page: 100 });
+              const mine = list.data.find(c => (c.body || '').includes(MARK));
+              const full = `${MARK}\n${text}`;
+              if (mine) await github.rest.issues.updateComment({ ...context.repo, comment_id: mine.id, body: full });
+              else      await github.rest.issues.createComment({ ...context.repo, issue_number: num, body: full });
+            }
+            async function clearComment() {
+              const list = await github.rest.issues.listComments(
+                { ...context.repo, issue_number: num, per_page: 100 });
+              const mine = list.data.find(c => (c.body || '').includes(MARK));
+              if (mine) await github.rest.issues.updateComment(
+                { ...context.repo, comment_id: mine.id, body: `${MARK}\n✅ Evidence hợp lệ.` });
+            }
+
+            if (isPR) {
+              const head = context.payload.pull_request.head.ref;
+              const labels = (context.payload.pull_request.labels || []).map(l => l.name);
+              const PROMO = ['staging', 'production'];
+              if (PROMO.includes(head) || labels.includes('skip-evidence')) {
+                core.info('Bỏ qua: PR promote hoặc skip-evidence.');
+                return;
+              }
+              const ok = hasEvd && hasBefore && hasAfter && proof;
+              if (!ok) {
+                const miss = [];
+                if (!hasEvd)    miss.push('mục **Evidence**');
+                if (!hasBefore) miss.push('phần **TRƯỚC/before**');
+                if (!hasAfter)  miss.push('phần **SAU/after**');
+                if (!proof)     miss.push('**ảnh `![](...)`** hoặc **code/diff ```**');
+                await setComment(
+                  `❌ **Thiếu Evidence cho MR.** Cần: ${miss.join(', ')}.\n` +
+                  `MR phải có Evidence **TRƯỚC + SAU** (UI: ảnh before+after; BE/refactor: code/diff trước-sau). ` +
+                  `PR promote/sync hoặc nhãn \`skip-evidence\` được miễn.`);
+                core.setFailed('MR thiếu Evidence TRƯỚC+SAU.');
+              } else {
+                await clearComment();
+              }
+            } else {
+              // ISSUE: cần Evidence TRƯỚC (ảnh hoặc code)
+              const ok = hasEvd && hasBefore && proof;
+              const LBL = 'needs-evidence';
+              if (!ok) {
+                await setComment(
+                  `⚠️ **Issue thiếu Evidence TRƯỚC.** Cần mục **Evidence** + phần **TRƯỚC/before** + ` +
+                  `**ảnh** hoặc **code/diff hiện trạng**. (UI→ảnh; BE/refactor→snippet/diff.)`);
+                try { await github.rest.issues.addLabels({ ...context.repo, issue_number: num, labels: [LBL] }); } catch (e) {}
+              } else {
+                try { await github.rest.issues.removeLabel({ ...context.repo, issue_number: num, name: LBL }); } catch (e) {}
+                await clearComment();
+              }
+            }
