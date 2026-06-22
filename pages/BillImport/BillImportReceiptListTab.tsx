@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Camera, FileText, RotateCw, Upload } from 'lucide-react';
+import { Camera, FileText, PencilLine, RotateCw, Upload } from 'lucide-react';
 import type { SavedStockReceiptSummary } from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -28,6 +28,8 @@ export interface BillImportReceiptListTabProps {
   filteredReceipts: SavedStockReceiptSummary[];
   onRowClick: (receiptId: string) => void;
   onFileSelected?: (file: File | undefined) => void;
+  /** Mở form nhập phiếu THỦ CÔNG (bill viết tay — không OCR). */
+  onStartManual?: () => void;
 }
 
 const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
@@ -38,6 +40,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
   filteredReceipts,
   onRowClick,
   onFileSelected,
+  onStartManual,
 }) => {
   const { t } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -87,7 +90,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
                 Nhập bill mới
               </Typography>
               <Typography size="xs" variant="muted" layoutClassName="mt-0.5">
-                Chụp ảnh hoặc tải ảnh hoá đơn — hệ thống tự đọc OCR và chuẩn hoá thành phiếu nhập.
+                Chụp / tải ảnh hoá đơn để OCR tự đọc, hoặc nhập thủ công khi bill viết tay.
               </Typography>
             </Box>
             <Box layoutClassName="flex flex-wrap items-center gap-2">
@@ -116,6 +119,19 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
               >
                 Tải ảnh lên
               </Button>
+              {onStartManual ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => onStartManual()}
+                  leftIcon={<PencilLine />}
+                  iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                  sizeClassName="px-4 py-2"
+                  layoutClassName="inline-flex items-center gap-2 whitespace-nowrap"
+                >
+                  Nhập thủ công
+                </Button>
+              ) : null}
             </Box>
           </Box>
         </Card>
@@ -181,6 +197,19 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
                   >
                     Tải ảnh lên
                   </Button>
+                  {onStartManual ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      sizeClassName="px-3 py-1.5 text-xs"
+                      onClick={() => onStartManual()}
+                      leftIcon={<PencilLine />}
+                      iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                      layoutClassName="inline-flex items-center gap-1.5"
+                    >
+                      Nhập thủ công
+                    </Button>
+                  ) : null}
                 </Box>
               ) : null}
             </Box>
@@ -199,14 +228,19 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
                 {filteredReceipts.map((row) => (
                   <TableRow
                     key={row.id}
-                    className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                    layoutClassName="cursor-pointer"
+                    hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-800/60"
                     onClick={() => void onRowClick(row.id)}
                   >
                     <TableCell>
                       {row.invoiceNumber ? (
-                        <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                        <Typography
+                          as="span"
+                          layoutClassName="rounded-md bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800"
+                          textClassName="font-mono text-xs text-slate-700 dark:text-slate-200"
+                        >
                           {row.invoiceNumber}
-                        </span>
+                        </Typography>
                       ) : (
                         '—'
                       )}
