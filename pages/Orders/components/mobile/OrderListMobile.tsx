@@ -2,6 +2,8 @@ import React from 'react';
 import { CalendarDays, ChevronRight, MapPin, Package, Phone, User } from 'lucide-react';
 import { PAYMENT_STATUS_COLORS, STATUS_COLORS } from '@/constant/order';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
+import { surchargeTagLabel } from '@/types/order';
 import { Order } from '@/types';
 import { DeliveryType } from '@/types/enums';
 
@@ -26,6 +28,7 @@ interface OrderListMobileProps {
 
 const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder }) => {
   const { t } = useLanguage();
+  const { surchargeTags } = useSurchargeTags();
 
   const getItemCount = (order: Order) =>
     order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
@@ -188,7 +191,7 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                       backgroundClassName="bg-primary-50 dark:bg-primary-900/30"
                       textClassName="text-primary-700 dark:text-primary-300"
                     >
-                      Phụ thu {formatVND(order.surchargeAmount)}
+                      {surchargeTagLabel(order.surchargeTag, surchargeTags)} {formatVND(order.surchargeAmount)}
                     </Badge>
                   ) : null}
                 </Box>

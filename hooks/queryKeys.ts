@@ -31,6 +31,9 @@ export const qk = {
   badges: {
     all: ['badges'] as const,
   },
+  surchargeTags: {
+    all: ['surcharge-tags'] as const,
+  },
   promotions: {
     all: ['promotions'] as const,
     preview: (params: unknown) => ['promotions', 'preview', params] as const,
