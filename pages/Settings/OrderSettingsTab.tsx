@@ -4,6 +4,7 @@ import Box from '@/components/ui/Box';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import ShippingSettingsTab from '@/pages/Settings/ShippingSettingsTab';
+import SurchargeTagsTab from '@/pages/Settings/SurchargeTagsTab';
 
 /**
  * Container cho mọi cài đặt liên quan đến đơn hàng.
@@ -23,6 +24,7 @@ const OrderSettingsTab: React.FC = () => {
       </Box>
 
       <ShippingSettingsTab />
+      <SurchargeTagsTab />
     </Box>
   );
 };

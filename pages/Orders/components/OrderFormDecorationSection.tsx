@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Sparkles, Pencil } from 'lucide-react';
-import { SurchargeTag, SURCHARGE_TAGS, surchargeTagLabel } from '@/types/order';
+import type { SurchargeTag } from '@/types/surchargeTag';
+import { surchargeTagLabel } from '@/types/surchargeTag';
 import { allocateSurcharge } from '@/utils/order/orderUtils';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Badge from '@/components/ui/Badge';
@@ -20,15 +21,19 @@ export interface SurchargeItem {
 
 interface Props {
   surchargeAmount: number;
-  surchargeTag?: SurchargeTag;
+  /** `key` của tag đang chọn (đơn lưu string). */
+  surchargeTag?: string;
+  /** Danh sách tag động (đã lọc active, sort sortOrder ở caller). */
+  surchargeTags: SurchargeTag[];
   items: SurchargeItem[];
   onAmountChange: (amount: number) => void;
-  onTagChange: (tag: SurchargeTag | undefined) => void;
+  onTagChange: (tag: string | undefined) => void;
 }
 
 const OrderFormDecorationSection: React.FC<Props> = ({
   surchargeAmount,
   surchargeTag,
+  surchargeTags,
   items,
   onAmountChange,
   onTagChange,
@@ -47,12 +52,14 @@ const OrderFormDecorationSection: React.FC<Props> = ({
   const perProduct = totalQty > 0 ? Math.round(surchargeAmount / totalQty) : 0;
 
   // "Sửa tay": tổng phụ thu khác mức gợi ý của nhãn đang chọn.
-  const presetOfTag = SURCHARGE_TAGS.find((s) => s.value === surchargeTag)?.preset;
+  const presetOfTag = surchargeTags.find((s) => s.key === surchargeTag)?.preset;
   const isManual =
     surchargeTag != null && presetOfTag != null && surchargeAmount !== presetOfTag;
 
+  const hasTags = surchargeTags.length > 0;
+
   // Bấm chip preset: điền cả nhãn + mức gợi ý.
-  const handlePreset = (tag: SurchargeTag, preset: number) => {
+  const handlePreset = (tag: string, preset: number) => {
     onTagChange(tag);
     onAmountChange(preset);
   };
@@ -100,14 +107,15 @@ const OrderFormDecorationSection: React.FC<Props> = ({
           <Select
             id="order-form-surcharge-tag"
             fullWidth
+            disabled={!hasTags}
             value={surchargeTag ?? ''}
             onChange={(e) =>
-              onTagChange(e.target.value ? (e.target.value as SurchargeTag) : undefined)
+              onTagChange(e.target.value ? e.target.value : undefined)
             }
           >
-            <option value="">— Chọn nhãn —</option>
-            {SURCHARGE_TAGS.map((s) => (
-              <option key={s.value} value={s.value}>
+            <option value="">{hasTags ? '— Chọn nhãn —' : '— Chưa có nhãn —'}</option>
+            {surchargeTags.map((s) => (
+              <option key={s.key} value={s.key}>
                 {s.label}
               </option>
             ))}
@@ -116,14 +124,14 @@ const OrderFormDecorationSection: React.FC<Props> = ({
       </Box>
 
       <Box layoutClassName="flex flex-wrap gap-2">
-        {SURCHARGE_TAGS.map((s) => {
-          const active = surchargeTag === s.value;
+        {surchargeTags.map((s) => {
+          const active = surchargeTag === s.key;
           return (
             <Button
-              key={s.value}
+              key={s.key}
               type="button"
               variant="ghost"
-              onClick={() => handlePreset(s.value, s.preset)}
+              onClick={() => handlePreset(s.key, s.preset)}
               sizeClassName="px-3 py-1"
               roundedClassName="rounded-full"
               shadowClassName=""
@@ -169,7 +177,7 @@ const OrderFormDecorationSection: React.FC<Props> = ({
                 backgroundClassName="bg-white dark:bg-slate-800"
                 textClassName="text-primary-700 dark:text-primary-300"
               >
-                <Sparkles className="h-3 w-3" /> {surchargeTagLabel(surchargeTag)}
+                <Sparkles className="h-3 w-3" /> {surchargeTagLabel(surchargeTag, surchargeTags)}
               </Badge>
               <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-primary-700 dark:text-primary-300">
                 chia đều
