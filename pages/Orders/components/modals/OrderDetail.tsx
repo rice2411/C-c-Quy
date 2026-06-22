@@ -29,6 +29,7 @@ import { ORDER_EDIT_DENIED } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber } from '@/services/transactionService';
 import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction } from '@/types';
 import { surchargeTagLabel } from '@/types/order';
+import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { allocateSurcharge, generateQRCodeImage, getOrderTotal } from '@/utils/order/orderUtils';
 import { Sparkles } from 'lucide-react';
@@ -65,6 +66,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 }) => {
   const { t } = useLanguage();
   const { currentUser } = useAuth();
+  const { surchargeTags } = useSurchargeTags();
   const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPayment, setUpdatingPayment] = useState(false);
@@ -479,7 +481,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                            backgroundClassName="bg-white dark:bg-slate-800"
                            textClassName="text-primary-700 dark:text-primary-300"
                          >
-                           <Sparkles className="h-3 w-3" /> {surchargeTagLabel(currentOrder.surchargeTag)}
+                           <Sparkles className="h-3 w-3" /> {surchargeTagLabel(currentOrder.surchargeTag, surchargeTags)}
                          </Badge>
                          <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">{formatVND(currentOrder.surchargeAmount)}</Typography>
                        </Box>
@@ -500,7 +502,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                        <Box layoutClassName="flex items-center justify-between" textClassName="text-sm text-primary-600 dark:text-primary-400">
                          <Typography as="span" size="sm">
                            {t('detail.surcharge')}
-                           <Typography as="span" size="xs" layoutClassName="ml-1.5" textClassName="text-slate-400 dark:text-slate-500">· {surchargeTagLabel(currentOrder.surchargeTag)}</Typography>
+                           <Typography as="span" size="xs" layoutClassName="ml-1.5" textClassName="text-slate-400 dark:text-slate-500">· {surchargeTagLabel(currentOrder.surchargeTag, surchargeTags)}</Typography>
                          </Typography>
                          <Typography as="span" size="sm">+{formatVND(currentOrder.surchargeAmount)}</Typography>
                        </Box>

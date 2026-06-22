@@ -16,7 +16,8 @@ import { getNextOrderNumber } from '@/services/orderService';
 import { fetchCommissionGroups } from '@/services/commissionGroupService';
 import { calcItemCommission } from '@/types/commissionGroup';
 import { getUserByUid } from '@/services/userService';
-import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product, SurchargeTag } from '@/types/index';
+import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product } from '@/types/index';
+import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -79,7 +80,17 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
 
   // Phụ thu cả đơn (mô hình mới) — 1 tổng + 1 nhãn, tự chia theo SL sản phẩm.
   const [surchargeAmount, setSurchargeAmount] = useState(0);
-  const [surchargeTag, setSurchargeTag] = useState<SurchargeTag | undefined>(undefined);
+  const [surchargeTag, setSurchargeTag] = useState<string | undefined>(undefined);
+
+  // Tag phụ thu động (Cài đặt đơn hàng) — chỉ hiện active, theo sortOrder.
+  const { surchargeTags: allSurchargeTags } = useSurchargeTags();
+  const activeSurchargeTags = useMemo(
+    () =>
+      allSurchargeTags
+        .filter((tg) => tg.active)
+        .sort((a, b) => a.sortOrder - b.sortOrder),
+    [allSurchargeTags],
+  );
 
   const [shippingCost, setShippingCost] = useState(0);
   const [shipInfo, setShipInfo] = useState<NonNullable<Order['shipInfo']> | null>(null);
@@ -705,6 +716,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
             <OrderFormDecorationSection
               surchargeAmount={surchargeAmount}
               surchargeTag={surchargeTag}
+              surchargeTags={activeSurchargeTags}
               items={items.map((i) => ({ name: i.productName || 'Sản phẩm', quantity: Number(i.quantity) }))}
               onAmountChange={setSurchargeAmount}
               onTagChange={setSurchargeTag}
