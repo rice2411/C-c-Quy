@@ -16,8 +16,7 @@ import { getNextOrderNumber } from '@/services/orderService';
 import { fetchCommissionGroups } from '@/services/commissionGroupService';
 import { calcItemCommission } from '@/types/commissionGroup';
 import { getUserByUid } from '@/services/userService';
-import { fetchMaterialPriceOptions, MaterialPriceOption } from '@/services/stockReceiptService';
-import { DeliveryType, Order, OrderDecoration, OrderStatus, PaymentMethod, PaymentStatus, Product } from '@/types/index';
+import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product, SurchargeTag } from '@/types/index';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -78,15 +77,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   // Products: lấy từ React Query (P2 useProducts) thay vì tự fetch.
   const { products } = useProducts();
 
-  // Trang trí thêm: vật phẩm chọn từ nguyên liệu (materials) — React Query.
-  const { data: materialsData } = useQuery({
-    queryKey: qk.stockReceipt.materialPriceOptions,
-    queryFn: fetchMaterialPriceOptions,
-    enabled: !!currentUser && isOpen,
-  });
-  const materials: MaterialPriceOption[] = materialsData ?? [];
-
-  const [decorations, setDecorations] = useState<OrderDecoration[]>([]);
+  // Phụ thu cả đơn (mô hình mới) — 1 tổng + 1 nhãn, tự chia theo SL sản phẩm.
+  const [surchargeAmount, setSurchargeAmount] = useState(0);
+  const [surchargeTag, setSurchargeTag] = useState<SurchargeTag | undefined>(undefined);
 
   const [shippingCost, setShippingCost] = useState(0);
   const [shipInfo, setShipInfo] = useState<NonNullable<Order['shipInfo']> | null>(null);
@@ -155,7 +148,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setShippingCost(initialData.shippingCost || 0);
       setShipInfo(initialData.shipInfo ?? null);
       setIsTest(!!initialData.isTest);
-      setDecorations(initialData.decorations ?? []);
+      setSurchargeAmount(initialData.surchargeAmount ?? 0);
+      setSurchargeTag(initialData.surchargeTag);
       // Điền lại mã + chiến dịch đã áp để sửa đơn không mất khuyến mãi.
       setPromoCode(initialData.appliedPromotions?.find((p) => p.code)?.code ?? '');
       setSelectedPromoIds((initialData.appliedPromotions ?? []).map((p) => p.promotionId));
@@ -195,7 +189,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setDeliveryType(DeliveryType.SHIP);
       setItems([]);
       setIsTest(false);
-      setDecorations([]);
+      setSurchargeAmount(0);
+      setSurchargeTag(undefined);
       setPromoCode('');
       setPromoPreview(null);
       setSelectedPromoIds([]);
@@ -324,10 +319,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
     }));
   };
 
-  // Tổng tiền hàng TRƯỚC giảm (items + decorations).
+  // Tổng tiền hàng TRƯỚC giảm (items + phụ thu cả đơn).
   const subtotal =
     items.reduce((sum, item) => sum + Number(item.unitPrice) * Number(item.quantity), 0) +
-    decorations.reduce((sum, d) => sum + Number(d.price) * Number(d.quantity), 0);
+    Number(surchargeAmount || 0);
   const discountAmount = promoPreview?.discountAmount ?? 0;
   const total = Math.max(0, subtotal + Number(shippingCost) - discountAmount);
 
@@ -353,7 +348,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         items: items
           .filter((i) => i.productId)
           .map((i) => ({ productId: i.productId, price: Number(i.unitPrice), quantity: Number(i.quantity) })),
-        decorations: decorations.map((d) => ({ price: Number(d.price), quantity: Number(d.quantity) })),
+        surchargeAmount: Number(surchargeAmount || 0),
+        surchargeTag: surchargeTag,
         shippingCost: Number(shippingCost),
         code: code.trim() || undefined,
         promotionIds: ids,
@@ -382,7 +378,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       clearTimeout(t);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, decorations, shippingCost, selectedPromoIds]);
+  }, [items, surchargeAmount, surchargeTag, shippingCost, selectedPromoIds]);
 
   const handlePreviewPromo = () => void runPreview(selectedPromoIds, promoCode, false);
 
@@ -497,7 +493,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
           address: address,
         },
         items: finalItems,
-        decorations: decorations,
+        surchargeAmount: Number(surchargeAmount || 0),
+        ...(surchargeTag ? { surchargeTag } : {}),
         shippingCost: Number(shippingCost),
         shipInfo: shipInfo ?? undefined,
         subtotal: subtotal,
@@ -706,9 +703,11 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
             <hr className="border-slate-100 dark:border-slate-700" />
 
             <OrderFormDecorationSection
-              materials={materials}
-              decorations={decorations}
-              onChange={setDecorations}
+              surchargeAmount={surchargeAmount}
+              surchargeTag={surchargeTag}
+              items={items.map((i) => ({ name: i.productName || 'Sản phẩm', quantity: Number(i.quantity) }))}
+              onAmountChange={setSurchargeAmount}
+              onTagChange={setSurchargeTag}
             />
 
             <hr className="border-slate-100 dark:border-slate-700" />
