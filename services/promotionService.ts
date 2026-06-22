@@ -1,5 +1,6 @@
 import { apiClient } from '@/services/api/client';
 import { ComputeResult, Promotion } from '@/types/promotion';
+import { SurchargeTag } from '@/types/order';
 
 const PATH = '/promotions';
 
@@ -29,7 +30,12 @@ export const deletePromotion = async (id: string): Promise<void> => {
 /** Tính trước giảm giá cho giỏ hàng (màn tạo/sửa đơn gọi). */
 export const previewPromotion = async (cart: {
   items: { productId?: string; price: number; quantity: number }[];
+  /** @deprecated dùng surchargeAmount/surchargeTag (mô hình phụ thu mới) */
   decorations?: { price: number; quantity: number }[];
+  /** Phụ thu cả đơn (VND) — cộng vào subtotal trước giảm. */
+  surchargeAmount?: number;
+  /** Nhãn phụ thu. */
+  surchargeTag?: SurchargeTag;
   shippingCost?: number;
   code?: string;
   promotionIds?: string[];

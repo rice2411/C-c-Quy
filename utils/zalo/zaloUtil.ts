@@ -1,8 +1,9 @@
 import { Order, OrderFieldChange } from "@/types";
+import { surchargeTagLabel } from "@/types/order";
 import { parseDateValue } from "../format/dateUtil";
 import { formatVND } from "../format/currencyUtil";
 import { formatItemsDiff } from "@/utils/order/itemsDiff";
-import { getOrderTotal } from "../order/orderUtils";
+import { allocateSurcharge, getOrderTotal } from "../order/orderUtils";
 
 const DIVIDER = '─────────────────────────';
 
@@ -68,6 +69,14 @@ export const formatOrderMessage = (order: any): string => {
   }
   lines.push('');
   lines.push(`💰 Hàng:    ${formatVND(subtotal)}`);
+  const surcharge = Number(order.surchargeAmount || 0);
+  if (surcharge > 0) {
+    lines.push(`✨ Phụ thu: ${formatVND(surcharge)} · ${surchargeTagLabel(order.surchargeTag)}`);
+    const shares = allocateSurcharge(surcharge, order.items || []);
+    (order.items || []).forEach((it: any, idx: number) => {
+      lines.push(`   • ${it.name} +${formatVND(shares[idx] || 0)}`);
+    });
+  }
   lines.push(`🚚 Ship:    ${formatVND(shipping)}`);
   lines.push('━━━━━━━━━━━━━━━━━━━━━━━━');
   lines.push(`💵 TỔNG:    ${formatVND(total)}`);
@@ -103,6 +112,8 @@ const renderOrderSnapshot = (order: any, title: string): string[] => {
     });
   }
   lines.push(`💰 Hàng:  ${formatVND(subtotal)}`);
+  const surcharge = Number(order.surchargeAmount || 0);
+  if (surcharge > 0) lines.push(`✨ Phụ thu: ${formatVND(surcharge)} · ${surchargeTagLabel(order.surchargeTag)}`);
   if (shipping > 0) lines.push(`🚚 Ship:  ${formatVND(shipping)}`);
   lines.push(`💵 Tổng:  ${formatVND(total)}`);
   return lines;
