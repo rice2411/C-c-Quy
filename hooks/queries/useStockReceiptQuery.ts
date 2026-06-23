@@ -13,6 +13,7 @@ import type {
   ImportedSupplierSummary,
   SavedStockReceiptDetail,
   SavedStockReceiptSummary,
+  StockReceiptSource,
   StockReceiptStructured,
   StockReceiptValidationSnapshot,
   SupplierContactInfo,
@@ -163,6 +164,7 @@ export interface SaveStockReceiptDraftArgs {
   createdByUid?: string | null;
   targetSupplierId?: string | null;
   supplierContact?: SupplierContactInfo | null;
+  source?: StockReceiptSource;
 }
 
 export interface UpdateSupplierArgs {

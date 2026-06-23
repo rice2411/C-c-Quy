@@ -1,13 +1,16 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import {
   Check,
   Circle,
   CreditCard,
   FileText,
+  ImagePlus,
   Loader2,
+  Plus,
   Receipt,
   Store,
   Tag,
+  Trash2,
   Wallet,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -21,6 +24,7 @@ import type {
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import Image from '@/components/ui/Image';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 import Input from '@/components/ui/Input';
@@ -37,6 +41,8 @@ import SupplierPicker from '@/pages/BillImport/SupplierPicker';
 import EmptyState from '@/components/ui/EmptyState';
 
 export interface BillImportEntryTabProps {
+  /** true = nhập thủ công (bill viết tay): ẩn panel OCR/JSON, cho đính ảnh lưu trữ. */
+  isManual?: boolean;
   busy: boolean;
   previewUrl: string | null;
   progressStage: UiProgressStage | null;
@@ -47,6 +53,10 @@ export interface BillImportEntryTabProps {
   onSaveDraft: () => void;
   updateDraftField: <K extends keyof StockReceiptStructured>(key: K, value: StockReceiptStructured[K]) => void;
   updateDraftLine: (idx: number, patch: Partial<BillLineItem>) => void;
+  onAddLine: () => void;
+  onRemoveLine: (idx: number) => void;
+  /** Đính ảnh bill giấy để lưu trữ ở mode manual (không OCR). */
+  onManualImageSelected?: (file: File | undefined) => void;
   supplierList: ImportedSupplierSummary[];
   selectedSupplierId: string | null;
   supplierContact: SupplierContactInfo;
@@ -78,6 +88,7 @@ const ContactField: React.FC<{
 );
 
 const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
+  isManual = false,
   busy,
   previewUrl,
   progressStage,
@@ -88,6 +99,9 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
   onSaveDraft,
   updateDraftField,
   updateDraftLine,
+  onAddLine,
+  onRemoveLine,
+  onManualImageSelected,
   supplierList,
   selectedSupplierId,
   supplierContact,
@@ -95,6 +109,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
   onSupplierContactChange,
 }) => {
   const { t } = useLanguage();
+  const manualImageInputRef = useRef<HTMLInputElement>(null);
 
   const moneyFmt = useMemo(
     () => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }),
@@ -136,12 +151,41 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
           borderClassName="border-slate-200 dark:border-slate-700"
           layoutClassName="overflow-hidden"
         >
-          <img
+          <Image
             src={previewUrl}
             alt="Bill"
-            className="max-h-48 sm:max-h-80 w-full object-contain bg-slate-50 dark:bg-slate-900"
+            layoutClassName="max-h-48 sm:max-h-80 w-full object-contain bg-slate-50 dark:bg-slate-900"
           />
         </Card>
+      ) : null}
+
+      {isManual && onManualImageSelected ? (
+        <>
+          {/* File input thô: chưa có UI component cho input file (giống pages/Storage/product/*). */}
+          <input
+            ref={manualImageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              onManualImageSelected(file);
+            }}
+          />
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => manualImageInputRef.current?.click()}
+            leftIcon={<ImagePlus />}
+            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+            sizeClassName="px-3 py-1.5 text-xs"
+            layoutClassName="inline-flex w-fit items-center gap-1.5"
+            disableVariantTextColor
+          >
+            {previewUrl ? 'Đổi ảnh đính kèm' : 'Đính ảnh bill (tuỳ chọn, không OCR)'}
+          </Button>
+        </>
       ) : null}
 
       {busy && progressStage ? (
@@ -184,15 +228,17 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                   style={{ width: `${progressBarPct}%` }}
                 />
               </Box>
-              <ul className="m-0 list-none space-y-2 p-0">
+              <Box layoutClassName="m-0 list-none space-y-2 p-0">
                 {PIPELINE_STAGES.map((step, i) => {
                   const done = activeStepIndex > i;
                   const current = activeStepIndex === i;
                   return (
-                    <li
+                    <Box
                       key={step.id}
-                      className={
-                        'flex items-center gap-3 text-sm transition-colors duration-300 ' +
+                      layoutClassName="flex items-center gap-3"
+                      textClassName="text-sm"
+                      stateClassName={
+                        'transition-colors duration-300 ' +
                         (current
                           ? 'font-semibold text-primary-700 dark:text-primary-300'
                           : done
@@ -207,11 +253,11 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                       ) : (
                         <Circle className="h-4 w-4 shrink-0" strokeWidth={2} />
                       )}
-                      <span>{t(step.labelKey)}</span>
-                    </li>
+                      <Typography as="span">{t(step.labelKey)}</Typography>
+                    </Box>
                   );
                 })}
-              </ul>
+              </Box>
             </Box>
           </Box>
         </Card>
@@ -241,7 +287,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
         </Card>
       ) : null}
 
-      {(ocrText || draftStructured) ? (
+      {!isManual && (ocrText || draftStructured) ? (
         <Box layoutClassName="grid gap-4 md:grid-cols-2">
           {ocrText ? (
             <Card
@@ -275,7 +321,9 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                 backgroundClassName="bg-slate-900"
                 textClassName="font-mono text-xs text-slate-100"
               >
-                <pre className="m-0">{JSON.stringify(draftStructured, null, 2)}</pre>
+                <Box layoutClassName="m-0" textClassName="whitespace-pre-wrap break-all">
+                  {JSON.stringify(draftStructured, null, 2)}
+                </Box>
               </Box>
             </Card>
           ) : null}
@@ -351,7 +399,9 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
               />
             </Box>
             <Typography size="xs" variant="muted">
-              SĐT / địa chỉ được tự điền từ OCR. Trường trống sẽ không ghi đè dữ liệu cũ của NCC.
+              {isManual
+                ? 'Chọn NCC đã có hoặc gõ tên NCC mới. Trường trống sẽ không ghi đè dữ liệu cũ của NCC.'
+                : 'SĐT / địa chỉ được tự điền từ OCR. Trường trống sẽ không ghi đè dữ liệu cũ của NCC.'}
             </Typography>
           </Card>
 
@@ -412,9 +462,9 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                 <Tag className="h-3.5 w-3.5 text-slate-400" />
                 <Typography size="xs" variant="muted">
                   Số dòng mặt hàng:{' '}
-                  <strong className="text-slate-700 dark:text-slate-100">
+                  <Typography as="span" textClassName="font-semibold text-slate-700 dark:text-slate-100">
                     {draftStructured.productLineCount}
-                  </strong>
+                  </Typography>
                 </Typography>
               </Box>
             </Card>
@@ -475,9 +525,9 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                   layoutClassName="text-right font-bold tabular-nums text-primary-900 dark:text-primary-100"
                 >
                   {moneyFmt.format(computedTotal)}{' '}
-                  <span className="text-xs font-medium opacity-70">
+                  <Typography as="span" textClassName="text-xs font-medium opacity-70">
                     {draftStructured.currency || 'VND'}
-                  </span>
+                  </Typography>
                 </Typography>
               </Box>
             </Card>
@@ -507,6 +557,18 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                       <Typography size="xs" variant="muted" layoutClassName="font-bold uppercase tracking-wider">
                         #{idx + 1}
                       </Typography>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => onRemoveLine(idx)}
+                        leftIcon={<Trash2 />}
+                        iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                        sizeClassName="px-2 py-1 text-xs"
+                        layoutClassName="inline-flex items-center gap-1"
+                        textClassName="text-red-600 dark:text-red-400"
+                      >
+                        Xoá
+                      </Button>
                     </Box>
                     <ContactField
                       label={t('billImport.colName')}
@@ -556,12 +618,13 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                     <TableHeaderCell>{t('billImport.colUnit')}</TableHeaderCell>
                     <TableHeaderCell>{t('billImport.colPrice')}</TableHeaderCell>
                     <TableHeaderCell>{t('billImport.colLineTotal')}</TableHeaderCell>
+                    <TableHeaderCell> </TableHeaderCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {draftStructured.lineItems.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6}>
+                      <TableCell colSpan={7}>
                         <EmptyState
                           icon={<FileText className="h-6 w-6" />}
                           title={t('billImport.emptyLines')}
@@ -619,11 +682,39 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                             placeholder="Thành tiền"
                           />
                         </TableCell>
+                        <TableCell>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => onRemoveLine(idx)}
+                            leftIcon={<Trash2 />}
+                            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                            sizeClassName="px-2 py-1"
+                            layoutClassName="inline-flex items-center"
+                            textClassName="text-red-600 dark:text-red-400"
+                            aria-label="Xoá dòng"
+                          />
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
                 </TableBody>
               </Table>
+            </Box>
+
+            <Box layoutClassName="flex justify-start">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => onAddLine()}
+                leftIcon={<Plus />}
+                iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                sizeClassName="px-3 py-1.5 text-xs"
+                layoutClassName="inline-flex items-center gap-1.5"
+                disableVariantTextColor
+              >
+                Thêm dòng
+              </Button>
             </Box>
           </Card>
 

@@ -36,6 +36,43 @@ import { normalizeSearchText } from '@/utils/format/stringUtil';
 
 const EMPTY_CONTACT: SupplierContactInfo = {};
 
+const EMPTY_LINE: BillLineItem = {
+  name: '',
+  quantity: null,
+  unit: null,
+  unitPrice: null,
+  lineTotal: null,
+};
+
+/** Phiếu trống cho luồng nhập thủ công (không OCR) — 1 dòng hàng sẵn để gõ. */
+const buildEmptyStructured = (): StockReceiptStructured => ({
+  supplierName: null,
+  supplierPhone: null,
+  supplierAddress: null,
+  invoiceNumber: null,
+  storeOrBranch: null,
+  receiptDate: null,
+  receiptTime: null,
+  lineItems: [{ ...EMPTY_LINE }],
+  productLineCount: 0,
+  subtotal: null,
+  tax: null,
+  discount: null,
+  totalAmount: null,
+  currency: 'VND',
+  paymentMethod: null,
+  notes: null,
+});
+
+/** Validation snapshot mặc định cho phiếu nhập thủ công (không qua OCR/gating). */
+const MANUAL_VALIDATION = {
+  isLikelyReceipt: true,
+  confidence: 1,
+  reasonVi: 'Nhập thủ công',
+  heuristicScore: 1,
+  heuristicNoteVi: 'manual',
+} as const;
+
 const BillImportPage: React.FC = () => {
   const { t } = useLanguage();
   const { currentUser } = useAuth();
@@ -50,6 +87,7 @@ const BillImportPage: React.FC = () => {
   const [progressStage, setProgressStage] = useState<UiProgressStage | null>(null);
   const [activeTab, setActiveTab] = useState<BillImportTabId>('receipts');
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [entryMode, setEntryMode] = useState<'ocr' | 'manual'>('ocr');
   const [detailReceiptId, setDetailReceiptId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [receiptSearch, setReceiptSearch] = useState('');
@@ -103,6 +141,7 @@ const BillImportPage: React.FC = () => {
   const runPipelineForFile = useCallback(
     async (file: File) => {
       resetOutput();
+      setEntryMode('ocr');
       const url = URL.createObjectURL(file);
       setPreviewUrl((prev) => {
         if (prev) URL.revokeObjectURL(prev);
@@ -151,10 +190,74 @@ const BillImportPage: React.FC = () => {
     [runPipelineForFile, t],
   );
 
+  // Mở form nhập THỦ CÔNG: phiếu trống, KHÔNG chạy OCR.
+  const handleStartManual = useCallback(() => {
+    resetAndClosePreview();
+    setEntryMode('manual');
+    setDraftStructured(buildEmptyStructured());
+    setImportModalOpen(true);
+  }, [resetAndClosePreview]);
+
+  // Đính ảnh bill (giấy) để LƯU TRỮ ở mode manual — không chạy OCR pipeline.
+  const handleManualImageSelected = useCallback(
+    async (file: File | undefined) => {
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        toast.error(t('billImport.invalidFile'));
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      setPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
+      });
+      try {
+        const b64 = await fileToBase64NoPrefix(file);
+        setUploadedImageBase64(b64);
+        setUploadedImageMimeType(file.type || null);
+      } catch (e) {
+        console.error(e);
+        toast.error(e instanceof Error ? e.message : String(e));
+      }
+    },
+    [t],
+  );
+
+  const addDraftLine = useCallback(() => {
+    setDraftStructured((prev) =>
+      prev ? { ...prev, lineItems: [...prev.lineItems, { ...EMPTY_LINE }] } : prev,
+    );
+  }, []);
+
+  const removeDraftLine = useCallback((idx: number) => {
+    setDraftStructured((prev) =>
+      prev ? { ...prev, lineItems: prev.lineItems.filter((_, i) => i !== idx) } : prev,
+    );
+  }, []);
+
   const handleSaveDraft = async () => {
-    if (!draftStructured || !validation || !ocrText) {
+    const isManual = entryMode === 'manual';
+    if (!draftStructured) {
       toast.error(t('billImport.missingSaveData'));
       return;
+    }
+    if (!isManual && (!validation || !ocrText)) {
+      toast.error(t('billImport.missingSaveData'));
+      return;
+    }
+    if (isManual) {
+      const hasSupplier = (draftStructured.supplierName ?? '').trim() !== '';
+      const validLines = draftStructured.lineItems.filter(
+        (l) => (l.name ?? '').trim() !== '',
+      );
+      if (!hasSupplier) {
+        toast.error('Nhập tên nhà cung cấp trước khi lưu.');
+        return;
+      }
+      if (validLines.length === 0) {
+        toast.error('Thêm ít nhất 1 dòng hàng có tên.');
+        return;
+      }
     }
     setSavingDraft(true);
     try {
@@ -165,14 +268,19 @@ const BillImportPage: React.FC = () => {
       const taxV = typeof draftStructured.tax === 'number' ? draftStructured.tax : 0;
       const discountV =
         typeof draftStructured.discount === 'number' ? draftStructured.discount : 0;
+      const validLineCount = (draftStructured.lineItems || []).filter(
+        (l) => (l.name ?? '').trim() !== '',
+      ).length;
       const structuredForSave: StockReceiptStructured = {
         ...draftStructured,
         totalAmount: lineSum + taxV - discountV,
+        productLineCount: isManual ? validLineCount : draftStructured.productLineCount,
       };
       await saveDraft({
         structured: structuredForSave,
-        validation,
-        ocrText,
+        validation: validation ?? MANUAL_VALIDATION,
+        ocrText: isManual ? '' : ocrText,
+        source: isManual ? 'manual' : 'ocr',
         receiptImageBase64: uploadedImageBase64,
         receiptImageMimeType: uploadedImageMimeType,
         createdByUid: currentUser?.uid ?? null,
@@ -181,6 +289,7 @@ const BillImportPage: React.FC = () => {
       });
       toast.success(t('billImport.saved'));
       setImportModalOpen(false);
+      setEntryMode('ocr');
       resetAndClosePreview();
     } catch (error) {
       console.error(error);
@@ -250,7 +359,9 @@ const BillImportPage: React.FC = () => {
 
   const closeImportModal = useCallback(() => {
     setImportModalOpen(false);
-  }, []);
+    setEntryMode('ocr');
+    resetAndClosePreview();
+  }, [resetAndClosePreview]);
 
   const filteredReceipts = receiptRows.filter((row) => {
     const q = normalizeSearchText(receiptSearch);
@@ -320,6 +431,7 @@ const BillImportPage: React.FC = () => {
           filteredReceipts={filteredReceipts}
           onRowClick={openReceiptDetail}
           onFileSelected={handleFileSelected}
+          onStartManual={handleStartManual}
         />
       ) : activeTab === 'suppliers' ? (
         <BillImportSuppliersTab
@@ -342,9 +454,10 @@ const BillImportPage: React.FC = () => {
       <BillImportModal
         open={importModalOpen}
         onClose={closeImportModal}
-        title="Nhập bill mới"
+        title={entryMode === 'manual' ? 'Nhập phiếu thủ công' : 'Nhập bill mới'}
       >
         <BillImportEntryTab
+          isManual={entryMode === 'manual'}
           busy={busy}
           previewUrl={previewUrl}
           progressStage={progressStage}
@@ -355,6 +468,9 @@ const BillImportPage: React.FC = () => {
           onSaveDraft={handleSaveDraft}
           updateDraftField={updateDraftField}
           updateDraftLine={updateDraftLine}
+          onAddLine={addDraftLine}
+          onRemoveLine={removeDraftLine}
+          onManualImageSelected={handleManualImageSelected}
           supplierList={supplierRows}
           selectedSupplierId={selectedSupplierId}
           supplierContact={supplierContact}
