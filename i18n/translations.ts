@@ -493,7 +493,8 @@ export const translations = {
       label: "Delivery Method",
       ship: "Local delivery",
       pickup: "Customer pickup",
-      shipProvince: "Province shipping"
+      shipProvince: "Province shipping",
+      noAddress: "No address"
     },
     qr: {
       sectionTitle: "Payment QR",
@@ -1010,7 +1011,8 @@ export const translations = {
       label: "Hình thức nhận hàng",
       ship: "Giao tận nơi",
       pickup: "Khách tới lấy",
-      shipProvince: "Ship tỉnh"
+      shipProvince: "Ship tỉnh",
+      noAddress: "Chưa có địa chỉ"
     },
     qr: {
       sectionTitle: "Mã thanh toán",
