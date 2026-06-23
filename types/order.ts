@@ -37,6 +37,17 @@ export {
   type SurchargeTag as SurchargeTagDef,
 } from './surchargeTag';
 
+/**
+ * Key i18n hiển thị ở CHỖ địa chỉ khi đơn KHÔNG có địa chỉ thật.
+ * PICKUP → "Khách tới lấy", SHIP_PROVINCE → "Ship tỉnh", còn lại (SHIP/undefined) → "Chưa có địa chỉ".
+ * Dùng chung cho list (desktop/mobile) + chi tiết đơn — gom logic, tránh lặp.
+ */
+export const orderAddressFallbackKey = (dt?: DeliveryType): string => {
+  if (dt === DeliveryType.PICKUP) return 'deliveryType.pickup';
+  if (dt === DeliveryType.SHIP_PROVINCE) return 'deliveryType.shipProvince';
+  return 'deliveryType.noAddress';
+};
+
 export interface OrderFieldChange {
   field: string;
   label?: string;
