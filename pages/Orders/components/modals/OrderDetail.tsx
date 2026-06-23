@@ -28,7 +28,7 @@ import { qk } from '@/hooks/queryKeys';
 import { ORDER_EDIT_DENIED } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber } from '@/services/transactionService';
 import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction } from '@/types';
-import { surchargeTagLabel } from '@/types/order';
+import { orderAddressFallbackKey, surchargeTagLabel } from '@/types/order';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { allocateSurcharge, generateQRCodeImage, getOrderTotal } from '@/utils/order/orderUtils';
@@ -408,11 +408,17 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                     </div>
                     <div className="flex items-start gap-3">
                       <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-300">
-                        <MapPin className="w-4 h-4" />
+                        {!currentOrder.customer.address && currentOrder.deliveryType === DeliveryType.PICKUP ? (
+                          <Store className="w-4 h-4" />
+                        ) : !currentOrder.customer.address && currentOrder.deliveryType === DeliveryType.SHIP_PROVINCE ? (
+                          <Globe className="w-4 h-4" />
+                        ) : (
+                          <MapPin className="w-4 h-4" />
+                        )}
                       </div>
                       <div className="text-sm">
                         <p className="font-medium text-slate-900 dark:text-white">{t('detail.shippingAddress')}</p>
-                        <p className="text-slate-500 dark:text-slate-400">{currentOrder.customer.address || 'No address provided'}</p>
+                        <p className="text-slate-500 dark:text-slate-400">{currentOrder.customer.address || t(orderAddressFallbackKey(currentOrder.deliveryType))}</p>
                         {currentOrder.customer.city && <p className="text-slate-500 dark:text-slate-400">{currentOrder.customer.city}, {currentOrder.customer.country}</p>}
                       </div>
                     </div>

@@ -1,15 +1,17 @@
 import React from 'react';
 import {
   CalendarDays,
+  Globe,
   MapPin,
   Package,
   Phone,
+  Store,
   User,
 } from 'lucide-react';
 import { PAYMENT_METHOD_COLORS, PAYMENT_STATUS_COLORS, STATUS_COLORS } from '@/constant/order';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
-import { surchargeTagLabel } from '@/types/order';
+import { orderAddressFallbackKey, surchargeTagLabel } from '@/types/order';
 import { Order } from '@/types';
 import { DeliveryType } from '@/types/enums';
 
@@ -155,9 +157,24 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                     {order.customer?.address ? (
                       <Box layoutClassName="mt-1 flex items-start gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                         <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
-                        <span className="line-clamp-1">{order.customer.address}</span>
+                        <Typography as="span" layoutClassName="line-clamp-1">
+                          {order.customer.address}
+                        </Typography>
                       </Box>
-                    ) : null}
+                    ) : (
+                      <Box layoutClassName="mt-1 flex items-start gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        {order.deliveryType === DeliveryType.PICKUP ? (
+                          <Store className="mt-0.5 h-3 w-3 shrink-0" />
+                        ) : order.deliveryType === DeliveryType.SHIP_PROVINCE ? (
+                          <Globe className="mt-0.5 h-3 w-3 shrink-0" />
+                        ) : (
+                          <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
+                        )}
+                        <Typography as="span" layoutClassName="line-clamp-1">
+                          {t(orderAddressFallbackKey(order.deliveryType))}
+                        </Typography>
+                      </Box>
+                    )}
 
                     <Box layoutClassName="mt-2 flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300">
                       <Package className="h-3.5 w-3.5 shrink-0 text-slate-400" />
