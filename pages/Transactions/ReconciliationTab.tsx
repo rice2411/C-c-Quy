@@ -8,6 +8,7 @@ import {
   XCircle,
   RotateCcw,
   BarChart2,
+  Link2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -20,6 +21,8 @@ import TransactionsDesktopTable from './components/desktop/TransactionsDesktopTa
 import TransactionsMobileList from './components/mobile/TransactionsMobileList';
 import TransactionDetailModal from './components/TransactionDetailModal';
 import TransactionMappingPanel from './components/TransactionMappingPanel';
+import ReconcileSyncModal from './components/ReconcileSyncModal';
+import { ReconcilePreviewResult } from '@/services/transactionService';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -148,12 +151,16 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   const { t } = useLanguage();
   const { orders, modifyOrder } = useOrders();
   const { transactions, loading, isRefreshing, error, refetch } = useTransactions();
-  const { markExternal, linkOrder } = useTransactionMutations();
+  const { markExternal, linkOrder, reconcilePreview, reconcileApply } = useTransactionMutations();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('all');
+  const [syncOpen, setSyncOpen] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncApplying, setSyncApplying] = useState(false);
+  const [syncPreview, setSyncPreview] = useState<ReconcilePreviewResult | null>(null);
 
   useEffect(() => {
     if (error) toast.error(t('transactions.loadError') || 'Không tải được giao dịch');
@@ -165,6 +172,38 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
       toast.success(t('transactions.refreshSuccess') || 'Đã làm mới');
     } catch {
       toast.error(t('transactions.refreshError') || 'Làm mới thất bại');
+    }
+  };
+
+  // Đối soát hàng loạt: quét preview (dry-run) → mở modal cho user duyệt.
+  const handleOpenSync = async () => {
+    setSyncOpen(true);
+    setSyncPreview(null);
+    setSyncLoading(true);
+    try {
+      setSyncPreview(await reconcilePreview());
+    } catch (err: any) {
+      toast.error(err?.message || t('transactions.sync.previewError') || 'Không quét được giao dịch');
+      setSyncOpen(false);
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+  // User xác nhận → ghi map các cặp đã preview (BE atomic + idempotent).
+  const handleConfirmSync = async () => {
+    if (!syncPreview || syncPreview.matched.length === 0) return;
+    setSyncApplying(true);
+    try {
+      const { applied, skipped } = await reconcileApply(syncPreview.matched);
+      const doneLabel = t('transactions.sync.done') || 'Đã khớp';
+      const skipLabel = t('transactions.sync.skippedToast') || 'bỏ qua';
+      toast.success(`${doneLabel} ${applied}${skipped ? ` · ${skipLabel} ${skipped}` : ''}`);
+      setSyncOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message || t('transactions.sync.applyError') || 'Khớp thất bại');
+    } finally {
+      setSyncApplying(false);
     }
   };
 
@@ -329,6 +368,21 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
             searchPlaceholder={t('transactions.searchPlaceholder') || 'Tìm nội dung, mã đơn...'}
           />
         </Box>
+        <Button
+          type="button"
+          variant="primary"
+          onClick={handleOpenSync}
+          disabled={syncLoading || syncApplying}
+          layoutClassName="flex shrink-0 items-center gap-1.5"
+          roundedClassName="rounded-xl"
+          sizeClassName="px-3 py-2.5 text-sm"
+          stateClassName="transition-colors disabled:opacity-50"
+        >
+          <Link2 className={`h-4 w-4 ${syncLoading ? 'animate-spin' : ''}`} />
+          <Typography as="span" layoutClassName="hidden sm:inline">
+            {t('transactions.sync.button') || 'Đồng bộ với đơn'}
+          </Typography>
+        </Button>
         <IconButton
           type="button"
           label="Làm mới"
@@ -437,6 +491,15 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
         onClose={() => { setIsDetailModalOpen(false); setSelectedTransaction(null); }}
         transaction={selectedTransaction}
         formatDate={formatDate}
+      />
+
+      <ReconcileSyncModal
+        isOpen={syncOpen}
+        onClose={() => { if (!syncApplying) setSyncOpen(false); }}
+        preview={syncPreview}
+        loading={syncLoading}
+        applying={syncApplying}
+        onConfirm={handleConfirmSync}
       />
     </Box>
   );
