@@ -32,3 +32,44 @@ export const fetchTransactionsByOrderNumber = async (
   });
   return res.data;
 };
+
+/* ───────────────────────── Đối soát hàng loạt ─────────────────────────── */
+
+/** 1 cặp GD↔đơn khớp tự động (BE trả ở preview). */
+export interface ReconcileMatch {
+  transactionId: string;
+  sepayId: number;
+  orderId: string;
+  orderNumber: string;
+  amount: number;
+  transactionDate: string;
+  orderCreatedAt: string;
+}
+
+export interface ReconcilePreviewResult {
+  /** Các cặp GD↔đơn khớp DUY NHẤT (sẽ ghi nếu user confirm). */
+  matched: ReconcileMatch[];
+  /** GD có ≥2 đơn ứng viên / tranh chấp → bỏ qua, khớp tay. */
+  skippedAmbiguous: number;
+  /** GD không tìm được đơn nào khớp. */
+  skippedNoMatch: number;
+  /** Tổng GD chưa khớp đã quét. */
+  totalUnmatched: number;
+}
+
+/** Preview (dry-run): quét toàn bộ GD chưa khớp → trả các cặp sẽ map. KHÔNG ghi. */
+export const reconcileTransactionsPreview = async (): Promise<ReconcilePreviewResult> => {
+  const res = await apiClient.post<ReconcilePreviewResult>('/transactions/reconcile/preview');
+  return res.data;
+};
+
+/** Apply: ghi map cho danh sách cặp user đã confirm (BE atomic + idempotent). */
+export const reconcileTransactionsApply = async (
+  pairs: ReconcileMatch[],
+): Promise<{ applied: number; skipped: number }> => {
+  const res = await apiClient.post<{ applied: number; skipped: number }>(
+    '/transactions/reconcile/apply',
+    { pairs },
+  );
+  return res.data;
+};

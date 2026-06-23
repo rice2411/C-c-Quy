@@ -16,6 +16,10 @@ import {
   fetchTransactionsByOrderNumber,
   linkTransactionOrder,
   markTransactionExternal,
+  reconcileTransactionsPreview,
+  reconcileTransactionsApply,
+  ReconcileMatch,
+  ReconcilePreviewResult,
 } from '@/services/transactionService';
 import { fetchRevenueReport, RevenueReport } from '@/services/revenueService';
 
@@ -81,11 +85,20 @@ export interface LinkOrderArgs {
 export interface UseTransactionMutationsResult {
   markExternal: (args: MarkExternalArgs) => Promise<void>;
   linkOrder: (args: LinkOrderArgs) => Promise<void>;
+  /** Đối soát: preview (dry-run) các cặp GD↔đơn sẽ khớp tự động. */
+  reconcilePreview: () => Promise<ReconcilePreviewResult>;
+  /** Đối soát: ghi map cho danh sách cặp đã confirm. */
+  reconcileApply: (pairs: ReconcileMatch[]) => Promise<{ applied: number; skipped: number }>;
 }
 
 export const useTransactionMutations = (): UseTransactionMutationsResult => {
   const queryClient = useQueryClient();
   const invalidate = () => queryClient.invalidateQueries({ queryKey: qk.transactions.all });
+  // Đối soát ghi cả transaction (orderNumber) lẫn đơn (sepayId/PAID) → refresh cả 2 cache.
+  const invalidateBoth = () => {
+    queryClient.invalidateQueries({ queryKey: qk.transactions.all });
+    queryClient.invalidateQueries({ queryKey: qk.orders.all });
+  };
 
   const markExternalMutation = useMutation({
     mutationFn: ({ transactionId, isExternal }: MarkExternalArgs) =>
@@ -97,10 +110,16 @@ export const useTransactionMutations = (): UseTransactionMutationsResult => {
       linkTransactionOrder(transactionId, orderNumber),
     onSuccess: invalidate,
   });
+  const reconcileApplyMutation = useMutation({
+    mutationFn: (pairs: ReconcileMatch[]) => reconcileTransactionsApply(pairs),
+    onSuccess: invalidateBoth,
+  });
 
   return {
     markExternal: (args) => markExternalMutation.mutateAsync(args),
     linkOrder: (args) => linkOrderMutation.mutateAsync(args),
+    reconcilePreview: () => reconcileTransactionsPreview(),
+    reconcileApply: (pairs) => reconcileApplyMutation.mutateAsync(pairs),
   };
 };
 
