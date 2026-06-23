@@ -12,6 +12,7 @@ import type {
   ImportedSupplierSummary,
   SavedStockReceiptDetail,
   SavedStockReceiptSummary,
+  StockReceiptSource,
   StockReceiptStructured,
   StockReceiptValidationSnapshot,
   SupplierContactInfo,
@@ -50,6 +51,8 @@ export async function saveStockReceiptDraft(input: {
   createdByUid?: string | null;
   targetSupplierId?: string | null;
   supplierContact?: SupplierContactInfo | null;
+  /** Mặc định 'ocr' (BE coi thiếu = 'ocr'). 'manual' → BE bỏ chống trùng DUPLICATE_BILL. */
+  source?: StockReceiptSource;
 }): Promise<string> {
   const { createdByUid: _ignore, ...payload } = input;
   const res = await apiClient.post<{ id: string }>(`${BASE}/draft`, payload);

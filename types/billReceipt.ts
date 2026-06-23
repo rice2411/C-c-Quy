@@ -55,6 +55,9 @@ export interface StockReceiptValidationSnapshot {
   heuristicNoteVi: string;
 }
 
+/** Nguồn tạo phiếu nhập: OCR ảnh bill hoặc nhập thủ công qua form (bill viết tay). */
+export type StockReceiptSource = 'ocr' | 'manual';
+
 /**
  * Thông tin liên hệ + phân loại NCC để thống kê / quản lý.
  * Tất cả optional vì có thể fill dần qua nhiều lần nhập bill.
