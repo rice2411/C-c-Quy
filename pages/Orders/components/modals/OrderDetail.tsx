@@ -1174,6 +1174,10 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           : currentOrder.deliveryType === DeliveryType.SHIP_PROVINCE ? t('deliveryType.shipProvince')
           : currentOrder.deliveryType === DeliveryType.SHIP ? t('deliveryType.ship') : ''
         }
+        paymentLabel={
+          currentOrder.paymentMethod === PaymentMethod.CASH ? t('paymentMethod.cash')
+          : currentOrder.paymentMethod === PaymentMethod.BANKING ? t('paymentMethod.banking') : ''
+        }
         qrUrl={qrUrl}
         description={description}
       />
