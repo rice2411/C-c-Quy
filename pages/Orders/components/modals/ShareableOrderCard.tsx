@@ -14,6 +14,8 @@ export interface ShareableOrderCardProps {
   surchargeLabel?: string;
   /** Nhãn loại giao: "Giao tận nơi" / "Khách tới lấy" / "Ship tỉnh". */
   deliveryLabel?: string;
+  /** Nhãn hình thức thanh toán: "Tiền mặt" / "Chuyển khoản". */
+  paymentLabel?: string;
   qrUrl: string;
   /** Nội dung chuyển khoản = mã đơn. */
   description: string;
@@ -26,9 +28,19 @@ export interface ShareableOrderCardProps {
  * KHÔNG có nút thao tác. Sản phẩm hiển thị dạng text (không thumbnail) để né CORS ảnh.
  */
 const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardProps>(
-  ({ order, subtotal, finalTotal, shippingCost, surchargeLabel, deliveryLabel, qrUrl, description }, ref) => {
+  ({ order, subtotal, finalTotal, shippingCost, surchargeLabel, deliveryLabel, paymentLabel, qrUrl, description }, ref) => {
     const c = order.customer;
     const rowClass = 'flex items-center justify-between gap-3';
+    const deliveryDateText = order.deliveryDate
+      ? `${new Date(order.deliveryDate).toLocaleDateString('vi-VN')}${order.deliveryTime ? ` · ${order.deliveryTime}` : ''}`
+      : '';
+    // 1 dòng thông tin: nhãn (trái, cố định) : giá trị (phải).
+    const infoRow = (label: string, value: React.ReactNode) => (
+      <Box layoutClassName="flex gap-2">
+        <Typography as="span" size="sm" layoutClassName="w-[84px] shrink-0" textClassName="text-slate-400">{label}</Typography>
+        <Typography as="span" size="sm" layoutClassName="min-w-0 flex-1 font-medium" textClassName="text-slate-700">{value}</Typography>
+      </Box>
+    );
     return (
       <Box
         ref={ref}
@@ -42,27 +54,18 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
             <Heading level={3} textClassName="text-lg font-extrabold text-primary-600">Tiệm Bánh Cúc Quy</Heading>
             <Typography as="p" size="xs" textClassName="text-slate-400">cucquy.site</Typography>
           </Box>
-          <Box layoutClassName="text-right">
-            <Typography as="p" size="sm" layoutClassName="font-mono font-bold" textClassName="text-slate-700">{order.orderNumber}</Typography>
-            {order.deliveryDate ? (
-              <Typography as="p" size="xs" textClassName="text-slate-400">
-                Nhận: {new Date(order.deliveryDate).toLocaleDateString('vi-VN')}{order.deliveryTime ? ` · ${order.deliveryTime}` : ''}
-              </Typography>
-            ) : null}
-          </Box>
+          <Typography as="p" size="sm" layoutClassName="font-mono font-bold" textClassName="text-slate-700">{order.orderNumber}</Typography>
         </Box>
 
-        {/* Khách hàng */}
-        <Box layoutClassName="space-y-1">
-          <Typography as="p" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-400">Khách hàng</Typography>
-          <Typography as="p" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900">{c.name || '—'}</Typography>
-          {c.phone ? <Typography as="p" size="sm" textClassName="text-slate-600">{c.phone}</Typography> : null}
-          {deliveryLabel ? (
-            <Box layoutClassName="inline-flex rounded-full px-2 py-0.5" backgroundClassName="bg-primary-50">
-              <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-primary-700">{deliveryLabel}</Typography>
-            </Box>
-          ) : null}
-          {c.address ? <Typography as="p" size="sm" textClassName="text-slate-600">{c.address}{c.city ? `, ${c.city}` : ''}</Typography> : null}
+        {/* Thông tin khách + giao + thanh toán (nhãn : giá trị) */}
+        <Box layoutClassName="space-y-1.5">
+          <Typography as="p" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-400">Thông tin đơn</Typography>
+          {infoRow('Khách hàng', c.name || '—')}
+          {c.phone ? infoRow('SĐT', c.phone) : null}
+          {deliveryLabel ? infoRow('Hình thức', deliveryLabel) : null}
+          {c.address ? infoRow('Địa chỉ', `${c.address}${c.city ? `, ${c.city}` : ''}`) : null}
+          {paymentLabel ? infoRow('Thanh toán', paymentLabel) : null}
+          {deliveryDateText ? infoRow('Ngày giao', deliveryDateText) : null}
         </Box>
 
         {/* Sản phẩm (text, không thumbnail) */}
