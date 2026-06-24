@@ -12,6 +12,8 @@ export interface ShareableOrderCardProps {
   finalTotal: number;
   shippingCost: number;
   surchargeLabel?: string;
+  /** Nhãn loại giao: "Giao tận nơi" / "Khách tới lấy" / "Ship tỉnh". */
+  deliveryLabel?: string;
   qrUrl: string;
   /** Nội dung chuyển khoản = mã đơn. */
   description: string;
@@ -24,7 +26,7 @@ export interface ShareableOrderCardProps {
  * KHÔNG có nút thao tác. Sản phẩm hiển thị dạng text (không thumbnail) để né CORS ảnh.
  */
 const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardProps>(
-  ({ order, subtotal, finalTotal, shippingCost, surchargeLabel, qrUrl, description }, ref) => {
+  ({ order, subtotal, finalTotal, shippingCost, surchargeLabel, deliveryLabel, qrUrl, description }, ref) => {
     const c = order.customer;
     const rowClass = 'flex items-center justify-between gap-3';
     return (
@@ -55,6 +57,11 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
           <Typography as="p" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-400">Khách hàng</Typography>
           <Typography as="p" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900">{c.name || '—'}</Typography>
           {c.phone ? <Typography as="p" size="sm" textClassName="text-slate-600">{c.phone}</Typography> : null}
+          {deliveryLabel ? (
+            <Box layoutClassName="inline-flex rounded-full px-2 py-0.5" backgroundClassName="bg-primary-50">
+              <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-primary-700">{deliveryLabel}</Typography>
+            </Box>
+          ) : null}
           {c.address ? <Typography as="p" size="sm" textClassName="text-slate-600">{c.address}{c.city ? `, ${c.city}` : ''}</Typography> : null}
         </Box>
 

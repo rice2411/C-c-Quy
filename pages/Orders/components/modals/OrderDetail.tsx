@@ -1163,6 +1163,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         finalTotal={finalTotal}
         shippingCost={shippingCost}
         surchargeLabel={surchargeTagLabel(currentOrder.surchargeTag, surchargeTags)}
+        deliveryLabel={
+          currentOrder.deliveryType === DeliveryType.PICKUP ? t('deliveryType.pickup')
+          : currentOrder.deliveryType === DeliveryType.SHIP_PROVINCE ? t('deliveryType.shipProvince')
+          : currentOrder.deliveryType === DeliveryType.SHIP ? t('deliveryType.ship') : ''
+        }
         qrUrl={qrUrl}
         description={description}
       />
