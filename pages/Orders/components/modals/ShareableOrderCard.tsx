@@ -62,7 +62,19 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
         <Box layoutClassName="space-y-1.5 border-t border-slate-200 pt-3">
           <Typography as="p" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-400">Sản phẩm</Typography>
           {order.items.map((it, idx) => (
-            <Box key={idx} layoutClassName={rowClass}>
+            <Box key={idx} layoutClassName="flex items-center gap-2.5">
+              {it.image ? (
+                <Image
+                  src={it.image}
+                  alt={it.name}
+                  crossOrigin="anonymous"
+                  disableFade
+                  loading="eager"
+                  layoutClassName="h-10 w-10 shrink-0 rounded-md border border-slate-200 object-cover"
+                />
+              ) : (
+                <Box layoutClassName="h-10 w-10 shrink-0 rounded-md" backgroundClassName="bg-slate-100" />
+              )}
               <Typography as="span" size="sm" layoutClassName="min-w-0 flex-1" textClassName="text-slate-700">{it.name} ×{it.quantity}</Typography>
               <Typography as="span" size="sm" layoutClassName="shrink-0 font-medium" textClassName="text-slate-700">{formatVND(it.price * it.quantity)}</Typography>
             </Box>
