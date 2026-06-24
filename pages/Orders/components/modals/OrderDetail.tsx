@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
+import { toBlob } from 'html-to-image';
 import {
+  Camera,
   Clock,
   Copy,
   CreditCard,
@@ -42,6 +44,7 @@ import Heading from '@/components/ui/Heading';
 import IconButton from '@/components/ui/IconButton';
 import Typography from '@/components/ui/Typography';
 import CancelRefundModal, { type CancelRefundMode, type CancelRefundResult } from '@/pages/Orders/components/modals/CancelRefundModal';
+import ShareableOrderCard from '@/pages/Orders/components/modals/ShareableOrderCard';
 interface OrderDetailProps {
   isOpen: boolean;
   order: Order | null;
@@ -95,6 +98,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order?.paymentStatus, order?.sepayId]);
 
+  const shareRef = useRef<HTMLDivElement>(null);
+  const [copyingImg, setCopyingImg] = useState(false);
+
   const currentOrder = localOrder || order;
   if (!currentOrder) return null;
 
@@ -113,6 +119,39 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+  };
+
+  // Chụp thẻ thông tin gửi khách (ShareableOrderCard, off-screen) → ảnh PNG → clipboard.
+  // Trình duyệt không hỗ trợ copy ảnh / lỗi clipboard → fallback tải PNG xuống.
+  const handleCopyImage = async () => {
+    if (!shareRef.current || copyingImg) return;
+    setCopyingImg(true);
+    try {
+      if (document.fonts?.ready) await document.fonts.ready; // tránh nhảy font khi render
+      const blob = await toBlob(shareRef.current, { pixelRatio: 2, backgroundColor: '#ffffff', cacheBust: true });
+      if (!blob) throw new Error('no blob');
+      const canClipboard = typeof ClipboardItem !== 'undefined' && !!navigator.clipboard?.write;
+      if (canClipboard) {
+        try {
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+          toast.success(t('detail.copyImageSuccess') || 'Đã copy ảnh đơn vào clipboard');
+          return;
+        } catch {
+          /* clipboard ảnh fail (quyền/secure context) → rơi xuống fallback download */
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentOrder.orderNumber || 'don-hang'}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(t('detail.copyImageDownloaded') || 'Đã tải ảnh đơn (trình duyệt không hỗ trợ copy ảnh)');
+    } catch {
+      toast.error(t('detail.copyImageError') || 'Không tạo được ảnh đơn');
+    } finally {
+      setCopyingImg(false);
+    }
   };
 
   /**
@@ -238,6 +277,25 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
   const footer = (
     <Box layoutClassName="flex justify-end gap-3">
+      <Button
+        type="button"
+        onClick={handleCopyImage}
+        disabled={copyingImg}
+        variant="secondary"
+        disableVariantHover
+        disableVariantTextColor
+        borderClassName="border border-primary-200 dark:border-primary-700/50"
+        backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+        hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-900/30"
+        textClassName="text-sm font-medium text-primary-700 dark:text-primary-300"
+        roundedClassName="rounded-lg"
+        layoutClassName="mr-auto px-4 py-2"
+        stateClassName="transition-colors disabled:opacity-50"
+        leftIcon={<Camera className="h-4 w-4" />}
+        iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+      >
+        {copyingImg ? (t('detail.copyImageLoading') || 'Đang tạo ảnh...') : (t('detail.copyImage') || 'Copy ảnh')}
+      </Button>
       <Button
         type="button"
         onClick={onClose}
@@ -1101,6 +1159,29 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
       onClose={() => setCrMode(null)}
       onConfirm={handleCancelRefund}
     />
+
+    {/* Thẻ gửi khách render OFF-SCREEN để chụp ảnh (html-to-image). Không hiển thị cho user. */}
+    <Box layoutClassName="pointer-events-none fixed left-[-99999px] top-0" aria-hidden>
+      <ShareableOrderCard
+        ref={shareRef}
+        order={currentOrder}
+        subtotal={subtotal}
+        finalTotal={finalTotal}
+        shippingCost={shippingCost}
+        surchargeLabel={surchargeTagLabel(currentOrder.surchargeTag, surchargeTags)}
+        deliveryLabel={
+          currentOrder.deliveryType === DeliveryType.PICKUP ? t('deliveryType.pickup')
+          : currentOrder.deliveryType === DeliveryType.SHIP_PROVINCE ? t('deliveryType.shipProvince')
+          : currentOrder.deliveryType === DeliveryType.SHIP ? t('deliveryType.ship') : ''
+        }
+        paymentLabel={
+          currentOrder.paymentMethod === PaymentMethod.CASH ? t('paymentMethod.cash')
+          : currentOrder.paymentMethod === PaymentMethod.BANKING ? t('paymentMethod.banking') : ''
+        }
+        qrUrl={qrUrl}
+        description={description}
+      />
+    </Box>
     </>
   );
 };

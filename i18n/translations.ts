@@ -466,6 +466,11 @@ export const translations = {
     detail: {
       orderId: "Order #",
       placedOn: "Placed on",
+      copyImage: "Copy image",
+      copyImageLoading: "Generating image...",
+      copyImageSuccess: "Order image copied to clipboard",
+      copyImageDownloaded: "Image downloaded (browser doesn't support image copy)",
+      copyImageError: "Could not generate order image",
       tabDetails: "Order Details",
       tabAi: "AI Assistant",
       tabHistory: "Edit History",
@@ -1000,6 +1005,11 @@ export const translations = {
     detail: {
       orderId: "Đơn hàng #",
       placedOn: "Đặt lúc",
+      copyImage: "Copy ảnh",
+      copyImageLoading: "Đang tạo ảnh...",
+      copyImageSuccess: "Đã copy ảnh đơn vào clipboard",
+      copyImageDownloaded: "Đã tải ảnh đơn (trình duyệt không hỗ trợ copy ảnh)",
+      copyImageError: "Không tạo được ảnh đơn",
       tabDetails: "Chi tiết đơn",
       tabAi: "Trợ lý AI",
       tabHistory: "Lịch sử",
