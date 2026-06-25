@@ -3,6 +3,7 @@ import { CreditCard, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePaymentConfig } from '@/hooks/usePaymentConfig';
+import { formatDateTime } from '@/utils/format/dateUtil';
 import { QR_TEMPLATES } from '@/types/paymentConfig';
 import type { PaymentConfiguration, QrTemplate } from '@/types/paymentConfig';
 import Box from '@/components/ui/Box';
@@ -129,7 +130,7 @@ const PaymentSettingsTab: React.FC = () => {
 
         {draft.updatedAt ? (
           <Typography size="xs" variant="muted" layoutClassName="mt-1">
-            {t('paymentSettings.updatedAt')}: {new Date(draft.updatedAt).toLocaleString('vi-VN')}
+            {t('paymentSettings.updatedAt')}: {formatDateTime(draft.updatedAt)}
           </Typography>
         ) : null}
       </Card>
