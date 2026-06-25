@@ -122,8 +122,46 @@ const configFor = (key: string): FieldConfig =>
   FIELD_CONFIG[key] ?? { label: key, kind: 'text' };
 
 /**
+ * So sánh 2 giá trị THÔ (raw before vs after) xem có THỰC SỰ đổi không.
+ * Chuẩn hoá trước khi so để tránh "đổi giả" do khác kiểu/format:
+ *  - number: "25000" vs 25000 coi như bằng (toNumber).
+ *  - mảng/JSON-string: so theo nội dung đã parse (toArray) — tags ["a"] == '["a"]'.
+ *  - rỗng: null/undefined/''/[] coi như "rỗng" và bằng nhau (isBlank).
+ * So trên raw (không phải string format) để ảnh đổi URL vẫn được giữ:
+ * 2 URL khác nhau cùng format thành "đã đổi ảnh" nhưng raw khác → vẫn coi là đổi.
+ */
+const rawValuesEqual = (a: unknown, b: unknown): boolean => {
+  // Cả hai rỗng → coi như bằng (không có thay đổi thực sự).
+  if (isBlank(a) && isBlank(b)) return true;
+  if (isBlank(a) !== isBlank(b)) return false;
+
+  // Số: so theo giá trị numeric ("25000" == 25000).
+  const na = toNumber(a);
+  const nb = toNumber(b);
+  if (na !== null && nb !== null) return na === nb;
+  // Một bên là số, bên kia không parse được số → khác.
+  if (na !== null || nb !== null) return false;
+
+  // Mảng / JSON-string mảng: so theo nội dung đã parse.
+  const arrA = toArray(a);
+  const arrB = toArray(b);
+  if (arrA && arrB) {
+    if (arrA.length !== arrB.length) return false;
+    return arrA.every((x, i) => rawValuesEqual(x, arrB[i]));
+  }
+  if (arrA || arrB) return false;
+
+  // Còn lại (string/boolean/object): so theo dạng chuẩn hoá ổn định.
+  const norm = (v: unknown): string =>
+    typeof v === 'string' ? v : JSON.stringify(v);
+  return norm(a) === norm(b);
+};
+
+/**
  * Tính danh sách thay đổi của 1 version.
  * Ưu tiên `changes` (field đã đổi); lấy before từ `before`, after từ `after` (fallback `changes`).
+ * CHỈ giữ field có giá trị THỰC SỰ đổi (so raw before vs after) — BE ghi toàn bộ field
+ * mỗi version nên phải tự lọc field không đổi để timeline không hiển thị dòng nhiễu.
  */
 export const diffProductVersion = (version: ProductVersion): ProductFieldChange[] => {
   const before = (version.before ?? {}) as Record<string, unknown>;
@@ -139,6 +177,9 @@ export const diffProductVersion = (version: ProductVersion): ProductFieldChange[
     const cfg = configFor(key);
     const rawBefore = key in before ? before[key] : undefined;
     const rawAfter = key in after ? after[key] : changes[key];
+
+    // Lọc field KHÔNG đổi: so trên giá trị thô đã chuẩn hoá.
+    if (rawValuesEqual(rawBefore, rawAfter)) continue;
 
     const beforeStr = formatValue(cfg.kind, rawBefore);
     const afterStr = formatValue(cfg.kind, rawAfter);

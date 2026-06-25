@@ -47,7 +47,12 @@ const ProductVersionTimeline: React.FC<ProductVersionTimelineProps> = ({
     );
   }
 
-  if (versions.length === 0) {
+  // Tính diff trước + bỏ qua version không còn field nào đổi (BE ghi cả field không đổi).
+  const visibleVersions = versions
+    .map((version) => ({ version, changes: diffProductVersion(version) }))
+    .filter((v) => v.changes.length > 0);
+
+  if (versions.length === 0 || visibleVersions.length === 0) {
     return (
       <EmptyState
         icon={<History className="h-6 w-6" />}
@@ -61,8 +66,7 @@ const ProductVersionTimeline: React.FC<ProductVersionTimelineProps> = ({
       layoutClassName="relative space-y-5 pl-5"
       borderClassName="border-l-2 border-slate-200 dark:border-slate-700"
     >
-      {versions.map((version) => {
-        const changes = diffProductVersion(version);
+      {visibleVersions.map(({ version, changes }) => {
         return (
           <Box key={version.id} layoutClassName="relative">
             {/* Dot mốc thời gian */}
@@ -83,49 +87,43 @@ const ProductVersionTimeline: React.FC<ProductVersionTimelineProps> = ({
               </Typography>
             </Box>
 
-            {changes.length > 0 ? (
-              <Box layoutClassName="mt-2 space-y-1.5">
-                {changes.map((c) => (
-                  <Box
-                    key={c.field}
-                    layoutClassName="flex flex-wrap items-center gap-2 rounded-md p-2"
-                    backgroundClassName="bg-slate-50/70 dark:bg-slate-700/30"
-                    borderClassName="border border-slate-100 dark:border-slate-700"
+            <Box layoutClassName="mt-2 space-y-1.5">
+              {changes.map((c) => (
+                <Box
+                  key={c.field}
+                  layoutClassName="flex flex-wrap items-center gap-2 rounded-md p-2"
+                  backgroundClassName="bg-slate-50/70 dark:bg-slate-700/30"
+                  borderClassName="border border-slate-100 dark:border-slate-700"
+                >
+                  <Badge
+                    size="sm"
+                    backgroundClassName="bg-slate-200 dark:bg-slate-600"
+                    textClassName="font-semibold text-slate-700 dark:text-slate-200"
                   >
-                    <Badge
-                      size="sm"
-                      backgroundClassName="bg-slate-200 dark:bg-slate-600"
-                      textClassName="font-semibold text-slate-700 dark:text-slate-200"
-                    >
-                      {c.label}
-                    </Badge>
-                    <Typography
-                      as="span"
-                      size="xs"
-                      layoutClassName="break-all line-through"
-                      textClassName="text-rose-500 dark:text-rose-400"
-                    >
-                      {c.before}
-                    </Typography>
-                    <Typography as="span" size="xs" variant="muted" aria-hidden="true">
-                      →
-                    </Typography>
-                    <Typography
-                      as="span"
-                      size="xs"
-                      layoutClassName="break-all font-semibold"
-                      textClassName="text-emerald-600 dark:text-emerald-400"
-                    >
-                      {c.after}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            ) : (
-              <Typography size="xs" variant="muted" layoutClassName="mt-1">
-                Không có thay đổi chi tiết
-              </Typography>
-            )}
+                    {c.label}
+                  </Badge>
+                  <Typography
+                    as="span"
+                    size="xs"
+                    layoutClassName="break-all line-through"
+                    textClassName="text-rose-500 dark:text-rose-400"
+                  >
+                    {c.before}
+                  </Typography>
+                  <Typography as="span" size="xs" variant="muted" aria-hidden="true">
+                    →
+                  </Typography>
+                  <Typography
+                    as="span"
+                    size="xs"
+                    layoutClassName="break-all font-semibold"
+                    textClassName="text-emerald-600 dark:text-emerald-400"
+                  >
+                    {c.after}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
           </Box>
         );
       })}
