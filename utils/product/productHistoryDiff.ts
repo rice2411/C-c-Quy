@@ -6,6 +6,7 @@
  * mảng có thể là string JSON. Mọi format đều type-guard.
  */
 import { formatVND } from '@/utils/format/currencyUtil';
+import { parseDateValue } from '@/utils/format/dateUtil';
 import type { ProductVersion } from '@/types';
 
 /** 1 dòng thay đổi của 1 field trong 1 version. */
@@ -192,11 +193,18 @@ export const diffProductVersion = (version: ProductVersion): ProductFieldChange[
   return result;
 };
 
-/** Format thời gian chỉnh sửa (vi-VN), '—' nếu thiếu/không hợp lệ. */
-export const formatEditedAt = (iso?: string): string => {
-  if (!iso) return PLACEHOLDER;
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return PLACEHOLDER;
+/**
+ * Format thời gian chỉnh sửa (vi-VN), '—' nếu thiếu/không hợp lệ.
+ *
+ * LƯU Ý: type `ProductVersion.editedAt` khai báo `string`, NHƯNG runtime có thể là
+ * Timestamp-like object — interceptor `services/api/client.ts` (`reviveTimestamps`)
+ * biến mọi ISO timestamp từ BE thành `{ seconds, nanoseconds, toDate(), toMillis() }`.
+ * Vì vậy nhận `unknown` và uỷ thác cho `parseDateValue` (helper dùng chung) để xử
+ * lý đồng nhất cả string ISO, number (ms), Date lẫn Timestamp-like object.
+ */
+export const formatEditedAt = (value?: unknown): string => {
+  const d = parseDateValue(value);
+  if (!d || Number.isNaN(d.getTime())) return PLACEHOLDER;
   return d.toLocaleString('vi-VN', {
     day: '2-digit',
     month: '2-digit',
