@@ -1,4 +1,5 @@
 import { apiClient } from "@/services/api/client";
+import { fetchPaymentConfiguration } from "@/services/configurationService";
 import { Order, OrderFieldChange } from "@/types";
 import { generateQRCodeImage, getOrderTotal } from "@/utils/order/orderUtils";
 import {
@@ -50,7 +51,9 @@ export const sendNewOrderZaloNotifications = async (order: any, groupIds: string
 
   const orderNumber = order?.orderNumber || order?.id;
   const amount = getOrderTotal(order);
-  const qrUrl = orderNumber && amount ? generateQRCodeImage(orderNumber, amount) : '';
+  // Non-React: không dùng hook → fetch config trước khi build QR (des = "SEVQR <orderNumber>").
+  const paymentConfig = await fetchPaymentConfiguration();
+  const qrUrl = orderNumber && amount ? generateQRCodeImage(orderNumber, amount, paymentConfig) : '';
   if (!qrUrl) {
     await postTextToGroups(groupIds, message);
     return;

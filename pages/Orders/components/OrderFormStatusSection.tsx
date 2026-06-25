@@ -1,7 +1,9 @@
 import React from 'react';
 import { Copy, CreditCard, QrCode, StickyNote, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { usePaymentConfig } from '@/hooks/usePaymentConfig';
 import { OrderStatus, PaymentMethod, PaymentStatus } from '@/types';
+import { generateQRCodeImage } from '@/utils/order/orderUtils';
 import Box from '@/components/ui/Box';
 import Field from '@/components/ui/Field';
 import Image from '@/components/ui/Image';
@@ -35,9 +37,10 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
   orderNumber,
 }) => {
   const { t } = useLanguage();
+  const { config: paymentConfig } = usePaymentConfig();
 
-  const description = `${orderNumber}`;
-  const qrUrl = `https://qr.sepay.vn/img?acc=96247HTTH1308&bank=BIDV&amount=${Math.round(total)}&des=${encodeURIComponent(description)}&template=compact`;
+  const description = `SEVQR ${orderNumber}`;
+  const qrUrl = generateQRCodeImage(orderNumber, total, paymentConfig);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -114,8 +117,8 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
         />
       </Field>
 
-      {/* QR luôn hiện khi total > 0 — không phụ thuộc paymentMethod */}
-      {total > 0 ? (
+      {/* QR hiện khi total > 0 VÀ có URL hợp lệ (config đủ số TK/bank) — không phụ thuộc paymentMethod */}
+      {total > 0 && qrUrl ? (
         <Box
           layoutClassName="flex animate-fade-in flex-col items-center gap-4 rounded-xl border p-4 sm:flex-row sm:items-start"
           borderClassName="border-blue-100 dark:border-blue-800"
@@ -146,19 +149,19 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
                   {t('qr.bank')}
                 </Typography>
                 <Typography as="span" layoutClassName="font-bold text-slate-800 dark:text-slate-200">
-                  BIDV
+                  {paymentConfig.bankCode}
                 </Typography>
               </Box>
               <Box
                 layoutClassName="group flex cursor-pointer items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800 sm:justify-start sm:gap-4"
-                onClick={() => copyToClipboard('96247HTTH1308')}
+                onClick={() => copyToClipboard(paymentConfig.accountNumber)}
               >
                 <Typography as="span" size="xs" layoutClassName="min-w-[60px] font-medium uppercase text-slate-500">
                   {t('qr.account')}
                 </Typography>
                 <Box layoutClassName="flex items-center gap-2">
                   <Typography as="span" layoutClassName="font-mono font-bold text-slate-800 dark:text-slate-200">
-                    96247HTTH1308
+                    {paymentConfig.accountNumber}
                   </Typography>
                   <Copy className="h-3 w-3 text-slate-400 group-hover:text-blue-500" />
                 </Box>
@@ -168,7 +171,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
                   {t('qr.accountName')}
                 </Typography>
                 <Typography as="span" layoutClassName="font-bold uppercase text-slate-800 dark:text-slate-200">
-                  TON THAT ANH MINH
+                  {paymentConfig.accountHolder}
                 </Typography>
               </Box>
               <Box layoutClassName="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800 sm:justify-start sm:gap-4">

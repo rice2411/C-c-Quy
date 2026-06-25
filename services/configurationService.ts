@@ -19,6 +19,8 @@ import {
 } from '@/types';
 import { DEFAULT_SHIPPING_CONFIG } from '@/types/shippingConfig';
 import type { ShippingConfiguration } from '@/types/shippingConfig';
+import { DEFAULT_PAYMENT_CONFIG } from '@/types/paymentConfig';
+import type { PaymentConfiguration } from '@/types/paymentConfig';
 import { UserRole } from '@/types/user';
 import { getUserByUid } from '@/services/userService';
 
@@ -162,4 +164,23 @@ export const saveShippingConfiguration = async (
   updatedBy?: string | null,
 ): Promise<void> => {
   await apiClient.put('/configurations/shipping', { ...config, updatedBy });
+};
+
+// ==================== PAYMENT CONFIGURATION ====================
+
+export const fetchPaymentConfiguration = async (): Promise<PaymentConfiguration> => {
+  const { data } = await apiClient.get<PaymentConfiguration>('/configurations/payment');
+  return data ?? DEFAULT_PAYMENT_CONFIG;
+};
+
+export const savePaymentConfiguration = async (
+  config: PaymentConfiguration,
+): Promise<PaymentConfiguration> => {
+  const { data } = await apiClient.put<PaymentConfiguration>('/configurations/payment', {
+    bankCode: config.bankCode,
+    accountNumber: config.accountNumber,
+    accountHolder: config.accountHolder,
+    qrTemplate: config.qrTemplate,
+  });
+  return data ?? config;
 };

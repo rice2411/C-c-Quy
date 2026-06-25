@@ -505,6 +505,21 @@ export const translations = {
       content: "Content",
       instruction: "Scan with any banking app to pay."
     },
+    paymentSettings: {
+      title: "Payment account",
+      bankInfo: "Receiving bank account",
+      bankCode: "Bank code",
+      accountNumber: "Account number",
+      accountHolder: "Account holder",
+      qrTemplate: "QR template",
+      hint: "This account/QR is used for the payment QR code shown on orders and Zalo notifications.",
+      updatedAt: "Last updated",
+      save: "Save",
+      saving: "Saving...",
+      saved: "Payment configuration saved",
+      saveError: "Failed to save payment configuration",
+      required: "Please fill bank code, account number and account holder"
+    },
     login: {
       welcome: "Welcome back! Please sign in to continue.",
       googleButton: "Sign in with Google",
@@ -1021,6 +1036,21 @@ export const translations = {
       amount: "Số tiền",
       content: "Nội dung",
       instruction: "Quét mã bằng ứng dụng ngân hàng để thanh toán."
+    },
+    paymentSettings: {
+      title: "Tài khoản thanh toán",
+      bankInfo: "Tài khoản nhận tiền",
+      bankCode: "Mã ngân hàng",
+      accountNumber: "Số tài khoản",
+      accountHolder: "Chủ tài khoản",
+      qrTemplate: "Template QR",
+      hint: "Tài khoản/QR này dùng cho mã QR thanh toán hiển thị trên đơn hàng và thông báo Zalo.",
+      updatedAt: "Cập nhật lần cuối",
+      save: "Lưu",
+      saving: "Đang lưu...",
+      saved: "Đã lưu cấu hình thanh toán",
+      saveError: "Lỗi khi lưu cấu hình thanh toán",
+      required: "Vui lòng nhập mã ngân hàng, số tài khoản và chủ tài khoản"
     },
     login: {
       welcome: "Chào mừng trở lại! Vui lòng đăng nhập để tiếp tục.",
