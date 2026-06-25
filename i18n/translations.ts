@@ -518,7 +518,13 @@ export const translations = {
       saving: "Saving...",
       saved: "Payment configuration saved",
       saveError: "Failed to save payment configuration",
-      required: "Please fill bank code, account number and account holder"
+      required: "Please fill bank code, account number and account holder",
+      qrLink: "Paste SePay QR link",
+      qrLinkPlaceholder: "https://qr.sepay.vn/img?acc=96247HTTH1308&bank=BIDV&template=compact",
+      qrLinkHint: "Paste the SePay QR link to auto-fill bank and account number.",
+      qrLinkParsed: "Recognized from link",
+      qrLinkInvalid: "Invalid QR link",
+      invalidBank: "Please select a valid bank"
     },
     login: {
       welcome: "Welcome back! Please sign in to continue.",
@@ -1050,7 +1056,13 @@ export const translations = {
       saving: "Đang lưu...",
       saved: "Đã lưu cấu hình thanh toán",
       saveError: "Lỗi khi lưu cấu hình thanh toán",
-      required: "Vui lòng nhập mã ngân hàng, số tài khoản và chủ tài khoản"
+      required: "Vui lòng nhập mã ngân hàng, số tài khoản và chủ tài khoản",
+      qrLink: "Dán link QR SePay",
+      qrLinkPlaceholder: "https://qr.sepay.vn/img?acc=96247HTTH1308&bank=BIDV&template=compact",
+      qrLinkHint: "Dán link QR SePay để tự điền ngân hàng và số tài khoản.",
+      qrLinkParsed: "Đã nhận diện từ link",
+      qrLinkInvalid: "Link QR không hợp lệ",
+      invalidBank: "Vui lòng chọn ngân hàng hợp lệ"
     },
     login: {
       welcome: "Chào mừng trở lại! Vui lòng đăng nhập để tiếp tục.",

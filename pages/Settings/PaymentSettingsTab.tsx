@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePaymentConfig } from '@/hooks/usePaymentConfig';
 import { formatDateTime } from '@/utils/format/dateUtil';
-import { QR_TEMPLATES } from '@/types/paymentConfig';
+import { QR_TEMPLATES, SEPAY_BANKS, parseSepayQrLink } from '@/types/paymentConfig';
 import type { PaymentConfiguration, QrTemplate } from '@/types/paymentConfig';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -20,8 +20,31 @@ const PaymentSettingsTab: React.FC = () => {
   const { t } = useLanguage();
   const { config, loading, saving, save } = usePaymentConfig();
   const [draft, setDraft] = useState<PaymentConfiguration>(config);
+  const [qrLink, setQrLink] = useState('');
 
   useEffect(() => { setDraft(config); }, [config]);
+
+  const applyQrLink = (value: string) => {
+    const parsed = parseSepayQrLink(value);
+    if (!parsed) {
+      toast.error(t('paymentSettings.qrLinkInvalid'));
+      return;
+    }
+    setDraft((d) => ({
+      ...d,
+      ...(parsed.bankCode ? { bankCode: parsed.bankCode } : {}),
+      ...(parsed.accountNumber ? { accountNumber: parsed.accountNumber } : {}),
+      ...(parsed.qrTemplate
+        ? { qrTemplate: parsed.qrTemplate as QrTemplate }
+        : {}),
+    }));
+    toast.success(t('paymentSettings.qrLinkParsed'));
+  };
+
+  const handleQrLinkChange = (value: string) => {
+    setQrLink(value);
+    if (value.trim()) applyQrLink(value);
+  };
 
   const handleSave = async () => {
     const next: PaymentConfiguration = {
@@ -30,8 +53,12 @@ const PaymentSettingsTab: React.FC = () => {
       accountHolder: draft.accountHolder.trim(),
       qrTemplate: draft.qrTemplate,
     };
-    if (!next.bankCode || !next.accountNumber || !next.accountHolder) {
+    if (!next.accountNumber || !next.accountHolder) {
       toast.error(t('paymentSettings.required'));
+      return;
+    }
+    if (!SEPAY_BANKS.some((b) => b.value === next.bankCode)) {
+      toast.error(t('paymentSettings.invalidBank'));
       return;
     }
     try {
@@ -80,15 +107,34 @@ const PaymentSettingsTab: React.FC = () => {
 
       <Card padding="lg">
         <Heading level={3} textClassName="text-base font-semibold mb-3">{t('paymentSettings.bankInfo')}</Heading>
-        <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+        <Field label={t('paymentSettings.qrLink')} htmlFor="payment-qr-link">
+          <Input
+            id="payment-qr-link"
+            type="text"
+            value={qrLink}
+            onChange={(e) => handleQrLinkChange(e.target.value)}
+            placeholder={t('paymentSettings.qrLinkPlaceholder')}
+          />
+          <Typography size="xs" variant="muted" layoutClassName="mt-1">
+            {t('paymentSettings.qrLinkHint')}
+          </Typography>
+        </Field>
+
+        <Box layoutClassName="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label={t('paymentSettings.bankCode')} htmlFor="payment-bank-code">
-            <Input
+            <Select
               id="payment-bank-code"
-              type="text"
+              fullWidth
               value={draft.bankCode}
               onChange={(e) => setDraft((d) => ({ ...d, bankCode: e.target.value }))}
-              placeholder="BIDV"
-            />
+            >
+              {SEPAY_BANKS.map((b) => (
+                <option key={b.value} value={b.value}>
+                  {b.label}
+                </option>
+              ))}
+            </Select>
           </Field>
           <Field label={t('paymentSettings.accountNumber')} htmlFor="payment-account-number">
             <Input
