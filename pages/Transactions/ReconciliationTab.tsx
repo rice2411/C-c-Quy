@@ -257,7 +257,7 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     activeTab === 'invalid' ? invalidTransactions :
     activeTab === 'external' ? externalTransactions :
     activeTab === 'out' ? outTransactions :
-    baseFiltered;
+    dateSearchFiltered; // 'Tất cả' = mọi giao dịch (cả tiền vào + tiền ra)
 
   const totalAmount = useMemo(() => validTransactions.reduce((s, tr) => s + tr.transferAmount, 0), [validTransactions]);
   const avgAmount = useMemo(() => validTransactions.length > 0 ? Math.round(totalAmount / validTransactions.length) : 0, [totalAmount, validTransactions.length]);
@@ -305,7 +305,7 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   };
 
   const subTabs: { key: TabKey; label: string; count: number; icon: React.ReactNode }[] = [
-    { key: 'all', label: 'Tất cả', count: baseFiltered.length, icon: <ArrowRightLeft className="h-3.5 w-3.5" /> },
+    { key: 'all', label: 'Tất cả', count: dateSearchFiltered.length, icon: <ArrowRightLeft className="h-3.5 w-3.5" /> },
     { key: 'valid', label: 'Hợp lệ', count: validTransactions.length, icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
     { key: 'invalid', label: 'Chưa khớp', count: pendingInvalidCount, icon: <AlertTriangle className="h-3.5 w-3.5" /> },
     { key: 'external', label: 'Ngoài HT', count: externalTransactions.length, icon: <XCircle className="h-3.5 w-3.5" /> },
