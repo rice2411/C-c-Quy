@@ -287,7 +287,7 @@ const OutReconcilePanel: React.FC<OutReconcilePanelProps> = ({
       transaction={tr}
       linkedRefund={refundByTxId.get(tr.id)}
       pendingRefunds={pendingRefunds}
-      onReconcileRefund={onReconcileRefund}
+      onReconcileRefund={(orderId, refundId) => onReconcileRefund(orderId, refundId, tr.id)}
       onUnreconcileRefund={onUnreconcileRefund}
       onMarkSettled={() => onMarkSettled(tr.id)}
       onUnmarkSettled={() => onUnmarkSettled(tr.id)}
