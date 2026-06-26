@@ -4,7 +4,6 @@ import Box from '@/components/ui/Box';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import ShippingSettingsTab from '@/pages/Settings/ShippingSettingsTab';
-import PaymentSettingsTab from '@/pages/Settings/PaymentSettingsTab';
 import SurchargeTagsTab from '@/pages/Settings/SurchargeTagsTab';
 
 /**
@@ -25,7 +24,6 @@ const OrderSettingsTab: React.FC = () => {
       </Box>
 
       <ShippingSettingsTab />
-      <PaymentSettingsTab />
       <SurchargeTagsTab />
     </Box>
   );
