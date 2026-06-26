@@ -184,8 +184,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         const loadedItems = initialData.items.map((item, index) => ({
           id: `item-${Date.now()}-${index}`,
           // BE Postgres: item.id = DB row id (vd "66"), item.productId = product id thật.
-          // Phải dùng productId làm khoá sản phẩm; fallback item.id cho đơn cũ chưa có productId.
-          productId: item.productId ?? item.id,
+          // Dùng || (không ??) để productId RỖNG ("") ở đơn data cũ vẫn fallback sang id,
+          // tránh throw "Please select a product" ở finalItems. BE #179 đã khớp refund theo name. (hotfix #179)
+          productId: item.productId || item.id,
           productName: item.name,
           quantity: item.quantity,
           unitPrice: item.price,
