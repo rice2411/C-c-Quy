@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Building2, CreditCard, TrendingUp } from 'lucide-react';
+import { Calendar, Building2, CreditCard, TrendingUp, ArrowDownLeft } from 'lucide-react';
 import { Transaction } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Badge from '@/components/ui/Badge';
@@ -65,18 +65,31 @@ const TransactionsDesktopTable: React.FC<TransactionsDesktopTableProps> = ({
                   </Box>
                 </TableCell>
 
-                {/* Amount */}
+                {/* Amount — tiền vào (+ xanh) / tiền ra (− đỏ) */}
                 <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
-                  <Box layoutClassName="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 dark:bg-emerald-900/20">
-                    <TrendingUp className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                    <Typography
-                      as="span"
-                      layoutClassName="text-sm font-bold"
-                      textClassName="text-emerald-700 dark:text-emerald-300"
-                    >
-                      +{formatVND(tr.transferAmount)}
-                    </Typography>
-                  </Box>
+                  {tr.transferType === 'out' ? (
+                    <Box layoutClassName="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 dark:bg-rose-900/20">
+                      <ArrowDownLeft className="h-3.5 w-3.5 shrink-0 text-rose-600 dark:text-rose-400" />
+                      <Typography
+                        as="span"
+                        layoutClassName="text-sm font-bold"
+                        textClassName="text-rose-700 dark:text-rose-300"
+                      >
+                        −{formatVND(tr.transferAmount)}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box layoutClassName="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 dark:bg-emerald-900/20">
+                      <TrendingUp className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                      <Typography
+                        as="span"
+                        layoutClassName="text-sm font-bold"
+                        textClassName="text-emerald-700 dark:text-emerald-300"
+                      >
+                        +{formatVND(tr.transferAmount)}
+                      </Typography>
+                    </Box>
+                  )}
                 </TableCell>
 
                 {/* Content */}
