@@ -573,6 +573,25 @@ export const translations = {
       recentAccounts: "Recent Accounts",
       accountRemoved: "Account removed from history",
       removeAccount: "Remove account"
+    },
+    refund: {
+      confirmTitle: "Confirm refund",
+      confirmCta: "Confirm refund",
+      processing: "Processing…",
+      confirmWarning: "This order is already paid. Reducing quantity will record a refund for the customer. This does not automatically transfer money.",
+      reducedItems: "Reduced items",
+      amountLabel: "Refund amount (VND)",
+      suggestedHint: "Suggested",
+      reasonLabel: "Reason",
+      reasonPlaceholder: "E.g. customer reduced quantity, item out of stock…",
+      amountInvalid: "Invalid refund amount",
+      amountExceed: "Refund amount cannot exceed the original total",
+      amountInvalidServer: "Refund amount is invalid (must be greater than 0 and not exceed the original total).",
+      paidNoIncrease: "A paid order can only have its quantity reduced.",
+      adminOnly: "Only Admin can reduce quantity on a paid order.",
+      failed: "Refund failed",
+      historyTitle: "Refund history",
+      totalRefunded: "Total refunded"
     }
   },
   vi: {
@@ -1149,6 +1168,25 @@ export const translations = {
       recentAccounts: "Tài khoản đã đăng nhập",
       accountRemoved: "Đã xóa tài khoản khỏi danh sách",
       removeAccount: "Xóa tài khoản"
+    },
+    refund: {
+      confirmTitle: "Xác nhận hoàn tiền",
+      confirmCta: "Xác nhận hoàn tiền",
+      processing: "Đang xử lý…",
+      confirmWarning: "Đơn này đã thanh toán. Giảm số lượng sẽ ghi nhận hoàn tiền cho khách. Thao tác này không tự động chuyển khoản.",
+      reducedItems: "Các dòng giảm số lượng",
+      amountLabel: "Số tiền hoàn (VNĐ)",
+      suggestedHint: "Gợi ý",
+      reasonLabel: "Lý do",
+      reasonPlaceholder: "VD: Khách giảm số lượng, hết hàng…",
+      amountInvalid: "Số tiền hoàn không hợp lệ",
+      amountExceed: "Số tiền hoàn không được vượt quá tổng đơn cũ",
+      amountInvalidServer: "Số tiền hoàn không hợp lệ (phải lớn hơn 0 và không vượt quá tổng đơn cũ).",
+      paidNoIncrease: "Đơn đã thanh toán chỉ được giảm số lượng.",
+      adminOnly: "Chỉ Admin được giảm số lượng đơn đã thanh toán.",
+      failed: "Hoàn tiền thất bại",
+      historyTitle: "Lịch sử hoàn tiền",
+      totalRefunded: "Tổng đã hoàn"
     }
   }
 };
