@@ -27,7 +27,6 @@ import Field from '@/components/ui/Field';
 import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
-import { calculateOrderTotal } from '@/utils/order/orderUtils';
 import { diffOrderItems } from '@/utils/order/itemsDiff';
 import CreateCustomerModal from '@/pages/Orders/components/modals/CreateCustomerModal';
 import RefundConfirmModal, { type RefundConfirmResult, type RefundLine } from '@/pages/Orders/components/modals/RefundConfirmModal';
@@ -184,7 +183,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       if (initialData.items && initialData.items.length > 0) {
         const loadedItems = initialData.items.map((item, index) => ({
           id: `item-${Date.now()}-${index}`,
-          productId: item.id,
+          // BE Postgres: item.id = DB row id (vd "66"), item.productId = product id thật.
+          // Phải dùng productId làm khoá sản phẩm; fallback item.id cho đơn cũ chưa có productId.
+          productId: item.productId ?? item.id,
           productName: item.name,
           quantity: item.quantity,
           unitPrice: item.price,
@@ -575,19 +576,13 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
             return;
           }
 
-          // Tiền hoàn gợi ý = total cũ − total mới (dùng đúng util total để chuẩn KM/phụ thu).
-          const oldTotal = calculateOrderTotal(
-            initialData.items,
-            initialData.shippingCost || 0,
-            initialData.decorations || [],
-            initialData.surchargeAmount || 0,
-          );
-          const newTotal = calculateOrderTotal(
-            finalItems as any,
-            Number(shippingCost),
-            [],
-            Number(surchargeAmount || 0),
-          );
+          // Tiền hoàn gợi ý = total cũ − total mới, promo-aware để KHỚP delta BE.
+          // - oldTotal: initialData.total (tổng cũ authoritative từ API, đã gồm KM/phụ thu/ship).
+          // - newTotal: biến `total` của form (subtotal + ship − discountAmount) — chính số
+          //   form đang hiển thị cho user sau khi sửa, đã trừ KM. calculateOrderTotal cũ KHÔNG
+          //   trừ KM nên trên đơn có KM số gợi ý lệch → FE gửi refund.amount sai → BE ghi sai.
+          const oldTotal = Number(initialData.total) || 0;
+          const newTotal = total;
           const suggested = Math.max(0, oldTotal - newTotal);
 
           const lines: RefundLine[] = decreases.map((d) => {
