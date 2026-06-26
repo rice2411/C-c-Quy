@@ -594,6 +594,29 @@ export const translations = {
       historyTitle: "Refund history",
       totalRefunded: "Total refunded",
       emptyTitle: "This order has no refunds yet"
+    },
+    reconcile: {
+      badgeSepay: "Reconciled (SePay)",
+      badgeCash: "Cash",
+      badgeUnreconciled: "Not reconciled",
+      sepayCta: "Reconcile SePay",
+      cashCta: "Paid cash",
+      unlinkCta: "Undo reconcile",
+      pickCta: "Select",
+      pickerTitle: "Select an outgoing SePay transaction",
+      loadingTx: "Loading transactions…",
+      loadTxFailed: "Failed to load outgoing transactions",
+      noOutTx: "No unlinked outgoing transactions",
+      amountMatch: "amount matches",
+      linkedTx: "Transaction",
+      reconciledSepay: "Reconciled with SePay transaction",
+      markedCash: "Marked as cash refund",
+      unreconciled: "Reconciliation removed",
+      errAlreadyLinked: "This transaction is already linked to another refund",
+      errNotOutgoing: "This transaction is not an outgoing one",
+      errTxNotFound: "Transaction not found",
+      errRefundNotFound: "Refund not found",
+      errGeneric: "Reconcile failed, please try again"
     }
   },
   vi: {
@@ -1191,6 +1214,29 @@ export const translations = {
       historyTitle: "Lịch sử hoàn tiền",
       totalRefunded: "Tổng đã hoàn",
       emptyTitle: "Đơn chưa có hoàn tiền"
+    },
+    reconcile: {
+      badgeSepay: "Đã đối soát SePay",
+      badgeCash: "Tiền mặt",
+      badgeUnreconciled: "Chưa đối soát",
+      sepayCta: "Đối soát SePay",
+      cashCta: "Trả tiền mặt",
+      unlinkCta: "Gỡ đối soát",
+      pickCta: "Chọn",
+      pickerTitle: "Chọn giao dịch SePay tiền ra",
+      loadingTx: "Đang tải giao dịch…",
+      loadTxFailed: "Không tải được giao dịch tiền ra",
+      noOutTx: "Không có giao dịch tiền ra chưa gắn",
+      amountMatch: "khớp số tiền",
+      linkedTx: "Giao dịch",
+      reconciledSepay: "Đã đối soát với giao dịch SePay",
+      markedCash: "Đã đánh dấu hoàn tiền mặt",
+      unreconciled: "Đã gỡ đối soát",
+      errAlreadyLinked: "Giao dịch này đã được gắn cho phiếu hoàn khác",
+      errNotOutgoing: "Giao dịch này không phải tiền ra",
+      errTxNotFound: "Không tìm thấy giao dịch",
+      errRefundNotFound: "Không tìm thấy phiếu hoàn",
+      errGeneric: "Đối soát thất bại, vui lòng thử lại"
     }
   }
 };
