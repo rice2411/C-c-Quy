@@ -24,7 +24,7 @@ import {
 import { STATUS_COLORS } from '@/constant/order';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { usePaymentConfig } from '@/hooks/usePaymentConfig';
+import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { qk } from '@/hooks/queryKeys';
 import { ORDER_EDIT_DENIED } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber } from '@/services/transactionService';
@@ -68,7 +68,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const { t } = useLanguage();
   const { currentUser } = useAuth();
   const { surchargeTags } = useSurchargeTags();
-  const { config: paymentConfig } = usePaymentConfig();
+  const { activeAccount } = usePaymentAccounts();
   const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPayment, setUpdatingPayment] = useState(false);
@@ -111,7 +111,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const finalTotal = getOrderTotal(currentOrder);
 
   const description = `SEVQR ${currentOrder.orderNumber}`;
-  const qrUrl = generateQRCodeImage(currentOrder.orderNumber, finalTotal, paymentConfig);
+  // Không có TK active → qrUrl rỗng → section QR ẩn an toàn.
+  const qrUrl = activeAccount ? generateQRCodeImage(currentOrder.orderNumber, finalTotal, activeAccount) : '';
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -886,7 +887,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 </div>
 
                 {/* Payment QR Section — hiển thị khi có URL hợp lệ (config đủ số TK/bank); ẩn nếu thiếu để không vỡ ảnh */}
-                {qrUrl ? (
+                {qrUrl && activeAccount ? (
                   <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors animate-fade-in">
                      <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('qr.sectionTitle')}</Heading>
                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
@@ -907,18 +908,18 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                             <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
                               <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
                                   <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.bank')}</span>
-                                  <span className="font-bold text-slate-800 dark:text-slate-200">{paymentConfig.bankCode}</span>
+                                  <span className="font-bold text-slate-800 dark:text-slate-200">{activeAccount.bankCode}</span>
                               </div>
-                              <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 group cursor-pointer" onClick={() => copyToClipboard(paymentConfig.accountNumber)}>
+                              <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 group cursor-pointer" onClick={() => copyToClipboard(activeAccount.accountNumber)}>
                                   <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.account')}</span>
                                   <div className="flex items-center gap-2">
-                                    <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">{paymentConfig.accountNumber}</span>
+                                    <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">{activeAccount.accountNumber}</span>
                                     <Copy className="w-3 h-3 text-slate-400 group-hover:text-blue-500" />
                                   </div>
                               </div>
                               <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
                                   <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.accountName')}</span>
-                                  <span className="font-bold text-slate-800 dark:text-slate-200 uppercase">{paymentConfig.accountHolder}</span>
+                                  <span className="font-bold text-slate-800 dark:text-slate-200 uppercase">{activeAccount.accountHolder}</span>
                               </div>
                               <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
                                   <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.amount')}</span>

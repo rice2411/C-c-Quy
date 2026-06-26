@@ -105,8 +105,8 @@ export function userCanEditOrder(
 
 /**
  * Tạo URL ảnh QR code thanh toán (SePay VietQR).
- * Config (số TK / mã bank / template) được BƠM VÀO từ usePaymentConfig() (React)
- * hoặc fetchPaymentConfiguration() (non-React) — KHÔNG hardcode.
+ * Config (số TK / mã bank / template) = TK ACTIVE, bơm vào từ usePaymentAccounts() (React)
+ * hoặc fetchPaymentAccounts() → find(isActive) (non-React) — KHÔNG hardcode.
  * Nội dung CK = "SEVQR <orderNumber>" (prefix SEVQR cố định, giữ nguyên orderNumber ORD-...).
  * @param orderNumber - Mã đơn (vd "ORD-2026-001")
  * @param total - Tổng tiền (VND)

@@ -1,14 +1,17 @@
 /**
- * Payment configuration types + defaults.
- * Runtime config lưu ở BE (`configurations/payment-configuration`),
- * truy cập qua `usePaymentConfig()` ở components (mirror shipping config).
- * File này chỉ chứa types + default fallback.
+ * Payment account types + helpers.
+ * Mô hình: NHIỀU tài khoản nhận tiền, 1 cái active (mọi QR đơn dùng TK active).
+ * Runtime data lưu ở BE (`/configurations/payment-accounts`), truy cập qua
+ * `usePaymentAccounts()` ở components. File này chỉ chứa types + helper thuần.
  */
 
 /** Template QR của SePay (VietQR). */
 export type QrTemplate = 'compact' | 'compact2' | 'qr_only' | 'print';
 
-export interface PaymentConfiguration {
+/** 1 tài khoản nhận tiền đã lưu (BE trả về). */
+export interface PaymentAccount {
+  /** ID bản ghi (BE). */
+  id: string;
   /** Mã ngân hàng theo SePay/Napas, vd "BIDV". */
   bankCode: string;
   /** Số tài khoản nhận tiền. */
@@ -16,17 +19,20 @@ export interface PaymentConfiguration {
   /** Tên chủ tài khoản (in hoa). */
   accountHolder: string;
   /** Template ảnh QR của SePay (mặc định "compact"). */
-  qrTemplate: QrTemplate;
-  updatedAt?: string;
+  qrTemplate: QrTemplate | string;
+  /** TK đang active — mọi QR đơn dùng TK này. */
+  isActive: boolean;
+  /** Thời điểm tạo (ISO string từ BE). */
+  createdAt?: string;
 }
 
-/** Fallback khi BE chưa có doc hoặc fetch fail. */
-export const DEFAULT_PAYMENT_CONFIG: PaymentConfiguration = {
-  bankCode: 'BIDV',
-  accountNumber: '96247HTTH1308',
-  accountHolder: 'TON THAT ANH MINH',
-  qrTemplate: 'compact',
-};
+/** Body khi tạo tài khoản mới (POST). */
+export interface CreatePaymentAccountInput {
+  bankCode: string;
+  accountNumber: string;
+  accountHolder: string;
+  qrTemplate?: string;
+}
 
 /** Lựa chọn template cho dropdown cấu hình. */
 export const QR_TEMPLATES: { value: QrTemplate; label: string }[] = [
