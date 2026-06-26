@@ -19,6 +19,7 @@ import {
 } from '@/types';
 import { DEFAULT_SHIPPING_CONFIG } from '@/types/shippingConfig';
 import type { ShippingConfiguration } from '@/types/shippingConfig';
+import type { CreatePaymentAccountInput, PaymentAccount } from '@/types/paymentConfig';
 import { UserRole } from '@/types/user';
 import { getUserByUid } from '@/services/userService';
 
@@ -162,4 +163,39 @@ export const saveShippingConfiguration = async (
   updatedBy?: string | null,
 ): Promise<void> => {
   await apiClient.put('/configurations/shipping', { ...config, updatedBy });
+};
+
+// ==================== PAYMENT ACCOUNTS ====================
+// Mô hình mới: NHIỀU tài khoản + 1 active. Mọi endpoint trả về danh sách
+// PaymentAccount[] (active trước, createdAt desc) — interceptor đã bóc envelope `.data`.
+
+export const fetchPaymentAccounts = async (): Promise<PaymentAccount[]> => {
+  const { data } = await apiClient.get<PaymentAccount[]>('/configurations/payment-accounts');
+  return Array.isArray(data) ? data : [];
+};
+
+export const createPaymentAccount = async (
+  input: CreatePaymentAccountInput,
+): Promise<PaymentAccount[]> => {
+  const { data } = await apiClient.post<PaymentAccount[]>('/configurations/payment-accounts', {
+    bankCode: input.bankCode,
+    accountNumber: input.accountNumber,
+    accountHolder: input.accountHolder,
+    ...(input.qrTemplate ? { qrTemplate: input.qrTemplate } : {}),
+  });
+  return Array.isArray(data) ? data : [];
+};
+
+export const setActivePaymentAccount = async (id: string): Promise<PaymentAccount[]> => {
+  const { data } = await apiClient.put<PaymentAccount[]>(
+    `/configurations/payment-accounts/${encodeURIComponent(id)}/active`,
+  );
+  return Array.isArray(data) ? data : [];
+};
+
+export const deletePaymentAccount = async (id: string): Promise<PaymentAccount[]> => {
+  const { data } = await apiClient.delete<PaymentAccount[]>(
+    `/configurations/payment-accounts/${encodeURIComponent(id)}`,
+  );
+  return Array.isArray(data) ? data : [];
 };

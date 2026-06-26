@@ -19,6 +19,7 @@ import {
   Monitor,
   MessageSquare,
   Award,
+  QrCode,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { ScreenVisibilityMap } from "@/types";
@@ -168,6 +169,13 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
+    path: "/settings/sepay",
+    labelKey: "nav.settingsSepay",
+    icon: QrCode,
+    roles: [UserRole.SUPER_ADMIN],
+  },
+  {
+    type: "page",
     path: "/settings/badges",
     labelKey: "nav.settingsBadges",
     icon: Award,
@@ -310,6 +318,7 @@ export const navGroups: NavGroupConfig[] = [
       "/settings/screens",
       "/settings/zalo",
       "/settings/order",
+      "/settings/sepay",
       "/settings/badges",
       "/settings/categories",
     ],

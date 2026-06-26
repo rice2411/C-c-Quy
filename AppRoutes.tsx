@@ -21,6 +21,7 @@ import NotificationsPage from "./pages/Notifications/index";
 import ScreenVisibilityTab from "./pages/Settings/ScreenVisibilityTab";
 import ZaloSettingsTab from "./pages/Settings/ZaloSettingsTab";
 import OrderSettingsTab from "./pages/Settings/OrderSettingsTab";
+import SepaySettingsTab from "./pages/Settings/SepaySettingsTab";
 import BadgesTab from "./pages/Settings/BadgesTab";
 import CategoriesTab from "./pages/Settings/CategoriesTab";
 import LoginPage from "./pages/Login/index";
@@ -184,6 +185,14 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/order")?.roles}>
             <OrderSettingsTab />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="settings/sepay"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/sepay")?.roles}>
+            <SepaySettingsTab />
           </RoleBasedRoute>
         }
       />

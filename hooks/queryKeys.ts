@@ -53,6 +53,9 @@ export const qk = {
   shippingConfig: {
     all: ['shipping-config'] as const,
   },
+  paymentAccounts: {
+    all: ['payment-accounts'] as const,
+  },
   screenConfig: {
     all: ['screen-config'] as const,
   },
