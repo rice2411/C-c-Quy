@@ -19,7 +19,7 @@ import { qk } from '@/hooks/queryKeys';
 import { useOrders } from '@/hooks/useOrders';
 import { useTransactions, useTransactionMutations } from '@/hooks/queries/useTransactionsQuery';
 import { fetchAllRefunds, reconcileRefund, unreconcileRefund, RefundListItem } from '@/services/orderService';
-import { fetchReceiptsForReconcile, reconcileReceipt, unreconcileReceipt, ReconcileReceiptItem } from '@/services/stockReceiptService';
+import { markTransactionSettled } from '@/services/transactionService';
 import OutReconcilePanel from './components/OutReconcilePanel';
 import { PaymentStatus } from '@/types/enums';
 import { Transaction } from '@/types';
@@ -168,16 +168,9 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     queryFn: fetchAllRefunds,
     enabled: !!currentUser,
   });
-  const { data: receipts = [] } = useQuery<ReconcileReceiptItem[]>({
-    queryKey: ['stock-receipts', 'for-reconcile'],
-    queryFn: fetchReceiptsForReconcile,
-    enabled: !!currentUser,
-  });
-
   const refreshAfterReconcile = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: qk.orders.refunds }),
-      queryClient.invalidateQueries({ queryKey: ['stock-receipts', 'for-reconcile'] }),
       queryClient.invalidateQueries({ queryKey: qk.transactions.all }),
       queryClient.invalidateQueries({ queryKey: qk.orders.all }),
     ]);
@@ -205,24 +198,24 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     }
   };
 
-  const handleReconcileReceipt = async (receiptId: string, transactionId: string) => {
+  const handleMarkSettled = async (transactionId: string) => {
     try {
-      await reconcileReceipt(receiptId, transactionId);
-      toast.success('Đã đối soát phiếu nhập kho');
+      await markTransactionSettled(transactionId, true);
+      toast.success('Đã đánh dấu kết toán (về TK chính)');
       await refreshAfterReconcile();
     } catch (err: any) {
-      toast.error(err?.message || 'Đối soát phiếu nhập thất bại');
+      toast.error(err?.message || 'Đánh dấu thất bại');
       throw err;
     }
   };
 
-  const handleUnreconcileReceipt = async (receiptId: string) => {
+  const handleUnmarkSettled = async (transactionId: string) => {
     try {
-      await unreconcileReceipt(receiptId);
-      toast.success('Đã gỡ đối soát phiếu nhập');
+      await markTransactionSettled(transactionId, false);
+      toast.success('Đã gỡ đánh dấu kết toán');
       await refreshAfterReconcile();
     } catch (err: any) {
-      toast.error(err?.message || 'Gỡ đối soát thất bại');
+      toast.error(err?.message || 'Gỡ thất bại');
       throw err;
     }
   };
@@ -320,16 +313,15 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   const outTransactions = useMemo(() => dateSearchFiltered.filter(tr => tr.transferType === 'out'), [dateSearchFiltered]);
   const outTotal = useMemo(() => outTransactions.reduce((s, tr) => s + tr.transferAmount, 0), [outTransactions]);
 
-  // GD tiền ra CHƯA gắn phiếu hoàn / phiếu nhập nào (gộp vào tab "Chưa khớp").
-  const linkedOutTxIds = useMemo(() => {
+  // GD tiền ra CHƯA xử lý: chưa gắn phiếu hoàn VÀ chưa đánh dấu kết toán (gộp vào "Chưa khớp").
+  const refundLinkedTxIds = useMemo(() => {
     const s = new Set<string>();
     refunds.forEach(r => { if (r.transactionId) s.add(r.transactionId); });
-    receipts.forEach(r => { if (r.transactionId) s.add(r.transactionId); });
     return s;
-  }, [refunds, receipts]);
+  }, [refunds]);
   const outUnmatched = useMemo(
-    () => outTransactions.filter(tr => !linkedOutTxIds.has(tr.id)),
-    [outTransactions, linkedOutTxIds],
+    () => outTransactions.filter(tr => !refundLinkedTxIds.has(tr.id) && !tr.settledOut),
+    [outTransactions, refundLinkedTxIds],
   );
 
   const validTransactions = useMemo(() => baseFiltered.filter(tr => tr.orderNumber && tr.orderNumber.trim() !== ''), [baseFiltered]);
@@ -578,16 +570,15 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
             {outUnmatched.length > 0 && (
               <Box layoutClassName="space-y-2">
                 <Typography as="p" size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">
-                  Tiền ra — khớp hoàn tiền / nhập kho ({outUnmatched.length})
+                  Tiền ra — hoàn tiền / kết toán ({outUnmatched.length})
                 </Typography>
                 <OutReconcilePanel
                   transactions={outUnmatched}
                   refunds={refunds}
-                  receipts={receipts}
                   onReconcileRefund={handleReconcileOut}
                   onUnreconcileRefund={handleUnreconcileOut}
-                  onReconcileReceipt={handleReconcileReceipt}
-                  onUnreconcileReceipt={handleUnreconcileReceipt}
+                  onMarkSettled={handleMarkSettled}
+                  onUnmarkSettled={handleUnmarkSettled}
                   formatDate={formatDate}
                 />
               </Box>
@@ -598,11 +589,10 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
         <OutReconcilePanel
           transactions={outTransactions}
           refunds={refunds}
-          receipts={receipts}
           onReconcileRefund={handleReconcileOut}
           onUnreconcileRefund={handleUnreconcileOut}
-          onReconcileReceipt={handleReconcileReceipt}
-          onUnreconcileReceipt={handleUnreconcileReceipt}
+          onMarkSettled={handleMarkSettled}
+          onUnmarkSettled={handleUnmarkSettled}
           formatDate={formatDate}
         />
       ) : displayedTransactions.length === 0 ? (
