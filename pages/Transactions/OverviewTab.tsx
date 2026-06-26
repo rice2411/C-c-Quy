@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import {
   Wallet, Coins, Boxes, TrendingUp, Banknote, PieChart as PieIcon, LineChart as LineIcon,
-  ArrowUpRight, Undo2, BadgeDollarSign,
+  ArrowUpRight, Undo2, BadgeDollarSign, Landmark, AlertTriangle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -73,13 +73,16 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
         ]}
       />
 
-      {/* Doanh thu thuần + tiền ra + đã hoàn */}
+      {/* Doanh thu thuần + đã hoàn + tiền ra phân loại */}
       <StatsBanner
         items={[
           { icon: Banknote, label: t('transactions.totalIn'), value: formatVND(report.totalRevenue), accent: '#16a34a' },
           { icon: Undo2, label: t('transactions.totalRefunded'), value: formatVND(report.totalRefunded), accent: '#dc2626' },
           { icon: BadgeDollarSign, label: t('transactions.netRevenue'), value: formatVND(report.netRevenue), accent: '#0ea5e9' },
-          { icon: ArrowUpRight, label: t('transactions.bankOut'), value: formatVND(report.bankOut), accent: '#d97706' },
+          // Tiền ra đã kết toán = chuyển về TK chính, KHÔNG trừ doanh thu (trung tính).
+          { icon: Landmark, label: 'Đã kết toán', value: formatVND(report.settledOut ?? 0), accent: '#0284c7' },
+          // Tiền ra chưa phân loại = cần xử lý (gắn hoàn tiền hoặc đánh dấu kết toán).
+          { icon: AlertTriangle, label: 'Chưa phân loại', value: formatVND(report.unclassifiedOut ?? 0), accent: '#d97706' },
         ]}
       />
 
