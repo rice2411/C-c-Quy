@@ -473,6 +473,7 @@ export const translations = {
       copyImageDownloaded: "Image downloaded (browser doesn't support image copy)",
       copyImageError: "Could not generate order image",
       tabDetails: "Order Details",
+      tabRefund: "Refund",
       tabAi: "AI Assistant",
       tabHistory: "Edit History",
       historyEmpty: "No edits yet — changes will appear here.",
@@ -591,7 +592,8 @@ export const translations = {
       adminOnly: "Only Admin can reduce quantity on a paid order.",
       failed: "Refund failed",
       historyTitle: "Refund history",
-      totalRefunded: "Total refunded"
+      totalRefunded: "Total refunded",
+      emptyTitle: "This order has no refunds yet"
     }
   },
   vi: {
@@ -1068,6 +1070,7 @@ export const translations = {
       copyImageDownloaded: "Đã tải ảnh đơn (trình duyệt không hỗ trợ copy ảnh)",
       copyImageError: "Không tạo được ảnh đơn",
       tabDetails: "Chi tiết đơn",
+      tabRefund: "Hoàn tiền",
       tabAi: "Trợ lý AI",
       tabHistory: "Lịch sử",
       historyEmpty: "Chưa có chỉnh sửa nào — các thay đổi sẽ hiện ở đây.",
@@ -1186,7 +1189,8 @@ export const translations = {
       adminOnly: "Chỉ Admin được giảm số lượng đơn đã thanh toán.",
       failed: "Hoàn tiền thất bại",
       historyTitle: "Lịch sử hoàn tiền",
-      totalRefunded: "Tổng đã hoàn"
+      totalRefunded: "Tổng đã hoàn",
+      emptyTitle: "Đơn chưa có hoàn tiền"
     }
   }
 };
