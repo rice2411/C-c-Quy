@@ -64,16 +64,9 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/revenue",
-    labelKey: "nav.revenue",
-    icon: TrendingUp,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  },
-  {
-    type: "page",
-    path: "/transactions",
-    labelKey: "nav.transactions",
-    icon: Coins,
+    path: "/finance",
+    labelKey: "nav.finance",
+    icon: Wallet,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
