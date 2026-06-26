@@ -24,6 +24,13 @@ export const linkTransactionOrder = async (
   await apiClient.patch(`/transactions/${transactionId}/link`, { orderNumber });
 };
 
+/** Giao dịch SePay tiền ra (transferType='out') CHƯA gắn phiếu hoàn nào —
+ *  để chọn khi đối soát phiếu hoàn (#186). BE sắp theo ngày giảm dần. */
+export const fetchOutUnlinkedTransactions = async (): Promise<Transaction[]> => {
+  const res = await apiClient.get<Transaction[]>('/transactions/out-unlinked');
+  return res.data;
+};
+
 export const fetchTransactionsByOrderNumber = async (
   orderNumber: string,
 ): Promise<Transaction[]> => {

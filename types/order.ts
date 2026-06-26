@@ -70,6 +70,9 @@ export interface OrderRefundItem {
   amount: number; // VND = qtyRefunded × unitPrice (BE chuẩn KM/phụ thu)
 }
 
+/** Cách đối soát phiếu hoàn với dòng tiền ra (khớp BE). */
+export type RefundReconcileMethod = 'sepay' | 'cash';
+
 /** 1 bản ghi hoàn tiền của đơn (khớp BE). Mảng refunds sắp mới→cũ. */
 export interface OrderRefund {
   id: string;
@@ -78,7 +81,24 @@ export interface OrderRefund {
   items: OrderRefundItem[];
   createdAt?: any;
   createdBy?: string;
+  /** Đối soát (#186): id giao dịch SePay tiền ra đã gắn cho phiếu hoàn (null nếu chưa/tiền mặt). */
+  transactionId?: string | null;
+  /** Phiếu hoàn đã được đối soát (gắn GD SePay hoặc đánh dấu tiền mặt). */
+  reconciled?: boolean;
+  /** Cách đối soát: 'sepay' (gắn GD) / 'cash' (tiền mặt) / null khi chưa đối soát. */
+  reconcileMethod?: RefundReconcileMethod | null;
+  /** Thời điểm đối soát (ISO / Timestamp-like). */
+  reconciledAt?: any;
+  /** Người thực hiện đối soát (tên hiển thị). */
+  reconciledBy?: string | null;
 }
+
+/** Nhãn hiển thị cách đối soát phiếu hoàn (types-convention). */
+export const reconcileMethodLabel = (m?: RefundReconcileMethod | null): string => {
+  if (m === 'sepay') return 'SePay';
+  if (m === 'cash') return 'Tiền mặt';
+  return 'Chưa đối soát';
+};
 
 export interface Order {
   id: string;
