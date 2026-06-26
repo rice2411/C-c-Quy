@@ -1,4 +1,5 @@
 import { apiClient } from "@/services/api/client";
+import { fetchPaymentAccounts } from "@/services/configurationService";
 import { Order, OrderFieldChange } from "@/types";
 import { generateQRCodeImage, getOrderTotal } from "@/utils/order/orderUtils";
 import {
@@ -50,7 +51,14 @@ export const sendNewOrderZaloNotifications = async (order: any, groupIds: string
 
   const orderNumber = order?.orderNumber || order?.id;
   const amount = getOrderTotal(order);
-  const qrUrl = orderNumber && amount ? generateQRCodeImage(orderNumber, amount) : '';
+  // Non-React: không dùng hook → fetch list TK trước, chọn TK active (find isActive,
+  // fallback item đầu). Rỗng → không có QR → gửi text-only. des = "SEVQR <orderNumber>".
+  const accounts = await fetchPaymentAccounts();
+  const activeAccount = accounts.find((a) => a.isActive) ?? accounts[0] ?? null;
+  const qrUrl =
+    orderNumber && amount && activeAccount
+      ? generateQRCodeImage(orderNumber, amount, activeAccount)
+      : '';
   if (!qrUrl) {
     await postTextToGroups(groupIds, message);
     return;
