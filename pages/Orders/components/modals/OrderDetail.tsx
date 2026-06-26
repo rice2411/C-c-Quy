@@ -72,7 +72,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const { currentUser } = useAuth();
   const { surchargeTags } = useSurchargeTags();
   const { activeAccount } = usePaymentAccounts();
-  const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'refund' | 'history'>('details');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [crMode, setCrMode] = useState<CancelRefundMode | null>(null);
@@ -391,6 +391,31 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           </Button>
           <Button
             type="button"
+            onClick={() => setActiveTab('refund')}
+            variant="ghost"
+            disableVariantHover
+            disableVariantTextColor
+            borderClassName={
+              activeTab === 'refund' ? 'border-b-2 border-amber-600' : 'border-b-2 border-transparent'
+            }
+            textClassName={
+              activeTab === 'refund'
+                ? 'text-sm font-medium text-amber-600 dark:text-amber-400'
+                : 'text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+            }
+            layoutClassName="flex items-center gap-2 rounded-none py-4 shadow-none"
+            stateClassName="transition-colors"
+            leftIcon={<Wallet className="h-4 w-4" />}
+          >
+            {t('detail.tabRefund')}
+            {Array.isArray(currentOrder.refunds) && currentOrder.refunds.length > 0 ? (
+              <span className="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-100 px-1.5 text-[10px] font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                {currentOrder.refunds.length}
+              </span>
+            ) : null}
+          </Button>
+          <Button
+            type="button"
             onClick={() => setActiveTab('history')}
             variant="ghost"
             disableVariantHover
@@ -601,107 +626,6 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                      </div>
                    </div>
                 </div>
-
-                {/* REFUND HISTORY CARD (#179) — chỉ hiện khi có bản ghi hoàn */}
-                {Array.isArray(currentOrder.refunds) && currentOrder.refunds.length > 0 ? (
-                  <Box
-                    layoutClassName="rounded-xl border p-5"
-                    backgroundClassName="bg-white dark:bg-slate-800"
-                    borderClassName="border-amber-200 dark:border-amber-800"
-                    shadowClassName="shadow-sm"
-                    stateClassName="transition-colors"
-                  >
-                    <Heading
-                      level={3}
-                      textClassName="text-sm font-semibold text-slate-900 dark:text-white"
-                      layoutClassName="mb-4 flex items-center gap-2 uppercase tracking-wide"
-                    >
-                      <Wallet className="h-4 w-4 text-amber-600" />
-                      {t('refund.historyTitle')}
-                      {typeof currentOrder.refundedAmount === 'number' && currentOrder.refundedAmount > 0 ? (
-                        <Typography
-                          as="span"
-                          size="xs"
-                          layoutClassName="ml-auto font-bold"
-                          textClassName="text-amber-700 dark:text-amber-300"
-                        >
-                          {t('refund.totalRefunded')}: {formatVND(currentOrder.refundedAmount)}
-                        </Typography>
-                      ) : null}
-                    </Heading>
-                    <Box layoutClassName="space-y-3">
-                      {currentOrder.refunds.map((rf) => {
-                        const at = (rf.createdAt as any)?.toDate
-                          ? (rf.createdAt as any).toDate()
-                          : rf.createdAt
-                            ? new Date(rf.createdAt as any)
-                            : null;
-                        const atLabel =
-                          at && !isNaN(at.getTime())
-                            ? at.toLocaleString('vi-VN', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })
-                            : '—';
-                        return (
-                          <Box
-                            key={rf.id}
-                            layoutClassName="rounded-lg border p-3"
-                            borderClassName="border-amber-100 dark:border-amber-900/50"
-                            backgroundClassName="bg-amber-50/60 dark:bg-amber-950/30"
-                          >
-                            <Box layoutClassName="flex items-center justify-between gap-2">
-                              <Typography size="xs" variant="muted">
-                                {atLabel}
-                                {rf.createdBy ? ` • ${rf.createdBy}` : ''}
-                              </Typography>
-                              <Typography
-                                size="sm"
-                                layoutClassName="font-bold"
-                                textClassName="text-amber-700 dark:text-amber-300"
-                              >
-                                {formatVND(rf.amount)}
-                              </Typography>
-                            </Box>
-                            {rf.reason ? (
-                              <Typography size="xs" variant="muted" layoutClassName="mt-1">
-                                {t('refund.reasonLabel')}: {rf.reason}
-                              </Typography>
-                            ) : null}
-                            {Array.isArray(rf.items) && rf.items.length > 0 ? (
-                              <Box layoutClassName="mt-2 space-y-1 border-t border-amber-100 pt-2 dark:border-amber-900/50">
-                                {rf.items.map((it, idx) => (
-                                  <Box
-                                    key={`${rf.id}-${idx}`}
-                                    layoutClassName="flex items-center justify-between gap-2"
-                                  >
-                                    <Typography size="xs" textClassName="text-slate-700 dark:text-slate-300">
-                                      {it.productName}
-                                      <Typography
-                                        as="span"
-                                        size="xs"
-                                        layoutClassName="ml-1.5"
-                                        textClassName="text-slate-400 dark:text-slate-500"
-                                      >
-                                        −{it.qtyRefunded} × {formatVND(it.unitPrice)}
-                                      </Typography>
-                                    </Typography>
-                                    <Typography size="xs" textClassName="text-slate-600 dark:text-slate-400">
-                                      {formatVND(it.amount)}
-                                    </Typography>
-                                  </Box>
-                                ))}
-                              </Box>
-                            ) : null}
-                          </Box>
-                        );
-                      })}
-                    </Box>
-                  </Box>
-                ) : null}
 
                 {/* STATUS STEPPER CARD */}
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
@@ -1108,6 +1032,114 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 ) : null}
 
               </div>
+            ) : activeTab === 'refund' ? (
+              /* REFUND TAB (#186) — tách từ tab Chi tiết; rỗng → EmptyState */
+              Array.isArray(currentOrder.refunds) && currentOrder.refunds.length > 0 ? (
+                <Box layoutClassName="space-y-6">
+                  <Box
+                    layoutClassName="rounded-xl border p-5"
+                    backgroundClassName="bg-white dark:bg-slate-800"
+                    borderClassName="border-amber-200 dark:border-amber-800"
+                    shadowClassName="shadow-sm"
+                    stateClassName="transition-colors"
+                  >
+                    <Heading
+                      level={3}
+                      textClassName="text-sm font-semibold text-slate-900 dark:text-white"
+                      layoutClassName="mb-4 flex items-center gap-2 uppercase tracking-wide"
+                    >
+                      <Wallet className="h-4 w-4 text-amber-600" />
+                      {t('refund.historyTitle')}
+                      {typeof currentOrder.refundedAmount === 'number' && currentOrder.refundedAmount > 0 ? (
+                        <Typography
+                          as="span"
+                          size="xs"
+                          layoutClassName="ml-auto font-bold"
+                          textClassName="text-amber-700 dark:text-amber-300"
+                        >
+                          {t('refund.totalRefunded')}: {formatVND(currentOrder.refundedAmount)}
+                        </Typography>
+                      ) : null}
+                    </Heading>
+                    <Box layoutClassName="space-y-3">
+                      {currentOrder.refunds.map((rf) => {
+                        const at = (rf.createdAt as any)?.toDate
+                          ? (rf.createdAt as any).toDate()
+                          : rf.createdAt
+                            ? new Date(rf.createdAt as any)
+                            : null;
+                        const atLabel =
+                          at && !isNaN(at.getTime())
+                            ? at.toLocaleString('vi-VN', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })
+                            : '—';
+                        return (
+                          <Box
+                            key={rf.id}
+                            layoutClassName="rounded-lg border p-3"
+                            borderClassName="border-amber-100 dark:border-amber-900/50"
+                            backgroundClassName="bg-amber-50/60 dark:bg-amber-950/30"
+                          >
+                            <Box layoutClassName="flex items-center justify-between gap-2">
+                              <Typography size="xs" variant="muted">
+                                {atLabel}
+                                {rf.createdBy ? ` • ${rf.createdBy}` : ''}
+                              </Typography>
+                              <Typography
+                                size="sm"
+                                layoutClassName="font-bold"
+                                textClassName="text-amber-700 dark:text-amber-300"
+                              >
+                                {formatVND(rf.amount)}
+                              </Typography>
+                            </Box>
+                            {rf.reason ? (
+                              <Typography size="xs" variant="muted" layoutClassName="mt-1">
+                                {t('refund.reasonLabel')}: {rf.reason}
+                              </Typography>
+                            ) : null}
+                            {Array.isArray(rf.items) && rf.items.length > 0 ? (
+                              <Box layoutClassName="mt-2 space-y-1 border-t border-amber-100 pt-2 dark:border-amber-900/50">
+                                {rf.items.map((it, idx) => (
+                                  <Box
+                                    key={`${rf.id}-${idx}`}
+                                    layoutClassName="flex items-center justify-between gap-2"
+                                  >
+                                    <Typography size="xs" textClassName="text-slate-700 dark:text-slate-300">
+                                      {it.productName}
+                                      <Typography
+                                        as="span"
+                                        size="xs"
+                                        layoutClassName="ml-1.5"
+                                        textClassName="text-slate-400 dark:text-slate-500"
+                                      >
+                                        −{it.qtyRefunded} × {formatVND(it.unitPrice)}
+                                      </Typography>
+                                    </Typography>
+                                    <Typography size="xs" textClassName="text-slate-600 dark:text-slate-400">
+                                      {formatVND(it.amount)}
+                                    </Typography>
+                                  </Box>
+                                ))}
+                              </Box>
+                            ) : null}
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  </Box>
+                </Box>
+              ) : (
+                <EmptyState
+                  icon={<Wallet className="h-6 w-6" />}
+                  title={t('refund.emptyTitle')}
+                />
+              )
             ) : activeTab === 'history' ? (
               (() => {
                 const allHistory = Array.isArray(currentOrder.history) ? [...currentOrder.history].reverse() : [];
