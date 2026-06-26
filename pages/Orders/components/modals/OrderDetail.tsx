@@ -3,13 +3,17 @@ import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
 import { toBlob } from 'html-to-image';
 import {
+  BadgeCheck,
+  Banknote,
   Camera,
+  Check,
   Clock,
   Copy,
   CreditCard,
   FileText,
   Globe,
   History,
+  Link2,
   Mail,
   MapPin,
   Phone,
@@ -19,6 +23,7 @@ import {
   Store,
   Trash2,
   Truck,
+  Unlink,
   User,
   Wallet,
   X
@@ -28,10 +33,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { qk } from '@/hooks/queryKeys';
-import { ORDER_EDIT_DENIED } from '@/services/orderService';
-import { fetchTransactionsByOrderNumber } from '@/services/transactionService';
+import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund } from '@/services/orderService';
+import { fetchTransactionsByOrderNumber, fetchOutUnlinkedTransactions } from '@/services/transactionService';
 import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction } from '@/types';
-import { orderAddressFallbackKey, surchargeTagLabel } from '@/types/order';
+import { UserRole } from '@/types/user';
+import { orderAddressFallbackKey, surchargeTagLabel, reconcileMethodLabel } from '@/types/order';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { allocateSurcharge, generateQRCodeImage, getOrderTotal } from '@/utils/order/orderUtils';
@@ -43,6 +49,7 @@ import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import Heading from '@/components/ui/Heading';
 import IconButton from '@/components/ui/IconButton';
+import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 import CancelRefundModal, { type CancelRefundMode, type CancelRefundResult } from '@/pages/Orders/components/modals/CancelRefundModal';
 import ShareableOrderCard from '@/pages/Orders/components/modals/ShareableOrderCard';
@@ -69,7 +76,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   onUpdateOrder,
 }) => {
   const { t } = useLanguage();
-  const { currentUser } = useAuth();
+  const { currentUser, userData } = useAuth();
   const { surchargeTags } = useSurchargeTags();
   const { activeAccount } = usePaymentAccounts();
   const [activeTab, setActiveTab] = useState<'details' | 'refund' | 'history'>('details');
@@ -78,6 +85,18 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const [crMode, setCrMode] = useState<CancelRefundMode | null>(null);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [localOrder, setLocalOrder] = useState(order);
+
+  // ── Đối soát phiếu hoàn ↔ GD SePay tiền ra (#186) ──
+  // Chỉ Admin/Super Admin được thao tác (như refund).
+  const canReconcile =
+    userData?.role === UserRole.ADMIN || userData?.role === UserRole.SUPER_ADMIN;
+  /** refundId đang mở panel chọn giao dịch (null = không mở). */
+  const [pickerRefundId, setPickerRefundId] = useState<string | null>(null);
+  /** Danh sách GD tiền ra chưa gắn (load khi mở picker). */
+  const [outTx, setOutTx] = useState<Transaction[]>([]);
+  const [outTxLoading, setOutTxLoading] = useState(false);
+  /** refundId đang chạy 1 thao tác đối soát (disable nút + spinner). */
+  const [reconcilingId, setReconcilingId] = useState<string | null>(null);
 
   // Transactions của đơn hiện tại qua React Query — chỉ chạy khi có orderNumber.
   // Mỗi transaction render thành 1 entry trong block "Lịch sử nhận tiền".
@@ -215,6 +234,95 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
       patch.refundReason = patch.refundReason || result.reason;
     }
     await onUpdateOrder(currentOrder.id, { ...currentOrder, ...patch });
+  };
+
+  /* ── Đối soát phiếu hoàn (#186) ── */
+
+  // Map mã code lỗi BE → message i18n để toast rõ ràng.
+  const reconcileErrorMessage = (e: unknown): string => {
+    const code = e instanceof Error ? e.message : '';
+    switch (code) {
+      case 'TRANSACTION_ALREADY_LINKED':
+        return t('reconcile.errAlreadyLinked');
+      case 'TRANSACTION_NOT_OUTGOING':
+        return t('reconcile.errNotOutgoing');
+      case 'TRANSACTION_NOT_FOUND':
+        return t('reconcile.errTxNotFound');
+      case 'REFUND_NOT_FOUND':
+        return t('reconcile.errRefundNotFound');
+      default:
+        return t('reconcile.errGeneric');
+    }
+  };
+
+  // Mở/đóng panel chọn giao dịch cho 1 phiếu hoàn; load danh sách khi mở.
+  const handleOpenPicker = async (refundId: string) => {
+    if (pickerRefundId === refundId) {
+      setPickerRefundId(null);
+      return;
+    }
+    setPickerRefundId(refundId);
+    setOutTxLoading(true);
+    try {
+      const list = await fetchOutUnlinkedTransactions();
+      setOutTx(list);
+    } catch (e) {
+      console.error(e);
+      toast.error(t('reconcile.loadTxFailed'));
+      setOutTx([]);
+    } finally {
+      setOutTxLoading(false);
+    }
+  };
+
+  // Gắn 1 GD SePay cho phiếu hoàn → BE trả Order đầy đủ → refresh state đơn.
+  const handleReconcileSepay = async (refundId: string, transactionId: string) => {
+    if (!currentOrder?.id || reconcilingId) return;
+    setReconcilingId(refundId);
+    try {
+      const updated = await reconcileRefund(currentOrder.id, refundId, transactionId);
+      setLocalOrder(updated);
+      setPickerRefundId(null);
+      toast.success(t('reconcile.reconciledSepay'));
+    } catch (e) {
+      console.error(e);
+      toast.error(reconcileErrorMessage(e));
+    } finally {
+      setReconcilingId(null);
+    }
+  };
+
+  // Đánh dấu phiếu hoàn trả tiền mặt.
+  const handleReconcileCash = async (refundId: string) => {
+    if (!currentOrder?.id || reconcilingId) return;
+    setReconcilingId(refundId);
+    try {
+      const updated = await markRefundCash(currentOrder.id, refundId);
+      setLocalOrder(updated);
+      setPickerRefundId(null);
+      toast.success(t('reconcile.markedCash'));
+    } catch (e) {
+      console.error(e);
+      toast.error(reconcileErrorMessage(e));
+    } finally {
+      setReconcilingId(null);
+    }
+  };
+
+  // Gỡ đối soát phiếu hoàn.
+  const handleUnreconcile = async (refundId: string) => {
+    if (!currentOrder?.id || reconcilingId) return;
+    setReconcilingId(refundId);
+    try {
+      const updated = await unreconcileRefund(currentOrder.id, refundId);
+      setLocalOrder(updated);
+      toast.success(t('reconcile.unreconciled'));
+    } catch (e) {
+      console.error(e);
+      toast.error(reconcileErrorMessage(e));
+    } finally {
+      setReconcilingId(null);
+    }
   };
 
   const handleUpdateField = async (patch: Partial<Order>, setLoading: (v: boolean) => void) => {
@@ -1078,6 +1186,13 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                 minute: '2-digit',
                               })
                             : '—';
+                        const reconciled = rf.reconciled === true;
+                        const method = rf.reconcileMethod ?? null;
+                        const linkedTx = rf.transactionId
+                          ? relatedTransactions.find((tx) => tx.id === rf.transactionId)
+                          : undefined;
+                        const isBusy = reconcilingId === rf.id;
+                        const isPickerOpen = pickerRefundId === rf.id;
                         return (
                           <Box
                             key={rf.id}
@@ -1128,6 +1243,225 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                 ))}
                               </Box>
                             ) : null}
+
+                            {/* ── Đối soát (#186) ── */}
+                            <Box layoutClassName="mt-3 border-t border-amber-100 pt-3 dark:border-amber-900/50">
+                              <Box layoutClassName="flex flex-wrap items-center justify-between gap-2">
+                                {/* Badge trạng thái */}
+                                {reconciled && method === 'sepay' ? (
+                                  <Badge
+                                    size="sm"
+                                    borderClassName="border-emerald-200 dark:border-emerald-800"
+                                    backgroundClassName="bg-emerald-50 dark:bg-emerald-950/40"
+                                    textClassName="text-emerald-700 dark:text-emerald-300"
+                                  >
+                                    <BadgeCheck className="h-3.5 w-3.5" />
+                                    {t('reconcile.badgeSepay')}
+                                  </Badge>
+                                ) : reconciled && method === 'cash' ? (
+                                  <Badge
+                                    size="sm"
+                                    borderClassName="border-slate-200 dark:border-slate-700"
+                                    backgroundClassName="bg-slate-100 dark:bg-slate-700/40"
+                                    textClassName="text-slate-600 dark:text-slate-300"
+                                  >
+                                    <Banknote className="h-3.5 w-3.5" />
+                                    {t('reconcile.badgeCash')}
+                                  </Badge>
+                                ) : (
+                                  <Badge
+                                    size="sm"
+                                    borderClassName="border-amber-300 dark:border-amber-700"
+                                    backgroundClassName="bg-amber-100 dark:bg-amber-900/40"
+                                    textClassName="text-amber-700 dark:text-amber-300"
+                                  >
+                                    <Clock className="h-3.5 w-3.5" />
+                                    {t('reconcile.badgeUnreconciled')}
+                                  </Badge>
+                                )}
+
+                                {/* Hành động (chỉ Admin/Super Admin) */}
+                                {canReconcile ? (
+                                  reconciled ? (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      disabled={isBusy}
+                                      leftIcon={
+                                        isBusy ? (
+                                          <Spinner size="sm" />
+                                        ) : (
+                                          <Unlink className="h-3.5 w-3.5" />
+                                        )
+                                      }
+                                      onClick={() => handleUnreconcile(rf.id)}
+                                    >
+                                      {t('reconcile.unlinkCta')}
+                                    </Button>
+                                  ) : (
+                                    <Box layoutClassName="flex items-center gap-2">
+                                      <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        disabled={isBusy}
+                                        leftIcon={<Link2 className="h-3.5 w-3.5" />}
+                                        onClick={() => handleOpenPicker(rf.id)}
+                                      >
+                                        {t('reconcile.sepayCta')}
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        disabled={isBusy}
+                                        leftIcon={
+                                          isBusy ? (
+                                            <Spinner size="sm" />
+                                          ) : (
+                                            <Banknote className="h-3.5 w-3.5" />
+                                          )
+                                        }
+                                        onClick={() => handleReconcileCash(rf.id)}
+                                      >
+                                        {t('reconcile.cashCta')}
+                                      </Button>
+                                    </Box>
+                                  )
+                                ) : null}
+                              </Box>
+
+                              {/* Chi tiết GD đã gắn khi đã đối soát SePay */}
+                              {reconciled && method === 'sepay' ? (
+                                <Typography size="xs" variant="muted" layoutClassName="mt-1.5">
+                                  {t('reconcile.linkedTx')}:{' '}
+                                  <Typography
+                                    as="span"
+                                    size="xs"
+                                    layoutClassName="font-semibold"
+                                    textClassName="text-slate-700 dark:text-slate-300"
+                                  >
+                                    {linkedTx
+                                      ? `#${linkedTx.sepayId} • ${formatVND(linkedTx.transferAmount)}`
+                                      : rf.transactionId}
+                                  </Typography>
+                                  {rf.reconciledBy ? ` • ${rf.reconciledBy}` : ''}
+                                </Typography>
+                              ) : reconciled && method === 'cash' ? (
+                                <Typography size="xs" variant="muted" layoutClassName="mt-1.5">
+                                  {reconcileMethodLabel(method)}
+                                  {rf.reconciledBy ? ` • ${rf.reconciledBy}` : ''}
+                                </Typography>
+                              ) : null}
+
+                              {/* Panel chọn GD SePay tiền ra để gắn */}
+                              {isPickerOpen && !reconciled ? (
+                                <Box
+                                  layoutClassName="mt-3 space-y-2 rounded-lg border p-3"
+                                  borderClassName="border-slate-200 dark:border-slate-700"
+                                  backgroundClassName="bg-white dark:bg-slate-800"
+                                >
+                                  <Typography
+                                    size="xs"
+                                    layoutClassName="font-semibold uppercase tracking-wide"
+                                    textClassName="text-slate-600 dark:text-slate-300"
+                                  >
+                                    {t('reconcile.pickerTitle')}
+                                  </Typography>
+                                  {outTxLoading ? (
+                                    <Box layoutClassName="flex items-center justify-center gap-2 py-4">
+                                      <Spinner size="sm" textClassName="text-slate-400" />
+                                      <Typography size="xs" variant="muted">
+                                        {t('reconcile.loadingTx')}
+                                      </Typography>
+                                    </Box>
+                                  ) : outTx.length === 0 ? (
+                                    <EmptyState
+                                      icon={<Wallet className="h-6 w-6" />}
+                                      title={t('reconcile.noOutTx')}
+                                      layoutClassName="!min-h-0"
+                                    />
+                                  ) : (
+                                    <Box layoutClassName="max-h-56 space-y-1.5 overflow-y-auto">
+                                      {outTx.map((tx) => {
+                                        const amountMatch =
+                                          tx.transferAmount === rf.amount;
+                                        const txAt = tx.transactionDate
+                                          ? new Date(tx.transactionDate)
+                                          : tx.receivedAt
+                                            ? new Date(tx.receivedAt)
+                                            : null;
+                                        const txAtLabel =
+                                          txAt && !isNaN(txAt.getTime())
+                                            ? txAt.toLocaleString('vi-VN', {
+                                                day: '2-digit',
+                                                month: '2-digit',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                              })
+                                            : '—';
+                                        return (
+                                          <Box
+                                            key={tx.id}
+                                            layoutClassName="flex items-center justify-between gap-2 rounded-md border p-2"
+                                            borderClassName={
+                                              amountMatch
+                                                ? 'border-emerald-300 dark:border-emerald-700'
+                                                : 'border-slate-100 dark:border-slate-700'
+                                            }
+                                            backgroundClassName={
+                                              amountMatch
+                                                ? 'bg-emerald-50/70 dark:bg-emerald-950/30'
+                                                : 'bg-slate-50/60 dark:bg-slate-700/20'
+                                            }
+                                          >
+                                            <Box layoutClassName="min-w-0">
+                                              <Typography
+                                                size="xs"
+                                                layoutClassName="font-semibold"
+                                                textClassName="text-slate-800 dark:text-slate-200"
+                                              >
+                                                #{tx.sepayId} • {formatVND(tx.transferAmount)}
+                                                {amountMatch ? (
+                                                  <Typography
+                                                    as="span"
+                                                    size="xs"
+                                                    layoutClassName="ml-1.5 font-medium"
+                                                    textClassName="text-emerald-600 dark:text-emerald-400"
+                                                  >
+                                                    • {t('reconcile.amountMatch')}
+                                                  </Typography>
+                                                ) : null}
+                                              </Typography>
+                                              <Typography size="xs" variant="muted">
+                                                {txAtLabel}
+                                                {tx.referenceCode ? ` • ${tx.referenceCode}` : ''}
+                                              </Typography>
+                                            </Box>
+                                            <Button
+                                              variant="primary"
+                                              size="sm"
+                                              disabled={isBusy}
+                                              leftIcon={
+                                                isBusy ? (
+                                                  <Spinner size="sm" />
+                                                ) : (
+                                                  <Check className="h-3.5 w-3.5" />
+                                                )
+                                              }
+                                              onClick={() =>
+                                                handleReconcileSepay(rf.id, tx.id)
+                                              }
+                                            >
+                                              {t('reconcile.pickCta')}
+                                            </Button>
+                                          </Box>
+                                        );
+                                      })}
+                                    </Box>
+                                  )}
+                                </Box>
+                              ) : null}
+                            </Box>
                           </Box>
                         );
                       })}
