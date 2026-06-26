@@ -5,8 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RoleBasedRoute from "./components/RoleBasedRoute";
 import DashboardPage from "./pages/Dashboard/index";
 import OrdersPage from "./pages/Orders/index";
-import TransactionsPage from "./pages/Transactions/index";
-import RevenuePage from "./pages/Revenue/index";
+import FinancePage from "./pages/Revenue/index";
 import PromotionsPage from "./pages/Promotions/index";
 import CommissionPage from "./pages/Commission/index";
 import CommissionSettingsPage from "./pages/Commission/SettingsPage";
@@ -61,21 +60,16 @@ const AppRoutes: React.FC = () => (
         }
       />
       <Route
-        path="revenue"
+        path="finance"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/revenue")?.roles}>
-            <RevenuePage />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance")?.roles}>
+            <FinancePage />
           </RoleBasedRoute>
         }
       />
-      <Route
-        path="transactions"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/transactions")?.roles}>
-            <TransactionsPage />
-          </RoleBasedRoute>
-        }
-      />
+      {/* Back-compat: 2 màn cũ đã gộp vào /finance */}
+      <Route path="revenue" element={<Navigate to="/finance" replace />} />
+      <Route path="transactions" element={<Navigate to="/finance" replace />} />
       <Route
         path="promotions"
         element={
