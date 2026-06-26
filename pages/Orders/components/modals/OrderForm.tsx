@@ -27,7 +27,10 @@ import Field from '@/components/ui/Field';
 import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
+import { calculateOrderTotal } from '@/utils/order/orderUtils';
+import { diffOrderItems } from '@/utils/order/itemsDiff';
 import CreateCustomerModal from '@/pages/Orders/components/modals/CreateCustomerModal';
+import RefundConfirmModal, { type RefundConfirmResult, type RefundLine } from '@/pages/Orders/components/modals/RefundConfirmModal';
 import OrderFormCustomerSection from '@/pages/Orders/components/OrderFormCustomerSection';
 import OrderFormItemsSection from '@/pages/Orders/components/OrderFormItemsSection';
 import OrderFormDecorationSection from '@/pages/Orders/components/OrderFormDecorationSection';
@@ -57,6 +60,19 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const [error, setError] = useState<string | null>(null);
   const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
   const [pendingOrderData, setPendingOrderData] = useState<any>(null);
+
+  // Hoàn tiền khi giảm SL trên đơn ĐÃ THANH TOÁN (#179).
+  // Lưu lại formData + thông tin gợi ý để mở RefundConfirmModal trước khi lưu.
+  const [refundModal, setRefundModal] = useState<{
+    formData: any;
+    suggestedAmount: number;
+    maxAmount: number;
+    lines: RefundLine[];
+  } | null>(null);
+
+  // Admin / Super Admin mới được giảm SL đơn PAID (sinh hoàn tiền). CTV không.
+  const isAdminRole =
+    userData?.role === UserRole.ADMIN || userData?.role === UserRole.SUPER_ADMIN;
 
   const [orderNumber, setOrderNumber] = useState('');
   const [recentlyAddedId, setRecentlyAddedId] = useState<string | null>(null);
@@ -143,6 +159,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
     setError(null);
     setShowCreateCustomerModal(false);
     setPendingOrderData(null);
+    setRefundModal(null);
     if (initialData) {
       setOrderNumber(initialData.orderNumber || 'N/A');
       setCustomerName(initialData.customer.name);
@@ -527,6 +544,71 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         ...(commissionStatus && { commissionStatus }),
       };
 
+      // ── Hoàn tiền khi giảm SL trên đơn ĐÃ THANH TOÁN (#179) ──
+      // Chỉ áp dụng khi đang SỬA 1 đơn đang ở trạng thái PAID (theo dữ liệu gốc).
+      if (initialData?.id && initialData.paymentStatus === PaymentStatus.PAID) {
+        const diff = diffOrderItems(initialData.items, finalItems as any);
+        const hasIncrease = diff.some(
+          (d) =>
+            d.kind === 'added' ||
+            ((d.kind === 'qty' || d.kind === 'qtyPrice') &&
+              (d.newQty ?? 0) > (d.oldQty ?? 0)),
+        );
+        const decreases = diff.filter(
+          (d) =>
+            (d.kind === 'qty' || d.kind === 'qtyPrice' || d.kind === 'removed') &&
+            (d.oldQty ?? 0) > (d.newQty ?? 0),
+        );
+
+        if (hasIncrease) {
+          // Đơn đã thanh toán chỉ được GIẢM số lượng (đồng bộ BE ORDER_PAID_NO_INCREASE).
+          toast.error(t('refund.paidNoIncrease'));
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (decreases.length > 0) {
+          // Chỉ Admin/Super Admin được giảm SL đơn PAID.
+          if (!isAdminRole) {
+            toast.error(t('refund.adminOnly'));
+            setIsSubmitting(false);
+            return;
+          }
+
+          // Tiền hoàn gợi ý = total cũ − total mới (dùng đúng util total để chuẩn KM/phụ thu).
+          const oldTotal = calculateOrderTotal(
+            initialData.items,
+            initialData.shippingCost || 0,
+            initialData.decorations || [],
+            initialData.surchargeAmount || 0,
+          );
+          const newTotal = calculateOrderTotal(
+            finalItems as any,
+            Number(shippingCost),
+            [],
+            Number(surchargeAmount || 0),
+          );
+          const suggested = Math.max(0, oldTotal - newTotal);
+
+          const lines: RefundLine[] = decreases.map((d) => {
+            const qty = (d.oldQty ?? 0) - (d.newQty ?? 0);
+            const price = d.oldPrice ?? d.newPrice ?? 0;
+            return {
+              productName: d.name,
+              qtyRefunded: qty,
+              unitPrice: price,
+              amount: qty * price,
+            };
+          });
+
+          // Khách mới → vẫn cần tạo khách trước khi lưu; nhét cờ vào pendingOrderData
+          // để sau khi xác nhận hoàn sẽ chạy luồng tạo khách như thường.
+          setRefundModal({ formData, suggestedAmount: suggested, maxAmount: oldTotal, lines });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       if (phone.trim() && !checkCustomerExists(phone)) {
         setPendingOrderData(formData);
         setShowCreateCustomerModal(true);
@@ -536,6 +618,38 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       await submitOrderData(formData);
     } catch (err: any) {
       setError(err.message || "Failed to save order");
+      setIsSubmitting(false);
+    }
+  };
+
+  // Xác nhận hoàn tiền → đính kèm refund vào formData rồi đi tiếp luồng lưu.
+  // throws nếu BE trả lỗi (ORDER_REFUND_AMOUNT_INVALID / ORDER_PAID_NO_INCREASE…)
+  // để RefundConfirmModal bắt + toast.
+  const handleRefundConfirm = async (result: RefundConfirmResult) => {
+    if (!refundModal) return;
+    const formData = {
+      ...refundModal.formData,
+      refund: {
+        amount: result.amount,
+        ...(result.reason ? { reason: result.reason } : {}),
+      },
+    };
+    setIsSubmitting(true);
+    try {
+      // Gọi thẳng onSave để lỗi BE PROPAGATE về modal (submitOrderData nuốt lỗi
+      // vào setError). Đơn đang sửa nên khách đã tồn tại, không cần tạo mới.
+      await onSave(formData);
+      setRefundModal(null);
+    } catch (err: any) {
+      const msg = String(err?.message ?? '');
+      if (msg.includes('ORDER_REFUND_AMOUNT_INVALID')) {
+        throw new Error(t('refund.amountInvalidServer'));
+      }
+      if (msg.includes('ORDER_PAID_NO_INCREASE')) {
+        throw new Error(t('refund.paidNoIncrease'));
+      }
+      throw err instanceof Error ? err : new Error(t('refund.failed'));
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -839,6 +953,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         onSave={handleCreateCustomer}
         phone={phone}
         customerName={customerName}
+      />
+
+      <RefundConfirmModal
+        open={!!refundModal}
+        suggestedAmount={refundModal?.suggestedAmount ?? 0}
+        maxAmount={refundModal?.maxAmount ?? 0}
+        lines={refundModal?.lines ?? []}
+        onClose={() => setRefundModal(null)}
+        onConfirm={handleRefundConfirm}
       />
     </>
   );

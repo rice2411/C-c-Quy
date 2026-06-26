@@ -51,6 +51,24 @@ export interface OrderHistoryEntry {
   changes: OrderFieldChange[];
 }
 
+/** 1 dòng item được hoàn trong 1 lần hoàn tiền (khớp BE). */
+export interface OrderRefundItem {
+  productName: string;
+  qtyRefunded: number;
+  unitPrice: number; // VND
+  amount: number; // VND = qtyRefunded × unitPrice (BE chuẩn KM/phụ thu)
+}
+
+/** 1 bản ghi hoàn tiền của đơn (khớp BE). Mảng refunds sắp mới→cũ. */
+export interface OrderRefund {
+  id: string;
+  amount: number; // VND
+  reason?: string;
+  items: OrderRefundItem[];
+  createdAt?: any;
+  createdBy?: string;
+}
+
 export interface Order {
   id: string;
   orderNumber?: string;
@@ -110,4 +128,6 @@ export interface Order {
   refundedAmount?: number;
   refundReason?: string;
   refundedBy?: string;
+  /** Lịch sử hoàn tiền (mới→cũ) — mỗi lần giảm SL trên đơn PAID sinh 1 bản ghi. */
+  refunds?: OrderRefund[];
 }
