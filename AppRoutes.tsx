@@ -5,7 +5,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RoleBasedRoute from "./components/RoleBasedRoute";
 import DashboardPage from "./pages/Dashboard/index";
 import OrdersPage from "./pages/Orders/index";
-import FinancePage from "./pages/Revenue/index";
+import FinanceOverviewPage from "./pages/Finance/Overview";
+import FinanceRevenuePage from "./pages/Finance/Revenue";
+import FinanceTransactionsPage from "./pages/Finance/Transactions";
 import PromotionsPage from "./pages/Promotions/index";
 import CommissionPage from "./pages/Commission/index";
 import CommissionSettingsPage from "./pages/Commission/SettingsPage";
@@ -59,17 +61,35 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
+      {/* Tài chính — 3 sub-screen riêng (nhóm menu "Tài chính") */}
       <Route
-        path="finance"
+        path="finance/overview"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance")?.roles}>
-            <FinancePage />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/overview")?.roles}>
+            <FinanceOverviewPage />
           </RoleBasedRoute>
         }
       />
-      {/* Back-compat: 2 màn cũ đã gộp vào /finance */}
-      <Route path="revenue" element={<Navigate to="/finance" replace />} />
-      <Route path="transactions" element={<Navigate to="/finance" replace />} />
+      <Route
+        path="finance/revenue"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/revenue")?.roles}>
+            <FinanceRevenuePage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="finance/transactions"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/transactions")?.roles}>
+            <FinanceTransactionsPage />
+          </RoleBasedRoute>
+        }
+      />
+      {/* Back-compat redirect các path cũ */}
+      <Route path="finance" element={<Navigate to="/finance/overview" replace />} />
+      <Route path="revenue" element={<Navigate to="/finance/revenue" replace />} />
+      <Route path="transactions" element={<Navigate to="/finance/transactions" replace />} />
       <Route
         path="promotions"
         element={
