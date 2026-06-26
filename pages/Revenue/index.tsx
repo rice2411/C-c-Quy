@@ -2,16 +2,21 @@ import React, { useState } from 'react';
 import { TrendingUp } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
-import PeriodFilter, { DatePreset, computePresetRange } from './PeriodFilter';
-import ReconciliationTab from './ReconciliationTab';
+import Tabs from '@/components/ui/Tabs';
+import PeriodFilter, { DatePreset, computePresetRange } from '@/pages/Transactions/PeriodFilter';
+import OverviewTab from '@/pages/Transactions/OverviewTab';
+import RevenueTab from '@/pages/Transactions/RevenueTab';
+
+type TopTab = 'overview' | 'revenue';
 
 const fmtRange = (d: string) => (d ? d.split('-').reverse().join('/') : '');
 
-const TransactionsPage: React.FC = () => {
+const RevenuePage: React.FC = () => {
   const initial = computePresetRange('month');
   const [fromDate, setFromDate] = useState(initial.from);
   const [toDate, setToDate] = useState(initial.to);
   const [preset, setPreset] = useState<DatePreset>('month');
+  const [tab, setTab] = useState<TopTab>('overview');
 
   const applyPreset = (p: DatePreset) => {
     if (p !== 'custom') {
@@ -22,6 +27,11 @@ const TransactionsPage: React.FC = () => {
     setPreset(p);
   };
 
+  const tabItems = [
+    { id: 'overview', label: 'Tổng quan' },
+    { id: 'revenue', label: 'Doanh thu' },
+  ];
+
   return (
     <Box layoutClassName="flex h-full flex-col space-y-4 sm:space-y-5">
       {/* Header */}
@@ -31,7 +41,7 @@ const TransactionsPage: React.FC = () => {
         </Box>
         <Box>
           <Typography as="h1" layoutClassName="text-lg font-bold sm:text-xl" textClassName="text-slate-900 dark:text-white">
-            Giao dịch / Đối soát
+            Doanh thu &amp; Lợi nhuận
           </Typography>
           <Typography as="p" size="xs" variant="muted">
             Kỳ: {fmtRange(fromDate)} — {fmtRange(toDate)}
@@ -49,12 +59,16 @@ const TransactionsPage: React.FC = () => {
         onToChange={(v) => { setToDate(v); setPreset('custom'); }}
       />
 
-      {/* Nội dung: Đối soát ngân hàng */}
+      {/* Tabs */}
+      <Tabs items={tabItems} value={tab} onChange={(v) => setTab(v as TopTab)} />
+
+      {/* Nội dung tab */}
       <Box layoutClassName="flex-1 overflow-y-auto">
-        <ReconciliationTab fromDate={fromDate} toDate={toDate} />
+        {tab === 'overview' && <OverviewTab fromDate={fromDate} toDate={toDate} />}
+        {tab === 'revenue' && <RevenueTab fromDate={fromDate} toDate={toDate} />}
       </Box>
     </Box>
   );
 };
 
-export default TransactionsPage;
+export default RevenuePage;
