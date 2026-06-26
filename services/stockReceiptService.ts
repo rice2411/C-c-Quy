@@ -125,3 +125,32 @@ export async function mergeSuppliers(rootId: string, duplicateIds: string[]): Pr
 export async function mergeMaterials(rootId: string, duplicateIds: string[]): Promise<void> {
   await apiClient.post(`${BASE}/materials/merge`, { rootId, duplicateIds });
 }
+
+// ==================== ĐỐI SOÁT (tiền ra ↔ phiếu nhập) ====================
+
+/** 1 phiếu nhập + field đối soát — đối soát tiền ra ↔ phiếu nhập (tab Tiền ra). */
+export interface ReconcileReceiptItem {
+  receiptId: string;
+  supplierName?: string | null;
+  totalAmount?: number | null;
+  receiptDate?: string | null;
+  invoiceNumber?: string | null;
+  transactionId?: string | null;
+  reconciled: boolean;
+}
+
+/** Danh sách phiếu nhập cho đối soát — GET /stock-receipts/for-reconcile. */
+export async function fetchReceiptsForReconcile(): Promise<ReconcileReceiptItem[]> {
+  const res = await apiClient.get<ReconcileReceiptItem[]>(`${BASE}/for-reconcile`);
+  return res.data ?? [];
+}
+
+/** Gắn 1 giao dịch tiền ra cho 1 phiếu nhập — POST /stock-receipts/:id/reconcile. */
+export async function reconcileReceipt(receiptId: string, transactionId: string): Promise<void> {
+  await apiClient.post(`${BASE}/${receiptId}/reconcile`, { transactionId });
+}
+
+/** Gỡ đối soát phiếu nhập — POST /stock-receipts/:id/unreconcile. */
+export async function unreconcileReceipt(receiptId: string): Promise<void> {
+  await apiClient.post(`${BASE}/${receiptId}/unreconcile`);
+}

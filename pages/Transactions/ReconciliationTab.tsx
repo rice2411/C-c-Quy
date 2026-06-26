@@ -19,6 +19,7 @@ import { qk } from '@/hooks/queryKeys';
 import { useOrders } from '@/hooks/useOrders';
 import { useTransactions, useTransactionMutations } from '@/hooks/queries/useTransactionsQuery';
 import { fetchAllRefunds, reconcileRefund, unreconcileRefund, RefundListItem } from '@/services/orderService';
+import { fetchReceiptsForReconcile, reconcileReceipt, unreconcileReceipt, ReconcileReceiptItem } from '@/services/stockReceiptService';
 import OutReconcilePanel from './components/OutReconcilePanel';
 import { PaymentStatus } from '@/types/enums';
 import { Transaction } from '@/types';
@@ -161,16 +162,22 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   const { currentUser } = useAuth();
   const queryClient = useQueryClient();
 
-  // Phiếu hoàn (mọi đơn) — để đối soát tiền ra ↔ phiếu hoàn ở tab "Tiền ra".
+  // Phiếu hoàn + phiếu nhập kho — để đối soát tiền ra ở tab "Tiền ra" / "Chưa khớp".
   const { data: refunds = [] } = useQuery<RefundListItem[]>({
     queryKey: qk.orders.refunds,
     queryFn: fetchAllRefunds,
+    enabled: !!currentUser,
+  });
+  const { data: receipts = [] } = useQuery<ReconcileReceiptItem[]>({
+    queryKey: ['stock-receipts', 'for-reconcile'],
+    queryFn: fetchReceiptsForReconcile,
     enabled: !!currentUser,
   });
 
   const refreshAfterReconcile = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: qk.orders.refunds }),
+      queryClient.invalidateQueries({ queryKey: ['stock-receipts', 'for-reconcile'] }),
       queryClient.invalidateQueries({ queryKey: qk.transactions.all }),
       queryClient.invalidateQueries({ queryKey: qk.orders.all }),
     ]);
@@ -194,6 +201,28 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
       await refreshAfterReconcile();
     } catch (err: any) {
       toast.error(err?.message || t('reconcile.errGeneric') || 'Gỡ đối soát thất bại');
+      throw err;
+    }
+  };
+
+  const handleReconcileReceipt = async (receiptId: string, transactionId: string) => {
+    try {
+      await reconcileReceipt(receiptId, transactionId);
+      toast.success('Đã đối soát phiếu nhập kho');
+      await refreshAfterReconcile();
+    } catch (err: any) {
+      toast.error(err?.message || 'Đối soát phiếu nhập thất bại');
+      throw err;
+    }
+  };
+
+  const handleUnreconcileReceipt = async (receiptId: string) => {
+    try {
+      await unreconcileReceipt(receiptId);
+      toast.success('Đã gỡ đối soát phiếu nhập');
+      await refreshAfterReconcile();
+    } catch (err: any) {
+      toast.error(err?.message || 'Gỡ đối soát thất bại');
       throw err;
     }
   };
@@ -291,6 +320,18 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   const outTransactions = useMemo(() => dateSearchFiltered.filter(tr => tr.transferType === 'out'), [dateSearchFiltered]);
   const outTotal = useMemo(() => outTransactions.reduce((s, tr) => s + tr.transferAmount, 0), [outTransactions]);
 
+  // GD tiền ra CHƯA gắn phiếu hoàn / phiếu nhập nào (gộp vào tab "Chưa khớp").
+  const linkedOutTxIds = useMemo(() => {
+    const s = new Set<string>();
+    refunds.forEach(r => { if (r.transactionId) s.add(r.transactionId); });
+    receipts.forEach(r => { if (r.transactionId) s.add(r.transactionId); });
+    return s;
+  }, [refunds, receipts]);
+  const outUnmatched = useMemo(
+    () => outTransactions.filter(tr => !linkedOutTxIds.has(tr.id)),
+    [outTransactions, linkedOutTxIds],
+  );
+
   const validTransactions = useMemo(() => baseFiltered.filter(tr => tr.orderNumber && tr.orderNumber.trim() !== ''), [baseFiltered]);
   const invalidTransactions = useMemo(() => baseFiltered.filter(tr => !tr.orderNumber || tr.orderNumber.trim() === ''), [baseFiltered]);
   const pendingInvalidCount = useMemo(() => invalidTransactions.filter(tr => !tr.isExternal).length, [invalidTransactions]);
@@ -351,7 +392,7 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   const subTabs: { key: TabKey; label: string; count: number; icon: React.ReactNode }[] = [
     { key: 'all', label: 'Tất cả', count: dateSearchFiltered.length, icon: <ArrowRightLeft className="h-3.5 w-3.5" /> },
     { key: 'valid', label: 'Hợp lệ', count: validTransactions.length, icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
-    { key: 'invalid', label: 'Chưa khớp', count: pendingInvalidCount, icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+    { key: 'invalid', label: 'Chưa khớp', count: pendingInvalidCount + outUnmatched.length, icon: <AlertTriangle className="h-3.5 w-3.5" /> },
     { key: 'external', label: 'Ngoài HT', count: externalTransactions.length, icon: <XCircle className="h-3.5 w-3.5" /> },
     { key: 'out', label: 'Tiền ra', count: outTransactions.length, icon: <ArrowDownLeft className="h-3.5 w-3.5" /> },
   ];
@@ -508,29 +549,60 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
           </Box>
         )
       ) : activeTab === 'invalid' ? (
-        invalidTransactions.length === 0 ? (
+        invalidTransactions.length === 0 && outUnmatched.length === 0 ? (
           <Box layoutClassName="flex flex-1 flex-col items-center justify-center gap-3 py-16" textClassName="text-slate-400 dark:text-slate-500">
             <Box layoutClassName="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/20">
               <CheckCircle2 className="h-8 w-8 text-emerald-500 opacity-80" />
             </Box>
-            <Typography size="sm" variant="muted">Tất cả giao dịch đã có mã đơn hàng</Typography>
+            <Typography size="sm" variant="muted">Tất cả giao dịch đã được đối soát</Typography>
           </Box>
         ) : (
-          <TransactionMappingPanel
-            transactions={invalidTransactions}
-            orders={orders}
-            onLink={handleLinkOrder}
-            onMarkExternal={handleMarkExternal}
-            onUnmarkExternal={handleUnmarkExternal}
-            formatDate={formatDate}
-          />
+          <Box layoutClassName="space-y-6">
+            {/* Tiền vào chưa khớp đơn */}
+            {invalidTransactions.length > 0 && (
+              <Box layoutClassName="space-y-2">
+                <Typography as="p" size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">
+                  Tiền vào — khớp đơn ({invalidTransactions.filter(tr => !tr.isExternal).length})
+                </Typography>
+                <TransactionMappingPanel
+                  transactions={invalidTransactions}
+                  orders={orders}
+                  onLink={handleLinkOrder}
+                  onMarkExternal={handleMarkExternal}
+                  onUnmarkExternal={handleUnmarkExternal}
+                  formatDate={formatDate}
+                />
+              </Box>
+            )}
+            {/* Tiền ra chưa khớp (hoàn tiền / nhập kho) */}
+            {outUnmatched.length > 0 && (
+              <Box layoutClassName="space-y-2">
+                <Typography as="p" size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">
+                  Tiền ra — khớp hoàn tiền / nhập kho ({outUnmatched.length})
+                </Typography>
+                <OutReconcilePanel
+                  transactions={outUnmatched}
+                  refunds={refunds}
+                  receipts={receipts}
+                  onReconcileRefund={handleReconcileOut}
+                  onUnreconcileRefund={handleUnreconcileOut}
+                  onReconcileReceipt={handleReconcileReceipt}
+                  onUnreconcileReceipt={handleUnreconcileReceipt}
+                  formatDate={formatDate}
+                />
+              </Box>
+            )}
+          </Box>
         )
       ) : activeTab === 'out' ? (
         <OutReconcilePanel
           transactions={outTransactions}
           refunds={refunds}
-          onReconcile={handleReconcileOut}
-          onUnreconcile={handleUnreconcileOut}
+          receipts={receipts}
+          onReconcileRefund={handleReconcileOut}
+          onUnreconcileRefund={handleUnreconcileOut}
+          onReconcileReceipt={handleReconcileReceipt}
+          onUnreconcileReceipt={handleUnreconcileReceipt}
           formatDate={formatDate}
         />
       ) : displayedTransactions.length === 0 ? (
