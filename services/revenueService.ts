@@ -62,6 +62,8 @@ export interface RevenueReport {
   bankIn: number;
   bankInDelta: number; // bankIn - totalRevenue (đối chiếu ngân hàng vs doanh thu đơn)
   bankOut: number; // VND — tiền ra (transactions transfer_type='out' trong kỳ)
+  settledOut?: number; // VND — tiền ra đã kết toán (về TK chính), trung tính
+  unclassifiedOut?: number; // VND — tiền ra chưa phân loại (cần xử lý)
   totalRefunded: number; // VND — tổng đã hoàn (order_refunds trong kỳ)
   netRevenue: number; // VND — doanh thu thuần = totalRevenue − totalRefunded
   series: RevenuePoint[];
