@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRightLeft, Building2, TrendingUp } from 'lucide-react';
+import { ArrowRightLeft, Building2, TrendingUp, ArrowDownLeft } from 'lucide-react';
 import { Transaction } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Badge from '@/components/ui/Badge';
@@ -29,18 +29,20 @@ const TransactionsMobileList: React.FC<TransactionsMobileListProps> = ({
         >
           {/* Top row: amount + order badge */}
           <Box layoutClassName="mb-2.5 flex items-start justify-between gap-2">
-            {/* Amount + icon */}
+            {/* Amount + icon — tiền vào (+ xanh) / tiền ra (− đỏ) */}
             <Box layoutClassName="flex items-center gap-2.5">
-              <Box layoutClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/20">
-                <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <Box layoutClassName={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tr.transferType === 'out' ? 'bg-rose-50 dark:bg-rose-900/20' : 'bg-emerald-50 dark:bg-emerald-900/20'}`}>
+                {tr.transferType === 'out'
+                  ? <ArrowDownLeft className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                  : <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
               </Box>
               <Box>
                 <Typography
                   as="div"
                   layoutClassName="text-base font-bold"
-                  textClassName="text-emerald-700 dark:text-emerald-300"
+                  textClassName={tr.transferType === 'out' ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}
                 >
-                  +{formatVND(tr.transferAmount)}
+                  {tr.transferType === 'out' ? '−' : '+'}{formatVND(tr.transferAmount)}
                 </Typography>
                 <Typography
                   as="div"
