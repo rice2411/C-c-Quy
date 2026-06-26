@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import {
   Wallet, Coins, Boxes, TrendingUp, Banknote, PieChart as PieIcon, LineChart as LineIcon,
+  ArrowUpRight, Undo2, BadgeDollarSign,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -8,6 +9,7 @@ import {
   PieChart, Pie, Cell,
 } from 'recharts';
 import { useRevenueReport } from '@/hooks/queries/useTransactionsQuery';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
@@ -18,6 +20,7 @@ import StatsBanner from '@/pages/BillImport/StatsBanner';
 const pctText = (v: number) => `${(v * 100).toFixed(1)}%`;
 
 const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, toDate }) => {
+  const { t } = useLanguage();
   // BE tự fetch mọi nguồn & tính; báo cáo nạp lại khi đổi khoảng thời gian (queryKey theo from/to)
   const { report, loading, error } = useRevenueReport({ from: fromDate, to: toDate });
 
@@ -67,6 +70,16 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
           { icon: Boxes, label: '− Nhập kho', value: formatVND(report.totalStockIn), accent: '#d97706' },
           { icon: Coins, label: '− Hoa hồng', value: formatVND(report.totalCommission), accent: '#4abab9' },
           { icon: TrendingUp, label: '= Lợi nhuận', value: formatVND(report.profit), accent: profitPositive ? '#16a34a' : '#dc2626' },
+        ]}
+      />
+
+      {/* Doanh thu thuần + tiền ra + đã hoàn */}
+      <StatsBanner
+        items={[
+          { icon: Banknote, label: t('transactions.totalIn'), value: formatVND(report.totalRevenue), accent: '#16a34a' },
+          { icon: Undo2, label: t('transactions.totalRefunded'), value: formatVND(report.totalRefunded), accent: '#dc2626' },
+          { icon: BadgeDollarSign, label: t('transactions.netRevenue'), value: formatVND(report.netRevenue), accent: '#0ea5e9' },
+          { icon: ArrowUpRight, label: t('transactions.bankOut'), value: formatVND(report.bankOut), accent: '#d97706' },
         ]}
       />
 

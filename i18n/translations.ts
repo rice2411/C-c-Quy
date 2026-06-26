@@ -381,6 +381,9 @@ export const translations = {
       refreshSuccess: "Transactions refreshed successfully",
       refreshError: "Failed to refresh transactions",
       loadError: "Failed to load transactions",
+      bankOut: "Money Out",
+      totalRefunded: "Refunded",
+      netRevenue: "Net Revenue",
       sync: {
         button: "Sync with orders",
         title: "Reconcile transactions with orders",
@@ -1001,6 +1004,9 @@ export const translations = {
       refreshSuccess: "Đã làm mới danh sách giao dịch",
       refreshError: "Không thể làm mới danh sách giao dịch",
       loadError: "Không thể tải danh sách giao dịch",
+      bankOut: "Tiền ra",
+      totalRefunded: "Đã hoàn",
+      netRevenue: "Doanh thu thuần",
       sync: {
         button: "Đồng bộ với đơn",
         title: "Đồng bộ giao dịch với đơn",
