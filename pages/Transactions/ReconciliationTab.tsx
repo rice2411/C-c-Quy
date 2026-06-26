@@ -9,6 +9,7 @@ import {
   RotateCcw,
   BarChart2,
   Link2,
+  ArrowDownLeft,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -32,7 +33,7 @@ import Typography from '@/components/ui/Typography';
 import Button from '@/components/ui/Button';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 
-type TabKey = 'all' | 'valid' | 'invalid' | 'external';
+type TabKey = 'all' | 'valid' | 'invalid' | 'external' | 'out';
 
 const InlineSpinner: React.FC<{ className?: string }> = ({ className }) => (
   <Box layoutClassName={`h-3.5 w-3.5 animate-spin rounded-full border-2 border-t-transparent ${className ?? 'border-slate-300'}`} />
@@ -217,8 +218,9 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     }
   };
 
-  const baseFiltered = useMemo(() => {
-    let filtered = transactions.filter(tr => tr.transferType === 'in');
+  // Lọc theo ngày + từ khoá (chưa phân loại tiền vào/ra) — dùng chung cho cả 2 chiều.
+  const dateSearchFiltered = useMemo(() => {
+    let filtered = transactions;
     if (fromDate) {
       const from = new Date(fromDate);
       filtered = filtered.filter(tr => new Date(tr.transactionDate) >= from);
@@ -240,6 +242,11 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     return filtered;
   }, [transactions, searchTerm, fromDate, toDate]);
 
+  // Tiền VÀO = domain đối soát (khớp đơn). Tiền RA hiển thị ở tab riêng "Tiền ra".
+  const baseFiltered = useMemo(() => dateSearchFiltered.filter(tr => tr.transferType === 'in'), [dateSearchFiltered]);
+  const outTransactions = useMemo(() => dateSearchFiltered.filter(tr => tr.transferType === 'out'), [dateSearchFiltered]);
+  const outTotal = useMemo(() => outTransactions.reduce((s, tr) => s + tr.transferAmount, 0), [outTransactions]);
+
   const validTransactions = useMemo(() => baseFiltered.filter(tr => tr.orderNumber && tr.orderNumber.trim() !== ''), [baseFiltered]);
   const invalidTransactions = useMemo(() => baseFiltered.filter(tr => !tr.orderNumber || tr.orderNumber.trim() === ''), [baseFiltered]);
   const pendingInvalidCount = useMemo(() => invalidTransactions.filter(tr => !tr.isExternal).length, [invalidTransactions]);
@@ -249,6 +256,7 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     activeTab === 'valid' ? validTransactions :
     activeTab === 'invalid' ? invalidTransactions :
     activeTab === 'external' ? externalTransactions :
+    activeTab === 'out' ? outTransactions :
     baseFiltered;
 
   const totalAmount = useMemo(() => validTransactions.reduce((s, tr) => s + tr.transferAmount, 0), [validTransactions]);
@@ -301,6 +309,7 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     { key: 'valid', label: 'Hợp lệ', count: validTransactions.length, icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
     { key: 'invalid', label: 'Chưa khớp', count: pendingInvalidCount, icon: <AlertTriangle className="h-3.5 w-3.5" /> },
     { key: 'external', label: 'Ngoài HT', count: externalTransactions.length, icon: <XCircle className="h-3.5 w-3.5" /> },
+    { key: 'out', label: 'Tiền ra', count: outTransactions.length, icon: <ArrowDownLeft className="h-3.5 w-3.5" /> },
   ];
 
   if (loading) {
