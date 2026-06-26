@@ -17,6 +17,7 @@ export const qk = {
   orders: {
     all: ['orders'] as const,
     nextNumber: () => ['orders', 'next-number'] as const,
+    refunds: ['orders', 'refunds'] as const,
   },
   customers: {
     all: ['customers'] as const,

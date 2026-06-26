@@ -12,9 +12,14 @@ import {
   ArrowDownLeft,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { qk } from '@/hooks/queryKeys';
 import { useOrders } from '@/hooks/useOrders';
 import { useTransactions, useTransactionMutations } from '@/hooks/queries/useTransactionsQuery';
+import { fetchAllRefunds, reconcileRefund, unreconcileRefund, RefundListItem } from '@/services/orderService';
+import OutReconcilePanel from './components/OutReconcilePanel';
 import { PaymentStatus } from '@/types/enums';
 import { Transaction } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
@@ -153,6 +158,45 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   const { orders, modifyOrder } = useOrders();
   const { transactions, loading, isRefreshing, error, refetch } = useTransactions();
   const { markExternal, linkOrder, reconcilePreview, reconcileApply } = useTransactionMutations();
+  const { currentUser } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Phiếu hoàn (mọi đơn) — để đối soát tiền ra ↔ phiếu hoàn ở tab "Tiền ra".
+  const { data: refunds = [] } = useQuery<RefundListItem[]>({
+    queryKey: qk.orders.refunds,
+    queryFn: fetchAllRefunds,
+    enabled: !!currentUser,
+  });
+
+  const refreshAfterReconcile = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: qk.orders.refunds }),
+      queryClient.invalidateQueries({ queryKey: qk.transactions.all }),
+      queryClient.invalidateQueries({ queryKey: qk.orders.all }),
+    ]);
+  };
+
+  const handleReconcileOut = async (orderId: string, refundId: string, transactionId: string) => {
+    try {
+      await reconcileRefund(orderId, refundId, transactionId);
+      toast.success(t('reconcile.reconciledSepay') || 'Đã đối soát phiếu hoàn');
+      await refreshAfterReconcile();
+    } catch (err: any) {
+      toast.error(err?.message || t('reconcile.errGeneric') || 'Đối soát thất bại');
+      throw err;
+    }
+  };
+
+  const handleUnreconcileOut = async (orderId: string, refundId: string) => {
+    try {
+      await unreconcileRefund(orderId, refundId);
+      toast.success(t('reconcile.unreconciled') || 'Đã gỡ đối soát');
+      await refreshAfterReconcile();
+    } catch (err: any) {
+      toast.error(err?.message || t('reconcile.errGeneric') || 'Gỡ đối soát thất bại');
+      throw err;
+    }
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -481,6 +525,14 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
             formatDate={formatDate}
           />
         )
+      ) : activeTab === 'out' ? (
+        <OutReconcilePanel
+          transactions={outTransactions}
+          refunds={refunds}
+          onReconcile={handleReconcileOut}
+          onUnreconcile={handleUnreconcileOut}
+          formatDate={formatDate}
+        />
       ) : displayedTransactions.length === 0 ? (
         <Box layoutClassName="flex flex-1 flex-col items-center justify-center gap-3 py-16" textClassName="text-slate-400 dark:text-slate-500">
           <Box layoutClassName="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">

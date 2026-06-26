@@ -154,6 +154,25 @@ export const reconcileRefund = async (
   return res.data as Order;
 };
 
+/** 1 phiếu hoàn (mọi đơn) kèm ngữ cảnh đơn — đối soát từ phía GD tiền ra. */
+export interface RefundListItem {
+  refundId: string;
+  orderId: string;
+  orderNumber?: string | null;
+  amount: number;
+  reason?: string | null;
+  createdAt?: unknown; // revive Timestamp
+  transactionId?: string | null;
+  reconciled: boolean;
+  reconcileMethod?: 'sepay' | 'cash' | null;
+}
+
+/** Toàn bộ phiếu hoàn (mọi đơn) — GET /orders/refunds. Phục vụ đối soát tiền ra. */
+export const fetchAllRefunds = async (): Promise<RefundListItem[]> => {
+  const res = await apiClient.get('/orders/refunds');
+  return (res.data as RefundListItem[]) ?? [];
+};
+
 /** Đánh dấu phiếu hoàn đã trả bằng tiền mặt. BE trả Order đầy đủ. */
 export const markRefundCash = async (
   orderId: string,
