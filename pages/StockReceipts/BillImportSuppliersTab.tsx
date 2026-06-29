@@ -17,8 +17,8 @@ import {
 } from 'lucide-react';
 import type { ImportedSupplierSummary } from '@/types/billReceipt';
 import { mergeSuppliers } from '@/services/stockReceiptService';
-import StatsBanner from '@/pages/BillImport/StatsBanner';
-import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/BillImport/dateFilter';
+import StatsBanner from '@/pages/StockReceipts/StatsBanner';
+import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/StockReceipts/dateFilter';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Box from '@/components/ui/Box';
@@ -35,8 +35,8 @@ import {
   TableRow,
 } from '@/components/ui/Table';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
-import SupplierEditModal from '@/pages/BillImport/SupplierEditModal';
-import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/BillImport/MergeItemsModal';
+import SupplierEditModal from '@/pages/StockReceipts/SupplierEditModal';
+import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/StockReceipts/MergeItemsModal';
 import EmptyState from '@/components/ui/EmptyState';
 
 import Checkbox from '@/components/ui/Checkbox';
@@ -222,35 +222,46 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                   }
                 >
                   <Box layoutClassName="flex gap-3">
-                    <Checkbox checked={isChecked}
+                    <Checkbox
+                      checked={isChecked}
                       onChange={() => toggleSelect(row.id)}
-                      className="mt-1 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                      borderClassName="mt-1 shrink-0 rounded border-slate-300"
+                      focusClassName="cursor-pointer text-primary-600 focus:ring-primary-500"
                     />
                     <Box layoutClassName="min-w-0 flex-1 space-y-1">
                       <Typography size="sm" layoutClassName="font-semibold break-words">
                         {row.name}
                       </Typography>
                       {row.category ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                        <Typography
+                          as="span"
+                          size="xs"
+                          layoutClassName="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-700"
+                          textClassName="text-[10px] text-slate-700 dark:text-slate-200"
+                        >
                           <Tag className="h-3 w-3" /> {row.category}
-                        </span>
+                        </Typography>
                       ) : null}
                       {row.phone || row.contactPerson ? (
                         <Box layoutClassName="flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
-                          {row.phone ? <span>📞 {row.phone}</span> : null}
-                          {row.contactPerson ? <span>👤 {row.contactPerson}</span> : null}
+                          {row.phone ? <Typography as="span" size="xs">📞 {row.phone}</Typography> : null}
+                          {row.contactPerson ? (
+                            <Typography as="span" size="xs">👤 {row.contactPerson}</Typography>
+                          ) : null}
                         </Box>
                       ) : null}
                       <Box layoutClassName="flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
                         <Typography size="xs" variant="muted">
                           Phiếu:{' '}
-                          <strong className="text-slate-700 dark:text-slate-100">{row.receiptCount}</strong>
+                          <Typography as="span" textClassName="text-slate-700 dark:text-slate-100 font-semibold">
+                            {row.receiptCount}
+                          </Typography>
                         </Typography>
                         <Typography size="xs" variant="muted">
                           Tổng:{' '}
-                          <strong className="text-slate-700 dark:text-slate-100">
+                          <Typography as="span" textClassName="text-slate-700 dark:text-slate-100 font-semibold">
                             {formatVNDOrDash(row.totalAmount)}
-                          </strong>
+                          </Typography>
                         </Typography>
                         {row.lastReceiptDate ? (
                           <Typography size="xs" variant="muted">
@@ -302,7 +313,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                       {row.address ? (
                         <Box layoutClassName="flex items-start gap-1.5">
                           <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-slate-400" />
-                          <span className="break-words">{row.address}</span>
+                          <Typography as="span" layoutClassName="break-words">{row.address}</Typography>
                         </Box>
                       ) : null}
                       {row.notes ? (
@@ -358,16 +369,21 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                         layoutClassName={isChecked ? 'bg-primary-50/60 dark:bg-primary-950/20' : undefined}
                       >
                         <TableCell>
-                          <Checkbox checked={isChecked}
+                          <Checkbox
+                            checked={isChecked}
                             onChange={() => toggleSelect(row.id)}
-                            className="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                            borderClassName="rounded border-slate-300"
+                            focusClassName="cursor-pointer text-primary-600 focus:ring-primary-500"
                           />
                         </TableCell>
                         <TableCell>
                           <Button
                             type="button"
                             onClick={() => setExpanded(open ? null : row.id)}
-                            className="rounded p-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                            roundedClassName="rounded"
+                            sizeClassName="p-0.5"
+                            textClassName="text-slate-400"
+                            hoverClassName="hover:text-slate-700 dark:hover:text-slate-200"
                             aria-label={open ? 'Thu gọn' : 'Mở rộng'}
                            variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                             {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -387,17 +403,24 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                         </TableCell>
                         <TableCell>
                           {row.category ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700 dark:bg-slate-700 dark:text-slate-200">
+                            <Typography
+                              as="span"
+                              size="xs"
+                              layoutClassName="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-700"
+                              textClassName="text-xs text-slate-700 dark:text-slate-200"
+                            >
                               <Tag className="h-3 w-3" /> {row.category}
-                            </span>
+                            </Typography>
                           ) : (
                             <Typography size="xs" variant="muted">—</Typography>
                           )}
                         </TableCell>
                         <TableCell>
                           <Box layoutClassName="flex flex-col text-xs">
-                            {row.phone ? <span>📞 {row.phone}</span> : null}
-                            {row.contactPerson ? <span>👤 {row.contactPerson}</span> : null}
+                            {row.phone ? <Typography as="span" size="xs">📞 {row.phone}</Typography> : null}
+                            {row.contactPerson ? (
+                              <Typography as="span" size="xs">👤 {row.contactPerson}</Typography>
+                            ) : null}
                             {!row.phone && !row.contactPerson ? (
                               <Typography size="xs" variant="muted">—</Typography>
                             ) : null}

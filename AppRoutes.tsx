@@ -15,7 +15,9 @@ import CommissionGuidePage from "./pages/Commission/GuidePage";
 import MyCommissionPage from "./pages/MyCommission/index";
 import InventoryPage from "./pages/Storage/index";
 import ProductDetailPage from "./pages/Storage/product/ProductDetailPage";
-import BillImportPage from "./pages/BillImport/index";
+import StockReceiptsPage from "./pages/StockReceipts/index";
+import SuppliersPage from "./pages/Suppliers/index";
+import MaterialsPage from "./pages/Materials/index";
 import CustomersPage from "./pages/Customers/index";
 import UsersPage from "./pages/Users/index";
 import RequestLogsPage from "./pages/Admin/RequestLogs/index";
@@ -147,13 +149,31 @@ const AppRoutes: React.FC = () => (
         }
       />
       <Route
-        path="bill-import"
+        path="stock-receipts"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/bill-import")?.roles}>
-            <BillImportPage />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/stock-receipts")?.roles}>
+            <StockReceiptsPage />
           </RoleBasedRoute>
         }
       />
+      <Route
+        path="suppliers"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/suppliers")?.roles}>
+            <SuppliersPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="materials"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/materials")?.roles}>
+            <MaterialsPage />
+          </RoleBasedRoute>
+        }
+      />
+      {/* Back-compat redirect path cũ */}
+      <Route path="bill-import" element={<Navigate to="/stock-receipts" replace />} />
       <Route
         path="customers"
         element={

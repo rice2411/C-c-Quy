@@ -11,7 +11,6 @@ import type {
   SupplierContactInfo,
 } from '@/types/billReceipt';
 import {
-  useImportedMaterials,
   useImportedSuppliers,
   useStockReceiptDetail,
   useStockReceiptMutations,
@@ -22,14 +21,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import Box from '@/components/ui/Box';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
-import Tabs from '@/components/ui/Tabs';
-import BillImportEntryTab from '@/pages/BillImport/BillImportEntryTab';
-import BillImportReceiptListTab from '@/pages/BillImport/BillImportReceiptListTab';
-import BillImportSuppliersTab from '@/pages/BillImport/BillImportSuppliersTab';
-import BillImportMaterialsTab from '@/pages/BillImport/BillImportMaterialsTab';
-import ReceiptDetailModal from '@/pages/BillImport/ReceiptDetailModal';
-import BillImportModal from '@/pages/BillImport/BillImportModal';
-import type { BillImportTabId, UiProgressStage } from '@/pages/BillImport/constants';
+import BillImportEntryTab from '@/pages/StockReceipts/BillImportEntryTab';
+import BillImportReceiptListTab from '@/pages/StockReceipts/BillImportReceiptListTab';
+import ReceiptDetailModal from '@/pages/StockReceipts/ReceiptDetailModal';
+import BillImportModal from '@/pages/StockReceipts/BillImportModal';
+import type { UiProgressStage } from '@/pages/StockReceipts/constants';
 import { fileToBase64NoPrefix } from '@/utils/io/fileUtil';
 import { formatImportedAt } from '@/utils/format/dateUtil';
 import { normalizeSearchText } from '@/utils/format/stringUtil';
@@ -73,7 +69,7 @@ const MANUAL_VALIDATION = {
   heuristicNoteVi: 'manual',
 } as const;
 
-const BillImportPage: React.FC = () => {
+const StockReceiptsPage: React.FC = () => {
   const { t } = useLanguage();
   const { currentUser } = useAuth();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -85,40 +81,31 @@ const BillImportPage: React.FC = () => {
   const [draftStructured, setDraftStructured] = useState<StockReceiptStructured | null>(null);
   const [validation, setValidation] = useState<BillValidationResult | null>(null);
   const [progressStage, setProgressStage] = useState<UiProgressStage | null>(null);
-  const [activeTab, setActiveTab] = useState<BillImportTabId>('receipts');
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [entryMode, setEntryMode] = useState<'ocr' | 'manual'>('ocr');
   const [detailReceiptId, setDetailReceiptId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [receiptSearch, setReceiptSearch] = useState('');
-  const [supplierSearch, setSupplierSearch] = useState('');
-  const [materialSearch, setMaterialSearch] = useState('');
 
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [supplierContact, setSupplierContact] = useState<SupplierContactInfo>(EMPTY_CONTACT);
 
   // Data qua React Query (epic #58 — P8). queryFn gọi thẳng stockReceiptService.
+  // supplierRows vẫn cần cho EntryTab (supplierList) + SupplierPicker.
   const receiptsQuery = useStockReceiptSummaries();
   const suppliersQuery = useImportedSuppliers();
-  const materialsQuery = useImportedMaterials();
   const detailQuery = useStockReceiptDetail(detailReceiptId);
   const { saveDraft } = useStockReceiptMutations();
 
   const receiptRows = receiptsQuery.receipts;
   const supplierRows = suppliersQuery.suppliers;
-  const materialRows = materialsQuery.materials;
   const receiptLoading = receiptsQuery.loading;
-  const masterLoading = suppliersQuery.loading || materialsQuery.loading;
   const receiptDetail: SavedStockReceiptDetail | null = detailQuery.detail;
   const detailLoading = detailQuery.loading;
 
   const loadReceipts = useCallback(async () => {
     await receiptsQuery.refetch();
   }, [receiptsQuery]);
-
-  const loadMasters = useCallback(async () => {
-    await Promise.all([suppliersQuery.refetch(), materialsQuery.refetch()]);
-  }, [suppliersQuery, materialsQuery]);
 
   const resetOutput = useCallback(() => {
     setOcrText('');
@@ -261,6 +248,9 @@ const BillImportPage: React.FC = () => {
     }
     setSavingDraft(true);
     try {
+      // Tổng tiền: nếu user/OCR đã nhập totalAmount (typeof number) thì GIỮ NGUYÊN,
+      // chỉ tự tính lineSum + tax - discount khi totalAmount null/undefined.
+      const hasExplicitTotal = typeof draftStructured.totalAmount === 'number';
       const lineSum = (draftStructured.lineItems || []).reduce(
         (s, l) => s + (typeof l.lineTotal === 'number' ? l.lineTotal : 0),
         0,
@@ -273,7 +263,9 @@ const BillImportPage: React.FC = () => {
       ).length;
       const structuredForSave: StockReceiptStructured = {
         ...draftStructured,
-        totalAmount: lineSum + taxV - discountV,
+        totalAmount: hasExplicitTotal
+          ? draftStructured.totalAmount
+          : lineSum + taxV - discountV,
         productLineCount: isManual ? validLineCount : draftStructured.productLineCount,
       };
       await saveDraft({
@@ -377,79 +369,28 @@ const BillImportPage: React.FC = () => {
     );
   });
 
-  const filteredSuppliers = supplierRows.filter((row) => {
-    const q = normalizeSearchText(supplierSearch);
-    if (!q) return true;
-    return (
-      normalizeSearchText(row.name).includes(q) || normalizeSearchText(row.normalizedName).includes(q)
-    );
-  });
-
-  const filteredMaterials = materialRows.filter((row) => {
-    const q = normalizeSearchText(materialSearch);
-    if (!q) return true;
-    return (
-      normalizeSearchText(row.name).includes(q) || normalizeSearchText(row.normalizedName).includes(q)
-    );
-  });
-
   return (
     <Box layoutClassName="space-y-6 animate-fade-in">
       <Box>
         <Heading level={2} textClassName="flex items-center gap-2 text-xl font-semibold">
           <ScanLine className="h-6 w-6 text-primary-500" />
-          {t('header.billImportTitle')}
+          {t('header.stockReceiptsTitle')}
         </Heading>
         <Typography size="sm" variant="muted" layoutClassName="mt-1">
           {t('billImport.subtitle')}
         </Typography>
       </Box>
 
-      <Tabs
-        items={[
-          { id: 'receipts', label: 'Phiếu nhập' },
-          { id: 'suppliers', label: 'Nhà cung cấp' },
-          { id: 'materials', label: 'Nguyên vật liệu' },
-        ]}
-        value={activeTab}
-        onChange={(value) => {
-          const next = value as BillImportTabId;
-          setActiveTab(next);
-          if (next === 'suppliers' || next === 'materials') {
-            void loadMasters();
-          }
-          if (next === 'receipts') void loadReceipts();
-        }}
+      <BillImportReceiptListTab
+        receiptSearch={receiptSearch}
+        onReceiptSearchChange={setReceiptSearch}
+        receiptLoading={receiptLoading}
+        onRefresh={loadReceipts}
+        filteredReceipts={filteredReceipts}
+        onRowClick={openReceiptDetail}
+        onFileSelected={handleFileSelected}
+        onStartManual={handleStartManual}
       />
-
-      {activeTab === 'receipts' ? (
-        <BillImportReceiptListTab
-          receiptSearch={receiptSearch}
-          onReceiptSearchChange={setReceiptSearch}
-          receiptLoading={receiptLoading}
-          onRefresh={loadReceipts}
-          filteredReceipts={filteredReceipts}
-          onRowClick={openReceiptDetail}
-          onFileSelected={handleFileSelected}
-          onStartManual={handleStartManual}
-        />
-      ) : activeTab === 'suppliers' ? (
-        <BillImportSuppliersTab
-          supplierSearch={supplierSearch}
-          onSupplierSearchChange={setSupplierSearch}
-          masterLoading={masterLoading}
-          onRefresh={loadMasters}
-          filteredSuppliers={filteredSuppliers}
-        />
-      ) : (
-        <BillImportMaterialsTab
-          materialSearch={materialSearch}
-          onMaterialSearchChange={setMaterialSearch}
-          masterLoading={masterLoading}
-          onRefresh={loadMasters}
-          filteredMaterials={filteredMaterials}
-        />
-      )}
 
       <BillImportModal
         open={importModalOpen}
@@ -489,4 +430,4 @@ const BillImportPage: React.FC = () => {
   );
 };
 
-export default BillImportPage;
+export default StockReceiptsPage;

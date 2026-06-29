@@ -90,9 +90,9 @@ const Layout: React.FC = () => {
     if (location.pathname === '/my-commission') return 'Hoa hồng của tôi';
     if (location.pathname === '/commission-guide') return 'Hướng dẫn hoa hồng';
     if (location.pathname === '/storage') return t('header.inventoryTitle');
-    if (location.pathname === '/bill-import') {
-      return t('header.billImportTitle');
-    }
+    if (location.pathname === '/stock-receipts') return t('header.stockReceiptsTitle');
+    if (location.pathname === '/suppliers') return t('header.suppliersTitle');
+    if (location.pathname === '/materials') return t('header.materialsTitle');
     if (location.pathname === '/customers') return t('header.customersTitle');
     if (location.pathname === '/users') return t('header.usersTitle');
     if (location.pathname === '/admin/request-logs') return t('nav.requestLogs');
