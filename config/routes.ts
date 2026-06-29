@@ -4,6 +4,8 @@ import {
   ShoppingCart,
   Boxes,
   FileText,
+  Truck,
+  Package,
   Users,
   Settings,
   Settings2,
@@ -127,9 +129,23 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/bill-import",
-    labelKey: "nav.billImport",
+    path: "/stock-receipts",
+    labelKey: "nav.stockReceipts",
     icon: FileText,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/suppliers",
+    labelKey: "nav.suppliers",
+    icon: Truck,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/materials",
+    labelKey: "nav.materials",
+    icon: Package,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -323,7 +339,9 @@ export const navGroups: NavGroupConfig[] = [
     icon: Boxes,
     childPaths: [
       "/storage",
-      "/bill-import",
+      "/stock-receipts",
+      "/suppliers",
+      "/materials",
     ],
   },
   {

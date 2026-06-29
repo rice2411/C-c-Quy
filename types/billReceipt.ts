@@ -119,6 +119,10 @@ export interface ImportedMaterialSummary {
   importCount: number;
   totalQty: number;
   totalAmount: number;
+  /** Đơn vị chuẩn hoá (canonical) của NVL, vd "kg", "lít", "cái". */
+  canonicalUnit?: string | null;
+  /** Đơn giá nhập gần nhất (VND). */
+  lastUnitPrice?: number | null;
   lastSupplierName?: string;
   lastReceiptDate?: string;
 }

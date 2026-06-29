@@ -63,7 +63,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            className="hidden"
+            style={{ display: 'none' }}
             onChange={handleChange}
           />
           <input
@@ -71,7 +71,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
             type="file"
             accept="image/*"
             capture="environment"
-            className="hidden"
+            style={{ display: 'none' }}
             onChange={handleChange}
           />
         </>

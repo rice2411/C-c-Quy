@@ -73,10 +73,10 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
       isOpen={open}
       onClose={() => !submitting && onClose()}
       title={
-        <span className="flex items-center gap-2">
+        <Typography as="span" layoutClassName="flex items-center gap-2">
           <GitMerge className="h-5 w-5 text-primary-600" />
           Gộp {itemTypeLabel}
-        </span>
+        </Typography>
       }
       size="md"
       footer={
@@ -112,7 +112,7 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
     >
       <Box layoutClassName="space-y-4">
         <Typography size="sm" variant="muted">
-          Chọn 1 mục làm <strong>gốc</strong> — các mục còn lại sẽ được gộp vào nó. Mọi phiếu / dòng tham chiếu sẽ được cập nhật, số liệu thống kê sẽ được cộng dồn.
+          Chọn 1 mục làm <Typography as="span" textClassName="font-semibold">gốc</Typography> — các mục còn lại sẽ được gộp vào nó. Mọi phiếu / dòng tham chiếu sẽ được cập nhật, số liệu thống kê sẽ được cộng dồn.
         </Typography>
 
         {/* Cảnh báo */}
@@ -123,7 +123,7 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
           <Typography size="xs" textClassName="text-amber-900 dark:text-amber-200">
-            Thao tác không thể hoàn tác. Các mục được chọn ngoài "gốc" sẽ bị <strong>xoá</strong> khỏi hệ thống.
+            Thao tác không thể hoàn tác. Các mục được chọn ngoài "gốc" sẽ bị <Typography as="span" textClassName="font-semibold">xoá</Typography> khỏi hệ thống.
           </Typography>
         </Box>
 
@@ -140,12 +140,13 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
                 type="button"
                 onClick={() => setRootId(item.id)}
                 disabled={submitting}
-                className={`w-full rounded-xl border p-3 text-left transition ${
-                  isRoot
-                    ? 'border-primary-400 bg-primary-50 ring-2 ring-primary-200 dark:border-primary-600 dark:bg-primary-950/30 dark:ring-primary-900'
-                    : 'border-slate-200 bg-white hover:border-primary-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-primary-700'
-                }`}
-               variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
+                layoutClassName="w-full text-left transition"
+                sizeClassName="p-3"
+                roundedClassName="rounded-xl"
+                backgroundClassName={isRoot ? 'bg-primary-50 dark:bg-primary-950/30' : 'bg-white dark:bg-slate-900'}
+                hoverClassName={isRoot ? undefined : 'hover:border-primary-300 dark:hover:border-primary-700'}
+                shadowClassName={isRoot ? 'ring-2 ring-primary-200 dark:ring-primary-900' : undefined}
+               variant="ghost" disableVariantHover disableVariantTextColor borderClassName={isRoot ? 'border border-primary-400 dark:border-primary-600' : 'border border-slate-200 dark:border-slate-700'}>
                 <Box layoutClassName="flex items-center gap-3">
                   <Box
                     layoutClassName={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
@@ -168,9 +169,13 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
                     ) : null}
                   </Box>
                   {isRoot ? (
-                    <span className="rounded-md bg-primary-600 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+                    <Typography
+                      as="span"
+                      layoutClassName="rounded-md bg-primary-600 px-2 py-0.5"
+                      textClassName="text-[10px] font-bold uppercase text-white"
+                    >
                       GỐC
-                    </span>
+                    </Typography>
                   ) : null}
                 </Box>
               </Button>
@@ -191,9 +196,9 @@ const MergeItemsModal: React.FC<MergeItemsModalProps> = ({
             <Box layoutClassName="space-y-1.5 text-xs">
               {duplicates.map((d) => (
                 <Box key={d.id} layoutClassName="flex items-center gap-2">
-                  <span className="line-through text-rose-600 dark:text-rose-400">{d.name}</span>
+                  <Typography as="span" textClassName="line-through text-rose-600 dark:text-rose-400">{d.name}</Typography>
                   <ArrowDown className="h-3 w-3 rotate-[-90deg] text-slate-400" />
-                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">{root.name}</span>
+                  <Typography as="span" textClassName="font-semibold text-emerald-700 dark:text-emerald-400">{root.name}</Typography>
                 </Box>
               ))}
             </Box>

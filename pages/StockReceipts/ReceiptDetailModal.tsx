@@ -9,6 +9,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 
 import Button from '@/components/ui/Button';
+import Image from '@/components/ui/Image';
 const ZOOM_MIN = 0.5;
 const ZOOM_MAX = 4;
 const ZOOM_STEP = 0.25;
@@ -83,7 +84,9 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
           </Typography>
           <Button
             type="button"
-            className="text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-300 dark:hover:text-white"
+            sizeClassName="text-sm"
+            textClassName="font-medium text-slate-500 dark:text-slate-300"
+            hoverClassName="hover:text-slate-700 dark:hover:text-white"
             onClick={onClose}
            variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             Đóng
@@ -103,26 +106,30 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
           <Box layoutClassName="space-y-3">
             <Box layoutClassName="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
               <Typography size="sm">
-                <strong>Tên nhà cung cấp:</strong> {receiptDetail.supplierNameRaw || '—'}
+                <Typography as="span" textClassName="font-semibold">Tên nhà cung cấp:</Typography>{' '}
+                {receiptDetail.supplierNameRaw || '—'}
               </Typography>
               <Typography size="sm" layoutClassName="mt-1">
-                <strong>Ngày giờ:</strong> {receiptDetail.receiptDate || '—'}
+                <Typography as="span" textClassName="font-semibold">Ngày giờ:</Typography>{' '}
+                {receiptDetail.receiptDate || '—'}
               </Typography>
             </Box>
 
             {receiptDetail.receiptImageBase64 && imageSrc ? (
               <Button
                 type="button"
-                className="group w-full overflow-hidden rounded-lg border border-slate-200 text-left transition ring-offset-2 hover:ring-2 hover:ring-primary-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-slate-700"
+                layoutClassName="group w-full overflow-hidden text-left transition"
+                roundedClassName="rounded-lg"
+                focusClassName="ring-offset-2 hover:ring-2 hover:ring-primary-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                 onClick={(e) => {
                   e.stopPropagation();
                   openImageViewer();
                 }}
-               variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
-                <img
+               variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border border-slate-200 dark:border-slate-700">
+                <Image
                   src={imageSrc}
                   alt="Bill"
-                  className="max-h-80 w-full object-contain bg-slate-50 dark:bg-slate-900"
+                  layoutClassName="max-h-80 w-full object-contain bg-slate-50 dark:bg-slate-900"
                 />
                 <Typography size="xs" variant="muted" layoutClassName="bg-slate-100 px-2 py-1.5 text-center dark:bg-slate-800">
                   Bấm để xem phóng to và zoom
@@ -169,7 +176,12 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
           {/* Nút X cố định sau khi mở ảnh — trên mọi thanh app (z cao, portaled) */}
           <Button
             type="button"
-            className="fixed right-3 z-[210] flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-white shadow-lg ring-2 ring-white/40 backdrop-blur-sm hover:bg-white/30 active:bg-white/40"
+            layoutClassName="fixed right-3 z-[210] flex h-12 w-12 items-center justify-center backdrop-blur-sm"
+            roundedClassName="rounded-full"
+            backgroundClassName="bg-white/20"
+            textClassName="text-white"
+            shadowClassName="shadow-lg ring-2 ring-white/40"
+            hoverClassName="hover:bg-white/30 active:bg-white/40"
             style={{ top: 'max(0.75rem, env(safe-area-inset-top))' }}
             aria-label="Đóng xem ảnh"
             onClick={(e) => {
@@ -190,7 +202,10 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
             <Box layoutClassName="flex items-center gap-1">
               <Button
                 type="button"
-                className="flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-white/10 disabled:opacity-40"
+                layoutClassName="flex min-h-11 min-w-11 items-center justify-center"
+                roundedClassName="rounded-lg"
+                hoverClassName="hover:bg-white/10"
+                stateClassName="disabled:opacity-40"
                 aria-label="Thu nhỏ"
                 disabled={imageZoom <= ZOOM_MIN}
                 onClick={() => setImageZoom((z) => clampZoom(z - ZOOM_STEP))}
@@ -199,14 +214,19 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
               </Button>
               <Button
                 type="button"
-                className="rounded-lg px-3 py-2 text-sm hover:bg-white/10"
+                roundedClassName="rounded-lg"
+                sizeClassName="px-3 py-2 text-sm"
+                hoverClassName="hover:bg-white/10"
                 onClick={() => setImageZoom(1)}
                variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                 100%
               </Button>
               <Button
                 type="button"
-                className="flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-white/10 disabled:opacity-40"
+                layoutClassName="flex min-h-11 min-w-11 items-center justify-center"
+                roundedClassName="rounded-lg"
+                hoverClassName="hover:bg-white/10"
+                stateClassName="disabled:opacity-40"
                 aria-label="Phóng to"
                 disabled={imageZoom >= ZOOM_MAX}
                 onClick={() => setImageZoom((z) => clampZoom(z + ZOOM_STEP))}
@@ -228,11 +248,11 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
               layoutClassName="flex min-h-full w-full items-center justify-center p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
+              <Image
                 src={imageSrc}
                 alt="Bill phóng to"
                 draggable={false}
-                className="max-h-none select-none"
+                layoutClassName="max-h-none select-none"
                 style={{
                   transform: `scale(${imageZoom})`,
                   transformOrigin: 'center center',

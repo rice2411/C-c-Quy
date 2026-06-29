@@ -36,8 +36,8 @@ import {
   TableHeaderCell,
   TableRow,
 } from '@/components/ui/Table';
-import { PIPELINE_STAGES, type UiProgressStage } from '@/pages/BillImport/constants';
-import SupplierPicker from '@/pages/BillImport/SupplierPicker';
+import { PIPELINE_STAGES, type UiProgressStage } from '@/pages/StockReceipts/constants';
+import SupplierPicker from '@/pages/StockReceipts/SupplierPicker';
 import EmptyState from '@/components/ui/EmptyState';
 
 export interface BillImportEntryTabProps {
@@ -67,6 +67,17 @@ export interface BillImportEntryTabProps {
   }) => void;
   onSupplierContactChange: (patch: Partial<SupplierContactInfo>) => void;
 }
+
+/**
+ * Parse input số tiền/SL: chặn số âm (clamp >= 0). Rỗng → null, NaN → null.
+ * Dùng cho quantity / unitPrice / lineTotal / tax / discount / subtotal.
+ */
+const parseNonNegative = (v: string): number | null => {
+  if (v === '') return null;
+  const n = Number(v);
+  if (Number.isNaN(n)) return null;
+  return Math.max(0, n);
+};
 
 const ContactField: React.FC<{
   label: string;
@@ -166,7 +177,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
             ref={manualImageInputRef}
             type="file"
             accept="image/*"
-            className="hidden"
+            style={{ display: 'none' }}
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = '';
@@ -481,19 +492,19 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                 <ContactField
                   label="Tạm tính"
                   value={String(draftStructured.subtotal ?? '')}
-                  onChange={(v) => updateDraftField('subtotal', v === '' ? null : Number(v))}
+                  onChange={(v) => updateDraftField('subtotal', parseNonNegative(v))}
                   placeholder="0"
                 />
                 <ContactField
                   label="Thuế"
                   value={String(draftStructured.tax ?? '')}
-                  onChange={(v) => updateDraftField('tax', v === '' ? null : Number(v))}
+                  onChange={(v) => updateDraftField('tax', parseNonNegative(v))}
                   placeholder="0"
                 />
                 <ContactField
                   label="Giảm giá"
                   value={String(draftStructured.discount ?? '')}
-                  onChange={(v) => updateDraftField('discount', v === '' ? null : Number(v))}
+                  onChange={(v) => updateDraftField('discount', parseNonNegative(v))}
                   placeholder="0"
                 />
                 <ContactField
@@ -580,7 +591,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                       <ContactField
                         label={t('billImport.colQty')}
                         value={String(it.quantity ?? '')}
-                        onChange={(v) => updateDraftLine(idx, { quantity: v === '' ? null : Number(v) })}
+                        onChange={(v) => updateDraftLine(idx, { quantity: parseNonNegative(v) })}
                         placeholder="SL"
                       />
                       <ContactField
@@ -592,13 +603,13 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                       <ContactField
                         label={t('billImport.colPrice')}
                         value={String(it.unitPrice ?? '')}
-                        onChange={(v) => updateDraftLine(idx, { unitPrice: v === '' ? null : Number(v) })}
+                        onChange={(v) => updateDraftLine(idx, { unitPrice: parseNonNegative(v) })}
                         placeholder="Đơn giá"
                       />
                       <ContactField
                         label={t('billImport.colLineTotal')}
                         value={String(it.lineTotal ?? '')}
-                        onChange={(v) => updateDraftLine(idx, { lineTotal: v === '' ? null : Number(v) })}
+                        onChange={(v) => updateDraftLine(idx, { lineTotal: parseNonNegative(v) })}
                         placeholder="Thành tiền"
                       />
                     </Box>
@@ -647,7 +658,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                             value={String(it.quantity ?? '')}
                             onChange={(e) =>
                               updateDraftLine(idx, {
-                                quantity: e.target.value === '' ? null : Number(e.target.value),
+                                quantity: parseNonNegative(e.target.value),
                               })
                             }
                             placeholder="SL"
@@ -665,7 +676,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                             value={String(it.unitPrice ?? '')}
                             onChange={(e) =>
                               updateDraftLine(idx, {
-                                unitPrice: e.target.value === '' ? null : Number(e.target.value),
+                                unitPrice: parseNonNegative(e.target.value),
                               })
                             }
                             placeholder="Đơn giá"
@@ -676,7 +687,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                             value={String(it.lineTotal ?? '')}
                             onChange={(e) =>
                               updateDraftLine(idx, {
-                                lineTotal: e.target.value === '' ? null : Number(e.target.value),
+                                lineTotal: parseNonNegative(e.target.value),
                               })
                             }
                             placeholder="Thành tiền"
