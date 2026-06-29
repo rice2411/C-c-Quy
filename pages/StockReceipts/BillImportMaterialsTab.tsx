@@ -2,8 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { GitMerge, Package, ShoppingBag, TrendingUp, X } from 'lucide-react';
 import type { ImportedMaterialSummary } from '@/types/billReceipt';
 import { mergeMaterials } from '@/services/stockReceiptService';
-import StatsBanner from '@/pages/BillImport/StatsBanner';
-import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/BillImport/dateFilter';
+import StatsBanner from '@/pages/StockReceipts/StatsBanner';
+import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/StockReceipts/dateFilter';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Box from '@/components/ui/Box';
@@ -20,7 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/Table';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
-import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/BillImport/MergeItemsModal';
+import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/StockReceipts/MergeItemsModal';
 import EmptyState from '@/components/ui/EmptyState';
 
 import Checkbox from '@/components/ui/Checkbox';
@@ -199,9 +199,11 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
                       : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900')
                   }
                 >
-                  <Checkbox checked={isChecked}
+                  <Checkbox
+                    checked={isChecked}
                     onChange={() => toggle(row.id)}
-                    className="mt-1 h-4 w-4 shrink-0 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                    borderClassName="mt-1 shrink-0 rounded border-slate-300"
+                    focusClassName="cursor-pointer text-primary-600 focus:ring-primary-500"
                   />
                   <Box layoutClassName="min-w-0 flex-1 space-y-1">
                     <Typography size="sm" layoutClassName="font-semibold break-words">
@@ -215,16 +217,21 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
                     <Box layoutClassName="flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
                       <Typography size="xs" variant="muted">
                         Số lần:{' '}
-                        <strong className="text-slate-700 dark:text-slate-100">{row.importCount}</strong>
+                        <Typography as="span" textClassName="text-slate-700 dark:text-slate-100 font-semibold">
+                          {row.importCount}
+                        </Typography>
                       </Typography>
                       <Typography size="xs" variant="muted">
-                        SL: <strong className="text-slate-700 dark:text-slate-100">{row.totalQty}</strong>
+                        SL:{' '}
+                        <Typography as="span" textClassName="text-slate-700 dark:text-slate-100 font-semibold">
+                          {row.totalQty}
+                        </Typography>
                       </Typography>
                       <Typography size="xs" variant="muted">
                         Tổng:{' '}
-                        <strong className="text-slate-700 dark:text-slate-100">
+                        <Typography as="span" textClassName="text-slate-700 dark:text-slate-100 font-semibold">
                           {formatVNDOrDash(row.totalAmount)}
-                        </strong>
+                        </Typography>
                       </Typography>
                     </Box>
                   </Box>
@@ -247,9 +254,11 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
                 <TableRow>
                   <TableHeaderCell layoutClassName="w-10"></TableHeaderCell>
                   <TableHeaderCell>Tên</TableHeaderCell>
+                  <TableHeaderCell>Đơn vị</TableHeaderCell>
                   <TableHeaderCell>Nhà cung cấp</TableHeaderCell>
                   <TableHeaderCell>Số lần</TableHeaderCell>
                   <TableHeaderCell>Tổng SL</TableHeaderCell>
+                  <TableHeaderCell>Giá nhập gần nhất</TableHeaderCell>
                   <TableHeaderCell>Tổng tiền</TableHeaderCell>
                 </TableRow>
               </TableHead>
@@ -262,15 +271,19 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
                       layoutClassName={isChecked ? 'bg-primary-50/60 dark:bg-primary-950/20' : undefined}
                     >
                       <TableCell>
-                        <Checkbox checked={isChecked}
+                        <Checkbox
+                          checked={isChecked}
                           onChange={() => toggle(row.id)}
-                          className="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                          borderClassName="rounded border-slate-300"
+                          focusClassName="cursor-pointer text-primary-600 focus:ring-primary-500"
                         />
                       </TableCell>
                       <TableCell>{row.name}</TableCell>
+                      <TableCell>{row.canonicalUnit || '—'}</TableCell>
                       <TableCell>{row.lastSupplierName || '—'}</TableCell>
                       <TableCell>{row.importCount}</TableCell>
                       <TableCell>{row.totalQty}</TableCell>
+                      <TableCell>{formatVNDOrDash(row.lastUnitPrice)}</TableCell>
                       <TableCell>{formatVNDOrDash(row.totalAmount)}</TableCell>
                     </TableRow>
                   );

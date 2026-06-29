@@ -128,7 +128,9 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
             type="button"
             aria-label="Mở danh sách NCC"
             onClick={() => setOpen((v) => !v)}
-            className="absolute inset-y-0 right-2 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            layoutClassName="absolute inset-y-0 right-2 flex items-center"
+            textClassName="text-slate-400"
+            hoverClassName="hover:text-slate-600 dark:hover:text-slate-200"
            variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
             <ChevronDown className="h-4 w-4" />
           </Button>
@@ -141,12 +143,14 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
             textClassName="text-emerald-800 dark:text-emerald-200"
           >
             <Check className="h-3 w-3" />
-            <span className="font-medium">Đã chọn: {selectedSupplier.name}</span>
+            <Typography as="span" textClassName="font-medium">Đã chọn: {selectedSupplier.name}</Typography>
             <Button
               type="button"
               onClick={handleClear}
               aria-label="Bỏ chọn NCC"
-              className="ml-1 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/60"
+              layoutClassName="ml-1"
+              roundedClassName="rounded-full"
+              hoverClassName="hover:bg-emerald-100 dark:hover:bg-emerald-900/60"
              variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
               <X className="h-3 w-3" />
             </Button>
@@ -159,7 +163,7 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
             textClassName="text-amber-800 dark:text-amber-200"
           >
             <Plus className="h-3 w-3" />
-            <span className="font-medium">Sẽ tạo NCC mới</span>
+            <Typography as="span" textClassName="font-medium">Sẽ tạo NCC mới</Typography>
           </Box>
         )}
       </Box>
@@ -185,11 +189,13 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
                     type="button"
                     key={s.id}
                     onClick={() => handlePickExisting(s)}
-                    className={
-                      'flex w-full flex-col gap-1 px-3 py-2 text-left text-sm transition-colors ' +
-                      (isCurrent
-                        ? 'bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40'
-                        : 'hover:bg-primary-50 dark:hover:bg-primary-900/20')
+                    layoutClassName="flex w-full flex-col gap-1 text-left transition-colors"
+                    sizeClassName="px-3 py-2 text-sm"
+                    backgroundClassName={isCurrent ? 'bg-emerald-50/70 dark:bg-emerald-950/30' : undefined}
+                    hoverClassName={
+                      isCurrent
+                        ? 'hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40'
+                        : 'hover:bg-primary-50 dark:hover:bg-primary-900/20'
                     }
                    variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
                     <Box layoutClassName="flex items-center justify-between gap-2">
@@ -199,25 +205,39 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
                         ) : isTopHint ? (
                           <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary-500" />
                         ) : null}
-                        <span className="truncate font-medium text-slate-800 dark:text-slate-100">
+                        <Typography
+                          as="span"
+                          layoutClassName="truncate"
+                          textClassName="font-medium text-slate-800 dark:text-slate-100"
+                        >
                           {s.name}
-                        </span>
+                        </Typography>
                         {isCurrent ? (
-                          <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-200">
+                          <Typography
+                            as="span"
+                            layoutClassName="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 dark:bg-emerald-900/60"
+                            textClassName="text-[10px] font-medium text-emerald-700 dark:text-emerald-200"
+                          >
                             đang chọn
-                          </span>
+                          </Typography>
                         ) : null}
                       </Box>
-                      <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                      <Typography
+                        as="span"
+                        layoutClassName="shrink-0"
+                        textClassName="text-xs text-slate-500 dark:text-slate-400"
+                      >
                         {s.receiptCount}p · {moneyFmt.format(s.totalAmount)}đ
-                      </span>
+                      </Typography>
                     </Box>
                     <Box layoutClassName="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-                      {s.phone ? <span>📞 {s.phone}</span> : null}
-                      {s.address ? <span className="truncate">📍 {s.address}</span> : null}
-                      {s.category ? <span>🏷️ {s.category}</span> : null}
+                      {s.phone ? <Typography as="span" size="xs">📞 {s.phone}</Typography> : null}
+                      {s.address ? (
+                        <Typography as="span" size="xs" layoutClassName="truncate">📍 {s.address}</Typography>
+                      ) : null}
+                      {s.category ? <Typography as="span" size="xs">🏷️ {s.category}</Typography> : null}
                       {s.lastReceiptDate ? (
-                        <span>Lần cuối: {formatDateISO(s.lastReceiptDate)}</span>
+                        <Typography as="span" size="xs">Lần cuối: {formatDateISO(s.lastReceiptDate)}</Typography>
                       ) : null}
                     </Box>
                   </Button>
@@ -229,12 +249,15 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
             <Button
               type="button"
               onClick={handleCreateNew}
-              className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2 text-left text-sm text-primary-700 hover:bg-primary-50 dark:border-slate-700 dark:text-primary-300 dark:hover:bg-primary-900/20"
-             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
+              layoutClassName="flex w-full items-center gap-2 text-left"
+              sizeClassName="px-3 py-2 text-sm"
+              textClassName="text-primary-700 dark:text-primary-300"
+              hoverClassName="hover:bg-primary-50 dark:hover:bg-primary-900/20"
+             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-t border-slate-100 dark:border-slate-700">
               <Plus className="h-4 w-4" />
-              <span>
-                Tạo NCC mới: <strong>{rawName.trim()}</strong>
-              </span>
+              <Typography as="span">
+                Tạo NCC mới: <Typography as="span" textClassName="font-semibold">{rawName.trim()}</Typography>
+              </Typography>
             </Button>
           ) : null}
         </Box>

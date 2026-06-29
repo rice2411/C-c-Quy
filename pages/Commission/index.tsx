@@ -12,7 +12,7 @@ import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import EmptyState from '@/components/ui/EmptyState';
 import FilterToolbar from '@/components/shared/FilterToolbar';
-import StatsBanner from '@/pages/BillImport/StatsBanner';
+import StatsBanner from '@/pages/StockReceipts/StatsBanner';
 import CollabRow from './components/CollabRow';
 
 type SortKey = 'commission' | 'name';

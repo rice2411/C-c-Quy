@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions } from '@/hooks/queries/useTransactionsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
-import StatsBanner from '@/pages/BillImport/StatsBanner';
+import StatsBanner from '@/pages/StockReceipts/StatsBanner';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import Box from '@/components/ui/Box';
 import Spinner from '@/components/ui/Spinner';
