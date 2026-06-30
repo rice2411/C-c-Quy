@@ -105,8 +105,9 @@ const RevenueChart: React.FC<{ transactions: Transaction[]; fromDate: string; to
     const bucketDays = diffDays <= 31 ? 1 : diffDays <= 90 ? 7 : 30;
     const map: Record<string, number> = {};
     transactions.forEach(tr => {
-      const d = new Date(tr.transactionDate);
-      if (d < start || d > end) return;
+      // replace ' '→'T' để Safari/iOS parse được "YYYY-MM-DD HH:mm:ss".
+      const d = new Date((tr.transactionDate || '').replace(' ', 'T'));
+      if (Number.isNaN(d.getTime()) || d < start || d > end) return;
       const offset = Math.floor((d.getTime() - start.getTime()) / (bucketDays * 86_400_000));
       map[String(offset)] = (map[String(offset)] || 0) + tr.transferAmount;
     });
@@ -285,16 +286,22 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   };
 
   // Lọc theo ngày + từ khoá (chưa phân loại tiền vào/ra) — dùng chung cho cả 2 chiều.
+  // So ngày dạng CHUỖI 'YYYY-MM-DD' (10 ký tự đầu của transaction_date "YYYY-MM-DD HH:mm:ss").
+  // KHÔNG dùng new Date() trên chuỗi có dấu cách: Safari/iOS trả Invalid Date → lọc rỗng,
+  // và tránh lệch múi giờ ở biên ngày (đây là lý do trước đây gần như chỉ thấy hôm nay).
   const dateSearchFiltered = useMemo(() => {
     let filtered = transactions;
     if (fromDate) {
-      const from = new Date(fromDate);
-      filtered = filtered.filter(tr => new Date(tr.transactionDate) >= from);
+      filtered = filtered.filter(tr => {
+        const day = (tr.transactionDate || '').slice(0, 10);
+        return day !== '' && day >= fromDate;
+      });
     }
     if (toDate) {
-      const to = new Date(toDate);
-      to.setHours(23, 59, 59, 999);
-      filtered = filtered.filter(tr => new Date(tr.transactionDate) <= to);
+      filtered = filtered.filter(tr => {
+        const day = (tr.transactionDate || '').slice(0, 10);
+        return day !== '' && day <= toDate;
+      });
     }
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
