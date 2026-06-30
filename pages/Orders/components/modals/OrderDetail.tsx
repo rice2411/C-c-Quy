@@ -49,6 +49,7 @@ import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import Heading from '@/components/ui/Heading';
 import IconButton from '@/components/ui/IconButton';
+import Image from '@/components/ui/Image';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 import CancelRefundModal, { type CancelRefundMode, type CancelRefundResult } from '@/pages/Orders/components/modals/CancelRefundModal';
@@ -121,6 +122,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
   const shareRef = useRef<HTMLDivElement>(null);
   const [copyingImg, setCopyingImg] = useState(false);
+  // Object URL của ảnh đơn để mở modal preview (mobile / khi clipboard không khả dụng).
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const currentOrder = localOrder || order;
   if (!currentOrder) return null;
@@ -143,8 +146,10 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     navigator.clipboard.writeText(text);
   };
 
-  // Chụp thẻ thông tin gửi khách (ShareableOrderCard, off-screen) → ảnh PNG → clipboard.
-  // Trình duyệt không hỗ trợ copy ảnh / lỗi clipboard → fallback tải PNG xuống.
+  // Chụp thẻ thông tin gửi khách (ShareableOrderCard, off-screen) → ảnh PNG.
+  // - Desktop + clipboard khả dụng → copy ảnh vào clipboard (như cũ).
+  // - Mobile, hoặc clipboard không hỗ trợ / fail → MỞ MODAL PREVIEW (ảnh để user
+  //   tự chụp màn hình / lưu), KHÔNG tự động tải file. Clipboard ảnh trên mobile hay fail.
   const handleCopyImage = async () => {
     if (!shareRef.current || copyingImg) return;
     setCopyingImg(true);
@@ -152,28 +157,45 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
       if (document.fonts?.ready) await document.fonts.ready; // tránh nhảy font khi render
       const blob = await toBlob(shareRef.current, { pixelRatio: 2, backgroundColor: '#ffffff', cacheBust: true });
       if (!blob) throw new Error('no blob');
+      const isMobile = window.matchMedia('(max-width: 767px)').matches;
       const canClipboard = typeof ClipboardItem !== 'undefined' && !!navigator.clipboard?.write;
-      if (canClipboard) {
+      if (!isMobile && canClipboard) {
         try {
           await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
           toast.success(t('detail.copyImageSuccess') || 'Đã copy ảnh đơn vào clipboard');
           return;
         } catch {
-          /* clipboard ảnh fail (quyền/secure context) → rơi xuống fallback download */
+          /* clipboard ảnh fail (quyền/secure context) → rơi xuống mở modal preview */
         }
       }
+      // Mobile hoặc clipboard không khả dụng → mở modal preview để user chụp/lưu ảnh.
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${currentOrder.orderNumber || 'don-hang'}.png`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success(t('detail.copyImageDownloaded') || 'Đã tải ảnh đơn (trình duyệt không hỗ trợ copy ảnh)');
+      setPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return url;
+      });
     } catch {
       toast.error(t('detail.copyImageError') || 'Không tạo được ảnh đơn');
     } finally {
       setCopyingImg(false);
     }
+  };
+
+  // Đóng modal preview + giải phóng object URL.
+  const closePreview = () => {
+    setPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  };
+
+  // Tải ảnh đơn từ modal preview xuống máy.
+  const downloadPreview = () => {
+    if (!previewUrl) return;
+    const a = document.createElement('a');
+    a.href = previewUrl;
+    a.download = `${currentOrder.orderNumber || 'don-hang'}.png`;
+    a.click();
   };
 
   /**
@@ -1629,6 +1651,99 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
       onClose={() => setCrMode(null)}
       onConfirm={handleCancelRefund}
     />
+
+    {/* Modal preview ảnh đơn (mobile / khi clipboard không khả dụng).
+        z-index cao hơn slide panel chi tiết để nổi trên cùng. */}
+    {previewUrl ? (
+      <Box
+        layoutClassName="fixed inset-0 z-[120] flex items-center justify-center p-4"
+        onClick={closePreview}
+      >
+        <Box
+          layoutClassName="absolute inset-0"
+          backgroundClassName="bg-black/60"
+          aria-hidden
+        />
+        <Box
+          layoutClassName="relative z-10 flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-2xl"
+          backgroundClassName="bg-white dark:bg-slate-800"
+          shadowClassName="shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <Box
+            layoutClassName="flex items-center justify-between gap-3 border-b px-4 py-3"
+            borderClassName="border-slate-200 dark:border-slate-700"
+          >
+            <Heading level={3} textClassName="text-base font-semibold text-slate-800 dark:text-slate-100">
+              {t('detail.previewTitle') || 'Ảnh đơn — chụp màn hình để gửi khách'}
+            </Heading>
+            <IconButton
+              type="button"
+              layoutClassName="p-1.5"
+              roundedClassName="rounded-lg"
+              hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700"
+              textClassName="text-slate-400 dark:text-slate-300"
+              onClick={closePreview}
+              label={t('detail.close')}
+            >
+              <X className="h-5 w-5" />
+            </IconButton>
+          </Box>
+
+          {/* Ảnh + hint (scrollable) */}
+          <Box layoutClassName="flex-1 space-y-3 overflow-y-auto p-4">
+            <Image
+              src={previewUrl}
+              alt={currentOrder.orderNumber || 'don-hang'}
+              disableFade
+              loading="eager"
+              layoutClassName="mx-auto h-auto max-w-full rounded-lg"
+              borderClassName="border border-slate-200 dark:border-slate-700"
+            />
+            <Typography as="p" size="xs" layoutClassName="text-center" textClassName="text-slate-500 dark:text-slate-400">
+              {t('detail.previewHint') || 'Nhấn giữ ảnh để lưu, hoặc chụp màn hình'}
+            </Typography>
+          </Box>
+
+          {/* Footer */}
+          <Box
+            layoutClassName="flex justify-end gap-3 border-t px-4 py-3"
+            borderClassName="border-slate-200 dark:border-slate-700"
+          >
+            <Button
+              type="button"
+              onClick={downloadPreview}
+              disableVariantHover
+              disableVariantTextColor
+              borderClassName="border border-primary-200 dark:border-primary-700/50"
+              backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+              hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-900/30"
+              textClassName="text-sm font-medium text-primary-700 dark:text-primary-300"
+              roundedClassName="rounded-lg"
+              layoutClassName="px-4 py-2"
+            >
+              {t('detail.previewDownload') || 'Tải ảnh'}
+            </Button>
+            <Button
+              type="button"
+              onClick={closePreview}
+              variant="secondary"
+              disableVariantHover
+              disableVariantTextColor
+              borderClassName="border border-slate-200 dark:border-slate-600"
+              backgroundClassName="bg-transparent"
+              hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+              textClassName="text-sm font-medium text-slate-700 dark:text-slate-300"
+              roundedClassName="rounded-lg"
+              layoutClassName="px-4 py-2"
+            >
+              {t('detail.close') || 'Đóng'}
+            </Button>
+          </Box>
+        </Box>
+      </Box>
+    ) : null}
 
     {/* Thẻ gửi khách render OFF-SCREEN để chụp ảnh (html-to-image). Không hiển thị cho user. */}
     <Box layoutClassName="pointer-events-none fixed left-[-99999px] top-0" aria-hidden>

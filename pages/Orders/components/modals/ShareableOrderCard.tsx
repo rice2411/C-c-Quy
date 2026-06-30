@@ -52,7 +52,6 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
         <Box layoutClassName="flex items-center justify-between border-b border-slate-200 pb-3">
           <Box>
             <Heading level={3} textClassName="text-lg font-extrabold text-primary-600">Tiệm Bánh Cúc Quy</Heading>
-            <Typography as="p" size="xs" textClassName="text-slate-400">cucquy.site</Typography>
           </Box>
           <Typography as="p" size="sm" layoutClassName="font-mono font-bold" textClassName="text-slate-700">{order.orderNumber}</Typography>
         </Box>
