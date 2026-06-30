@@ -63,6 +63,8 @@ export interface BillImportMaterialsTabProps {
   masterLoading: boolean;
   onRefresh: () => void;
   filteredMaterials: ImportedMaterialSummary[];
+  /** Nút phụ chèn vào slot actions của toolbar (vd nút Gợi ý gộp). */
+  extraActions?: React.ReactNode;
 }
 
 const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
@@ -71,6 +73,7 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
   masterLoading,
   onRefresh,
   filteredMaterials,
+  extraActions,
 }) => {
   const { t } = useLanguage();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -121,6 +124,7 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
   // Nút hành động đặt trong toolbar (giống slot actions của trang Products).
   const toolbarActions = (
     <>
+      {extraActions}
       {selected.size >= 2 ? (
         <Button
           type="button"

@@ -22,6 +22,8 @@ export interface MergeSuggestionsPanelProps {
   open: boolean;
   /** Refetch danh sách NVL sau khi gộp xong (parent sở hữu list). */
   onMerged: () => void;
+  /** Nhúng trong modal: bỏ Card + header riêng (modal đã có khung + tiêu đề). */
+  embedded?: boolean;
 }
 
 /** 1 thành viên trong nhóm, kèm độ giống cao nhất của thành viên đó với nhóm. */
@@ -48,7 +50,7 @@ interface GroupChoice {
   unit: string;
 }
 
-const MergeSuggestionsPanel: React.FC<MergeSuggestionsPanelProps> = ({ open, onMerged }) => {
+const MergeSuggestionsPanel: React.FC<MergeSuggestionsPanelProps> = ({ open, onMerged, embedded }) => {
   const { t } = useLanguage();
   const { suggestions, loading } = useMaterialMergeSuggestions(
     open,
@@ -240,23 +242,26 @@ const MergeSuggestionsPanel: React.FC<MergeSuggestionsPanelProps> = ({ open, onM
 
   if (!open) return null;
 
+  const Wrapper: any = embedded ? Box : Card;
+  const wrapperProps: any = embedded
+    ? { layoutClassName: 'space-y-4' }
+    : { padding: 'md', layoutClassName: 'space-y-4', backgroundClassName: 'bg-white dark:bg-slate-800' };
+
   return (
-    <Card
-      padding="md"
-      layoutClassName="space-y-4"
-      backgroundClassName="bg-white dark:bg-slate-800"
-    >
-      <Box layoutClassName="flex items-center gap-2">
-        <Sparkles className="h-5 w-5 text-primary-500" />
-        <Box layoutClassName="min-w-0">
-          <Typography size="sm" tone="strong" layoutClassName="font-semibold">
-            {t('billImport.materialsMerge.suggestTitle')}
-          </Typography>
-          <Typography size="xs" variant="muted">
-            {t('billImport.materialsMerge.suggestSubtitle')}
-          </Typography>
+    <Wrapper {...wrapperProps}>
+      {embedded ? null : (
+        <Box layoutClassName="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-primary-500" />
+          <Box layoutClassName="min-w-0">
+            <Typography size="sm" tone="strong" layoutClassName="font-semibold">
+              {t('billImport.materialsMerge.suggestTitle')}
+            </Typography>
+            <Typography size="xs" variant="muted">
+              {t('billImport.materialsMerge.suggestSubtitle')}
+            </Typography>
+          </Box>
         </Box>
-      </Box>
+      )}
 
       {loading ? (
         <Box layoutClassName="flex items-center justify-center gap-2 py-8">
@@ -451,7 +456,7 @@ const MergeSuggestionsPanel: React.FC<MergeSuggestionsPanelProps> = ({ open, onM
           })}
         </Box>
       )}
-    </Card>
+    </Wrapper>
   );
 };
 
