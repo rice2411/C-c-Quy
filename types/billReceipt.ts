@@ -146,6 +146,8 @@ export interface SavedStockReceiptSummary {
   createdAt?: string;
   /** Đã đối soát với sao kê/thực tế hay chưa (BE bổ sung song song). */
   reconciled?: boolean;
+  /** Nguồn tạo phiếu: OCR ảnh bill hoặc nhập thủ công (BE bổ sung song song). */
+  source?: StockReceiptSource;
 }
 
 export interface SavedStockReceiptDetail extends SavedStockReceiptSummary {
