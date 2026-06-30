@@ -1,48 +1,53 @@
-import React, { useMemo, useRef } from 'react';
-import { Camera, FileText, PencilLine, RotateCw, Upload } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
+import { ArrowDown, ArrowUp, Camera, ChevronsUpDown, FileText, PencilLine, RotateCw, Upload } from 'lucide-react';
 import type { SavedStockReceiptSummary } from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
+import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { parseDateValue } from '@/utils/format/dateUtil';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import EmptyState from '@/components/ui/EmptyState';
 
-/** Ngày để gom nhóm 1 phiếu: ưu tiên receiptDate, fallback createdAt. */
-const receiptGroupDate = (row: SavedStockReceiptSummary): Date | null =>
-  parseDateValue(row.receiptDate) ?? parseDateValue(row.createdAt);
+/** Cột có thể sort. */
+type SortKey = 'date' | 'total';
+type SortDir = 'asc' | 'desc';
 
-/** Khoá nhóm theo ngày (yyyy-mm-dd local) để sort ổn định. */
-const dayKey = (d: Date | null): string => {
-  if (!d) return '0000-00-00';
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${dd}`;
+/** Mốc thời gian của 1 phiếu: ưu tiên receiptDate, fallback createdAt. */
+const receiptSortTime = (row: SavedStockReceiptSummary): number =>
+  (parseDateValue(row.receiptDate) ?? parseDateValue(row.createdAt))?.getTime() ?? 0;
+
+/** Ngày hiển thị (dd/mm/yyyy) — ưu tiên receiptDate, fallback createdAt. */
+const receiptDateLabel = (row: SavedStockReceiptSummary): string => {
+  const d = parseDateValue(row.receiptDate) ?? parseDateValue(row.createdAt);
+  if (!d) return '—';
+  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-/** Nhãn heading ngày (vd "Thứ 2, 30/06/2026"). */
-const dayHeading = (key: string): string => {
-  if (key === '0000-00-00') return 'Không rõ ngày';
-  const d = parseDateValue(key);
-  if (!d) return key;
-  return d.toLocaleDateString('vi-VN', {
-    weekday: 'short',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-};
-
-/** Chỉ giờ:phút của 1 phiếu (nếu suy được từ createdAt), rỗng nếu không. */
+/** Chỉ giờ:phút của 1 phiếu (suy từ createdAt), rỗng nếu không. */
 const receiptTimeLabel = (row: SavedStockReceiptSummary): string => {
   const d = parseDateValue(row.createdAt);
   if (!d) return '';
   return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 };
+
+/** Màu badge theo nguồn (tách backgroundClassName / textClassName — KHÔNG className gộp). */
+const sourceBadgeColor = (
+  source: SavedStockReceiptSummary['source'],
+): { backgroundClassName: string; textClassName: string } =>
+  source === 'manual'
+    ? {
+        backgroundClassName: 'bg-slate-100 dark:bg-slate-700',
+        textClassName: 'text-slate-700 dark:text-slate-200',
+      }
+    : {
+        backgroundClassName: 'bg-emerald-100 dark:bg-emerald-950/50',
+        textClassName: 'text-emerald-700 dark:text-emerald-300',
+      };
 
 export interface BillImportReceiptListTabProps {
   receiptSearch: string;
@@ -70,28 +75,35 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  /** Gom phiếu theo ngày (giảm dần), trong mỗi ngày sắp theo giờ giảm dần. */
-  const groupedByDay = useMemo(() => {
-    const map = new Map<string, SavedStockReceiptSummary[]>();
-    for (const row of filteredReceipts) {
-      const key = dayKey(receiptGroupDate(row));
-      const bucket = map.get(key);
-      if (bucket) bucket.push(row);
-      else map.set(key, [row]);
+  // (1) state
+  const [sortKey, setSortKey] = useState<SortKey>('date');
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+  // (2) memo: sort filteredReceipts theo cột đang chọn
+  const sortedReceipts = useMemo(() => {
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return [...filteredReceipts].sort((a, b) => {
+      if (sortKey === 'total') {
+        return ((a.totalAmount || 0) - (b.totalAmount || 0)) * dir;
+      }
+      return (receiptSortTime(a) - receiptSortTime(b)) * dir;
+    });
+  }, [filteredReceipts, sortKey, sortDir]);
+
+  // (3) handler
+  const toggleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('desc');
     }
-    return Array.from(map.entries())
-      .sort((a, b) => b[0].localeCompare(a[0]))
-      .map(([key, rows]) => ({
-        key,
-        heading: dayHeading(key),
-        rows: [...rows].sort((r1, r2) => {
-          const t1 = parseDateValue(r1.createdAt)?.getTime() ?? 0;
-          const t2 = parseDateValue(r2.createdAt)?.getTime() ?? 0;
-          return t2 - t1;
-        }),
-        total: rows.reduce((s, r) => s + (r.totalAmount || 0), 0),
-      }));
-  }, [filteredReceipts]);
+  };
+
+  const sortIcon = (key: SortKey) => {
+    if (key !== sortKey) return <ChevronsUpDown className="h-3.5 w-3.5 opacity-40" />;
+    return sortDir === 'asc' ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />;
+  };
 
   const openCamera = () => cameraInputRef.current?.click();
   const openFilePicker = () => fileInputRef.current?.click();
@@ -102,6 +114,21 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
     if (file && onFileSelected) onFileSelected(file);
   };
 
+  const renderSourceBadge = (row: SavedStockReceiptSummary) => {
+    const color = sourceBadgeColor(row.source);
+    return (
+      <Badge
+        size="sm"
+        backgroundClassName={color.backgroundClassName}
+        textClassName={color.textClassName}
+        borderClassName="border-transparent"
+      >
+        {row.source === 'manual' ? t('billImport.sourceManual') : t('billImport.sourceOcr')}
+      </Badge>
+    );
+  };
+
+  // (4) render
   return (
     <Box layoutClassName="grid gap-4">
       {onFileSelected ? (
@@ -212,13 +239,13 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
           onSearchChange={onReceiptSearchChange}
           searchPlaceholder={t('billImport.receiptsSearch')}
         />
-        <Box layoutClassName="max-h-[640px] overflow-auto rounded-lg border border-slate-100 p-1 dark:border-slate-800">
-          {filteredReceipts.length === 0 ? (
+
+        {filteredReceipts.length === 0 ? (
+          <Box
+            layoutClassName="rounded-lg border border-slate-100 dark:border-slate-800"
+          >
             <Box layoutClassName="flex flex-col items-center gap-3 p-6 text-center">
-              <EmptyState
-                icon={<FileText className="h-6 w-6" />}
-                title="Chưa có bill nào."
-              />
+              <EmptyState icon={<FileText className="h-6 w-6" />} title="Chưa có bill nào." />
               {onFileSelected ? (
                 <Box layoutClassName="flex flex-wrap items-center justify-center gap-2">
                   <Button
@@ -260,92 +287,172 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
                 </Box>
               ) : null}
             </Box>
-          ) : (
-            <Box layoutClassName="space-y-4 p-1">
-              {groupedByDay.map((group) => (
-                <Box key={group.key} layoutClassName="space-y-1.5">
-                  {/* Heading ngày */}
-                  <Box layoutClassName="flex items-baseline justify-between gap-2 px-1">
-                    <Typography
-                      size="xs"
-                      layoutClassName="font-semibold uppercase tracking-wide"
-                      textClassName="text-slate-500 dark:text-slate-400"
-                    >
-                      {group.heading}
+          </Box>
+        ) : (
+          <>
+            {/* Desktop (md+): bảng giao dịch */}
+            <Box
+              layoutClassName="hidden max-h-[640px] overflow-auto rounded-lg border md:block"
+              borderClassName="border-slate-200 dark:border-slate-700"
+            >
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableHeaderCell layoutClassName="px-4 py-2.5">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        disableVariantHover
+                        disableVariantTextColor
+                        borderClassName="border-transparent"
+                        sizeClassName="px-0 py-0 text-xs"
+                        layoutClassName="inline-flex items-center gap-1 font-medium uppercase"
+                        onClick={() => toggleSort('date')}
+                      >
+                        {t('billImport.colDateTime')}
+                        {sortIcon('date')}
+                      </Button>
+                    </TableHeaderCell>
+                    <TableHeaderCell layoutClassName="px-4 py-2.5">{t('billImport.colSupplier')}</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="px-4 py-2.5">{t('billImport.colInvoice')}</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="px-4 py-2.5 text-right">
+                      {t('billImport.colItemCount')}
+                    </TableHeaderCell>
+                    <TableHeaderCell layoutClassName="px-4 py-2.5">{t('billImport.colSource')}</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="px-4 py-2.5 text-right">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        disableVariantHover
+                        disableVariantTextColor
+                        borderClassName="border-transparent"
+                        sizeClassName="px-0 py-0 text-xs"
+                        layoutClassName="inline-flex items-center gap-1 font-medium uppercase"
+                        onClick={() => toggleSort('total')}
+                      >
+                        {t('billImport.colTotal')}
+                        {sortIcon('total')}
+                      </Button>
+                    </TableHeaderCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {sortedReceipts.map((row) => {
+                    const time = receiptTimeLabel(row);
+                    return (
+                      <TableRow
+                        key={row.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => void onRowClick(row.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            void onRowClick(row.id);
+                          }
+                        }}
+                        layoutClassName="cursor-pointer"
+                        hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                      >
+                        <TableCell layoutClassName="px-4 py-3 whitespace-nowrap">
+                          <Typography size="sm" layoutClassName="font-medium">
+                            {receiptDateLabel(row)}
+                          </Typography>
+                          {time ? (
+                            <Typography size="xs" variant="muted">
+                              {time}
+                            </Typography>
+                          ) : null}
+                        </TableCell>
+                        <TableCell layoutClassName="px-4 py-3">
+                          <Typography size="sm" layoutClassName="max-w-[220px] truncate">
+                            {row.supplierNameRaw || 'Không rõ NCC'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell layoutClassName="px-4 py-3">
+                          {row.invoiceNumber ? (
+                            <Typography
+                              as="span"
+                              size="xs"
+                              textClassName="font-mono text-slate-600 dark:text-slate-300"
+                            >
+                              {row.invoiceNumber}
+                            </Typography>
+                          ) : (
+                            <Typography as="span" size="sm" variant="muted">
+                              —
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell layoutClassName="px-4 py-3 text-right">
+                          <Typography size="sm" layoutClassName="tabular-nums">
+                            {row.productLineCount}
+                          </Typography>
+                        </TableCell>
+                        <TableCell layoutClassName="px-4 py-3">{renderSourceBadge(row)}</TableCell>
+                        <TableCell layoutClassName="px-4 py-3 text-right whitespace-nowrap">
+                          <Typography
+                            size="sm"
+                            layoutClassName="font-bold tabular-nums text-primary-700 dark:text-primary-300"
+                          >
+                            {formatVNDOrDash(row.totalAmount)}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Box>
+
+            {/* Mobile (<md): dòng gọn */}
+            <Box
+              layoutClassName="max-h-[640px] divide-y overflow-auto rounded-lg border md:hidden"
+              borderClassName="divide-slate-100 border-slate-200 dark:divide-slate-800 dark:border-slate-700"
+            >
+              {sortedReceipts.map((row) => (
+                <Box
+                  key={row.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => void onRowClick(row.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      void onRowClick(row.id);
+                    }
+                  }}
+                  layoutClassName="flex cursor-pointer items-center justify-between gap-3 px-3 py-2.5"
+                  backgroundClassName="bg-white dark:bg-slate-900"
+                  hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                >
+                  {/* Trái: NCC + ngày */}
+                  <Box layoutClassName="min-w-0 flex-1 space-y-0.5">
+                    <Typography size="sm" layoutClassName="truncate font-medium">
+                      {row.supplierNameRaw || 'Không rõ NCC'}
                     </Typography>
                     <Typography size="xs" variant="muted">
-                      {group.rows.length} phiếu · {formatVNDOrDash(group.total)}
+                      {receiptDateLabel(row)}
                     </Typography>
                   </Box>
 
-                  {/* Danh sách dòng phiếu trong ngày */}
-                  <Box
-                    layoutClassName="divide-y overflow-hidden rounded-lg border"
-                    borderClassName="divide-slate-100 border-slate-200 dark:divide-slate-800 dark:border-slate-700"
-                  >
-                    {group.rows.map((row) => {
-                      const time = receiptTimeLabel(row);
-                      return (
-                        <Box
-                          key={row.id}
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => void onRowClick(row.id)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              void onRowClick(row.id);
-                            }
-                          }}
-                          layoutClassName="flex cursor-pointer items-center justify-between gap-3 px-3 py-2.5"
-                          backgroundClassName="bg-white dark:bg-slate-900"
-                          hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-800/60"
-                        >
-                          {/* Trái: NCC + (mã HĐ + giờ) */}
-                          <Box layoutClassName="min-w-0 flex-1 space-y-0.5">
-                            <Typography size="sm" layoutClassName="truncate font-medium">
-                              {row.supplierNameRaw || 'Không rõ NCC'}
-                            </Typography>
-                            <Box layoutClassName="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                              {row.invoiceNumber ? (
-                                <Typography
-                                  as="span"
-                                  size="xs"
-                                  layoutClassName="rounded bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800"
-                                  textClassName="font-mono text-[10px] text-slate-600 dark:text-slate-300"
-                                >
-                                  {row.invoiceNumber}
-                                </Typography>
-                              ) : null}
-                              {time ? (
-                                <Typography size="xs" variant="muted">
-                                  {time}
-                                </Typography>
-                              ) : null}
-                            </Box>
-                          </Box>
-
-                          {/* Phải: tổng tiền đậm + số mặt hàng */}
-                          <Box layoutClassName="shrink-0 text-right">
-                            <Typography
-                              size="sm"
-                              layoutClassName="font-bold text-primary-700 dark:text-primary-300"
-                            >
-                              {formatVNDOrDash(row.totalAmount)}
-                            </Typography>
-                            <Typography size="xs" variant="muted">
-                              {row.productLineCount} mặt hàng
-                            </Typography>
-                          </Box>
-                        </Box>
-                      );
-                    })}
+                  {/* Phải: tổng tiền + số mặt hàng + badge nguồn */}
+                  <Box layoutClassName="flex shrink-0 flex-col items-end gap-1">
+                    <Typography size="sm" layoutClassName="font-bold text-primary-700 dark:text-primary-300">
+                      {formatVNDOrDash(row.totalAmount)}
+                    </Typography>
+                    <Box layoutClassName="flex items-center gap-1.5">
+                      <Typography size="xs" variant="muted">
+                        {t('billImport.itemsCount').replace('{{count}}', String(row.productLineCount))}
+                      </Typography>
+                      {renderSourceBadge(row)}
+                    </Box>
                   </Box>
                 </Box>
               ))}
             </Box>
-          )}
-        </Box>
+          </>
+        )}
       </Card>
     </Box>
   );

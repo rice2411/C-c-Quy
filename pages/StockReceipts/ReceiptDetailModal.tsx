@@ -6,6 +6,8 @@ import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import EmptyState from '@/components/ui/EmptyState';
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 
 import Button from '@/components/ui/Button';
@@ -31,6 +33,7 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
   receiptDetail,
   onClose,
 }) => {
+  const { t } = useLanguage();
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [imageZoom, setImageZoom] = useState(1);
 
@@ -113,6 +116,16 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
                 <Typography as="span" textClassName="font-semibold">Ngày giờ:</Typography>{' '}
                 {receiptDetail.receiptDate || '—'}
               </Typography>
+              <Typography size="sm" layoutClassName="mt-1">
+                <Typography as="span" textClassName="font-semibold">{t('billImport.colInvoice')}:</Typography>{' '}
+                {receiptDetail.invoiceNumber ? (
+                  <Typography as="span" size="sm" textClassName="font-mono text-slate-600 dark:text-slate-300">
+                    {receiptDetail.invoiceNumber}
+                  </Typography>
+                ) : (
+                  '—'
+                )}
+              </Typography>
             </Box>
 
             {receiptDetail.receiptImageBase64 && imageSrc ? (
@@ -135,33 +148,87 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
                   Bấm để xem phóng to và zoom
                 </Typography>
               </Button>
-            ) : null}
-
-            <Box layoutClassName="rounded-lg border border-slate-200 dark:border-slate-700">
-              <Box layoutClassName="border-b border-slate-200 px-3 py-2 dark:border-slate-700">
-                <Typography size="sm" layoutClassName="font-semibold">
-                  Sản phẩm
+            ) : (
+              <Box
+                layoutClassName="flex items-center gap-2 rounded-lg border border-dashed border-slate-300 px-3 py-3 dark:border-slate-600"
+              >
+                <FileText className="h-4 w-4 text-slate-400" />
+                <Typography size="sm" variant="muted">
+                  {t('billImport.manualNoImage')}
                 </Typography>
               </Box>
-              <Box layoutClassName="space-y-2 p-3">
-                {receiptDetail.lineItems.length === 0 ? (
-                  <EmptyState
-                    icon={<Package className="h-6 w-6" />}
-                    title="Không có dòng sản phẩm."
-                  />
-                ) : (
-                  receiptDetail.lineItems.map((item, idx) => (
-                    <Box
-                      key={`${item.name}-${idx}`}
-                      layoutClassName="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 dark:bg-slate-800"
-                    >
-                      <Typography size="sm">{item.name || `Sản phẩm ${idx + 1}`}</Typography>
-                      <Typography size="sm" layoutClassName="font-semibold">
-                        {formatVNDOrDash(item.lineTotal)}
-                      </Typography>
-                    </Box>
-                  ))
-                )}
+            )}
+
+            <Box layoutClassName="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+              <Box layoutClassName="border-b border-slate-200 px-3 py-2 dark:border-slate-700">
+                <Typography size="sm" layoutClassName="font-semibold">
+                  {t('billImport.items')}
+                </Typography>
+              </Box>
+              {receiptDetail.lineItems.length === 0 ? (
+                <Box layoutClassName="p-3">
+                  <EmptyState icon={<Package className="h-6 w-6" />} title={t('billImport.emptyLines')} />
+                </Box>
+              ) : (
+                <Box layoutClassName="overflow-x-auto">
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeaderCell layoutClassName="px-3 py-2">{t('billImport.colName')}</TableHeaderCell>
+                        <TableHeaderCell layoutClassName="px-3 py-2 text-right">
+                          {t('billImport.colQty')}
+                        </TableHeaderCell>
+                        <TableHeaderCell layoutClassName="px-3 py-2">{t('billImport.colUnit')}</TableHeaderCell>
+                        <TableHeaderCell layoutClassName="px-3 py-2 text-right">
+                          {t('billImport.colPrice')}
+                        </TableHeaderCell>
+                        <TableHeaderCell layoutClassName="px-3 py-2 text-right">
+                          {t('billImport.colLineTotal')}
+                        </TableHeaderCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {receiptDetail.lineItems.map((item, idx) => (
+                        <TableRow key={`${item.name}-${idx}`}>
+                          <TableCell layoutClassName="px-3 py-2">
+                            <Typography size="sm">{item.name || `Sản phẩm ${idx + 1}`}</Typography>
+                          </TableCell>
+                          <TableCell layoutClassName="px-3 py-2 text-right">
+                            <Typography size="sm" layoutClassName="tabular-nums">
+                              {item.quantity ?? '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell layoutClassName="px-3 py-2">
+                            <Typography size="sm" variant="muted">
+                              {item.unit || '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell layoutClassName="px-3 py-2 text-right">
+                            <Typography size="sm" layoutClassName="tabular-nums">
+                              {formatVNDOrDash(item.unitPrice)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell layoutClassName="px-3 py-2 text-right">
+                            <Typography size="sm" layoutClassName="font-semibold tabular-nums">
+                              {formatVNDOrDash(item.lineTotal)}
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Box>
+              )}
+              <Box
+                layoutClassName="flex items-center justify-between border-t border-slate-200 px-3 py-2.5 dark:border-slate-700"
+                backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
+              >
+                <Typography size="sm" layoutClassName="font-semibold">
+                  {t('billImport.total')}
+                </Typography>
+                <Typography size="sm" layoutClassName="font-bold tabular-nums text-primary-700 dark:text-primary-300">
+                  {formatVNDOrDash(receiptDetail.totalAmount)}
+                </Typography>
               </Box>
             </Box>
           </Box>
