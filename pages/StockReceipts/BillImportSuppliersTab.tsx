@@ -16,6 +16,11 @@ import {
   X,
 } from 'lucide-react';
 import type { ImportedSupplierSummary } from '@/types/billReceipt';
+import {
+  SUPPLIER_CHANNELS,
+  supplierChannelBadgeColor,
+  supplierChannelLabel,
+} from '@/types/billReceipt';
 import { mergeSuppliers } from '@/services/stockReceiptService';
 import StatsBanner from '@/pages/StockReceipts/StatsBanner';
 import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/StockReceipts/dateFilter';
@@ -25,7 +30,7 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
-import Input from '@/components/ui/Input';
+import Badge from '@/components/ui/Badge';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import SupplierEditModal from '@/pages/StockReceipts/SupplierEditModal';
 import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/StockReceipts/MergeItemsModal';
@@ -80,25 +85,53 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
   const [mergeOpen, setMergeOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'amount' | 'name' | 'count'>('recent');
   const [period, setPeriod] = useState<DatePeriod>('all');
+  // '' = tất cả loại; 'none' = chưa phân loại; còn lại = 1 SupplierChannel.
+  const [channelFilter, setChannelFilter] = useState<string>('');
 
   const periodFiltered = useMemo(
     () => filterByPeriod(filteredSuppliers, period),
     [filteredSuppliers, period],
   );
 
+  const channelFiltered = useMemo(() => {
+    if (!channelFilter) return periodFiltered;
+    if (channelFilter === 'none') return periodFiltered.filter((sp) => !sp.channel);
+    return periodFiltered.filter((sp) => sp.channel === channelFilter);
+  }, [periodFiltered, channelFilter]);
+
   const sortedSuppliers = useMemo(() => {
-    const arr = [...periodFiltered];
+    const arr = [...channelFiltered];
     if (sortBy === 'amount') arr.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
     else if (sortBy === 'name') arr.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     else if (sortBy === 'count') arr.sort((a, b) => (b.receiptCount || 0) - (a.receiptCount || 0));
     return arr;
-  }, [periodFiltered, sortBy]);
+  }, [channelFiltered, sortBy]);
 
   const stats = useMemo(() => {
-    const totalAmount = periodFiltered.reduce((s, sp) => s + (sp.totalAmount || 0), 0);
-    const totalReceipts = periodFiltered.reduce((s, sp) => s + (sp.receiptCount || 0), 0);
+    const totalAmount = channelFiltered.reduce((s, sp) => s + (sp.totalAmount || 0), 0);
+    const totalReceipts = channelFiltered.reduce((s, sp) => s + (sp.receiptCount || 0), 0);
     return { totalAmount, totalReceipts };
-  }, [periodFiltered]);
+  }, [channelFiltered]);
+
+  /** Chip lọc theo Loại: Tất cả + từng channel + Chưa phân loại. */
+  const channelPills = useMemo(
+    () => [
+      { id: 'all', label: 'Tất cả loại', active: channelFilter === '', onClick: () => setChannelFilter('') },
+      ...SUPPLIER_CHANNELS.map((c) => ({
+        id: c.value,
+        label: c.label,
+        active: channelFilter === c.value,
+        onClick: () => setChannelFilter(c.value),
+      })),
+      {
+        id: 'none',
+        label: 'Chưa phân loại',
+        active: channelFilter === 'none',
+        onClick: () => setChannelFilter('none'),
+      },
+    ],
+    [channelFilter],
+  );
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
@@ -176,7 +209,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
             {
               icon: Store,
               label: 'NCC',
-              value: String(periodFiltered.length),
+              value: String(channelFiltered.length),
               accent: '#4abab9',
             },
             {
@@ -208,7 +241,12 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
             { value: 'name', label: t('billImport.sort.name') },
           ]}
           onSortChange={(v) => setSortBy(v as any)}
-          onClearAll={() => { setPeriod('all'); onSupplierSearchChange(''); }}
+          pills={channelPills}
+          onClearAll={() => {
+            setPeriod('all');
+            setChannelFilter('');
+            onSupplierSearchChange('');
+          }}
         />
         {selected.size >= 1 ? (
           <Typography size="xs" variant="muted">
@@ -242,6 +280,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                         : tier.borderClassName
                     }
                   >
+                    {/* Đầu danh bạ: checkbox + tên (to) + badge Loại + badge danh mục */}
                     <Box layoutClassName="flex items-start gap-2">
                       <Checkbox
                         checked={isChecked}
@@ -249,39 +288,72 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                         borderClassName="mt-1 shrink-0 rounded border-slate-300"
                         focusClassName="cursor-pointer text-primary-600 focus:ring-primary-500"
                       />
-                      <Box layoutClassName="min-w-0 flex-1">
-                        <Typography size="sm" layoutClassName="break-words font-semibold">
+                      <Box layoutClassName="min-w-0 flex-1 space-y-1">
+                        <Typography size="base" layoutClassName="break-words font-semibold">
                           {row.name}
                         </Typography>
-                        {row.category ? (
-                          <Typography
-                            as="span"
-                            size="xs"
-                            layoutClassName="mt-0.5 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-700"
-                            textClassName="text-[10px] text-slate-700 dark:text-slate-200"
-                          >
-                            <Tag className="h-3 w-3" /> {row.category}
-                          </Typography>
-                        ) : null}
+                        <Box layoutClassName="flex flex-wrap items-center gap-1.5">
+                          {row.channel ? (
+                            <Badge
+                              size="sm"
+                              borderClassName="border-transparent"
+                              backgroundClassName={supplierChannelBadgeColor(row.channel).backgroundClassName}
+                              textClassName={supplierChannelBadgeColor(row.channel).textClassName}
+                            >
+                              {supplierChannelLabel(row.channel)}
+                            </Badge>
+                          ) : null}
+                          {row.category ? (
+                            <Badge
+                              size="sm"
+                              borderClassName="border-transparent"
+                              backgroundClassName="bg-slate-100 dark:bg-slate-700"
+                              textClassName="text-slate-700 dark:text-slate-200"
+                            >
+                              <Tag className="h-3 w-3" /> {row.category}
+                            </Badge>
+                          ) : null}
+                        </Box>
                       </Box>
                     </Box>
 
-                    <Typography size="lg" layoutClassName="font-bold text-primary-700 dark:text-primary-300">
-                      {formatVNDOrDash(row.totalAmount)}
-                    </Typography>
+                    {/* Liên hệ nổi bật: 📞 phone · người liên hệ */}
+                    <Box
+                      layoutClassName="flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-md px-2 py-1.5"
+                      backgroundClassName="bg-white/60 dark:bg-slate-900/40"
+                    >
+                      <Box layoutClassName="flex items-center gap-1.5">
+                        <Phone className="h-3.5 w-3.5 shrink-0 text-primary-500" />
+                        <Typography
+                          as="span"
+                          size="sm"
+                          layoutClassName="font-medium"
+                          textClassName={row.phone ? 'text-slate-800 dark:text-slate-100' : 'text-slate-400'}
+                        >
+                          {row.phone || 'Chưa có SĐT'}
+                        </Typography>
+                      </Box>
+                      {row.contactPerson ? (
+                        <>
+                          <Typography as="span" size="xs" textClassName="text-slate-300 dark:text-slate-600">·</Typography>
+                          <Typography as="span" size="xs" variant="muted" layoutClassName="truncate">
+                            {row.contactPerson}
+                          </Typography>
+                        </>
+                      ) : null}
+                    </Box>
 
+                    {/* Stats phụ: N phiếu · tổng chi · lần cuối */}
                     <Box layoutClassName="flex flex-wrap gap-x-3 gap-y-0.5">
                       <Typography size="xs" variant="muted">
                         {row.receiptCount} phiếu
                       </Typography>
+                      <Typography size="xs" variant="muted" layoutClassName="font-semibold">
+                        {formatVNDOrDash(row.totalAmount)}
+                      </Typography>
                       {row.lastReceiptDate ? (
                         <Typography size="xs" variant="muted">
                           🕒 {formatDateISO(row.lastReceiptDate)}
-                        </Typography>
-                      ) : null}
-                      {row.phone ? (
-                        <Typography size="xs" variant="muted">
-                          📞 {row.phone}
                         </Typography>
                       ) : null}
                     </Box>
@@ -324,6 +396,12 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                           <User className="h-3 w-3 shrink-0 text-slate-400" />
                           <Typography as="span" size="xs">{row.contactPerson || '—'}</Typography>
                         </Box>
+                        {row.channel ? (
+                          <Box layoutClassName="flex items-center gap-1.5">
+                            <Tag className="h-3 w-3 shrink-0 text-slate-400" />
+                            <Typography as="span" size="xs">Loại: {supplierChannelLabel(row.channel)}</Typography>
+                          </Box>
+                        ) : null}
                         {row.email ? (
                           <Box layoutClassName="flex items-center gap-1.5">
                             <Mail className="h-3 w-3 shrink-0 text-slate-400" />

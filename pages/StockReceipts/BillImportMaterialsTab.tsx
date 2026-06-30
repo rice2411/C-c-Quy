@@ -10,7 +10,6 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
-import Input from '@/components/ui/Input';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import { formatDateISO, parseDateValue } from '@/utils/format/dateUtil';
 import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/StockReceipts/MergeItemsModal';
@@ -26,6 +25,7 @@ const materialRecencyTier = (
   borderClassName: string;
   badgeBackgroundClassName: string;
   badgeTextClassName: string;
+  dotClassName: string;
   label: string;
 } => {
   const parsed = parseDateValue(lastReceiptDate);
@@ -36,6 +36,7 @@ const materialRecencyTier = (
       borderClassName: 'border-l-emerald-500 border-slate-200 dark:border-slate-700 dark:border-l-emerald-500',
       badgeBackgroundClassName: 'bg-emerald-100 dark:bg-emerald-950/50',
       badgeTextClassName: 'text-[10px] font-medium text-emerald-700 dark:text-emerald-300',
+      dotClassName: 'bg-emerald-500',
       label: 'Mới nhập',
     };
   if (days <= 60)
@@ -44,6 +45,7 @@ const materialRecencyTier = (
       borderClassName: 'border-l-amber-500 border-slate-200 dark:border-slate-700 dark:border-l-amber-500',
       badgeBackgroundClassName: 'bg-amber-100 dark:bg-amber-950/50',
       badgeTextClassName: 'text-[10px] font-medium text-amber-700 dark:text-amber-300',
+      dotClassName: 'bg-amber-500',
       label: 'Khá lâu',
     };
   return {
@@ -51,6 +53,7 @@ const materialRecencyTier = (
     borderClassName: 'border-l-rose-500 border-slate-200 dark:border-slate-700 dark:border-l-rose-500',
     badgeBackgroundClassName: 'bg-rose-100 dark:bg-rose-950/50',
     badgeTextClassName: 'text-[10px] font-medium text-rose-700 dark:text-rose-300',
+    dotClassName: 'bg-rose-500',
     label: 'Lâu chưa nhập',
   };
 };
@@ -233,6 +236,7 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
                         : tier.borderClassName
                     }
                   >
+                    {/* Hàng đầu: checkbox + tên (kèm chấm recency) */}
                     <Box layoutClassName="flex items-start gap-2">
                       <Checkbox
                         checked={isChecked}
@@ -240,46 +244,43 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
                         borderClassName="mt-1 shrink-0 rounded border-slate-300"
                         focusClassName="cursor-pointer text-primary-600 focus:ring-primary-500"
                       />
-                      <Box layoutClassName="min-w-0 flex-1">
+                      <Box layoutClassName="flex min-w-0 flex-1 items-center gap-1.5">
+                        <Box
+                          layoutClassName="mt-0.5 h-2 w-2 shrink-0 rounded-full"
+                          backgroundClassName={tier.dotClassName}
+                          title={tier.label}
+                        />
                         <Typography size="sm" layoutClassName="break-words font-semibold">
                           {row.name}
                         </Typography>
-                        {row.lastSupplierName ? (
-                          <Typography size="xs" variant="muted" layoutClassName="truncate">
-                            🏭 {row.lastSupplierName}
-                          </Typography>
-                        ) : null}
                       </Box>
-                      <Typography
-                        as="span"
-                        size="xs"
-                        layoutClassName="inline-flex shrink-0 items-center rounded-full px-2 py-0.5"
-                        backgroundClassName={tier.badgeBackgroundClassName}
-                        textClassName={tier.badgeTextClassName}
-                      >
-                        {tier.label}
-                      </Typography>
                     </Box>
 
-                    <Box layoutClassName="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                    {/* Giá nhập gần nhất (to, đậm) / đơn vị */}
+                    <Box layoutClassName="flex flex-wrap items-baseline gap-x-1">
                       <Typography size="lg" layoutClassName="font-bold text-primary-700 dark:text-primary-300">
-                        {row.totalQty}
+                        {formatVNDOrDash(row.lastUnitPrice)}
                       </Typography>
-                      <Typography size="xs" variant="muted">
-                        {row.canonicalUnit || ''}
-                      </Typography>
+                      {row.canonicalUnit ? (
+                        <Typography size="xs" variant="muted">
+                          / {row.canonicalUnit}
+                        </Typography>
+                      ) : null}
                     </Box>
 
+                    {/* Dòng phụ: đã nhập tổng · số lần · NCC gần nhất */}
                     <Box layoutClassName="flex flex-wrap gap-x-3 gap-y-0.5">
                       <Typography size="xs" variant="muted">
-                        Giá gần nhất:{' '}
-                        <Typography as="span" textClassName="font-semibold text-slate-700 dark:text-slate-100">
-                          {formatVNDOrDash(row.lastUnitPrice)}
-                        </Typography>
+                        Đã nhập {row.totalQty} {row.canonicalUnit || ''}
                       </Typography>
                       <Typography size="xs" variant="muted">
-                        {row.importCount} lần nhập
+                        {row.importCount} lần
                       </Typography>
+                      {row.lastSupplierName ? (
+                        <Typography size="xs" variant="muted" layoutClassName="truncate">
+                          🏭 {row.lastSupplierName}
+                        </Typography>
+                      ) : null}
                       {row.lastReceiptDate ? (
                         <Typography size="xs" variant="muted">
                           🕒 {formatDateISO(row.lastReceiptDate)}

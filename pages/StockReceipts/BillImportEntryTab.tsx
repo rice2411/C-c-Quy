@@ -23,6 +23,7 @@ import type {
   StockReceiptStructured,
   SupplierContactInfo,
 } from '@/types/billReceipt';
+import { SUPPLIER_CHANNELS } from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -30,6 +31,7 @@ import Image from '@/components/ui/Image';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import {
   Table,
   TableBody,
@@ -457,6 +459,23 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                     onChange={(v) => onSupplierContactChange({ taxCode: v })}
                     placeholder="Mã số thuế"
                   />
+                  <Box layoutClassName="space-y-1">
+                    <Typography size="xs" variant="muted" layoutClassName="font-medium uppercase tracking-wide">
+                      Loại
+                    </Typography>
+                    <Select
+                      fullWidth
+                      value={contact.channel ?? ''}
+                      onChange={(e) => onSupplierContactChange({ channel: e.target.value })}
+                    >
+                      <option value="">Chưa phân loại</option>
+                      {SUPPLIER_CHANNELS.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </Select>
+                  </Box>
                   <ContactField
                     label="Danh mục"
                     value={contact.category ?? ''}

@@ -74,9 +74,65 @@ export interface SupplierContactInfo {
   taxCode?: string | null;
   /** Danh mục: "Bột & ngũ cốc", "Sữa & bơ", "Bao bì", … */
   category?: string | null;
+  /** Loại / kênh NCC (nguồn mua): shopee, tiktok, chợ, facebook, sỉ… (xem SUPPLIER_CHANNELS). */
+  channel?: string;
   /** Ghi chú nội bộ (giá tốt, giao nhanh, hay hết hàng…) */
   notes?: string | null;
 }
+
+/** Loại / kênh nhà cung cấp (nguồn mua hàng). */
+export type SupplierChannel = 'shopee' | 'tiktok' | 'cho' | 'facebook' | 'si' | 'khac';
+
+export const SUPPLIER_CHANNELS: { value: SupplierChannel; label: string }[] = [
+  { value: 'shopee', label: 'Shopee' },
+  { value: 'tiktok', label: 'TikTok Shop' },
+  { value: 'cho', label: 'Tạp hoá / Chợ' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'si', label: 'Sỉ / Đại lý' },
+  { value: 'khac', label: 'Khác' },
+];
+
+/** Nhãn hiển thị của 1 channel (rỗng nếu chưa phân loại / không khớp). */
+export const supplierChannelLabel = (v?: string): string =>
+  SUPPLIER_CHANNELS.find((c) => c.value === v)?.label ?? '';
+
+/** Màu badge theo channel (tách backgroundClassName / textClassName — KHÔNG className gộp). */
+export const supplierChannelBadgeColor = (
+  v?: string,
+): { backgroundClassName: string; textClassName: string } => {
+  switch (v) {
+    case 'shopee':
+      return {
+        backgroundClassName: 'bg-orange-100 dark:bg-orange-950/50',
+        textClassName: 'text-orange-700 dark:text-orange-300',
+      };
+    case 'tiktok':
+      return {
+        backgroundClassName: 'bg-pink-100 dark:bg-pink-950/50',
+        textClassName: 'text-pink-700 dark:text-pink-300',
+      };
+    case 'cho':
+      return {
+        backgroundClassName: 'bg-emerald-100 dark:bg-emerald-950/50',
+        textClassName: 'text-emerald-700 dark:text-emerald-300',
+      };
+    case 'facebook':
+      return {
+        backgroundClassName: 'bg-blue-100 dark:bg-blue-950/50',
+        textClassName: 'text-blue-700 dark:text-blue-300',
+      };
+    case 'si':
+      return {
+        backgroundClassName: 'bg-purple-100 dark:bg-purple-950/50',
+        textClassName: 'text-purple-700 dark:text-purple-300',
+      };
+    default:
+      return {
+        backgroundClassName: 'bg-slate-100 dark:bg-slate-700',
+        textClassName: 'text-slate-700 dark:text-slate-200',
+      };
+  }
+};
 
 export interface SavedStockReceiptSummary {
   id: string;
