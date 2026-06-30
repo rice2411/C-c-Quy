@@ -171,6 +171,23 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
         </>
       ) : null}
 
+      <StatsBanner
+        items={[
+          {
+            icon: ReceiptText,
+            label: t('billImport.statReceiptCount'),
+            value: String(stats.count),
+            accent: '#0ea5e9',
+          },
+          {
+            icon: TrendingUp,
+            label: t('billImport.statTotalAmount'),
+            value: formatVNDOrDash(stats.totalAmount),
+            accent: '#16a34a',
+          },
+        ]}
+      />
+
       {onFileSelected ? (
         <Card
           padding="md"
@@ -231,22 +248,6 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
         </Card>
       ) : null}
 
-      <StatsBanner
-        items={[
-          {
-            icon: ReceiptText,
-            label: t('billImport.statReceiptCount'),
-            value: String(stats.count),
-            accent: '#0ea5e9',
-          },
-          {
-            icon: TrendingUp,
-            label: t('billImport.statTotalAmount'),
-            value: formatVNDOrDash(stats.totalAmount),
-            accent: '#16a34a',
-          },
-        ]}
-      />
       <FilterToolbar
         search={receiptSearch}
         onSearchChange={onReceiptSearchChange}
