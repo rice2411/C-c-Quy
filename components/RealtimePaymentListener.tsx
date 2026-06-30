@@ -1,10 +1,13 @@
 import React, { useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { auth } from '@/config/firebase';
 import { API_BASE_URL } from '@/services/api/client';
+import { qk } from '@/hooks/queryKeys';
 import { UserRole } from '@/types/user';
+import { PaymentStatus } from '@/types/enums';
+import type { Order } from '@/types';
 
 /** BE phục vụ tại `<origin>/api` → socket.io ở `<origin>` (bỏ hậu tố /api). */
 const SOCKET_URL = API_BASE_URL.replace(/\/api\/?$/, '');
@@ -25,6 +28,7 @@ interface OrderPaidEvent {
  */
 const RealtimePaymentListener: React.FC = () => {
   const { currentUser, userData } = useAuth();
+  const queryClient = useQueryClient();
   const role = userData?.role;
 
   useEffect(() => {
@@ -48,13 +52,28 @@ const RealtimePaymentListener: React.FC = () => {
       toast.success(`💰 Đơn ${e?.orderNumber} đã thanh toán ${amount}đ`, {
         duration: 6000,
       });
+
+      // Cập nhật trạng thái ngay trong cache (khỏi refresh): set đơn khớp = PAID...
+      if (e?.orderNumber) {
+        queryClient.setQueryData<Order[]>(qk.orders.all, (old) =>
+          Array.isArray(old)
+            ? old.map((o) =>
+                o.orderNumber === e.orderNumber
+                  ? { ...o, paymentStatus: PaymentStatus.PAID }
+                  : o,
+              )
+            : old,
+        );
+      }
+      // ...rồi refetch để đồng bộ các field server tính (sepayId, updatedAt...).
+      queryClient.invalidateQueries({ queryKey: qk.orders.all });
     });
 
     return () => {
       socket.off('order:paid');
       socket.disconnect();
     };
-  }, [currentUser, role]);
+  }, [currentUser, role, queryClient]);
 
   return null;
 };
