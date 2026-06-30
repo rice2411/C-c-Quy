@@ -1796,6 +1796,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         }
         qrUrl={qrUrl}
         description={description}
+        bankCode={activeAccount?.bankCode}
+        accountNumber={activeAccount?.accountNumber}
+        accountHolder={activeAccount?.accountHolder}
       />
     </Box>
     </>
