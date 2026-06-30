@@ -8,6 +8,7 @@ import OrdersPage from "./pages/Orders/index";
 import FinanceOverviewPage from "./pages/Finance/Overview";
 import FinanceRevenuePage from "./pages/Finance/Revenue";
 import FinanceTransactionsPage from "./pages/Finance/Transactions";
+import FinanceReconciliationPage from "./pages/Finance/Reconciliation";
 import PromotionsPage from "./pages/Promotions/index";
 import CommissionPage from "./pages/Commission/index";
 import CommissionSettingsPage from "./pages/Commission/SettingsPage";
@@ -85,6 +86,14 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/transactions")?.roles}>
             <FinanceTransactionsPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="finance/reconciliation"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/reconciliation")?.roles}>
+            <FinanceReconciliationPage />
           </RoleBasedRoute>
         }
       />
