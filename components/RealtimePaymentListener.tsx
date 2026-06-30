@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { API_BASE_URL } from '@/services/api/client';
 import { qk } from '@/hooks/queryKeys';
+import { playNotificationSound, primeNotificationSound } from '@/utils/sound';
 import { UserRole } from '@/types/user';
 import { PaymentStatus } from '@/types/enums';
 import type { Order } from '@/types';
@@ -31,6 +32,9 @@ const RealtimePaymentListener: React.FC = () => {
   const queryClient = useQueryClient();
   const role = userData?.role;
 
+  // Mở khoá âm thông báo sau cử chỉ đầu tiên của người dùng (autoplay policy).
+  useEffect(() => primeNotificationSound(), []);
+
   useEffect(() => {
     if (!currentUser || !role || !NOTIFY_ROLES.includes(role) || !SOCKET_URL) {
       return;
@@ -49,6 +53,7 @@ const RealtimePaymentListener: React.FC = () => {
 
     socket.on('order:paid', (e: OrderPaidEvent) => {
       const amount = (e?.amount || 0).toLocaleString('vi-VN');
+      playNotificationSound();
       toast.success(`💰 Đơn ${e?.orderNumber} đã thanh toán ${amount}đ`, {
         duration: 6000,
       });
