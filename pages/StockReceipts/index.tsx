@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from 'react';
-import { ScanLine } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type {
@@ -19,8 +18,6 @@ import {
 import { runBillImportPipeline } from '@/services/billReceiptPipeline';
 import { useAuth } from '@/contexts/AuthContext';
 import Box from '@/components/ui/Box';
-import Heading from '@/components/ui/Heading';
-import Typography from '@/components/ui/Typography';
 import BillImportEntryTab from '@/pages/StockReceipts/BillImportEntryTab';
 import BillImportReceiptListTab from '@/pages/StockReceipts/BillImportReceiptListTab';
 import ReceiptDetailModal from '@/pages/StockReceipts/ReceiptDetailModal';
@@ -371,16 +368,6 @@ const StockReceiptsPage: React.FC = () => {
 
   return (
     <Box layoutClassName="space-y-6 animate-fade-in">
-      <Box>
-        <Heading level={2} textClassName="flex items-center gap-2 text-xl font-semibold">
-          <ScanLine className="h-6 w-6 text-primary-500" />
-          {t('header.stockReceiptsTitle')}
-        </Heading>
-        <Typography size="sm" variant="muted" layoutClassName="mt-1">
-          {t('billImport.subtitle')}
-        </Typography>
-      </Box>
-
       <BillImportReceiptListTab
         receiptSearch={receiptSearch}
         onReceiptSearchChange={setReceiptSearch}

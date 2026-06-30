@@ -4,7 +4,6 @@ import type { SavedStockReceiptSummary } from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import FilterToolbar, { type ToolbarOption } from '@/components/shared/FilterToolbar';
@@ -150,7 +149,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
 
   // (4) render
   return (
-    <Box layoutClassName="grid gap-4">
+    <Box layoutClassName="space-y-3">
       {onFileSelected ? (
         <>
           <input
@@ -171,117 +170,110 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
         </>
       ) : null}
 
-      {onFileSelected ? (
-        <Card
-          padding="md"
-          borderClassName="border-primary-200 dark:border-primary-900/60"
-          backgroundClassName="bg-gradient-to-br from-primary-50 to-primary-50 dark:from-primary-950/40 dark:to-primary-950/30"
-          layoutClassName="shadow-sm"
-        >
-          <Box layoutClassName="flex flex-wrap items-center justify-between gap-3">
-            <Box layoutClassName="min-w-0">
-              <Typography size="sm" layoutClassName="font-semibold text-primary-900 dark:text-primary-100">
-                Nhập bill mới
-              </Typography>
-              <Typography size="xs" variant="muted" layoutClassName="mt-0.5">
-                Chụp / tải ảnh hoá đơn để OCR tự đọc, hoặc nhập thủ công khi bill viết tay.
-              </Typography>
-            </Box>
-            <Box layoutClassName="flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                variant="primary"
-                onClick={openCamera}
-                leftIcon={<Camera />}
-                iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-                sizeClassName="px-4 py-2"
-                layoutClassName="inline-flex items-center gap-2 whitespace-nowrap"
-                disableVariantHover
-              >
-                Chụp ảnh
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={openFilePicker}
-                leftIcon={<Upload />}
-                iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-                sizeClassName="px-4 py-2"
-                layoutClassName="inline-flex items-center gap-2 whitespace-nowrap"
-                disableVariantHover
-                disableVariantTextColor
-              >
-                Tải ảnh lên
-              </Button>
-              {onStartManual ? (
+      <StatsBanner
+        items={[
+          {
+            icon: ReceiptText,
+            label: t('billImport.statReceiptCount'),
+            value: String(stats.count),
+            accent: '#0ea5e9',
+          },
+          {
+            icon: TrendingUp,
+            label: t('billImport.statTotalAmount'),
+            value: formatVNDOrDash(stats.totalAmount),
+            accent: '#16a34a',
+          },
+        ]}
+      />
+
+      <FilterToolbar
+        search={receiptSearch}
+        onSearchChange={onReceiptSearchChange}
+        searchPlaceholder={t('billImport.receiptsSearch')}
+        period={period}
+        periodOptions={PERIOD_OPTIONS as ToolbarOption[]}
+        onPeriodChange={(v) => setPeriod(v as DatePeriod)}
+        actions={
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              sizeClassName="px-3 py-1.5 text-xs"
+              onClick={() => void onRefresh()}
+              disabled={receiptLoading}
+              leftIcon={<RotateCw />}
+              iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+              layoutClassName="inline-flex items-center gap-1.5"
+            >
+              {receiptLoading ? 'Đang tải...' : 'Làm mới'}
+            </Button>
+            {onFileSelected ? (
+              <>
+                {onStartManual ? (
+                  <Button
+                    type="button"
+                    onClick={() => onStartManual()}
+                    leftIcon={<PencilLine />}
+                    iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                    sizeClassName="px-3 py-2 text-xs"
+                    backgroundClassName="bg-white dark:bg-slate-800"
+                    borderClassName="border border-slate-200 dark:border-slate-600"
+                    textClassName="font-medium text-slate-700 dark:text-slate-200"
+                    roundedClassName="rounded-xl"
+                    layoutClassName="inline-flex items-center gap-1.5"
+                    disableVariantHover
+                    disableVariantTextColor
+                  >
+                    Nhập thủ công
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
-                  variant="ghost"
-                  onClick={() => onStartManual()}
-                  leftIcon={<PencilLine />}
+                  onClick={openFilePicker}
+                  leftIcon={<Upload />}
+                  iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                  sizeClassName="px-3 py-2 text-xs"
+                  backgroundClassName="bg-white dark:bg-slate-800"
+                  borderClassName="border border-slate-200 dark:border-slate-600"
+                  textClassName="font-medium text-slate-700 dark:text-slate-200"
+                  roundedClassName="rounded-xl"
+                  layoutClassName="inline-flex items-center gap-1.5"
+                  disableVariantHover
+                  disableVariantTextColor
+                >
+                  Tải ảnh lên
+                </Button>
+                <Button
+                  type="button"
+                  onClick={openCamera}
+                  leftIcon={<Camera />}
                   iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
                   sizeClassName="px-4 py-2"
-                  layoutClassName="inline-flex items-center gap-2 whitespace-nowrap"
+                  backgroundClassName="bg-primary-600 hover:bg-primary-700"
+                  textClassName="font-medium text-white"
+                  roundedClassName="rounded-xl"
+                  borderClassName="border border-transparent"
+                  layoutClassName="inline-flex items-center gap-1.5"
+                  disableVariantHover
+                  disableVariantTextColor
                 >
-                  Nhập thủ công
+                  Chụp ảnh
                 </Button>
-              ) : null}
-            </Box>
-          </Box>
-        </Card>
-      ) : null}
-
-      <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
-        <Box layoutClassName="flex items-center justify-between gap-2">
-          <Box>
-            <Typography size="sm" layoutClassName="font-semibold">
-              Danh sách phiếu đã nhập
-            </Typography>
-            <Typography size="xs" variant="muted">
-              Bấm vào dòng để xem chi tiết bill và ảnh gốc.
-            </Typography>
-          </Box>
-          <Button
-            type="button"
-            variant="secondary"
-            sizeClassName="px-3 py-1.5 text-xs"
-            onClick={() => void onRefresh()}
-            disabled={receiptLoading}
-            leftIcon={<RotateCw />}
-            iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-            layoutClassName="inline-flex items-center gap-1.5"
-          >
-            {receiptLoading ? 'Đang tải...' : 'Làm mới'}
-          </Button>
-        </Box>
-        <FilterToolbar
-          search={receiptSearch}
-          onSearchChange={onReceiptSearchChange}
-          searchPlaceholder={t('billImport.receiptsSearch')}
-          period={period}
-          periodOptions={PERIOD_OPTIONS as ToolbarOption[]}
-          onPeriodChange={(v) => setPeriod(v as DatePeriod)}
-          onClearAll={() => {
-            setPeriod('all');
-            onReceiptSearchChange('');
-          }}
-        />
-        <StatsBanner
-          items={[
-            {
-              icon: ReceiptText,
-              label: t('billImport.statReceiptCount'),
-              value: String(stats.count),
-              accent: '#0ea5e9',
-            },
-            {
-              icon: TrendingUp,
-              label: t('billImport.statTotalAmount'),
-              value: formatVNDOrDash(stats.totalAmount),
-              accent: '#16a34a',
-            },
-          ]}
-        />
+              </>
+            ) : null}
+          </>
+        }
+        stats={
+          <Typography size="xs" variant="muted" layoutClassName="text-right">
+            {sortedReceipts.length} / {filteredReceipts.length} phiếu
+          </Typography>
+        }
+        onClearAll={() => {
+          setPeriod('all');
+          onReceiptSearchChange('');
+        }}
+      />
 
         {sortedReceipts.length === 0 ? (
           <Box
@@ -496,7 +488,6 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
             </Box>
           </>
         )}
-      </Card>
     </Box>
   );
 };
