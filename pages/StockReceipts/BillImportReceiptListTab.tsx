@@ -8,14 +8,6 @@ import Typography from '@/components/ui/Typography';
 import Input from '@/components/ui/Input';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import { useLanguage } from '@/contexts/LanguageContext';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-} from '@/components/ui/Table';
 import { formatImportedAt } from '@/utils/format/dateUtil';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import EmptyState from '@/components/ui/EmptyState';
@@ -165,7 +157,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
           onSearchChange={onReceiptSearchChange}
           searchPlaceholder={t('billImport.receiptsSearch')}
         />
-        <Box layoutClassName="max-h-[560px] overflow-auto rounded-lg border border-slate-100 dark:border-slate-800">
+        <Box layoutClassName="max-h-[640px] overflow-auto rounded-lg border border-slate-100 p-1 dark:border-slate-800">
           {filteredReceipts.length === 0 ? (
             <Box layoutClassName="flex flex-col items-center gap-3 p-6 text-center">
               <EmptyState
@@ -214,45 +206,77 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
               ) : null}
             </Box>
           ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell>Mã HĐ</TableHeaderCell>
-                  <TableHeaderCell>Ngày bill</TableHeaderCell>
-                  <TableHeaderCell>Ngày nhập</TableHeaderCell>
-                  <TableHeaderCell>Nhà cung cấp</TableHeaderCell>
-                  <TableHeaderCell>Tổng tiền</TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredReceipts.map((row) => (
-                  <TableRow
+            <Box layoutClassName="grid gap-3 p-2 sm:grid-cols-2 xl:grid-cols-3">
+              {filteredReceipts.map((row) => {
+                const isReconciled = row.reconciled === true;
+                return (
+                  <Card
                     key={row.id}
-                    layoutClassName="cursor-pointer"
-                    hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                    padding="md"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => void onRowClick(row.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        void onRowClick(row.id);
+                      }
+                    }}
+                    layoutClassName="cursor-pointer space-y-2 border-l-4"
+                    borderClassName={
+                      isReconciled
+                        ? 'border-l-emerald-500 border-slate-200 dark:border-slate-700 dark:border-l-emerald-500'
+                        : 'border-l-amber-500 border-slate-200 dark:border-slate-700 dark:border-l-amber-500'
+                    }
+                    hoverClassName="hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600"
                   >
-                    <TableCell>
+                    <Box layoutClassName="flex items-start justify-between gap-2">
+                      <Typography size="sm" layoutClassName="min-w-0 break-words font-semibold">
+                        {row.supplierNameRaw || 'Không rõ NCC'}
+                      </Typography>
+                      <Typography
+                        as="span"
+                        size="xs"
+                        layoutClassName="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5"
+                        backgroundClassName={
+                          isReconciled
+                            ? 'bg-emerald-100 dark:bg-emerald-950/50'
+                            : 'bg-amber-100 dark:bg-amber-950/50'
+                        }
+                        textClassName={
+                          isReconciled
+                            ? 'text-[10px] font-medium text-emerald-700 dark:text-emerald-300'
+                            : 'text-[10px] font-medium text-amber-700 dark:text-amber-300'
+                        }
+                      >
+                        {isReconciled ? 'Đã đối soát' : 'Chưa đối soát'}
+                      </Typography>
+                    </Box>
+                    <Typography size="lg" layoutClassName="font-bold text-primary-700 dark:text-primary-300">
+                      {formatVNDOrDash(row.totalAmount)}
+                    </Typography>
+                    <Box layoutClassName="flex flex-wrap gap-x-3 gap-y-0.5">
+                      <Typography size="xs" variant="muted">
+                        {row.receiptDate || formatImportedAt(row.createdAt)}
+                      </Typography>
+                      <Typography size="xs" variant="muted">
+                        {row.productLineCount} dòng
+                      </Typography>
                       {row.invoiceNumber ? (
                         <Typography
                           as="span"
+                          size="xs"
                           layoutClassName="rounded-md bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800"
-                          textClassName="font-mono text-xs text-slate-700 dark:text-slate-200"
+                          textClassName="font-mono text-[10px] text-slate-700 dark:text-slate-200"
                         >
                           {row.invoiceNumber}
                         </Typography>
-                      ) : (
-                        '—'
-                      )}
-                    </TableCell>
-                    <TableCell>{row.receiptDate || '—'}</TableCell>
-                    <TableCell>{formatImportedAt(row.createdAt)}</TableCell>
-                    <TableCell>{row.supplierNameRaw || '—'}</TableCell>
-                    <TableCell>{formatVNDOrDash(row.totalAmount)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      ) : null}
+                    </Box>
+                  </Card>
+                );
+              })}
+            </Box>
           )}
         </Box>
       </Card>
