@@ -158,7 +158,25 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     setCopyingImg(true);
     try {
       if (document.fonts?.ready) await document.fonts.ready; // tránh nhảy font khi render
-      const blob = await toBlob(shareRef.current, { pixelRatio: 2, backgroundColor: '#ffffff', cacheBust: true });
+      const node = shareRef.current;
+      if (!node) throw new Error('no node');
+      // Chờ TẤT CẢ ảnh (sản phẩm + QR) trong thẻ load xong trước khi chụp —
+      // mobile tải ảnh chậm hơn nên chụp sớm sẽ ra ảnh trống.
+      const imgs = Array.from(node.querySelectorAll('img')) as HTMLImageElement[];
+      await Promise.all(
+        imgs.map((img) =>
+          img.complete && img.naturalWidth > 0
+            ? Promise.resolve()
+            : new Promise<void>((resolve) => {
+                img.addEventListener('load', () => resolve(), { once: true });
+                img.addEventListener('error', () => resolve(), { once: true });
+              }),
+        ),
+      );
+      const opts = { pixelRatio: 2, backgroundColor: '#ffffff', cacheBust: true } as const;
+      // html-to-image hay miss ảnh ở lần chụp đầu (nhất là mobile) → warm-up rồi chụp thật.
+      await toBlob(node, opts);
+      const blob = await toBlob(node, opts);
       if (!blob) throw new Error('no blob');
       const url = URL.createObjectURL(blob);
       setPreviewUrl((prev) => {
