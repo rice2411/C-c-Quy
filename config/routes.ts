@@ -22,6 +22,7 @@ import {
   MessageSquare,
   Award,
   QrCode,
+  ArrowRightLeft,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { ScreenVisibilityMap } from "@/types";
@@ -83,6 +84,13 @@ export const routes: RouteConfig[] = [
     path: "/finance/transactions",
     labelKey: "nav.financeTransactions",
     icon: Coins,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/finance/reconciliation",
+    labelKey: "nav.financeReconciliation",
+    icon: ArrowRightLeft,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -320,6 +328,7 @@ export const navGroups: NavGroupConfig[] = [
       "/finance/overview",
       "/finance/revenue",
       "/finance/transactions",
+      "/finance/reconciliation",
     ],
   },
   {
