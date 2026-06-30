@@ -800,6 +800,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                 iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
                 sizeClassName="px-4 py-2.5 sm:py-2"
                 layoutClassName="inline-flex w-full items-center justify-center gap-2 sm:w-auto"
+                textClassName="text-white"
                 disableVariantHover
                 disableVariantTextColor
               >
