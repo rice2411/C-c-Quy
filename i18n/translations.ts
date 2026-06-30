@@ -1174,7 +1174,7 @@ export const translations = {
     detail: {
       orderId: "Đơn hàng #",
       placedOn: "Đặt lúc",
-      shareOrder: "Gửi khách",
+      shareOrder: "Chia sẻ",
       copyImage: "Copy ảnh",
       copyImageLoading: "Đang tạo ảnh...",
       copyImageSuccess: "Đã copy ảnh đơn vào clipboard",
