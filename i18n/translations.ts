@@ -281,6 +281,8 @@ export const translations = {
       sourceOcr: "OCR",
       manualNoImage: "Entered manually (no image)",
       itemsCount: "{{count}} items",
+      statReceiptCount: "Receipts",
+      statTotalAmount: "Total amount",
       materialsMerge: {
         suggestTitle: "Merge suggestions",
         suggestSubtitle: "Possibly duplicate materials grouped by name similarity.",
@@ -962,6 +964,8 @@ export const translations = {
       sourceOcr: "OCR",
       manualNoImage: "Nhập thủ công (không có ảnh)",
       itemsCount: "{{count}} mặt hàng",
+      statReceiptCount: "Số phiếu",
+      statTotalAmount: "Tổng tiền",
       materialsMerge: {
         suggestTitle: "Gợi ý gộp",
         suggestSubtitle: "Các nguyên vật liệu nghi trùng, gom nhóm theo độ giống tên.",
