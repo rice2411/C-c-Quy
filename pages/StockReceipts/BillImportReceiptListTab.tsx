@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, Camera, ChevronsUpDown, FileText, PencilLine, RotateCw, Upload } from 'lucide-react';
+import { ArrowDown, ArrowUp, Camera, ChevronsUpDown, FileText, PencilLine, ReceiptText, RotateCw, TrendingUp, Upload } from 'lucide-react';
 import type { SavedStockReceiptSummary } from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
 import Badge from '@/components/ui/Badge';
@@ -7,7 +7,9 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
-import FilterToolbar from '@/components/shared/FilterToolbar';
+import FilterToolbar, { type ToolbarOption } from '@/components/shared/FilterToolbar';
+import StatsBanner from '@/pages/StockReceipts/StatsBanner';
+import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/StockReceipts/dateFilter';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { parseDateValue } from '@/utils/format/dateUtil';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
@@ -78,17 +80,35 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
   // (1) state
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [period, setPeriod] = useState<DatePeriod>('all');
 
-  // (2) memo: sort filteredReceipts theo cột đang chọn
+  // (2a) memo: lọc kỳ — ngày phiếu = receiptDate || createdAt (dùng filterByPeriod như NCC).
+  // Bọc mỗi phiếu thành { row, lastReceiptDate } để tái dùng helper rồi map ngược về row gốc.
+  const periodFilteredReceipts = useMemo(() => {
+    type Wrapped = { row: SavedStockReceiptSummary; lastReceiptDate?: string };
+    const wrapped: Wrapped[] = filteredReceipts.map((row) => ({
+      row,
+      lastReceiptDate: row.receiptDate ?? row.createdAt ?? undefined,
+    }));
+    return filterByPeriod(wrapped, period).map((w) => w.row);
+  }, [filteredReceipts, period]);
+
+  // (2b) memo: sort tập đã lọc kỳ theo cột đang chọn
   const sortedReceipts = useMemo(() => {
     const dir = sortDir === 'asc' ? 1 : -1;
-    return [...filteredReceipts].sort((a, b) => {
+    return [...periodFilteredReceipts].sort((a, b) => {
       if (sortKey === 'total') {
         return ((a.totalAmount || 0) - (b.totalAmount || 0)) * dir;
       }
       return (receiptSortTime(a) - receiptSortTime(b)) * dir;
     });
-  }, [filteredReceipts, sortKey, sortDir]);
+  }, [periodFilteredReceipts, sortKey, sortDir]);
+
+  // (2c) memo: stats của tập đã lọc (số phiếu + tổng tiền)
+  const stats = useMemo(() => {
+    const totalAmount = periodFilteredReceipts.reduce((s, r) => s + (r.totalAmount || 0), 0);
+    return { count: periodFilteredReceipts.length, totalAmount };
+  }, [periodFilteredReceipts]);
 
   // (3) handler
   const toggleSort = (key: SortKey) => {
@@ -238,9 +258,32 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
           search={receiptSearch}
           onSearchChange={onReceiptSearchChange}
           searchPlaceholder={t('billImport.receiptsSearch')}
+          period={period}
+          periodOptions={PERIOD_OPTIONS as ToolbarOption[]}
+          onPeriodChange={(v) => setPeriod(v as DatePeriod)}
+          onClearAll={() => {
+            setPeriod('all');
+            onReceiptSearchChange('');
+          }}
+        />
+        <StatsBanner
+          items={[
+            {
+              icon: ReceiptText,
+              label: t('billImport.statReceiptCount'),
+              value: String(stats.count),
+              accent: '#0ea5e9',
+            },
+            {
+              icon: TrendingUp,
+              label: t('billImport.statTotalAmount'),
+              value: formatVNDOrDash(stats.totalAmount),
+              accent: '#16a34a',
+            },
+          ]}
         />
 
-        {filteredReceipts.length === 0 ? (
+        {sortedReceipts.length === 0 ? (
           <Box
             layoutClassName="rounded-lg border border-slate-100 dark:border-slate-800"
           >
