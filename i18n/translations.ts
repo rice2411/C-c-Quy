@@ -214,7 +214,7 @@ export const translations = {
       deleteConfirm: "Are you sure you want to delete this product?"
     },
     billImport: {
-      subtitle: "Upload a photo of a purchase receipt. Google Vision reads the text; Gemini turns it into structured stock-in data.",
+      subtitle: "Upload a photo of a purchase receipt. Google Vision reads the text; Claude turns it into structured stock-in data.",
       captureImage: "Take photo",
       uploadImage: "Upload image",
       chooseImage: "Choose receipt image",
@@ -259,14 +259,14 @@ export const translations = {
       colLineTotal: "Line total",
       emptyLines: "No line items",
       validationHint:
-        "Images are checked with quick text rules, then Gemini decides if the OCR looks like a real purchase receipt before parsing.",
+        "Images are checked with quick text rules, then Claude decides if the OCR looks like a real purchase receipt before parsing.",
       validationTitle: "Receipt validation passed",
       validationConfidence: "AI confidence this is a purchase receipt: {{pct}}%",
       validationHeuristic: "Heuristic score (keywords / numbers): {{pct}}%",
       stagePrepare: "Preparing image…",
       stageVision: "Reading text from image (Google Vision)…",
-      stageValidate: "Checking if this looks like a purchase receipt (Gemini)…",
-      stageStructure: "Extracting line items and totals (Gemini)…",
+      stageValidate: "Checking if this looks like a purchase receipt (Claude)…",
+      stageStructure: "Extracting line items and totals (Claude)…",
       progressTitle: "Processing your receipt",
       suppliersSearch: "Search supplier by name, phone, category...",
       materialsSearch: "Search material by name...",
@@ -897,7 +897,7 @@ export const translations = {
       deleteConfirm: "Bạn có chắc chắn muốn xóa sản phẩm này không?"
     },
     billImport: {
-      subtitle: "Tải ảnh hoá đơn / phiếu mua hàng. Google Vision đọc chữ; Gemini chuẩn hoá thành dữ liệu nhập kho.",
+      subtitle: "Tải ảnh hoá đơn / phiếu mua hàng. Google Vision đọc chữ; Claude chuẩn hoá thành dữ liệu nhập kho.",
       captureImage: "Chụp ảnh",
       uploadImage: "Tải ảnh lên",
       chooseImage: "Chọn ảnh bill",
@@ -942,14 +942,14 @@ export const translations = {
       colLineTotal: "Thành tiền",
       emptyLines: "Không có dòng hàng",
       validationHint:
-        "Ảnh được lọc nhanh theo chữ OCR, sau đó Gemini xác định có giống bill/phiếu mua hàng thật trước khi trích xuất chi tiết.",
+        "Ảnh được lọc nhanh theo chữ OCR, sau đó Claude xác định có giống bill/phiếu mua hàng thật trước khi trích xuất chi tiết.",
       validationTitle: "Đã xác thực là bill hợp lệ",
       validationConfidence: "Độ tin cậy (AI) đây là chứng từ mua hàng: {{pct}}%",
       validationHeuristic: "Điểm kiểm tra nhanh (từ khoá / số): {{pct}}%",
       stagePrepare: "Đang chuẩn bị ảnh…",
       stageVision: "Đang đọc chữ từ ảnh (Google Vision)…",
-      stageValidate: "Đang kiểm tra có phải bill mua hàng (Gemini)…",
-      stageStructure: "Đang trích xuất dòng hàng và tổng tiền (Gemini)…",
+      stageValidate: "Đang kiểm tra có phải bill mua hàng (Claude)…",
+      stageStructure: "Đang trích xuất dòng hàng và tổng tiền (Claude)…",
       progressTitle: "Đang xử lý bill",
       suppliersSearch: "Tìm NCC theo tên, SĐT, danh mục...",
       materialsSearch: "Tìm nguyên vật liệu theo tên...",
