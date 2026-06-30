@@ -7,6 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ScreenConfigProvider } from "./contexts/ScreenConfigContext";
 import { useOfflineDetector } from "./hooks/useOfflineDetector";
 import AppRoutes from "./AppRoutes";
+import RealtimePaymentListener from "./components/RealtimePaymentListener";
 import { Toaster } from "react-hot-toast";
 
 // Devtools chỉ bật ở dev — lazy + ((import.meta as any).env?.DEV) để Vite tree-shake khỏi bundle prod.
@@ -28,6 +29,7 @@ const App: React.FC = () => {
       <AuthProvider>
         <ScreenConfigProvider>
           <LanguageProvider>
+            <RealtimePaymentListener />
             <AppRoutes />
           </LanguageProvider>
         </ScreenConfigProvider>
