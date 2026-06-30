@@ -208,7 +208,6 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
           ) : (
             <Box layoutClassName="grid gap-3 p-2 sm:grid-cols-2 xl:grid-cols-3">
               {filteredReceipts.map((row) => {
-                const isReconciled = row.reconciled === true;
                 return (
                   <Card
                     key={row.id}
@@ -222,34 +221,13 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
                         void onRowClick(row.id);
                       }
                     }}
-                    layoutClassName="cursor-pointer space-y-2 border-l-4"
-                    borderClassName={
-                      isReconciled
-                        ? 'border-l-emerald-500 border-slate-200 dark:border-slate-700 dark:border-l-emerald-500'
-                        : 'border-l-amber-500 border-slate-200 dark:border-slate-700 dark:border-l-amber-500'
-                    }
+                    layoutClassName="cursor-pointer space-y-2"
+                    borderClassName="border-slate-200 dark:border-slate-700"
                     hoverClassName="hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600"
                   >
                     <Box layoutClassName="flex items-start justify-between gap-2">
                       <Typography size="sm" layoutClassName="min-w-0 break-words font-semibold">
                         {row.supplierNameRaw || 'Không rõ NCC'}
-                      </Typography>
-                      <Typography
-                        as="span"
-                        size="xs"
-                        layoutClassName="inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5"
-                        backgroundClassName={
-                          isReconciled
-                            ? 'bg-emerald-100 dark:bg-emerald-950/50'
-                            : 'bg-amber-100 dark:bg-amber-950/50'
-                        }
-                        textClassName={
-                          isReconciled
-                            ? 'text-[10px] font-medium text-emerald-700 dark:text-emerald-300'
-                            : 'text-[10px] font-medium text-amber-700 dark:text-amber-300'
-                        }
-                      >
-                        {isReconciled ? 'Đã đối soát' : 'Chưa đối soát'}
                       </Typography>
                     </Box>
                     <Typography size="lg" layoutClassName="font-bold text-primary-700 dark:text-primary-300">
