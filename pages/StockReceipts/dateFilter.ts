@@ -45,7 +45,9 @@ export const filterByPeriod = <T extends { lastReceiptDate?: string }>(
   return arr.filter((x) => {
     if (!x.lastReceiptDate) return false;
     const d = parseDateValue(x.lastReceiptDate);
-    if (Number.isNaN(d.getTime())) return false;
+    // parseDateValue trả null khi chuỗi không parse được (vd receiptDate OCR/nhập
+    // tay dạng "29/06/2026") → phải guard, nếu không d.getTime() ném lỗi → vỡ trang.
+    if (!d || Number.isNaN(d.getTime())) return false;
     if (d < from) return false;
     if (to && d > to) return false;
     return true;
