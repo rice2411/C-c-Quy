@@ -19,6 +19,10 @@ export interface ShareableOrderCardProps {
   qrUrl: string;
   /** Nội dung chuyển khoản = mã đơn. */
   description: string;
+  /** Thông tin tài khoản (lấy động từ tài khoản đang active — khớp với QR). */
+  bankCode?: string;
+  accountNumber?: string;
+  accountHolder?: string;
 }
 
 /**
@@ -28,7 +32,7 @@ export interface ShareableOrderCardProps {
  * KHÔNG có nút thao tác. Sản phẩm hiển thị dạng text (không thumbnail) để né CORS ảnh.
  */
 const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardProps>(
-  ({ order, subtotal, finalTotal, shippingCost, surchargeLabel, deliveryLabel, paymentLabel, qrUrl, description }, ref) => {
+  ({ order, subtotal, finalTotal, shippingCost, surchargeLabel, deliveryLabel, paymentLabel, qrUrl, description, bankCode, accountNumber, accountHolder }, ref) => {
     const c = order.customer;
     const rowClass = 'flex items-center justify-between gap-3';
     const deliveryDateText = order.deliveryDate
@@ -134,8 +138,8 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
           </Box>
           <Box layoutClassName="flex-1 space-y-0.5 text-sm">
             <Typography as="p" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-400">Chuyển khoản</Typography>
-            <Typography as="p" size="sm" textClassName="text-slate-700"><Typography as="span" size="sm" layoutClassName="font-bold">BIDV</Typography> · 96247HTTH1308</Typography>
-            <Typography as="p" size="sm" layoutClassName="font-bold" textClassName="text-slate-800">TON THAT ANH MINH</Typography>
+            <Typography as="p" size="sm" textClassName="text-slate-700"><Typography as="span" size="sm" layoutClassName="font-bold">{bankCode || '—'}</Typography>{accountNumber ? ` · ${accountNumber}` : ''}</Typography>
+            <Typography as="p" size="sm" layoutClassName="font-bold" textClassName="text-slate-800">{(accountHolder || '').toUpperCase()}</Typography>
             <Typography as="p" size="sm" textClassName="text-slate-600">Số tiền: <Typography as="span" size="sm" layoutClassName="font-bold" textClassName="text-primary-600">{formatVND(finalTotal)}</Typography></Typography>
             <Typography as="p" size="sm" textClassName="text-slate-600">Nội dung: <Typography as="span" size="sm" layoutClassName="font-mono font-bold" textClassName="text-slate-800">{description}</Typography></Typography>
           </Box>
