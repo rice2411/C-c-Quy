@@ -48,17 +48,17 @@ const BillImportModal: React.FC<BillImportModalProps> = ({
 
   const tree = (
     <Box
-      layoutClassName="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto p-3 sm:p-6"
+      layoutClassName="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6"
       backgroundClassName="bg-slate-900/60"
     >
       <Card
         padding="none"
         borderClassName="border-slate-200 dark:border-slate-700"
-        layoutClassName="w-full max-w-5xl my-4"
+        layoutClassName="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden"
       >
-        {/* Sticky header */}
+        {/* Header cố định (không cuộn) — nền đặc, không lòi nội dung phía sau */}
         <Box
-          layoutClassName="sticky top-0 z-10 flex items-center justify-between gap-3 border-b px-5 py-3"
+          layoutClassName="flex shrink-0 items-center justify-between gap-3 border-b px-5 py-3"
           borderClassName="border-slate-200 dark:border-slate-700"
           backgroundClassName="bg-white dark:bg-slate-900"
         >
@@ -69,17 +69,19 @@ const BillImportModal: React.FC<BillImportModalProps> = ({
             type="button"
             aria-label="Đóng"
             onClick={onClose}
-            layoutClassName="flex h-9 w-9 items-center justify-center"
+            layoutClassName="flex h-9 w-9 shrink-0 items-center justify-center"
             roundedClassName="rounded-full"
-            textClassName="text-slate-500 dark:text-slate-300"
-            hoverClassName="hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
-           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
+            borderClassName="border border-slate-300 dark:border-slate-600"
+            backgroundClassName="bg-slate-100 dark:bg-slate-800"
+            textClassName="text-slate-700 dark:text-slate-200"
+            hoverClassName="hover:bg-slate-200 hover:text-slate-900 dark:hover:bg-slate-700 dark:hover:text-white"
+           variant="ghost" disableVariantHover disableVariantTextColor>
             <X className="h-5 w-5" />
           </Button>
         </Box>
 
-        {/* Body */}
-        <Box layoutClassName="space-y-4 p-4 sm:p-5">{children}</Box>
+        {/* Body cuộn bên trong */}
+        <Box layoutClassName="flex-1 space-y-4 overflow-y-auto p-4 sm:p-5">{children}</Box>
       </Card>
     </Box>
   );
