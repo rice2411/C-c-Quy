@@ -150,7 +150,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
 
   // (4) render
   return (
-    <Box layoutClassName="grid gap-4">
+    <Box layoutClassName="space-y-3">
       {onFileSelected ? (
         <>
           <input
@@ -231,16 +231,30 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
         </Card>
       ) : null}
 
-      <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
-        <Box layoutClassName="flex items-center justify-between gap-2">
-          <Box>
-            <Typography size="sm" layoutClassName="font-semibold">
-              Danh sách phiếu đã nhập
-            </Typography>
-            <Typography size="xs" variant="muted">
-              Bấm vào dòng để xem chi tiết bill và ảnh gốc.
-            </Typography>
-          </Box>
+      <StatsBanner
+        items={[
+          {
+            icon: ReceiptText,
+            label: t('billImport.statReceiptCount'),
+            value: String(stats.count),
+            accent: '#0ea5e9',
+          },
+          {
+            icon: TrendingUp,
+            label: t('billImport.statTotalAmount'),
+            value: formatVNDOrDash(stats.totalAmount),
+            accent: '#16a34a',
+          },
+        ]}
+      />
+      <FilterToolbar
+        search={receiptSearch}
+        onSearchChange={onReceiptSearchChange}
+        searchPlaceholder={t('billImport.receiptsSearch')}
+        period={period}
+        periodOptions={PERIOD_OPTIONS as ToolbarOption[]}
+        onPeriodChange={(v) => setPeriod(v as DatePeriod)}
+        actions={
           <Button
             type="button"
             variant="secondary"
@@ -253,35 +267,17 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
           >
             {receiptLoading ? 'Đang tải...' : 'Làm mới'}
           </Button>
-        </Box>
-        <FilterToolbar
-          search={receiptSearch}
-          onSearchChange={onReceiptSearchChange}
-          searchPlaceholder={t('billImport.receiptsSearch')}
-          period={period}
-          periodOptions={PERIOD_OPTIONS as ToolbarOption[]}
-          onPeriodChange={(v) => setPeriod(v as DatePeriod)}
-          onClearAll={() => {
-            setPeriod('all');
-            onReceiptSearchChange('');
-          }}
-        />
-        <StatsBanner
-          items={[
-            {
-              icon: ReceiptText,
-              label: t('billImport.statReceiptCount'),
-              value: String(stats.count),
-              accent: '#0ea5e9',
-            },
-            {
-              icon: TrendingUp,
-              label: t('billImport.statTotalAmount'),
-              value: formatVNDOrDash(stats.totalAmount),
-              accent: '#16a34a',
-            },
-          ]}
-        />
+        }
+        stats={
+          <Typography size="xs" variant="muted" layoutClassName="text-right">
+            {sortedReceipts.length} / {filteredReceipts.length} phiếu
+          </Typography>
+        }
+        onClearAll={() => {
+          setPeriod('all');
+          onReceiptSearchChange('');
+        }}
+      />
 
         {sortedReceipts.length === 0 ? (
           <Box
@@ -496,7 +492,6 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
             </Box>
           </>
         )}
-      </Card>
     </Box>
   );
 };

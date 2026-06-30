@@ -118,102 +118,106 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
       subtitle: `${m.importCount} lần · ${m.totalQty} sp · ${formatVNDOrDash(m.totalAmount)}`,
     }));
 
-  return (
-    <Box layoutClassName="grid gap-4">
-      <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
-        <Box layoutClassName="flex flex-wrap items-center justify-between gap-2">
-          <Typography size="sm" layoutClassName="font-semibold">
-            Nguyên vật liệu đã nhập
-          </Typography>
-          <Box layoutClassName="flex flex-wrap items-center gap-2">
-            {selected.size >= 2 ? (
-              <Button
-                type="button"
-                onClick={() => setMergeOpen(true)}
-                leftIcon={<GitMerge />}
-                iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                sizeClassName="px-3 py-1.5 text-xs"
-                backgroundClassName="bg-gradient-to-r from-primary-600 to-primary-600"
-                textClassName="font-semibold text-white"
-                roundedClassName="rounded-lg"
-                layoutClassName="inline-flex items-center gap-1.5"
-                disableVariantHover
-                disableVariantTextColor
-              >
-                Gộp {selected.size}
-              </Button>
-            ) : null}
-            {selected.size > 0 ? (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={clearSelection}
-                leftIcon={<X />}
-                iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                sizeClassName="px-2 py-1.5 text-xs"
-              >
-                Bỏ chọn
-              </Button>
-            ) : null}
-            <Button
-              type="button"
-              variant="secondary"
-              sizeClassName="px-3 py-1.5 text-xs"
-              onClick={() => void onRefresh()}
-              disabled={masterLoading}
-            >
-              {masterLoading ? 'Đang tải...' : 'Làm mới'}
-            </Button>
-          </Box>
-        </Box>
-        <StatsBanner
-          items={[
-            {
-              icon: Package,
-              label: 'Loại NVL',
-              value: String(periodFiltered.length),
-              accent: '#4abab9',
-            },
-            {
-              icon: ShoppingBag,
-              label: 'Lần nhập',
-              value: String(stats.totalCount),
-              accent: '#0ea5e9',
-            },
-            {
-              icon: TrendingUp,
-              label: 'Tổng chi',
-              value: formatVNDOrDash(stats.totalAmount),
-              accent: '#16a34a',
-            },
-          ]}
-        />
-        <FilterToolbar
-          search={materialSearch}
-          onSearchChange={onMaterialSearchChange}
-          searchPlaceholder={t('billImport.materialsSearch')}
-          period={period}
-          periodOptions={PERIOD_OPTIONS as any}
-          onPeriodChange={(v) => setPeriod(v as DatePeriod)}
-          sortBy={sortBy}
-          sortOptions={[
-            { value: 'recent', label: t('billImport.sort.recent') },
-            { value: 'amount', label: t('billImport.sort.amount') },
-            { value: 'count', label: t('billImport.sort.materialCount') },
-            { value: 'name', label: t('billImport.sort.name') },
-          ]}
-          onSortChange={(v) => setSortBy(v as any)}
-          onClearAll={() => { setPeriod('all'); onMaterialSearchChange(''); }}
-        />
-        {selected.size >= 1 ? (
-          <Typography size="xs" variant="muted">
-            Đã chọn {selected.size} mục.{' '}
-            {selected.size < 2 ? 'Chọn thêm để gộp.' : 'Bấm "Gộp" để hợp nhất.'}
-          </Typography>
-        ) : null}
+  // Nút hành động đặt trong toolbar (giống slot actions của trang Products).
+  const toolbarActions = (
+    <>
+      {selected.size >= 2 ? (
+        <Button
+          type="button"
+          onClick={() => setMergeOpen(true)}
+          leftIcon={<GitMerge />}
+          iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+          sizeClassName="px-3 py-1.5 text-xs"
+          backgroundClassName="bg-gradient-to-r from-primary-600 to-primary-600"
+          textClassName="font-semibold text-white"
+          roundedClassName="rounded-lg"
+          layoutClassName="inline-flex items-center gap-1.5"
+          disableVariantHover
+          disableVariantTextColor
+        >
+          Gộp {selected.size}
+        </Button>
+      ) : null}
+      {selected.size > 0 ? (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={clearSelection}
+          leftIcon={<X />}
+          iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+          sizeClassName="px-2 py-1.5 text-xs"
+        >
+          Bỏ chọn
+        </Button>
+      ) : null}
+      <Button
+        type="button"
+        variant="secondary"
+        sizeClassName="px-3 py-1.5 text-xs"
+        onClick={() => void onRefresh()}
+        disabled={masterLoading}
+      >
+        {masterLoading ? 'Đang tải...' : 'Làm mới'}
+      </Button>
+    </>
+  );
 
-        {/* ===== CARD GRID (mobile + desktop đồng nhất) ===== */}
-        <Box layoutClassName="max-h-[640px] overflow-auto p-1">
+  return (
+    <Box layoutClassName="space-y-3">
+      <StatsBanner
+        items={[
+          {
+            icon: Package,
+            label: 'Loại NVL',
+            value: String(periodFiltered.length),
+            accent: '#4abab9',
+          },
+          {
+            icon: ShoppingBag,
+            label: 'Lần nhập',
+            value: String(stats.totalCount),
+            accent: '#0ea5e9',
+          },
+          {
+            icon: TrendingUp,
+            label: 'Tổng chi',
+            value: formatVNDOrDash(stats.totalAmount),
+            accent: '#16a34a',
+          },
+        ]}
+      />
+      <FilterToolbar
+        search={materialSearch}
+        onSearchChange={onMaterialSearchChange}
+        searchPlaceholder={t('billImport.materialsSearch')}
+        period={period}
+        periodOptions={PERIOD_OPTIONS as any}
+        onPeriodChange={(v) => setPeriod(v as DatePeriod)}
+        sortBy={sortBy}
+        sortOptions={[
+          { value: 'recent', label: t('billImport.sort.recent') },
+          { value: 'amount', label: t('billImport.sort.amount') },
+          { value: 'count', label: t('billImport.sort.materialCount') },
+          { value: 'name', label: t('billImport.sort.name') },
+        ]}
+        onSortChange={(v) => setSortBy(v as any)}
+        actions={toolbarActions}
+        stats={
+          <Typography size="xs" variant="muted" layoutClassName="text-right">
+            {sortedMaterials.length} / {filteredMaterials.length} NVL
+          </Typography>
+        }
+        onClearAll={() => { setPeriod('all'); onMaterialSearchChange(''); }}
+      />
+      {selected.size >= 1 ? (
+        <Typography size="xs" variant="muted">
+          Đã chọn {selected.size} mục.{' '}
+          {selected.size < 2 ? 'Chọn thêm để gộp.' : 'Bấm "Gộp" để hợp nhất.'}
+        </Typography>
+      ) : null}
+
+      {/* ===== CARD GRID (mobile + desktop đồng nhất) ===== */}
+      <Box layoutClassName="max-h-[640px] overflow-auto p-1">
           {sortedMaterials.length === 0 ? (
             <EmptyState
               icon={<Package className="h-6 w-6" />}
@@ -293,7 +297,6 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
             </Box>
           )}
         </Box>
-      </Card>
 
       <MergeItemsModal
         open={mergeOpen}
