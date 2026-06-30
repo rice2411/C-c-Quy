@@ -6,9 +6,11 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 import type { ImportedSupplierSummary } from '@/types/billReceipt';
+import { SUPPLIER_CHANNELS } from '@/types/billReceipt';
 import { useStockReceiptMutations } from '@/hooks/queries/useStockReceiptQuery';
 import { formatDateISO } from '@/utils/format/dateUtil';
 
@@ -20,6 +22,7 @@ interface FormState {
   taxCode: string;
   address: string;
   category: string;
+  channel: string;
   notes: string;
 }
 
@@ -31,6 +34,7 @@ const emptyForm = (): FormState => ({
   taxCode: '',
   address: '',
   category: '',
+  channel: '',
   notes: '',
 });
 
@@ -42,6 +46,7 @@ const fromSupplier = (s: ImportedSupplierSummary): FormState => ({
   taxCode: s.taxCode || '',
   address: s.address || '',
   category: s.category || '',
+  channel: s.channel || '',
   notes: s.notes || '',
 });
 
@@ -129,6 +134,7 @@ const SupplierEditModal: React.FC<SupplierEditModalProps> = ({
           taxCode: form.taxCode,
           address: form.address,
           category: form.category,
+          channel: form.channel,
           notes: form.notes,
         },
       });
@@ -250,6 +256,23 @@ const SupplierEditModal: React.FC<SupplierEditModalProps> = ({
               placeholder="Số nhà, đường, quận, TP"
               layoutClassName="space-y-1 sm:col-span-2"
             />
+            <Box layoutClassName="space-y-1">
+              <Typography size="xs" variant="muted" layoutClassName="font-medium uppercase tracking-wide">
+                Loại
+              </Typography>
+              <Select
+                fullWidth
+                value={form.channel}
+                onChange={(e) => setField('channel', e.target.value)}
+              >
+                <option value="">Chưa phân loại</option>
+                {SUPPLIER_CHANNELS.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </Select>
+            </Box>
             <Field
               label="Danh mục"
               value={form.category}
