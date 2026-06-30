@@ -11,19 +11,49 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import Input from '@/components/ui/Input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-} from '@/components/ui/Table';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
+import { formatDateISO, parseDateValue } from '@/utils/format/dateUtil';
 import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/StockReceipts/MergeItemsModal';
 import EmptyState from '@/components/ui/EmptyState';
 
 import Checkbox from '@/components/ui/Checkbox';
+
+/** Mức độ "tươi mới" theo lần nhập cuối → màu xanh/vàng/đỏ. */
+const materialRecencyTier = (
+  lastReceiptDate?: string,
+): {
+  backgroundClassName: string;
+  borderClassName: string;
+  badgeBackgroundClassName: string;
+  badgeTextClassName: string;
+  label: string;
+} => {
+  const parsed = parseDateValue(lastReceiptDate);
+  const days = parsed ? Math.floor((Date.now() - parsed.getTime()) / 86_400_000) : Infinity;
+  if (days < 30)
+    return {
+      backgroundClassName: 'bg-emerald-50/60 dark:bg-emerald-950/20',
+      borderClassName: 'border-l-emerald-500 border-slate-200 dark:border-slate-700 dark:border-l-emerald-500',
+      badgeBackgroundClassName: 'bg-emerald-100 dark:bg-emerald-950/50',
+      badgeTextClassName: 'text-[10px] font-medium text-emerald-700 dark:text-emerald-300',
+      label: 'Mới nhập',
+    };
+  if (days <= 60)
+    return {
+      backgroundClassName: 'bg-amber-50/60 dark:bg-amber-950/20',
+      borderClassName: 'border-l-amber-500 border-slate-200 dark:border-slate-700 dark:border-l-amber-500',
+      badgeBackgroundClassName: 'bg-amber-100 dark:bg-amber-950/50',
+      badgeTextClassName: 'text-[10px] font-medium text-amber-700 dark:text-amber-300',
+      label: 'Khá lâu',
+    };
+  return {
+    backgroundClassName: 'bg-rose-50/50 dark:bg-rose-950/20',
+    borderClassName: 'border-l-rose-500 border-slate-200 dark:border-slate-700 dark:border-l-rose-500',
+    badgeBackgroundClassName: 'bg-rose-100 dark:bg-rose-950/50',
+    badgeTextClassName: 'text-[10px] font-medium text-rose-700 dark:text-rose-300',
+    label: 'Lâu chưa nhập',
+  };
+};
 export interface BillImportMaterialsTabProps {
   materialSearch: string;
   onMaterialSearchChange: (value: string) => void;
@@ -179,117 +209,87 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
           </Typography>
         ) : null}
 
-        {/* ===== MOBILE: card layout ===== */}
-        <Box layoutClassName="max-h-[60vh] space-y-2 overflow-auto md:hidden">
+        {/* ===== CARD GRID (mobile + desktop đồng nhất) ===== */}
+        <Box layoutClassName="max-h-[640px] overflow-auto p-1">
           {sortedMaterials.length === 0 ? (
             <EmptyState
               icon={<Package className="h-6 w-6" />}
               title="Không có nguyên vật liệu phù hợp."
             />
           ) : (
-            sortedMaterials.map((row) => {
-              const isChecked = selected.has(row.id);
-              return (
-                <Box
-                  key={`m-${row.id}`}
-                  layoutClassName={
-                    'flex gap-3 rounded-xl border p-3 ' +
-                    (isChecked
-                      ? 'border-primary-300 bg-primary-50/60 dark:border-primary-700 dark:bg-primary-950/20'
-                      : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900')
-                  }
-                >
-                  <Checkbox
-                    checked={isChecked}
-                    onChange={() => toggle(row.id)}
-                    borderClassName="mt-1 shrink-0 rounded border-slate-300"
-                    focusClassName="cursor-pointer text-primary-600 focus:ring-primary-500"
-                  />
-                  <Box layoutClassName="min-w-0 flex-1 space-y-1">
-                    <Typography size="sm" layoutClassName="font-semibold break-words">
-                      {row.name}
-                    </Typography>
-                    {row.lastSupplierName ? (
-                      <Typography size="xs" variant="muted" layoutClassName="truncate">
-                        🏭 {row.lastSupplierName}
-                      </Typography>
-                    ) : null}
-                    <Box layoutClassName="flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
-                      <Typography size="xs" variant="muted">
-                        Số lần:{' '}
-                        <Typography as="span" textClassName="text-slate-700 dark:text-slate-100 font-semibold">
-                          {row.importCount}
+            <Box layoutClassName="grid gap-3 p-1 sm:grid-cols-2 xl:grid-cols-3">
+              {sortedMaterials.map((row) => {
+                const isChecked = selected.has(row.id);
+                const tier = materialRecencyTier(row.lastReceiptDate);
+                return (
+                  <Card
+                    key={row.id}
+                    padding="md"
+                    layoutClassName={isChecked ? 'space-y-2' : 'space-y-2 border-l-4'}
+                    backgroundClassName={isChecked ? 'bg-primary-50/70 dark:bg-primary-950/30' : tier.backgroundClassName}
+                    borderClassName={
+                      isChecked
+                        ? 'border-2 border-primary-400 dark:border-primary-600'
+                        : tier.borderClassName
+                    }
+                  >
+                    <Box layoutClassName="flex items-start gap-2">
+                      <Checkbox
+                        checked={isChecked}
+                        onChange={() => toggle(row.id)}
+                        borderClassName="mt-1 shrink-0 rounded border-slate-300"
+                        focusClassName="cursor-pointer text-primary-600 focus:ring-primary-500"
+                      />
+                      <Box layoutClassName="min-w-0 flex-1">
+                        <Typography size="sm" layoutClassName="break-words font-semibold">
+                          {row.name}
                         </Typography>
-                      </Typography>
-                      <Typography size="xs" variant="muted">
-                        SL:{' '}
-                        <Typography as="span" textClassName="text-slate-700 dark:text-slate-100 font-semibold">
-                          {row.totalQty}
-                        </Typography>
-                      </Typography>
-                      <Typography size="xs" variant="muted">
-                        Tổng:{' '}
-                        <Typography as="span" textClassName="text-slate-700 dark:text-slate-100 font-semibold">
-                          {formatVNDOrDash(row.totalAmount)}
-                        </Typography>
+                        {row.lastSupplierName ? (
+                          <Typography size="xs" variant="muted" layoutClassName="truncate">
+                            🏭 {row.lastSupplierName}
+                          </Typography>
+                        ) : null}
+                      </Box>
+                      <Typography
+                        as="span"
+                        size="xs"
+                        layoutClassName="inline-flex shrink-0 items-center rounded-full px-2 py-0.5"
+                        backgroundClassName={tier.badgeBackgroundClassName}
+                        textClassName={tier.badgeTextClassName}
+                      >
+                        {tier.label}
                       </Typography>
                     </Box>
-                  </Box>
-                </Box>
-              );
-            })
-          )}
-        </Box>
 
-        {/* ===== DESKTOP: table layout ===== */}
-        <Box layoutClassName="hidden max-h-[480px] overflow-auto rounded-lg border border-slate-100 dark:border-slate-800 md:block">
-          {sortedMaterials.length === 0 ? (
-            <EmptyState
-              icon={<Package className="h-6 w-6" />}
-              title="Không có nguyên vật liệu phù hợp."
-            />
-          ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell layoutClassName="w-10"></TableHeaderCell>
-                  <TableHeaderCell>Tên</TableHeaderCell>
-                  <TableHeaderCell>Đơn vị</TableHeaderCell>
-                  <TableHeaderCell>Nhà cung cấp</TableHeaderCell>
-                  <TableHeaderCell>Số lần</TableHeaderCell>
-                  <TableHeaderCell>Tổng SL</TableHeaderCell>
-                  <TableHeaderCell>Giá nhập gần nhất</TableHeaderCell>
-                  <TableHeaderCell>Tổng tiền</TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sortedMaterials.map((row) => {
-                  const isChecked = selected.has(row.id);
-                  return (
-                    <TableRow
-                      key={`d-${row.id}`}
-                      layoutClassName={isChecked ? 'bg-primary-50/60 dark:bg-primary-950/20' : undefined}
-                    >
-                      <TableCell>
-                        <Checkbox
-                          checked={isChecked}
-                          onChange={() => toggle(row.id)}
-                          borderClassName="rounded border-slate-300"
-                          focusClassName="cursor-pointer text-primary-600 focus:ring-primary-500"
-                        />
-                      </TableCell>
-                      <TableCell>{row.name}</TableCell>
-                      <TableCell>{row.canonicalUnit || '—'}</TableCell>
-                      <TableCell>{row.lastSupplierName || '—'}</TableCell>
-                      <TableCell>{row.importCount}</TableCell>
-                      <TableCell>{row.totalQty}</TableCell>
-                      <TableCell>{formatVNDOrDash(row.lastUnitPrice)}</TableCell>
-                      <TableCell>{formatVNDOrDash(row.totalAmount)}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                    <Box layoutClassName="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                      <Typography size="lg" layoutClassName="font-bold text-primary-700 dark:text-primary-300">
+                        {row.totalQty}
+                      </Typography>
+                      <Typography size="xs" variant="muted">
+                        {row.canonicalUnit || ''}
+                      </Typography>
+                    </Box>
+
+                    <Box layoutClassName="flex flex-wrap gap-x-3 gap-y-0.5">
+                      <Typography size="xs" variant="muted">
+                        Giá gần nhất:{' '}
+                        <Typography as="span" textClassName="font-semibold text-slate-700 dark:text-slate-100">
+                          {formatVNDOrDash(row.lastUnitPrice)}
+                        </Typography>
+                      </Typography>
+                      <Typography size="xs" variant="muted">
+                        {row.importCount} lần nhập
+                      </Typography>
+                      {row.lastReceiptDate ? (
+                        <Typography size="xs" variant="muted">
+                          🕒 {formatDateISO(row.lastReceiptDate)}
+                        </Typography>
+                      ) : null}
+                    </Box>
+                  </Card>
+                );
+              })}
+            </Box>
           )}
         </Box>
       </Card>

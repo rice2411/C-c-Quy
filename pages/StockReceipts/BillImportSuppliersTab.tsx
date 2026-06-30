@@ -26,14 +26,6 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import Input from '@/components/ui/Input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-} from '@/components/ui/Table';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import SupplierEditModal from '@/pages/StockReceipts/SupplierEditModal';
 import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/StockReceipts/MergeItemsModal';
@@ -41,6 +33,31 @@ import EmptyState from '@/components/ui/EmptyState';
 
 import Checkbox from '@/components/ui/Checkbox';
 import { formatDateISO } from '@/utils/format/dateUtil';
+/** Bậc màu nền/viền theo tổng chi (VND) — primary đậm dần. */
+const supplierAmountTier = (
+  amount: number,
+): { backgroundClassName: string; borderClassName: string } => {
+  if (amount >= 20_000_000)
+    return {
+      backgroundClassName: 'bg-primary-100 dark:bg-primary-900/40',
+      borderClassName: 'border-primary-400 dark:border-primary-600',
+    };
+  if (amount >= 5_000_000)
+    return {
+      backgroundClassName: 'bg-primary-50 dark:bg-primary-950/40',
+      borderClassName: 'border-primary-300 dark:border-primary-700',
+    };
+  if (amount >= 1_000_000)
+    return {
+      backgroundClassName: 'bg-primary-50/50 dark:bg-primary-950/20',
+      borderClassName: 'border-primary-200 dark:border-primary-800',
+    };
+  return {
+    backgroundClassName: 'bg-white dark:bg-slate-900',
+    borderClassName: 'border-slate-200 dark:border-slate-700',
+  };
+};
+
 export interface BillImportSuppliersTabProps {
   supplierSearch: string;
   onSupplierSearchChange: (value: string) => void;
@@ -200,342 +217,145 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
           </Typography>
         ) : null}
 
-        {/* ===== MOBILE: card layout ===== */}
-        <Box layoutClassName="max-h-[60vh] space-y-2 overflow-auto md:hidden">
+        {/* ===== CARD GRID (mobile + desktop đồng nhất) ===== */}
+        <Box layoutClassName="max-h-[640px] overflow-auto p-1">
           {sortedSuppliers.length === 0 ? (
             <EmptyState
               icon={<Truck className="h-6 w-6" />}
               title="Không có nhà cung cấp phù hợp."
             />
           ) : (
-            sortedSuppliers.map((row) => {
-              const isChecked = selected.has(row.id);
-              const open = expanded === row.id;
-              return (
-                <Box
-                  key={`m-${row.id}`}
-                  layoutClassName={
-                    'rounded-xl border p-3 space-y-2 ' +
-                    (isChecked
-                      ? 'border-primary-300 bg-primary-50/60 dark:border-primary-700 dark:bg-primary-950/20'
-                      : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900')
-                  }
-                >
-                  <Box layoutClassName="flex gap-3">
-                    <Checkbox
-                      checked={isChecked}
-                      onChange={() => toggleSelect(row.id)}
-                      borderClassName="mt-1 shrink-0 rounded border-slate-300"
-                      focusClassName="cursor-pointer text-primary-600 focus:ring-primary-500"
-                    />
-                    <Box layoutClassName="min-w-0 flex-1 space-y-1">
-                      <Typography size="sm" layoutClassName="font-semibold break-words">
-                        {row.name}
-                      </Typography>
-                      {row.category ? (
-                        <Typography
-                          as="span"
-                          size="xs"
-                          layoutClassName="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-700"
-                          textClassName="text-[10px] text-slate-700 dark:text-slate-200"
-                        >
-                          <Tag className="h-3 w-3" /> {row.category}
+            <Box layoutClassName="grid gap-3 p-1 sm:grid-cols-2 xl:grid-cols-3">
+              {sortedSuppliers.map((row) => {
+                const isChecked = selected.has(row.id);
+                const open = expanded === row.id;
+                const tier = supplierAmountTier(row.totalAmount || 0);
+                return (
+                  <Card
+                    key={row.id}
+                    padding="md"
+                    layoutClassName="space-y-2"
+                    backgroundClassName={isChecked ? 'bg-primary-50/70 dark:bg-primary-950/30' : tier.backgroundClassName}
+                    borderClassName={
+                      isChecked
+                        ? 'border-2 border-primary-400 dark:border-primary-600'
+                        : tier.borderClassName
+                    }
+                  >
+                    <Box layoutClassName="flex items-start gap-2">
+                      <Checkbox
+                        checked={isChecked}
+                        onChange={() => toggleSelect(row.id)}
+                        borderClassName="mt-1 shrink-0 rounded border-slate-300"
+                        focusClassName="cursor-pointer text-primary-600 focus:ring-primary-500"
+                      />
+                      <Box layoutClassName="min-w-0 flex-1">
+                        <Typography size="sm" layoutClassName="break-words font-semibold">
+                          {row.name}
                         </Typography>
-                      ) : null}
-                      {row.phone || row.contactPerson ? (
-                        <Box layoutClassName="flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
-                          {row.phone ? <Typography as="span" size="xs">📞 {row.phone}</Typography> : null}
-                          {row.contactPerson ? (
-                            <Typography as="span" size="xs">👤 {row.contactPerson}</Typography>
-                          ) : null}
-                        </Box>
-                      ) : null}
-                      <Box layoutClassName="flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
-                        <Typography size="xs" variant="muted">
-                          Phiếu:{' '}
-                          <Typography as="span" textClassName="text-slate-700 dark:text-slate-100 font-semibold">
-                            {row.receiptCount}
-                          </Typography>
-                        </Typography>
-                        <Typography size="xs" variant="muted">
-                          Tổng:{' '}
-                          <Typography as="span" textClassName="text-slate-700 dark:text-slate-100 font-semibold">
-                            {formatVNDOrDash(row.totalAmount)}
-                          </Typography>
-                        </Typography>
-                        {row.lastReceiptDate ? (
-                          <Typography size="xs" variant="muted">
-                            🕒 {formatDateISO(row.lastReceiptDate)}
+                        {row.category ? (
+                          <Typography
+                            as="span"
+                            size="xs"
+                            layoutClassName="mt-0.5 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-700"
+                            textClassName="text-[10px] text-slate-700 dark:text-slate-200"
+                          >
+                            <Tag className="h-3 w-3" /> {row.category}
                           </Typography>
                         ) : null}
                       </Box>
                     </Box>
-                  </Box>
-                  <Box layoutClassName="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      sizeClassName="px-2 py-1 text-xs"
-                      onClick={() => setExpanded(open ? null : row.id)}
-                      leftIcon={open ? <ChevronDown /> : <ChevronRight />}
-                      iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                      layoutClassName="inline-flex items-center gap-1"
-                    >
-                      {open ? 'Thu gọn' : 'Chi tiết'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      sizeClassName="px-2 py-1 text-xs"
-                      onClick={() => setEditing(row)}
-                      leftIcon={<Pencil />}
-                      iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                      layoutClassName="inline-flex items-center gap-1"
-                    >
-                      Sửa
-                    </Button>
-                  </Box>
-                  {open ? (
-                    <Box
-                      layoutClassName="grid gap-2 rounded-md p-2 text-xs"
-                      backgroundClassName="bg-slate-50 dark:bg-slate-800/50"
-                    >
-                      {row.email ? (
-                        <Box layoutClassName="flex items-center gap-1.5">
-                          <Mail className="h-3 w-3 text-slate-400" /> {row.email}
-                        </Box>
-                      ) : null}
-                      {row.taxCode ? (
-                        <Box layoutClassName="flex items-center gap-1.5">
-                          <Tag className="h-3 w-3 text-slate-400" /> MST: {row.taxCode}
-                        </Box>
-                      ) : null}
-                      {row.address ? (
-                        <Box layoutClassName="flex items-start gap-1.5">
-                          <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-slate-400" />
-                          <Typography as="span" layoutClassName="break-words">{row.address}</Typography>
-                        </Box>
-                      ) : null}
-                      {row.notes ? (
-                        <Box
-                          layoutClassName="rounded p-1.5"
-                          backgroundClassName="bg-amber-50 dark:bg-amber-950/40"
-                        >
-                          💬 {row.notes}
-                        </Box>
-                      ) : null}
-                      {!row.email && !row.taxCode && !row.address && !row.notes ? (
+
+                    <Typography size="lg" layoutClassName="font-bold text-primary-700 dark:text-primary-300">
+                      {formatVNDOrDash(row.totalAmount)}
+                    </Typography>
+
+                    <Box layoutClassName="flex flex-wrap gap-x-3 gap-y-0.5">
+                      <Typography size="xs" variant="muted">
+                        {row.receiptCount} phiếu
+                      </Typography>
+                      {row.lastReceiptDate ? (
                         <Typography size="xs" variant="muted">
-                          — Không có thông tin bổ sung —
+                          🕒 {formatDateISO(row.lastReceiptDate)}
+                        </Typography>
+                      ) : null}
+                      {row.phone ? (
+                        <Typography size="xs" variant="muted">
+                          📞 {row.phone}
                         </Typography>
                       ) : null}
                     </Box>
-                  ) : null}
-                </Box>
-              );
-            })
-          )}
-        </Box>
 
-        {/* ===== DESKTOP: table layout ===== */}
-        <Box layoutClassName="hidden max-h-[560px] overflow-auto rounded-lg border border-slate-100 dark:border-slate-800 md:block">
-          {sortedSuppliers.length === 0 ? (
-            <EmptyState
-              icon={<Truck className="h-6 w-6" />}
-              title="Không có nhà cung cấp phù hợp."
-            />
-          ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableHeaderCell layoutClassName="w-10"></TableHeaderCell>
-                  <TableHeaderCell layoutClassName="w-8"></TableHeaderCell>
-                  <TableHeaderCell>Tên</TableHeaderCell>
-                  <TableHeaderCell>Danh mục</TableHeaderCell>
-                  <TableHeaderCell>Liên hệ</TableHeaderCell>
-                  <TableHeaderCell>Số phiếu</TableHeaderCell>
-                  <TableHeaderCell>Tổng tiền</TableHeaderCell>
-                  <TableHeaderCell>Lần cuối</TableHeaderCell>
-                  <TableHeaderCell layoutClassName="w-20 text-right">Thao tác</TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {sortedSuppliers.map((row) => {
-                  const open = expanded === row.id;
-                  const isChecked = selected.has(row.id);
-                  return (
-                    <React.Fragment key={`d-${row.id}`}>
-                      <TableRow
-                        layoutClassName={isChecked ? 'bg-primary-50/60 dark:bg-primary-950/20' : undefined}
+                    <Box layoutClassName="flex gap-2 border-t border-slate-100 pt-2 dark:border-slate-700/60">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        sizeClassName="px-2 py-1 text-xs"
+                        onClick={() => setExpanded(open ? null : row.id)}
+                        leftIcon={open ? <ChevronDown /> : <ChevronRight />}
+                        iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                        layoutClassName="inline-flex items-center gap-1"
                       >
-                        <TableCell>
-                          <Checkbox
-                            checked={isChecked}
-                            onChange={() => toggleSelect(row.id)}
-                            borderClassName="rounded border-slate-300"
-                            focusClassName="cursor-pointer text-primary-600 focus:ring-primary-500"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            type="button"
-                            onClick={() => setExpanded(open ? null : row.id)}
-                            roundedClassName="rounded"
-                            sizeClassName="p-0.5"
-                            textClassName="text-slate-400"
-                            hoverClassName="hover:text-slate-700 dark:hover:text-slate-200"
-                            aria-label={open ? 'Thu gọn' : 'Mở rộng'}
-                           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
-                            {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                          </Button>
-                        </TableCell>
-                        <TableCell>
-                          <Box layoutClassName="flex flex-col">
-                            <Typography size="sm" layoutClassName="font-medium">
-                              {row.name}
-                            </Typography>
-                            {row.address ? (
-                              <Typography size="xs" variant="muted" layoutClassName="truncate">
-                                {row.address}
-                              </Typography>
-                            ) : null}
+                        {open ? 'Thu gọn' : 'Chi tiết'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        sizeClassName="px-2 py-1 text-xs"
+                        onClick={() => setEditing(row)}
+                        leftIcon={<Pencil />}
+                        iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                        layoutClassName="inline-flex items-center gap-1"
+                      >
+                        Sửa
+                      </Button>
+                    </Box>
+
+                    {open ? (
+                      <Box
+                        layoutClassName="grid gap-2 rounded-md p-2 text-xs"
+                        backgroundClassName="bg-slate-50 dark:bg-slate-800/50"
+                      >
+                        <Box layoutClassName="flex items-center gap-1.5">
+                          <Phone className="h-3 w-3 shrink-0 text-slate-400" />
+                          <Typography as="span" size="xs">{row.phone || '—'}</Typography>
+                        </Box>
+                        <Box layoutClassName="flex items-center gap-1.5">
+                          <User className="h-3 w-3 shrink-0 text-slate-400" />
+                          <Typography as="span" size="xs">{row.contactPerson || '—'}</Typography>
+                        </Box>
+                        {row.email ? (
+                          <Box layoutClassName="flex items-center gap-1.5">
+                            <Mail className="h-3 w-3 shrink-0 text-slate-400" />
+                            <Typography as="span" size="xs">{row.email}</Typography>
                           </Box>
-                        </TableCell>
-                        <TableCell>
-                          {row.category ? (
-                            <Typography
-                              as="span"
-                              size="xs"
-                              layoutClassName="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-700"
-                              textClassName="text-xs text-slate-700 dark:text-slate-200"
-                            >
-                              <Tag className="h-3 w-3" /> {row.category}
-                            </Typography>
-                          ) : (
-                            <Typography size="xs" variant="muted">—</Typography>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Box layoutClassName="flex flex-col text-xs">
-                            {row.phone ? <Typography as="span" size="xs">📞 {row.phone}</Typography> : null}
-                            {row.contactPerson ? (
-                              <Typography as="span" size="xs">👤 {row.contactPerson}</Typography>
-                            ) : null}
-                            {!row.phone && !row.contactPerson ? (
-                              <Typography size="xs" variant="muted">—</Typography>
-                            ) : null}
+                        ) : null}
+                        {row.taxCode ? (
+                          <Box layoutClassName="flex items-center gap-1.5">
+                            <Tag className="h-3 w-3 shrink-0 text-slate-400" />
+                            <Typography as="span" size="xs">MST: {row.taxCode}</Typography>
                           </Box>
-                        </TableCell>
-                        <TableCell>{row.receiptCount}</TableCell>
-                        <TableCell>{formatVNDOrDash(row.totalAmount)}</TableCell>
-                        <TableCell>
-                          <Typography size="xs" variant="muted">
-                            {row.lastReceiptDate ? formatDateISO(row.lastReceiptDate) : '—'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Box layoutClassName="flex justify-end">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              sizeClassName="px-2 py-1 text-xs"
-                              onClick={() => setEditing(row)}
-                              leftIcon={<Pencil />}
-                              iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                              layoutClassName="inline-flex items-center gap-1"
-                            >
-                              Sửa
-                            </Button>
+                        ) : null}
+                        {row.address ? (
+                          <Box layoutClassName="flex items-start gap-1.5">
+                            <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-slate-400" />
+                            <Typography as="span" size="xs" layoutClassName="break-words">{row.address}</Typography>
                           </Box>
-                        </TableCell>
-                      </TableRow>
-                      {open ? (
-                        <TableRow>
-                          <TableCell colSpan={9}>
-                            <Box
-                              layoutClassName="grid gap-3 rounded-md p-3 sm:grid-cols-2 lg:grid-cols-3"
-                              backgroundClassName="bg-slate-50 dark:bg-slate-800/50"
-                            >
-                              <Box layoutClassName="flex items-start gap-2 text-xs">
-                                <Phone className="mt-0.5 h-3.5 w-3.5 text-slate-400" />
-                                <Box>
-                                  <Typography size="xs" variant="muted" layoutClassName="font-medium uppercase">
-                                    SĐT
-                                  </Typography>
-                                  <Typography size="sm">{row.phone || '—'}</Typography>
-                                </Box>
-                              </Box>
-                              <Box layoutClassName="flex items-start gap-2 text-xs">
-                                <User className="mt-0.5 h-3.5 w-3.5 text-slate-400" />
-                                <Box>
-                                  <Typography size="xs" variant="muted" layoutClassName="font-medium uppercase">
-                                    Người liên hệ
-                                  </Typography>
-                                  <Typography size="sm">{row.contactPerson || '—'}</Typography>
-                                </Box>
-                              </Box>
-                              <Box layoutClassName="flex items-start gap-2 text-xs">
-                                <Mail className="mt-0.5 h-3.5 w-3.5 text-slate-400" />
-                                <Box>
-                                  <Typography size="xs" variant="muted" layoutClassName="font-medium uppercase">
-                                    Email
-                                  </Typography>
-                                  <Typography size="sm">{row.email || '—'}</Typography>
-                                </Box>
-                              </Box>
-                              <Box layoutClassName="flex items-start gap-2 text-xs">
-                                <Tag className="mt-0.5 h-3.5 w-3.5 text-slate-400" />
-                                <Box>
-                                  <Typography size="xs" variant="muted" layoutClassName="font-medium uppercase">
-                                    MST
-                                  </Typography>
-                                  <Typography size="sm">{row.taxCode || '—'}</Typography>
-                                </Box>
-                              </Box>
-                              <Box layoutClassName="flex items-start gap-2 text-xs sm:col-span-2">
-                                <MapPin className="mt-0.5 h-3.5 w-3.5 text-slate-400" />
-                                <Box>
-                                  <Typography size="xs" variant="muted" layoutClassName="font-medium uppercase">
-                                    Địa chỉ
-                                  </Typography>
-                                  <Typography size="sm">{row.address || '—'}</Typography>
-                                </Box>
-                              </Box>
-                              {row.notes ? (
-                                <Box
-                                  layoutClassName="rounded-md p-2 text-xs sm:col-span-2 lg:col-span-3"
-                                  backgroundClassName="bg-amber-50 dark:bg-amber-950/40"
-                                  borderClassName="border border-amber-200 dark:border-amber-800"
-                                >
-                                  <Typography size="xs" variant="muted" layoutClassName="font-medium uppercase">
-                                    Ghi chú
-                                  </Typography>
-                                  <Typography size="sm">{row.notes}</Typography>
-                                </Box>
-                              ) : null}
-                              <Box layoutClassName="flex justify-end sm:col-span-2 lg:col-span-3">
-                                <Button
-                                  type="button"
-                                  variant="primary"
-                                  sizeClassName="px-3 py-1.5 text-xs"
-                                  onClick={() => setEditing(row)}
-                                  leftIcon={<Pencil />}
-                                  iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                                  layoutClassName="inline-flex items-center gap-1.5"
-                                  disableVariantHover
-                                >
-                                  Sửa thông tin NCC
-                                </Button>
-                              </Box>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ) : null}
-                    </React.Fragment>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        ) : null}
+                        {row.notes ? (
+                          <Box
+                            layoutClassName="rounded p-1.5"
+                            backgroundClassName="bg-amber-50 dark:bg-amber-950/40"
+                          >
+                            <Typography as="span" size="xs">💬 {row.notes}</Typography>
+                          </Box>
+                        ) : null}
+                      </Box>
+                    ) : null}
+                  </Card>
+                );
+              })}
+            </Box>
           )}
         </Box>
       </Card>

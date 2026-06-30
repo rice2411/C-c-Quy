@@ -88,6 +88,8 @@ export interface SavedStockReceiptSummary {
   currency: string;
   productLineCount: number;
   createdAt?: string;
+  /** Đã đối soát với sao kê/thực tế hay chưa (BE bổ sung song song). */
+  reconciled?: boolean;
 }
 
 export interface SavedStockReceiptDetail extends SavedStockReceiptSummary {
