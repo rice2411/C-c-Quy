@@ -4,11 +4,13 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
+import { useLanguage } from '@/contexts/LanguageContext';
 import type { ImportedSupplierSummary } from '@/types/billReceipt';
 import { normalizeSearchText } from '@/utils/format/stringUtil';
 import { formatDateISO } from '@/utils/format/dateUtil';
 
 const MAX_RESULTS = 8;
+const MAX_QUICK_CHIPS = 6;
 const moneyFmt = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
 
 export interface SupplierPickerProps {
@@ -28,6 +30,7 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
   suppliers,
   onChange,
 }) => {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -75,6 +78,28 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
       .sort((a, b) => b.score - a.score || (b.s.receiptCount - a.s.receiptCount));
     return scored.slice(0, MAX_RESULTS).map((x) => x.s);
   }, [rawName, suppliers, selectedSupplier, selectedId]);
+
+  // Chip "NCC hay dùng": top theo số phiếu (desc), tiebreak lần nhập mới hơn trước.
+  const topSuppliers = useMemo(() => {
+    return [...suppliers]
+      .sort((a, b) => {
+        if (b.receiptCount !== a.receiptCount) return b.receiptCount - a.receiptCount;
+        const ad = a.lastReceiptDate ? new Date(a.lastReceiptDate).getTime() : 0;
+        const bd = b.lastReceiptDate ? new Date(b.lastReceiptDate).getTime() : 0;
+        return bd - ad;
+      })
+      .slice(0, MAX_QUICK_CHIPS);
+  }, [suppliers]);
+
+  // Chỉ hiện chip khi CHƯA gõ query (rỗng hoặc đang = tên NCC đã chọn) để không che kết quả search.
+  const showQuickChips = useMemo(() => {
+    if (topSuppliers.length === 0) return false;
+    const q = normalizeSearchText(rawName);
+    return (
+      !q ||
+      Boolean(selectedSupplier && normalizeSearchText(selectedSupplier.name) === q)
+    );
+  }, [topSuppliers.length, rawName, selectedSupplier]);
 
   const handlePickExisting = (s: ImportedSupplierSummary) => {
     onChange({ id: s.id, name: s.name, supplier: s });
@@ -167,6 +192,61 @@ const SupplierPicker: React.FC<SupplierPickerProps> = ({
           </Box>
         )}
       </Box>
+
+      {showQuickChips ? (
+        <Box layoutClassName="mt-2 flex flex-col gap-1.5">
+          <Typography
+            size="xs"
+            variant="muted"
+            layoutClassName="font-medium uppercase tracking-wide"
+          >
+            {t('billImport.quickPickSuppliers')}
+          </Typography>
+          <Box layoutClassName="flex flex-wrap gap-1.5">
+            {topSuppliers.map((s) => {
+              const isCurrent = s.id === selectedId;
+              return (
+                <Button
+                  type="button"
+                  key={s.id}
+                  onClick={() => handlePickExisting(s)}
+                  layoutClassName="inline-flex max-w-[12rem] items-center gap-1"
+                  sizeClassName="px-2.5 py-1 text-xs"
+                  roundedClassName="rounded-full"
+                  borderClassName={
+                    isCurrent
+                      ? 'border border-emerald-400 dark:border-emerald-600'
+                      : 'border border-slate-200 dark:border-slate-700'
+                  }
+                  backgroundClassName={
+                    isCurrent
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40'
+                      : 'bg-white dark:bg-slate-800'
+                  }
+                  textClassName={
+                    isCurrent
+                      ? 'text-emerald-800 dark:text-emerald-200'
+                      : 'text-slate-700 dark:text-slate-200'
+                  }
+                  hoverClassName={
+                    isCurrent
+                      ? 'hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
+                      : 'hover:bg-slate-50 dark:hover:bg-slate-700/60'
+                  }
+                  variant="ghost"
+                  disableVariantHover
+                  disableVariantTextColor
+                >
+                  {isCurrent ? <Check className="h-3 w-3 shrink-0" /> : null}
+                  <Typography as="span" layoutClassName="truncate" textClassName="font-medium">
+                    {s.name}
+                  </Typography>
+                </Button>
+              );
+            })}
+          </Box>
+        </Box>
+      ) : null}
 
       {open && (filtered.length > 0 || showCreateRow) ? (
         <Box

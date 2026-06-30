@@ -1,6 +1,8 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   Check,
+  ChevronDown,
+  ChevronUp,
   Circle,
   CreditCard,
   FileText,
@@ -121,6 +123,8 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
 }) => {
   const { t } = useLanguage();
   const manualImageInputRef = useRef<HTMLInputElement>(null);
+  const [showMore, setShowMore] = useState(false);
+  const [showOcr, setShowOcr] = useState(false);
 
   const moneyFmt = useMemo(
     () => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }),
@@ -275,68 +279,75 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
       ) : null}
 
       {validation ? (
-        <Card
-          padding="md"
+        <Box
+          layoutClassName="inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1"
           borderClassName="border-emerald-200 dark:border-emerald-800"
           backgroundClassName="bg-emerald-50/80 dark:bg-emerald-950/30"
-          layoutClassName="space-y-2"
+          title={`${t('billImport.validationHeuristic').replace('{{pct}}', String(Math.round(validation.heuristicScore * 100)))} — ${validation.heuristicNoteVi}\n${validation.reasonVi}`}
         >
-          <Typography size="sm" layoutClassName="font-semibold text-emerald-900 dark:text-emerald-200">
-            {t('billImport.validationTitle')}
-          </Typography>
-          <Typography size="sm" textClassName="text-emerald-800 dark:text-emerald-100">
+          <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
+          <Typography size="xs" textClassName="font-medium text-emerald-800 dark:text-emerald-100">
             {t('billImport.validationConfidence').replace('{{pct}}', String(Math.round(validation.confidence * 100)))}
           </Typography>
-          <Typography size="xs" variant="muted" textClassName="text-emerald-900/80 dark:text-emerald-200/90">
-            {t('billImport.validationHeuristic').replace('{{pct}}', String(Math.round(validation.heuristicScore * 100)))}
-            {' — '}
-            {validation.heuristicNoteVi}
-          </Typography>
-          <Typography size="xs" textClassName="text-slate-700 dark:text-slate-200">
-            {validation.reasonVi}
-          </Typography>
-        </Card>
+        </Box>
       ) : null}
 
       {!isManual && (ocrText || draftStructured) ? (
-        <Box layoutClassName="grid gap-4 md:grid-cols-2">
-          {ocrText ? (
-            <Card
-              padding="md"
-              borderClassName="border-slate-200 dark:border-slate-700"
-              layoutClassName="space-y-2"
-            >
-              <Typography size="sm" layoutClassName="font-semibold">
-                {t('billImport.ocrSection')}
-              </Typography>
-              <Box
-                layoutClassName="max-h-72 overflow-auto rounded-lg p-3"
-                backgroundClassName="bg-slate-900"
-                textClassName="whitespace-pre-wrap font-mono text-xs text-slate-100"
-              >
-                {ocrText}
-              </Box>
-            </Card>
-          ) : null}
-          {draftStructured ? (
-            <Card
-              padding="md"
-              borderClassName="border-slate-200 dark:border-slate-700"
-              layoutClassName="space-y-2"
-            >
-              <Typography size="sm" layoutClassName="font-semibold">
-                {t('billImport.jsonSection')}
-              </Typography>
-              <Box
-                layoutClassName="max-h-72 overflow-auto rounded-lg p-3"
-                backgroundClassName="bg-slate-900"
-                textClassName="font-mono text-xs text-slate-100"
-              >
-                <Box layoutClassName="m-0" textClassName="whitespace-pre-wrap break-all">
-                  {JSON.stringify(draftStructured, null, 2)}
-                </Box>
-              </Box>
-            </Card>
+        <Box layoutClassName="space-y-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setShowOcr((v) => !v)}
+            leftIcon={showOcr ? <ChevronUp /> : <ChevronDown />}
+            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+            sizeClassName="px-2 py-1 text-xs"
+            layoutClassName="inline-flex w-fit items-center gap-1"
+            textClassName="text-slate-500 dark:text-slate-400"
+            disableVariantTextColor
+          >
+            {showOcr ? t('billImport.hideOcrData') : t('billImport.viewOcrData')}
+          </Button>
+          {showOcr ? (
+            <Box layoutClassName="grid gap-4 md:grid-cols-2">
+              {ocrText ? (
+                <Card
+                  padding="md"
+                  borderClassName="border-slate-200 dark:border-slate-700"
+                  layoutClassName="space-y-2"
+                >
+                  <Typography size="sm" layoutClassName="font-semibold">
+                    {t('billImport.ocrSection')}
+                  </Typography>
+                  <Box
+                    layoutClassName="max-h-72 overflow-auto rounded-lg p-3"
+                    backgroundClassName="bg-slate-900"
+                    textClassName="whitespace-pre-wrap font-mono text-xs text-slate-100"
+                  >
+                    {ocrText}
+                  </Box>
+                </Card>
+              ) : null}
+              {draftStructured ? (
+                <Card
+                  padding="md"
+                  borderClassName="border-slate-200 dark:border-slate-700"
+                  layoutClassName="space-y-2"
+                >
+                  <Typography size="sm" layoutClassName="font-semibold">
+                    {t('billImport.jsonSection')}
+                  </Typography>
+                  <Box
+                    layoutClassName="max-h-72 overflow-auto rounded-lg p-3"
+                    backgroundClassName="bg-slate-900"
+                    textClassName="font-mono text-xs text-slate-100"
+                  >
+                    <Box layoutClassName="m-0" textClassName="whitespace-pre-wrap break-all">
+                      {JSON.stringify(draftStructured, null, 2)}
+                    </Box>
+                  </Box>
+                </Card>
+              ) : null}
+            </Box>
           ) : null}
         </Box>
       ) : null}
@@ -371,178 +382,213 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                 onChange={(v) => onSupplierContactChange({ phone: v })}
                 placeholder="VD: 0901234567"
               />
-              <ContactField
-                label="Người liên hệ"
-                value={contact.contactPerson ?? ''}
-                onChange={(v) => onSupplierContactChange({ contactPerson: v })}
-                placeholder="Tên sale / chủ shop"
-              />
-              <ContactField
-                label="Email"
-                value={contact.email ?? ''}
-                onChange={(v) => onSupplierContactChange({ email: v })}
-                placeholder="contact@example.com"
-              />
-              <ContactField
-                label="MST"
-                value={contact.taxCode ?? ''}
-                onChange={(v) => onSupplierContactChange({ taxCode: v })}
-                placeholder="Mã số thuế"
-              />
-              <ContactField
-                label="Địa chỉ"
-                value={contact.address ?? ''}
-                onChange={(v) => onSupplierContactChange({ address: v })}
-                placeholder="Số nhà, đường, quận, TP"
-                layoutClassName="space-y-1 sm:col-span-2"
-              />
-              <ContactField
-                label="Danh mục"
-                value={contact.category ?? ''}
-                onChange={(v) => onSupplierContactChange({ category: v })}
-                placeholder="VD: Bột & ngũ cốc"
-              />
-              <ContactField
-                label="Ghi chú NCC"
-                value={contact.notes ?? ''}
-                onChange={(v) => onSupplierContactChange({ notes: v })}
-                placeholder="Giá tốt, giao nhanh…"
-              />
             </Box>
-            <Typography size="xs" variant="muted">
-              {isManual
-                ? 'Chọn NCC đã có hoặc gõ tên NCC mới. Trường trống sẽ không ghi đè dữ liệu cũ của NCC.'
-                : 'SĐT / địa chỉ được tự điền từ OCR. Trường trống sẽ không ghi đè dữ liệu cũ của NCC.'}
-            </Typography>
           </Card>
 
-          <Box layoutClassName="grid gap-4 lg:grid-cols-2">
-            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+          {/* ===== TỔNG TIỀN — luôn hiện ===== */}
+          <Box
+            layoutClassName="flex items-center justify-between gap-3 rounded-lg border p-3"
+            borderClassName="border-primary-200 dark:border-primary-800"
+            backgroundClassName="bg-primary-50 dark:bg-primary-950/40"
+          >
+            <Box layoutClassName="flex flex-col gap-0.5">
               <Box layoutClassName="flex items-center gap-2">
-                <Receipt className="h-5 w-5 text-primary-500" />
-                <Typography size="sm" layoutClassName="font-semibold">
-                  Thông tin phiếu
+                <CreditCard className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                <Typography size="sm" layoutClassName="font-semibold text-primary-900 dark:text-primary-100">
+                  Tổng tiền
                 </Typography>
               </Box>
-              <Box layoutClassName="grid gap-3 sm:grid-cols-2">
-                <ContactField
-                  label="Mã / Số HĐ"
-                  value={draftStructured.invoiceNumber ?? ''}
-                  onChange={(v) => updateDraftField('invoiceNumber', v || null)}
-                  placeholder="VD: HĐGTGT 00012345"
-                  layoutClassName="space-y-1 sm:col-span-2"
-                />
-                <ContactField
-                  label="Ngày trên bill"
-                  value={draftStructured.receiptDate ?? ''}
-                  onChange={(v) => updateDraftField('receiptDate', v || null)}
-                  placeholder="YYYY-MM-DD (mặc định hôm nay)"
-                />
-                <ContactField
-                  label="Giờ"
-                  value={draftStructured.receiptTime ?? ''}
-                  onChange={(v) => updateDraftField('receiptTime', v || null)}
-                  placeholder="HH:mm"
-                />
-                <ContactField
-                  label="Chi nhánh / địa điểm"
-                  value={draftStructured.storeOrBranch ?? ''}
-                  onChange={(v) => updateDraftField('storeOrBranch', v || null)}
-                  placeholder="Tên chi nhánh nếu có"
-                  layoutClassName="space-y-1 sm:col-span-2"
-                />
-                <ContactField
-                  label="Phương thức thanh toán"
-                  value={draftStructured.paymentMethod ?? ''}
-                  onChange={(v) => updateDraftField('paymentMethod', v || null)}
-                  placeholder="Tiền mặt / Chuyển khoản / Pos"
-                  layoutClassName="space-y-1 sm:col-span-2"
-                />
-                <ContactField
-                  label="Ghi chú bill"
-                  value={draftStructured.notes ?? ''}
-                  onChange={(v) => updateDraftField('notes', v || null)}
-                  placeholder="Ghi chú riêng cho phiếu này"
-                  layoutClassName="space-y-1 sm:col-span-2"
-                />
-              </Box>
-              <Box
-                layoutClassName="flex items-center gap-2 rounded-md p-2 text-xs"
-                backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
-              >
-                <Tag className="h-3.5 w-3.5 text-slate-400" />
-                <Typography size="xs" variant="muted">
-                  Số dòng mặt hàng:{' '}
-                  <Typography as="span" textClassName="font-semibold text-slate-700 dark:text-slate-100">
-                    {draftStructured.productLineCount}
-                  </Typography>
-                </Typography>
-              </Box>
-            </Card>
+              <Typography size="xs" textClassName="text-primary-800/70 dark:text-primary-200/70">
+                = Σ mặt hàng + thuế − giảm giá
+              </Typography>
+            </Box>
+            <Typography
+              size="sm"
+              layoutClassName="text-right font-bold tabular-nums text-primary-900 dark:text-primary-100"
+            >
+              {moneyFmt.format(computedTotal)}{' '}
+              <Typography as="span" textClassName="text-xs font-medium opacity-70">
+                {draftStructured.currency || 'VND'}
+              </Typography>
+            </Typography>
+          </Box>
 
-            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
-              <Box layoutClassName="flex items-center gap-2">
-                <Wallet className="h-5 w-5 text-primary-500" />
-                <Typography size="sm" layoutClassName="font-semibold">
-                  Tài chính
-                </Typography>
-              </Box>
+          {/* ===== TOGGLE THÔNG TIN THÊM ===== */}
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setShowMore((v) => !v)}
+            leftIcon={showMore ? <ChevronUp /> : <ChevronDown />}
+            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+            sizeClassName="px-3 py-1.5 text-xs"
+            layoutClassName="inline-flex w-fit items-center gap-1.5"
+            textClassName="text-slate-600 dark:text-slate-300"
+            disableVariantTextColor
+          >
+            {showMore ? t('billImport.lessInfo') : t('billImport.moreInfo')}
+          </Button>
 
-              <Box layoutClassName="grid gap-3 sm:grid-cols-2">
-                <ContactField
-                  label="Tạm tính"
-                  value={String(draftStructured.subtotal ?? '')}
-                  onChange={(v) => updateDraftField('subtotal', parseNonNegative(v))}
-                  placeholder="0"
-                />
-                <ContactField
-                  label="Thuế"
-                  value={String(draftStructured.tax ?? '')}
-                  onChange={(v) => updateDraftField('tax', parseNonNegative(v))}
-                  placeholder="0"
-                />
-                <ContactField
-                  label="Giảm giá"
-                  value={String(draftStructured.discount ?? '')}
-                  onChange={(v) => updateDraftField('discount', parseNonNegative(v))}
-                  placeholder="0"
-                />
-                <ContactField
-                  label="Đơn vị tiền"
-                  value={draftStructured.currency ?? ''}
-                  onChange={(v) => updateDraftField('currency', v)}
-                  placeholder="VND"
-                />
-              </Box>
-
-              <Box
-                layoutClassName="flex items-center justify-between gap-3 rounded-lg border p-3"
-                borderClassName="border-primary-200 dark:border-primary-800"
-                backgroundClassName="bg-primary-50 dark:bg-primary-950/40"
-              >
-                <Box layoutClassName="flex flex-col gap-0.5">
-                  <Box layoutClassName="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                    <Typography size="sm" layoutClassName="font-semibold text-primary-900 dark:text-primary-100">
-                      Tổng tiền
-                    </Typography>
-                  </Box>
-                  <Typography size="xs" textClassName="text-primary-800/70 dark:text-primary-200/70">
-                    = Σ mặt hàng + thuế − giảm giá
+          {showMore ? (
+            <Box layoutClassName="space-y-4">
+              {/* --- NCC mở rộng --- */}
+              <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+                <Box layoutClassName="flex items-center gap-2">
+                  <Store className="h-5 w-5 text-primary-500" />
+                  <Typography size="sm" layoutClassName="font-semibold">
+                    Thông tin nhà cung cấp
                   </Typography>
                 </Box>
-                <Typography
-                  size="sm"
-                  layoutClassName="text-right font-bold tabular-nums text-primary-900 dark:text-primary-100"
-                >
-                  {moneyFmt.format(computedTotal)}{' '}
-                  <Typography as="span" textClassName="text-xs font-medium opacity-70">
-                    {draftStructured.currency || 'VND'}
-                  </Typography>
+                <Box layoutClassName="grid gap-3 sm:grid-cols-2">
+                  <ContactField
+                    label="Người liên hệ"
+                    value={contact.contactPerson ?? ''}
+                    onChange={(v) => onSupplierContactChange({ contactPerson: v })}
+                    placeholder="Tên sale / chủ shop"
+                  />
+                  <ContactField
+                    label="Email"
+                    value={contact.email ?? ''}
+                    onChange={(v) => onSupplierContactChange({ email: v })}
+                    placeholder="contact@example.com"
+                  />
+                  <ContactField
+                    label="MST"
+                    value={contact.taxCode ?? ''}
+                    onChange={(v) => onSupplierContactChange({ taxCode: v })}
+                    placeholder="Mã số thuế"
+                  />
+                  <ContactField
+                    label="Danh mục"
+                    value={contact.category ?? ''}
+                    onChange={(v) => onSupplierContactChange({ category: v })}
+                    placeholder="VD: Bột & ngũ cốc"
+                  />
+                  <ContactField
+                    label="Địa chỉ"
+                    value={contact.address ?? ''}
+                    onChange={(v) => onSupplierContactChange({ address: v })}
+                    placeholder="Số nhà, đường, quận, TP"
+                    layoutClassName="space-y-1 sm:col-span-2"
+                  />
+                  <ContactField
+                    label="Ghi chú NCC"
+                    value={contact.notes ?? ''}
+                    onChange={(v) => onSupplierContactChange({ notes: v })}
+                    placeholder="Giá tốt, giao nhanh…"
+                    layoutClassName="space-y-1 sm:col-span-2"
+                  />
+                </Box>
+                <Typography size="xs" variant="muted">
+                  {isManual
+                    ? 'Chọn NCC đã có hoặc gõ tên NCC mới. Trường trống sẽ không ghi đè dữ liệu cũ của NCC.'
+                    : 'SĐT / địa chỉ được tự điền từ OCR. Trường trống sẽ không ghi đè dữ liệu cũ của NCC.'}
                 </Typography>
+              </Card>
+
+              <Box layoutClassName="grid gap-4 lg:grid-cols-2">
+                {/* --- Thông tin phiếu --- */}
+                <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+                  <Box layoutClassName="flex items-center gap-2">
+                    <Receipt className="h-5 w-5 text-primary-500" />
+                    <Typography size="sm" layoutClassName="font-semibold">
+                      Thông tin phiếu
+                    </Typography>
+                  </Box>
+                  <Box layoutClassName="grid gap-3 sm:grid-cols-2">
+                    <ContactField
+                      label="Mã / Số HĐ"
+                      value={draftStructured.invoiceNumber ?? ''}
+                      onChange={(v) => updateDraftField('invoiceNumber', v || null)}
+                      placeholder="VD: HĐGTGT 00012345"
+                      layoutClassName="space-y-1 sm:col-span-2"
+                    />
+                    <ContactField
+                      label="Ngày trên bill"
+                      value={draftStructured.receiptDate ?? ''}
+                      onChange={(v) => updateDraftField('receiptDate', v || null)}
+                      placeholder="YYYY-MM-DD (mặc định hôm nay)"
+                    />
+                    <ContactField
+                      label="Giờ"
+                      value={draftStructured.receiptTime ?? ''}
+                      onChange={(v) => updateDraftField('receiptTime', v || null)}
+                      placeholder="HH:mm"
+                    />
+                    <ContactField
+                      label="Chi nhánh / địa điểm"
+                      value={draftStructured.storeOrBranch ?? ''}
+                      onChange={(v) => updateDraftField('storeOrBranch', v || null)}
+                      placeholder="Tên chi nhánh nếu có"
+                      layoutClassName="space-y-1 sm:col-span-2"
+                    />
+                    <ContactField
+                      label="Phương thức thanh toán"
+                      value={draftStructured.paymentMethod ?? ''}
+                      onChange={(v) => updateDraftField('paymentMethod', v || null)}
+                      placeholder="Tiền mặt / Chuyển khoản / Pos"
+                      layoutClassName="space-y-1 sm:col-span-2"
+                    />
+                    <ContactField
+                      label="Ghi chú bill"
+                      value={draftStructured.notes ?? ''}
+                      onChange={(v) => updateDraftField('notes', v || null)}
+                      placeholder="Ghi chú riêng cho phiếu này"
+                      layoutClassName="space-y-1 sm:col-span-2"
+                    />
+                  </Box>
+                  <Box
+                    layoutClassName="flex items-center gap-2 rounded-md p-2 text-xs"
+                    backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
+                  >
+                    <Tag className="h-3.5 w-3.5 text-slate-400" />
+                    <Typography size="xs" variant="muted">
+                      Số dòng mặt hàng:{' '}
+                      <Typography as="span" textClassName="font-semibold text-slate-700 dark:text-slate-100">
+                        {draftStructured.productLineCount}
+                      </Typography>
+                    </Typography>
+                  </Box>
+                </Card>
+
+                {/* --- Tài chính phụ --- */}
+                <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+                  <Box layoutClassName="flex items-center gap-2">
+                    <Wallet className="h-5 w-5 text-primary-500" />
+                    <Typography size="sm" layoutClassName="font-semibold">
+                      Tài chính
+                    </Typography>
+                  </Box>
+
+                  <Box layoutClassName="grid gap-3 sm:grid-cols-2">
+                    <ContactField
+                      label="Tạm tính"
+                      value={String(draftStructured.subtotal ?? '')}
+                      onChange={(v) => updateDraftField('subtotal', parseNonNegative(v))}
+                      placeholder="0"
+                    />
+                    <ContactField
+                      label="Thuế"
+                      value={String(draftStructured.tax ?? '')}
+                      onChange={(v) => updateDraftField('tax', parseNonNegative(v))}
+                      placeholder="0"
+                    />
+                    <ContactField
+                      label="Giảm giá"
+                      value={String(draftStructured.discount ?? '')}
+                      onChange={(v) => updateDraftField('discount', parseNonNegative(v))}
+                      placeholder="0"
+                    />
+                    <ContactField
+                      label="Đơn vị tiền"
+                      value={draftStructured.currency ?? ''}
+                      onChange={(v) => updateDraftField('currency', v)}
+                      placeholder="VND"
+                    />
+                  </Box>
+                </Card>
               </Box>
-            </Card>
-          </Box>
+            </Box>
+          ) : null}
 
           <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
             <Typography size="sm" layoutClassName="font-semibold">
