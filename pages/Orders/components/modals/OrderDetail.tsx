@@ -5,7 +5,6 @@ import { toBlob } from 'html-to-image';
 import {
   BadgeCheck,
   Banknote,
-  Camera,
   Check,
   Clock,
   Copy,
@@ -19,6 +18,7 @@ import {
   Phone,
   QrCode,
   Receipt,
+  Share2,
   StickyNote,
   Store,
   Trash2,
@@ -122,8 +122,12 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
   const shareRef = useRef<HTMLDivElement>(null);
   const [copyingImg, setCopyingImg] = useState(false);
-  // Object URL của ảnh đơn để mở modal preview (mobile / khi clipboard không khả dụng).
+  // Object URL của ảnh đơn để hiển thị <Image> trong modal preview.
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // Giữ blob gốc để nút "Copy ảnh" trong modal copy vào clipboard mà không render lại.
+  const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
+  // Cờ loading khi đang copy ảnh từ modal preview.
+  const [copyingPreview, setCopyingPreview] = useState(false);
 
   const currentOrder = localOrder || order;
   if (!currentOrder) return null;
@@ -146,34 +150,22 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     navigator.clipboard.writeText(text);
   };
 
-  // Chụp thẻ thông tin gửi khách (ShareableOrderCard, off-screen) → ảnh PNG.
-  // - Desktop + clipboard khả dụng → copy ảnh vào clipboard (như cũ).
-  // - Mobile, hoặc clipboard không hỗ trợ / fail → MỞ MODAL PREVIEW (ảnh để user
-  //   tự chụp màn hình / lưu), KHÔNG tự động tải file. Clipboard ảnh trên mobile hay fail.
-  const handleCopyImage = async () => {
+  // Chụp thẻ thông tin gửi khách (ShareableOrderCard, off-screen) → ảnh PNG rồi
+  // LUÔN mở MODAL PREVIEW (cả desktop lẫn mobile). Không tự copy, không tự đóng.
+  // Trong modal user chọn: Copy ảnh (clipboard) HOẶC tự chụp màn hình / tải ảnh.
+  const handleShareOrder = async () => {
     if (!shareRef.current || copyingImg) return;
     setCopyingImg(true);
     try {
       if (document.fonts?.ready) await document.fonts.ready; // tránh nhảy font khi render
       const blob = await toBlob(shareRef.current, { pixelRatio: 2, backgroundColor: '#ffffff', cacheBust: true });
       if (!blob) throw new Error('no blob');
-      const isMobile = window.matchMedia('(max-width: 767px)').matches;
-      const canClipboard = typeof ClipboardItem !== 'undefined' && !!navigator.clipboard?.write;
-      if (!isMobile && canClipboard) {
-        try {
-          await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-          toast.success(t('detail.copyImageSuccess') || 'Đã copy ảnh đơn vào clipboard');
-          return;
-        } catch {
-          /* clipboard ảnh fail (quyền/secure context) → rơi xuống mở modal preview */
-        }
-      }
-      // Mobile hoặc clipboard không khả dụng → mở modal preview để user chụp/lưu ảnh.
       const url = URL.createObjectURL(blob);
       setPreviewUrl((prev) => {
         if (prev) URL.revokeObjectURL(prev);
         return url;
       });
+      setPreviewBlob(blob);
     } catch {
       toast.error(t('detail.copyImageError') || 'Không tạo được ảnh đơn');
     } finally {
@@ -181,12 +173,33 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     }
   };
 
-  // Đóng modal preview + giải phóng object URL.
+  // Copy ảnh trong modal preview vào clipboard, GIỮ NGUYÊN modal mở.
+  // Trình duyệt không hỗ trợ / fail → toast hướng dẫn tải ảnh hoặc chụp màn hình.
+  const copyPreviewImage = async () => {
+    if (!previewBlob || copyingPreview) return;
+    const canClipboard = typeof ClipboardItem !== 'undefined' && !!navigator.clipboard?.write;
+    if (!canClipboard) {
+      toast.error(t('detail.copyImageUnsupported') || 'Trình duyệt không hỗ trợ copy — hãy tải ảnh hoặc chụp màn hình');
+      return;
+    }
+    setCopyingPreview(true);
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': previewBlob })]);
+      toast.success(t('detail.copyImageSuccess') || 'Đã copy ảnh đơn vào clipboard');
+    } catch {
+      toast.error(t('detail.copyImageUnsupported') || 'Trình duyệt không hỗ trợ copy — hãy tải ảnh hoặc chụp màn hình');
+    } finally {
+      setCopyingPreview(false);
+    }
+  };
+
+  // Đóng modal preview + giải phóng object URL + clear blob.
   const closePreview = () => {
     setPreviewUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return null;
     });
+    setPreviewBlob(null);
   };
 
   // Tải ảnh đơn từ modal preview xuống máy.
@@ -412,7 +425,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     <Box layoutClassName="flex justify-end gap-3">
       <Button
         type="button"
-        onClick={handleCopyImage}
+        onClick={handleShareOrder}
         disabled={copyingImg}
         variant="secondary"
         disableVariantHover
@@ -424,10 +437,10 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         roundedClassName="rounded-lg"
         layoutClassName="mr-auto px-4 py-2"
         stateClassName="transition-colors disabled:opacity-50"
-        leftIcon={<Camera className="h-4 w-4" />}
+        leftIcon={<Share2 className="h-4 w-4" />}
         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
       >
-        {copyingImg ? (t('detail.copyImageLoading') || 'Đang tạo ảnh...') : (t('detail.copyImage') || 'Copy ảnh')}
+        {copyingImg ? (t('detail.copyImageLoading') || 'Đang tạo ảnh...') : (t('detail.shareOrder') || 'Gửi khách')}
       </Button>
       <Button
         type="button"
@@ -1676,7 +1689,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
             borderClassName="border-slate-200 dark:border-slate-700"
           >
             <Heading level={3} textClassName="text-base font-semibold text-slate-800 dark:text-slate-100">
-              {t('detail.previewTitle') || 'Ảnh đơn — chụp màn hình để gửi khách'}
+              {t('detail.previewTitle') || 'Ảnh đơn — copy hoặc chụp màn hình để gửi khách'}
             </Heading>
             <IconButton
               type="button"
@@ -1702,15 +1715,33 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
               borderClassName="border border-slate-200 dark:border-slate-700"
             />
             <Typography as="p" size="xs" layoutClassName="text-center" textClassName="text-slate-500 dark:text-slate-400">
-              {t('detail.previewHint') || 'Nhấn giữ ảnh để lưu, hoặc chụp màn hình'}
+              {t('detail.previewHint') || 'Bấm Copy, hoặc chụp màn hình khung này để gửi khách'}
             </Typography>
           </Box>
 
           {/* Footer */}
           <Box
-            layoutClassName="flex justify-end gap-3 border-t px-4 py-3"
+            layoutClassName="flex flex-wrap justify-end gap-3 border-t px-4 py-3"
             borderClassName="border-slate-200 dark:border-slate-700"
           >
+            <Button
+              type="button"
+              onClick={copyPreviewImage}
+              disabled={copyingPreview}
+              disableVariantHover
+              disableVariantTextColor
+              borderClassName="border border-primary-200 dark:border-primary-700/50"
+              backgroundClassName="bg-primary-600 dark:bg-primary-500"
+              hoverClassName="hover:bg-primary-700 dark:hover:bg-primary-600"
+              textClassName="text-sm font-medium text-white"
+              roundedClassName="rounded-lg"
+              layoutClassName="mr-auto px-4 py-2"
+              stateClassName="transition-colors disabled:opacity-50"
+              leftIcon={<Copy className="h-4 w-4" />}
+              iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+            >
+              {t('detail.copyImage') || 'Copy ảnh'}
+            </Button>
             <Button
               type="button"
               onClick={downloadPreview}
