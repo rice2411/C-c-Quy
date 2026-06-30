@@ -605,7 +605,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
               ) : (
                 draftStructured.lineItems.map((it, idx) => (
                   <Box
-                    key={`m-${idx}-${it.name}`}
+                    key={`m-${idx}`}
                     layoutClassName="rounded-xl border p-3 space-y-2"
                     borderClassName="border-slate-200 dark:border-slate-700"
                     backgroundClassName="bg-slate-50/60 dark:bg-slate-900/40"
@@ -690,7 +690,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                     </TableRow>
                   ) : (
                     draftStructured.lineItems.map((it, idx) => (
-                      <TableRow key={`d-${idx}-${it.name}`}>
+                      <TableRow key={`d-${idx}`}>
                         <TableCell>{idx + 1}</TableCell>
                         <TableCell>
                           <Input
