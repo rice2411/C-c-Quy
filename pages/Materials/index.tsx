@@ -1,10 +1,9 @@
 import React, { useCallback, useState } from 'react';
-import { ChevronUp, Package, Sparkles } from 'lucide-react';
+import { ChevronUp, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useImportedMaterials } from '@/hooks/queries/useStockReceiptQuery';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
-import Heading from '@/components/ui/Heading';
 import BillImportMaterialsTab from '@/pages/StockReceipts/BillImportMaterialsTab';
 import { normalizeSearchText } from '@/utils/format/stringUtil';
 import MergeSuggestionsPanel from './components/MergeSuggestionsPanel';
@@ -33,11 +32,7 @@ const MaterialsPage: React.FC = () => {
 
   return (
     <Box layoutClassName="space-y-6 animate-fade-in">
-      <Box layoutClassName="flex flex-wrap items-center justify-between gap-3">
-        <Heading level={2} textClassName="flex items-center gap-2 text-xl font-semibold">
-          <Package className="h-6 w-6 text-primary-500" />
-          {t('header.materialsTitle')}
-        </Heading>
+      <Box layoutClassName="flex flex-wrap items-center justify-end gap-3">
         <Button
           type="button"
           variant={showSuggestions ? 'secondary' : 'primary'}

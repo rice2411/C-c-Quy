@@ -1,9 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import { Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useImportedSuppliers } from '@/hooks/queries/useStockReceiptQuery';
 import Box from '@/components/ui/Box';
-import Heading from '@/components/ui/Heading';
 import BillImportSuppliersTab from '@/pages/StockReceipts/BillImportSuppliersTab';
 import { normalizeSearchText } from '@/utils/format/stringUtil';
 
@@ -30,13 +28,6 @@ const SuppliersPage: React.FC = () => {
 
   return (
     <Box layoutClassName="space-y-6 animate-fade-in">
-      <Box>
-        <Heading level={2} textClassName="flex items-center gap-2 text-xl font-semibold">
-          <Truck className="h-6 w-6 text-primary-500" />
-          {t('header.suppliersTitle')}
-        </Heading>
-      </Box>
-
       <BillImportSuppliersTab
         supplierSearch={supplierSearch}
         onSupplierSearchChange={setSupplierSearch}
