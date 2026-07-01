@@ -49,16 +49,30 @@ const PeriodFilter: React.FC<PeriodFilterProps> = ({
   fromDate, toDate, preset, onApplyPreset, onFromChange, onToChange,
 }) => {
   const [open, setOpen] = useState(false);
+  // Draft nội bộ: mọi thay đổi trong popover chỉ áp dụng khi bấm "Áp dụng"
+  // (deferred apply — tránh refetch mỗi lần đổi ngày, đúng kiểu dashboard).
+  const [draftFrom, setDraftFrom] = useState(fromDate);
+  const [draftTo, setDraftTo] = useState(toDate);
+  const [draftPreset, setDraftPreset] = useState<DatePreset>(preset);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Khi mở popover: đồng bộ draft từ giá trị đang commit ở parent.
+  const syncDraftFromProps = () => {
+    setDraftFrom(fromDate);
+    setDraftTo(toDate);
+    setDraftPreset(preset);
+  };
+
+  const closePopover = () => setOpen(false);
 
   useEffect(() => {
     if (!open) return;
     const onDocClick = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setOpen(false);
+        closePopover();
       }
     };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closePopover(); };
     document.addEventListener('mousedown', onDocClick);
     document.addEventListener('keydown', onKey);
     return () => {
@@ -67,23 +81,44 @@ const PeriodFilter: React.FC<PeriodFilterProps> = ({
     };
   }, [open]);
 
-  // Nhãn hiển thị trên nút: tên preset nếu là preset, còn không thì "Tùy chọn"
+  const toggleOpen = () => {
+    if (!open) syncDraftFromProps(); // mở → nạp lại draft; đóng thì bỏ qua draft
+    setOpen((v) => !v);
+  };
+
+  // Nhãn hiển thị trên nút: tên preset ĐÃ commit, còn không thì "Tùy chọn".
   const triggerLabel = useMemo(() => {
     if (preset === 'custom') return 'Tùy chọn';
     return DATE_PRESETS.find((p) => p.key === preset)?.label ?? 'Tùy chọn';
   }, [preset]);
 
+  // Bấm preset → stage vào draft (chưa commit).
   const handlePreset = (p: DatePreset) => {
-    onApplyPreset(p);
-    setOpen(false);
+    const r = computePresetRange(p);
+    setDraftFrom(r.from);
+    setDraftTo(r.to);
+    setDraftPreset(p);
   };
+
+  // "Áp dụng" → commit draft ra parent qua contract sẵn có, rồi đóng.
+  const handleApply = () => {
+    if (draftPreset !== 'custom') {
+      onApplyPreset(draftPreset);
+    } else {
+      onFromChange(draftFrom);
+      onToChange(draftTo);
+    }
+    closePopover();
+  };
+
+  const dirty = draftFrom !== fromDate || draftTo !== toDate || draftPreset !== preset;
 
   return (
     <Box layoutClassName="relative inline-block" ref={wrapperRef as React.RefObject<HTMLDivElement>}>
       {/* Nút trigger gọn hiển thị khoảng ngày đang chọn */}
       <Button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggleOpen}
         aria-haspopup="dialog"
         aria-expanded={open}
         variant="secondary"
@@ -126,7 +161,7 @@ const PeriodFilter: React.FC<PeriodFilterProps> = ({
               Nhanh
             </Typography>
             {DATE_PRESETS.map((p) => {
-              const active = preset === p.key;
+              const active = draftPreset === p.key;
               return (
                 <Button
                   key={p.key}
@@ -169,9 +204,9 @@ const PeriodFilter: React.FC<PeriodFilterProps> = ({
               <Typography as="span" size="xs" variant="muted" layoutClassName="px-1">Từ ngày</Typography>
               <Input
                 type="date"
-                value={fromDate}
-                max={toDate || undefined}
-                onChange={(e) => onFromChange(e.target.value)}
+                value={draftFrom}
+                max={draftTo || undefined}
+                onChange={(e) => { setDraftFrom(e.target.value); setDraftPreset('custom'); }}
                 sizeClassName="px-2.5 py-1.5 text-sm"
                 backgroundClassName="bg-slate-50 dark:bg-slate-700"
                 borderClassName="border-slate-200 dark:border-slate-600"
@@ -182,24 +217,36 @@ const PeriodFilter: React.FC<PeriodFilterProps> = ({
               <Typography as="span" size="xs" variant="muted" layoutClassName="px-1">Đến ngày</Typography>
               <Input
                 type="date"
-                value={toDate}
-                min={fromDate || undefined}
-                onChange={(e) => onToChange(e.target.value)}
+                value={draftTo}
+                min={draftFrom || undefined}
+                onChange={(e) => { setDraftTo(e.target.value); setDraftPreset('custom'); }}
                 sizeClassName="px-2.5 py-1.5 text-sm"
                 backgroundClassName="bg-slate-50 dark:bg-slate-700"
                 borderClassName="border-slate-200 dark:border-slate-600"
                 textClassName="text-slate-700 dark:text-slate-200"
                 focusClassName="focus:ring-1" />
             </Box>
-            <Button
-              type="button"
-              onClick={() => setOpen(false)}
-              variant="primary"
-              layoutClassName="mt-1 w-full"
-              sizeClassName="px-3 py-1.5 text-sm"
-              roundedClassName="rounded-lg">
-              Áp dụng
-            </Button>
+            <Box layoutClassName="mt-1 flex items-center gap-2">
+              <Button
+                type="button"
+                onClick={closePopover}
+                variant="secondary"
+                layoutClassName="flex-1"
+                sizeClassName="px-3 py-1.5 text-sm"
+                roundedClassName="rounded-lg">
+                Huỷ
+              </Button>
+              <Button
+                type="button"
+                onClick={handleApply}
+                disabled={!dirty}
+                variant="primary"
+                layoutClassName="flex-1"
+                sizeClassName="px-3 py-1.5 text-sm"
+                roundedClassName="rounded-lg">
+                Áp dụng
+              </Button>
+            </Box>
           </Box>
         </Box>
       ) : null}
