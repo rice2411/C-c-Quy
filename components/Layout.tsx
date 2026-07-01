@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, ChevronDown, PanelLeft, PanelLeftClose } from 'lucide-react';
+import { LogOut, ChevronDown, ChevronsRight, LayoutGrid } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
@@ -25,6 +25,25 @@ const Layout: React.FC = () => {
     localStorage.setItem('sidebarCollapsed', sidebarCollapsed ? '1' : '0');
   }, [sidebarCollapsed]);
 
+  // Quick menu → mega menu (truy cập nhanh mọi trang)
+  const [megaOpen, setMegaOpen] = React.useState(false);
+  const megaRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!megaOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (megaRef.current && !megaRef.current.contains(e.target as Node)) setMegaOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMegaOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [megaOpen]);
+  // đóng mega menu khi chuyển trang
+  React.useEffect(() => { setMegaOpen(false); }, [location.pathname]);
+
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'vi' : 'en');
   };
@@ -47,6 +66,9 @@ const Layout: React.FC = () => {
   
   
   const navTree = buildNavTree(userRole, screenVisibility);
+  // Tách cho mega menu: route lẻ (cột "Chính") + các nhóm (mỗi nhóm 1 cột)
+  const megaStandalone = navTree.flatMap((n) => (n.type === 'route' ? [n.route] : []));
+  const megaGroups = navTree.flatMap((n) => (n.type === 'group' ? [n] : []));
 
   React.useEffect(() => {
     if (location.pathname === '/') return;
@@ -89,6 +111,29 @@ const Layout: React.FC = () => {
     );
   };
 
+  // 1 mục trong mega menu
+  const renderMegaItem = (item: RouteConfig) => {
+    const Icon = item.icon;
+    const active = location.pathname === item.path;
+    return (
+      <Link
+        key={item.path}
+        to={item.disabled ? '#' : item.path}
+        onClick={(e) => { if (item.disabled) { e.preventDefault(); return; } setMegaOpen(false); }}
+        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors ${
+          active
+            ? 'bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 font-medium'
+            : item.disabled
+              ? 'text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-60'
+              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+        }`}
+      >
+        <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500'}`} />
+        <span className="truncate">{t(item.labelKey)}</span>
+      </Link>
+    );
+  };
+
   // Tiêu đề trang lấy từ routes.ts (nguồn sự thật) — tránh map hardcode lỗi thời.
   // Route thuộc 1 nhóm sidebar → hiện breadcrumb "Nhóm › Trang" cho rõ ngữ cảnh.
   const getPageTitle = () => {
@@ -107,7 +152,7 @@ const Layout: React.FC = () => {
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-200 overflow-hidden">
       {/* Sidebar - Desktop */}
-      <aside className={`hidden md:flex flex-col bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 z-20 overflow-hidden transition-all duration-200 ${sidebarCollapsed ? 'w-0 border-r-0 opacity-0' : 'w-64'}`}>
+      <aside className={`hidden md:flex flex-col bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 z-20 overflow-hidden transition-[width,opacity] duration-300 ease-in-out will-change-[width] ${sidebarCollapsed ? 'w-0 border-r-0 opacity-0' : 'w-64 opacity-100'}`}>
         <div className="h-16 flex items-center px-6 border-b border-slate-100 dark:border-slate-700">
           <img src="/icon-v4.svg" alt="Tiệm Bánh Cúc Quy" className="w-8 h-8 rounded-lg mr-3 shadow-sm shadow-primary-300 dark:shadow-none" />
           <span className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Cúc <span className="text-primary-600 dark:text-primary-500"> Quy</span></span>
@@ -166,9 +211,9 @@ const Layout: React.FC = () => {
               onClick={() => setSidebarCollapsed((v) => !v)}
               aria-label={sidebarCollapsed ? 'Mở sidebar' : 'Thu gọn sidebar'}
               title={sidebarCollapsed ? 'Mở sidebar' : 'Thu gọn sidebar'}
-              className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+              className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors active:scale-90"
             >
-              {sidebarCollapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+              <ChevronsRight className={`w-5 h-5 transition-transform duration-300 ease-in-out ${sidebarCollapsed ? 'rotate-0' : 'rotate-180'}`} />
             </button>
             <div className="md:hidden flex items-center gap-2">
               <img src="/icon-v4.svg" alt="Tiệm Bánh Cúc Quy" className="w-8 h-8 rounded-lg shadow-sm shadow-primary-300 dark:shadow-none" />
@@ -178,6 +223,45 @@ const Layout: React.FC = () => {
               <h1 className="text-xl font-bold text-slate-800 dark:text-white">
                 {getPageTitle()}
               </h1>
+            </div>
+
+            {/* Quick menu → mega menu (truy cập nhanh) */}
+            <div className="hidden md:block relative" ref={megaRef}>
+              <button
+                type="button"
+                onClick={() => setMegaOpen((v) => !v)}
+                aria-haspopup="true"
+                aria-expanded={megaOpen}
+                className="inline-flex items-center gap-1.5 h-9 px-2.5 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+              >
+                <LayoutGrid className="w-4 h-4" />
+                <span className="hidden lg:inline">Truy cập nhanh</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ease-in-out ${megaOpen ? 'rotate-180' : ''}`} />
+              </button>
+              <div
+                className={`absolute left-0 top-full mt-2 origin-top-left rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl z-40 p-4 w-[min(88vw,720px)] transition-[opacity,transform] duration-200 ease-out ${
+                  megaOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none'
+                }`}
+              >
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-5">
+                  {megaStandalone.length > 0 && (
+                    <div>
+                      <p className="px-2 mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">Chính</p>
+                      <div className="space-y-0.5">
+                        {megaStandalone.map((r) => renderMegaItem(r))}
+                      </div>
+                    </div>
+                  )}
+                  {megaGroups.map((node) => (
+                    <div key={node.group.key}>
+                      <p className="px-2 mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">{t(node.group.labelKey)}</p>
+                      <div className="space-y-0.5">
+                        {node.children.map((c) => renderMegaItem(c))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
