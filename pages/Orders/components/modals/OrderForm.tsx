@@ -50,6 +50,8 @@ export interface FormItem {
   image?: string;
   quantity: number;
   unitPrice: number;
+  /** Vị đã chọn (nếu sản phẩm có vị) */
+  flavor?: string;
 }
 const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCancel }) => {
   const { t } = useLanguage();
@@ -190,7 +192,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
           productName: item.name,
           quantity: item.quantity,
           unitPrice: item.price,
-          image: item.image
+          image: item.image,
+          flavor: item.flavor,
         }));
         setItems(loadedItems);
       } else if (products.length > 0) {
@@ -490,7 +493,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
            name: finalProductName,
            quantity: Number(item.quantity),
            price: Number(item.unitPrice),
-           image: item.image
+           image: item.image,
+           flavor: item.flavor || undefined,
          };
       });
 
