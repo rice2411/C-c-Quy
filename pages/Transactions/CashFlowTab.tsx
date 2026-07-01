@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Banknote, Boxes, ArrowDownLeft, ChevronDown } from 'lucide-react';
-import { useTransactions } from '@/hooks/queries/useTransactionsQuery';
+import { Banknote, Boxes, Coins, TrendingUp, ChevronDown } from 'lucide-react';
+import { useRevenueReport } from '@/hooks/queries/useTransactionsQuery';
 import { useStockReceiptSummaries } from '@/hooks/queries/useStockReceiptQuery';
 import { useOrders } from '@/hooks/useOrders';
 import { revenueOrdersInPeriod, stockReceiptsInPeriod } from '@/services/revenueService';
@@ -9,6 +9,7 @@ import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
+import StatsBanner from '@/pages/StockReceipts/StatsBanner';
 import RevenueTab from '@/pages/Transactions/RevenueTab';
 
 const fmtDate = (s?: string | null) => {
@@ -17,7 +18,7 @@ const fmtDate = (s?: string | null) => {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('vi-VN');
 };
 
-// Khối danh sách gập/mở dùng chung cho Tiền vào / Nhập hàng / Tiền ra.
+// Khối danh sách gập/mở dùng chung cho Doanh thu / Chi phí.
 const ListSection: React.FC<{
   icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   label: string;
@@ -51,14 +52,15 @@ const ListSection: React.FC<{
   );
 };
 
-// Màn "Dòng tiền": liệt kê chi tiết tiền vào / tiền nhập hàng / tiền ra trong kỳ.
+// Màn "Doanh thu & Chi phí": P&L nghiệp vụ — doanh thu (đơn) − chi phí (nhập hàng + hoa hồng).
 const CashFlowTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, toDate }) => {
+  const { report } = useRevenueReport({ from: fromDate, to: toDate });
   const { orders } = useOrders();
   const { receipts } = useStockReceiptSummaries();
-  const { transactions } = useTransactions();
 
   const inOrders = useMemo(
-    () => revenueOrdersInPeriod(orders, fromDate, toDate),
+    () => revenueOrdersInPeriod(orders, fromDate, toDate)
+      .sort((a, b) => new Date(b.deliveryDate ?? 0).getTime() - new Date(a.deliveryDate ?? 0).getTime()),
     [orders, fromDate, toDate],
   );
   const inTotal = useMemo(() => inOrders.reduce((s, o) => s + (o.total ?? 0), 0), [inOrders]);
@@ -70,31 +72,32 @@ const CashFlowTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
   );
   const receiptsTotal = useMemo(() => receiptsInPeriod.reduce((s, r) => s + (r.totalAmount ?? 0), 0), [receiptsInPeriod]);
 
-  const outTx = useMemo(() => {
-    const from = fromDate ? new Date(fromDate) : null;
-    const to = toDate ? new Date(toDate) : null;
-    if (to) to.setHours(23, 59, 59, 999);
-    return transactions
-      .filter((tr) => tr.transferType === 'out')
-      .filter((tr) => {
-        const d = new Date(tr.transactionDate);
-        return (!from || d >= from) && (!to || d <= to);
-      })
-      .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime());
-  }, [transactions, fromDate, toDate]);
-  const outTotal = useMemo(() => outTx.reduce((s, tr) => s + tr.transferAmount, 0), [outTx]);
+  const commissionTotal = report?.totalCommission ?? 0;
+  const profitPositive = (report?.profit ?? 0) >= 0;
 
   return (
     <Box layoutClassName="space-y-4">
-      {/* Tiền vào — danh sách đơn doanh thu */}
-      <ListSection icon={Banknote} label="Tiền vào — Đơn doanh thu" count={inOrders.length} total={formatVND(inTotal)} accent="#16a34a" defaultOpen>
+      {/* P&L: doanh thu − chi phí (nhập hàng + hoa hồng) = lợi nhuận */}
+      {report ? (
+        <StatsBanner
+          items={[
+            { icon: Banknote, label: 'Doanh thu', value: formatVND(report.totalRevenue), accent: '#16a34a' },
+            { icon: Boxes, label: '− Nhập hàng', value: formatVND(report.totalStockIn), accent: '#d97706' },
+            { icon: Coins, label: '− Hoa hồng', value: formatVND(report.totalCommission), accent: '#4abab9' },
+            { icon: TrendingUp, label: '= Lợi nhuận', value: formatVND(report.profit), accent: profitPositive ? '#16a34a' : '#dc2626' },
+          ]}
+        />
+      ) : null}
+
+      {/* Doanh thu — danh sách đơn */}
+      <ListSection icon={Banknote} label="Doanh thu — Đơn hàng" count={inOrders.length} total={formatVND(inTotal)} accent="#16a34a" defaultOpen>
         <Box layoutClassName="p-3 sm:p-4">
           <RevenueTab fromDate={fromDate} toDate={toDate} />
         </Box>
       </ListSection>
 
-      {/* Tiền nhập hàng — danh sách phiếu nhập trong kỳ */}
-      <ListSection icon={Boxes} label="Tiền nhập hàng — Phiếu nhập" count={receiptsInPeriod.length} total={formatVND(receiptsTotal)} accent="#d97706">
+      {/* Chi phí — nhập hàng */}
+      <ListSection icon={Boxes} label="Chi phí — Nhập hàng" count={receiptsInPeriod.length} total={formatVND(receiptsTotal)} accent="#d97706">
         {receiptsInPeriod.length === 0 ? (
           <Box layoutClassName="px-4 py-8 text-center">
             <Typography size="sm" variant="muted">Không có phiếu nhập trong kỳ</Typography>
@@ -125,36 +128,13 @@ const CashFlowTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
         )}
       </ListSection>
 
-      {/* Tiền ra — giao dịch chi trong kỳ */}
-      <ListSection icon={ArrowDownLeft} label="Tiền ra — Giao dịch chi" count={outTx.length} total={formatVND(outTotal)} accent="#e11d48">
-        {outTx.length === 0 ? (
-          <Box layoutClassName="px-4 py-8 text-center">
-            <Typography size="sm" variant="muted">Không có giao dịch chi trong kỳ</Typography>
-          </Box>
-        ) : (
-          <Box layoutClassName="overflow-x-auto">
-            <Table>
-              <TableHead backgroundClassName="bg-slate-50 dark:bg-slate-900/40">
-                <TableRow>
-                  <TableHeaderCell layoutClassName="px-4 py-2.5 text-left" textClassName="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Ngày</TableHeaderCell>
-                  <TableHeaderCell layoutClassName="px-4 py-2.5 text-left" textClassName="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Nội dung</TableHeaderCell>
-                  <TableHeaderCell layoutClassName="px-4 py-2.5 text-left" textClassName="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Mã đơn</TableHeaderCell>
-                  <TableHeaderCell layoutClassName="px-4 py-2.5 text-right" textClassName="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Số tiền</TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {outTx.map((tr) => (
-                  <TableRow key={tr.id} borderClassName="border-t border-slate-50 dark:border-slate-700/50">
-                    <TableCell layoutClassName="px-4 py-2.5" textClassName="text-sm text-slate-500 dark:text-slate-400">{fmtDate(tr.transactionDate)}</TableCell>
-                    <TableCell layoutClassName="px-4 py-2.5" textClassName="text-sm text-slate-600 dark:text-slate-300">{tr.content || tr.description || '—'}</TableCell>
-                    <TableCell layoutClassName="px-4 py-2.5" textClassName="text-sm text-slate-500 dark:text-slate-400">{tr.orderNumber || '—'}</TableCell>
-                    <TableCell layoutClassName="px-4 py-2.5 text-right" textClassName="text-sm font-semibold text-rose-600 dark:text-rose-400">{formatVND(tr.transferAmount)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
-        )}
+      {/* Chi phí — hoa hồng (tổng; chi tiết theo CTV ở mục Hoa hồng) */}
+      <ListSection icon={Coins} label="Chi phí — Hoa hồng" total={formatVND(commissionTotal)} accent="#4abab9">
+        <Box layoutClassName="px-4 py-4">
+          <Typography size="sm" variant="muted">
+            Tổng hoa hồng cộng tác viên trong kỳ: <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-800 dark:text-slate-100">{formatVND(commissionTotal)}</Typography>. Xem chi tiết theo CTV ở mục Hoa hồng.
+          </Typography>
+        </Box>
       </ListSection>
     </Box>
   );
