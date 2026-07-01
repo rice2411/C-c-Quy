@@ -184,6 +184,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
             const lineTotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
             const isHighlighted = recentlyAddedId === item.id;
             const isEditingPrice = editingPriceId === item.id;
+            const itemFlavors = products.find((p) => p.id === item.productId)?.flavors ?? [];
             return (
               <Box
                 key={item.id}
@@ -216,6 +217,31 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                     <Typography size="sm" layoutClassName="truncate font-semibold">
                       {item.productName || `Item #${index + 1}`}
                     </Typography>
+                    {itemFlavors.length > 0 ? (
+                      <Box layoutClassName="mt-1 flex flex-wrap items-center gap-1">
+                        <Typography as="span" size="xs" variant="muted" layoutClassName="mr-0.5">Vị:</Typography>
+                        {itemFlavors.map((fl) => {
+                          const active = item.flavor === fl;
+                          return (
+                            <Button
+                              key={fl}
+                              type="button"
+                              onClick={() => onUpdateItem(item.id, 'flavor', active ? undefined : fl)}
+                              variant="ghost"
+                              disableVariantHover
+                              disableVariantTextColor
+                              sizeClassName="px-2 py-0.5 text-xs"
+                              roundedClassName="rounded-full"
+                              stateClassName="transition-colors"
+                              borderClassName={active ? 'border border-primary-400 dark:border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
+                              backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
+                              textClassName={active ? 'font-medium text-primary-700 dark:text-primary-300' : 'text-slate-600 dark:text-slate-300'}>
+                              {fl}
+                            </Button>
+                          );
+                        })}
+                      </Box>
+                    ) : null}
                     <Box layoutClassName="mt-0.5 flex items-center gap-1 text-xs">
                       {isEditingPrice ? (
                         <Input
