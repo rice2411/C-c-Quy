@@ -47,29 +47,9 @@ interface PeriodFilterProps {
 const PeriodFilter: React.FC<PeriodFilterProps> = ({
   fromDate, toDate, preset, onApplyPreset, onFromChange, onToChange,
 }) => (
-  <Card padding="none" layoutClassName="p-3 sm:p-4" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
+  <Card padding="none" layoutClassName="flex flex-col gap-2.5 p-3 sm:p-4" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
+    {/* Thanh range ở trên */}
     <Box layoutClassName="flex flex-wrap items-center gap-1.5">
-      {DATE_PRESETS.map(p => {
-        const active = preset === p.key;
-        return (
-          <Button
-            key={p.key}
-            type="button"
-            onClick={() => onApplyPreset(p.key)}
-            variant="ghost"
-            disableVariantHover
-            disableVariantTextColor
-            roundedClassName="rounded-full"
-            sizeClassName="px-3 py-1 text-xs"
-            stateClassName="transition-colors"
-            borderClassName={active ? 'border border-primary-400 dark:border-primary-600' : 'border border-slate-200 hover:border-primary-300 dark:border-slate-600 dark:hover:border-primary-700'}
-            backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white hover:bg-primary-50 dark:bg-slate-800'}
-            textClassName={active ? 'font-medium text-primary-700 dark:text-primary-300' : 'font-medium text-slate-600 dark:text-slate-400'}>
-            {p.label}
-          </Button>
-        );
-      })}
-      <Typography as="span" size="xs" layoutClassName="ml-1" textClassName="text-slate-300 dark:text-slate-600">|</Typography>
       <Calendar className="h-3.5 w-3.5 shrink-0 text-slate-400" />
       <Input
         type="date"
@@ -92,6 +72,30 @@ const PeriodFilter: React.FC<PeriodFilterProps> = ({
         textClassName="text-slate-700 dark:text-slate-200"
         focusClassName="focus:ring-1"
       />
+    </Box>
+
+    {/* Chip quick filter ở dưới */}
+    <Box layoutClassName="flex flex-wrap items-center gap-1.5">
+      {DATE_PRESETS.map(p => {
+        const active = preset === p.key;
+        return (
+          <Button
+            key={p.key}
+            type="button"
+            onClick={() => onApplyPreset(p.key)}
+            variant="ghost"
+            disableVariantHover
+            disableVariantTextColor
+            roundedClassName="rounded-full"
+            sizeClassName="px-3 py-1 text-xs"
+            stateClassName="transition-colors"
+            borderClassName={active ? 'border border-primary-400 dark:border-primary-600' : 'border border-slate-200 hover:border-primary-300 dark:border-slate-600 dark:hover:border-primary-700'}
+            backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white hover:bg-primary-50 dark:bg-slate-800'}
+            textClassName={active ? 'font-medium text-primary-700 dark:text-primary-300' : 'font-medium text-slate-600 dark:text-slate-400'}>
+            {p.label}
+          </Button>
+        );
+      })}
     </Box>
   </Card>
 );
