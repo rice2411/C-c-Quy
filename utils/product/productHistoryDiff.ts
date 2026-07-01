@@ -39,6 +39,7 @@ const FIELD_CONFIG: Record<string, FieldConfig> = {
   category: { label: 'Danh mục', kind: 'text' },
   categoryId: { label: 'Danh mục', kind: 'text' },
   tags: { label: 'Tags', kind: 'list' },
+  flavors: { label: 'Vị', kind: 'list' },
   image: { label: 'Ảnh', kind: 'image' },
   gallery: { label: 'Thư viện ảnh', kind: 'image' },
   recipeId: { label: 'Công thức', kind: 'text' },
