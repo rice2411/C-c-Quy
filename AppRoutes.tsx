@@ -6,9 +6,7 @@ import RoleBasedRoute from "./components/RoleBasedRoute";
 import DashboardPage from "./pages/Dashboard/index";
 import OrdersPage from "./pages/Orders/index";
 import FinanceOverviewPage from "./pages/Finance/Overview";
-import FinanceCashFlowPage from "./pages/Finance/CashFlow";
 import FinanceTransactionsPage from "./pages/Finance/Transactions";
-import FinanceReconciliationPage from "./pages/Finance/Reconciliation";
 import PromotionsPage from "./pages/Promotions/index";
 import CommissionPage from "./pages/Commission/index";
 import CommissionSettingsPage from "./pages/Commission/SettingsPage";
@@ -74,14 +72,6 @@ const AppRoutes: React.FC = () => (
         }
       />
       <Route
-        path="finance/cashflow"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/cashflow")?.roles}>
-            <FinanceCashFlowPage />
-          </RoleBasedRoute>
-        }
-      />
-      <Route
         path="finance/transactions"
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/transactions")?.roles}>
@@ -89,17 +79,11 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      <Route
-        path="finance/reconciliation"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/reconciliation")?.roles}>
-            <FinanceReconciliationPage />
-          </RoleBasedRoute>
-        }
-      />
       {/* Back-compat redirect các path cũ */}
       <Route path="finance" element={<Navigate to="/finance/overview" replace />} />
       <Route path="revenue" element={<Navigate to="/finance/overview" replace />} />
+      <Route path="finance/cashflow" element={<Navigate to="/finance/transactions" replace />} />
+      <Route path="finance/reconciliation" element={<Navigate to="/finance/transactions" replace />} />
       <Route path="transactions" element={<Navigate to="/finance/transactions" replace />} />
       <Route
         path="promotions"
