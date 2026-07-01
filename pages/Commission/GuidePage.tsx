@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import {
-  BookOpen, Coins, Percent, Calculator, TrendingUp, Search, Award, Package,
+  Coins, Percent, Calculator, TrendingUp, Search, Award, Package,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Product } from '@/types';
@@ -300,21 +300,6 @@ const CommissionGuidePage: React.FC = () => {
 
   return (
     <Box layoutClassName="flex h-full flex-col space-y-4 sm:space-y-5">
-      {/* Header */}
-      <Box layoutClassName="flex items-center gap-3">
-        <Box layoutClassName="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
-          <BookOpen className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-        </Box>
-        <Box>
-          <Typography as="p" layoutClassName="text-lg font-bold sm:text-xl" textClassName="text-slate-900 dark:text-white">
-            Hướng dẫn hoa hồng
-          </Typography>
-          <Typography as="p" size="xs" variant="muted">
-            Cách hoa hồng được tính
-          </Typography>
-        </Box>
-      </Box>
-
       {/* Content */}
       <Box layoutClassName="flex-1 space-y-3 overflow-y-auto">
         <Section icon={<Percent className="h-4 w-4" />} title="Cách tính">
