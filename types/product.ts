@@ -12,6 +12,8 @@ export interface Product {
   gallery?: string[];
   category: string;
   tags?: string[];
+  /** Vị (multi-select) — không ảnh hưởng giá */
+  flavors?: string[];
   description?: string;
   status: 'active' | 'inactive';
   materials?: ProductMaterial[];
