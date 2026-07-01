@@ -29,6 +29,9 @@ export const qk = {
   categories: {
     all: ['categories'] as const,
   },
+  flavors: {
+    all: ['flavors'] as const,
+  },
   badges: {
     all: ['badges'] as const,
   },

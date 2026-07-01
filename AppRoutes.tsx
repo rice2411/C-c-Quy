@@ -27,6 +27,7 @@ import OrderSettingsTab from "./pages/Settings/OrderSettingsTab";
 import SepaySettingsTab from "./pages/Settings/SepaySettingsTab";
 import BadgesTab from "./pages/Settings/BadgesTab";
 import CategoriesTab from "./pages/Settings/CategoriesTab";
+import FlavorsTab from "./pages/Settings/FlavorsTab";
 import LoginPage from "./pages/Login/index";
 import SerpApiMapsTestPage from "./pages/Test/SerpApiMaps/index";
 import { routes } from "./config/routes";
@@ -245,6 +246,14 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/categories")?.roles}>
             <CategoriesTab />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="settings/flavors"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/flavors")?.roles}>
+            <FlavorsTab />
           </RoleBasedRoute>
         }
       />

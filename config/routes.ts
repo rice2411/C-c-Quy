@@ -22,6 +22,7 @@ import {
   MessageSquare,
   Award,
   QrCode,
+  IceCream,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { ScreenVisibilityMap } from "@/types";
@@ -211,6 +212,13 @@ export const routes: RouteConfig[] = [
     icon: Tag,
     roles: [UserRole.SUPER_ADMIN],
   },
+  {
+    type: "page",
+    path: "/settings/flavors",
+    labelKey: "nav.settingsFlavors",
+    icon: IceCream,
+    roles: [UserRole.SUPER_ADMIN],
+  },
 ];
 
 export const storageTabRoutes: RouteConfig[] = [
@@ -355,6 +363,7 @@ export const navGroups: NavGroupConfig[] = [
       "/settings/sepay",
       "/settings/badges",
       "/settings/categories",
+      "/settings/flavors",
     ],
   },
 ];
