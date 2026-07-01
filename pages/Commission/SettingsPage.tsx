@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Settings2, Percent, DollarSign } from 'lucide-react';
+import { Percent, DollarSign } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
 import { useCommissionGroups } from '@/hooks/queries/useCommissionQuery';
@@ -30,21 +30,6 @@ const CommissionSettingsPage: React.FC = () => {
 
   return (
     <Box layoutClassName="flex h-full flex-col space-y-4 sm:space-y-5">
-      {/* Header */}
-      <Box layoutClassName="flex items-center gap-3">
-        <Box layoutClassName="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
-          <Settings2 className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-        </Box>
-        <Box>
-          <Typography as="h1" layoutClassName="text-lg font-bold sm:text-xl" textClassName="text-slate-900 dark:text-white">
-            Cài đặt hoa hồng
-          </Typography>
-          <Typography as="p" size="xs" variant="muted">
-            Nhóm hoa hồng · Giá cost sản phẩm
-          </Typography>
-        </Box>
-      </Box>
-
       {/* Tabs */}
       <Box layoutClassName="flex gap-1 rounded-xl border border-slate-100 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800/60">
         {tabs.map(({ key, label, icon }) => {
