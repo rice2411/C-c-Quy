@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, ChevronDown } from 'lucide-react';
+import { LogOut, ChevronDown, PanelLeft, PanelLeftClose } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
@@ -16,7 +16,15 @@ const Layout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { screenVisibility, isScreenEnabled } = useScreenConfig();
-  
+
+  // Thu gọn sidebar (desktop) — nhớ lựa chọn qua localStorage.
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState<boolean>(
+    () => localStorage.getItem('sidebarCollapsed') === '1',
+  );
+  React.useEffect(() => {
+    localStorage.setItem('sidebarCollapsed', sidebarCollapsed ? '1' : '0');
+  }, [sidebarCollapsed]);
+
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'vi' : 'en');
   };
@@ -99,7 +107,7 @@ const Layout: React.FC = () => {
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-200 overflow-hidden">
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:flex w-64 flex-col bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 z-20 transition-colors duration-200">
+      <aside className={`hidden md:flex flex-col bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 z-20 overflow-hidden transition-all duration-200 ${sidebarCollapsed ? 'w-0 border-r-0 opacity-0' : 'w-64'}`}>
         <div className="h-16 flex items-center px-6 border-b border-slate-100 dark:border-slate-700">
           <img src="/icon-v4.svg" alt="Tiệm Bánh Cúc Quy" className="w-8 h-8 rounded-lg mr-3 shadow-sm shadow-primary-300 dark:shadow-none" />
           <span className="text-lg font-bold text-slate-800 dark:text-white tracking-tight">Cúc <span className="text-primary-600 dark:text-primary-500"> Quy</span></span>
@@ -153,6 +161,15 @@ const Layout: React.FC = () => {
         {/* Header */}
         <header className="h-16 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 md:px-8 z-10 sticky top-0 transition-colors duration-200">
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed((v) => !v)}
+              aria-label={sidebarCollapsed ? 'Mở sidebar' : 'Thu gọn sidebar'}
+              title={sidebarCollapsed ? 'Mở sidebar' : 'Thu gọn sidebar'}
+              className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+            >
+              {sidebarCollapsed ? <PanelLeft className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+            </button>
             <div className="md:hidden flex items-center gap-2">
               <img src="/icon-v4.svg" alt="Tiệm Bánh Cúc Quy" className="w-8 h-8 rounded-lg shadow-sm shadow-primary-300 dark:shadow-none" />
               <span className="text-lg font-bold text-slate-800 dark:text-white">Tiệm Bánh <span className="text-primary-600 dark:text-primary-500">Cúc Quy</span></span>
