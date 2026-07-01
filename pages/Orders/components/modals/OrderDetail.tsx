@@ -700,6 +700,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                          <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover bg-slate-100 dark:bg-slate-700" />
                          <div className="flex-1">
                            <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name}</Heading>
+                           {item.flavor ? <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">Vị: {item.flavor}</p> : null}
                            <p className="text-xs text-slate-500 dark:text-slate-400">ID: {item.id}</p>
                          </div>
                          <div className="text-right">
