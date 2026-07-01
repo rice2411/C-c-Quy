@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DollarSign, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Product } from '@/types';
+import { flavorColor } from '@/types/flavor';
+import { useFlavors } from '@/hooks/queries/useFlavorsQuery';
 import { FormItem } from '@/pages/Orders/components/modals/OrderForm';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -45,6 +47,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
   recentlyAddedId,
 }) => {
   const { t } = useLanguage();
+  const { flavors: allFlavors } = useFlavors();
   const [quantityInputs, setQuantityInputs] = useState<Record<string, string>>({});
   const [shippingInput, setShippingInput] = useState<string>(String(shippingCost ?? 0));
   // Lưu giá trị shipping > 0 cuối cùng để khôi phục khi user "Bỏ freeship"
@@ -221,22 +224,33 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                       <Box layoutClassName="mt-1 flex flex-wrap items-center gap-1">
                         <Typography as="span" size="xs" variant="muted" layoutClassName="mr-0.5">Vị:</Typography>
                         {itemFlavors.map((fl) => {
-                          const active = item.flavor === fl;
+                          const selected = (item.flavors ?? []).includes(fl);
+                          const color = flavorColor(fl, allFlavors);
+                          const next = selected
+                            ? (item.flavors ?? []).filter((x) => x !== fl)
+                            : [...(item.flavors ?? []), fl];
                           return (
                             <Button
                               key={fl}
                               type="button"
-                              onClick={() => onUpdateItem(item.id, 'flavor', active ? undefined : fl)}
+                              onClick={() => onUpdateItem(item.id, 'flavors', next)}
                               variant="ghost"
                               disableVariantHover
                               disableVariantTextColor
                               sizeClassName="px-2 py-0.5 text-xs"
                               roundedClassName="rounded-full"
-                              stateClassName="transition-colors"
-                              borderClassName={active ? 'border border-primary-400 dark:border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
-                              backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
-                              textClassName={active ? 'font-medium text-primary-700 dark:text-primary-300' : 'text-slate-600 dark:text-slate-300'}>
+                              borderClassName="border-2"
+                              layoutClassName="inline-flex items-center gap-1"
+                              textClassName="font-medium"
+                              stateClassName="transition-all"
+                              style={{
+                                backgroundColor: selected ? color + '33' : 'transparent',
+                                color,
+                                borderColor: selected ? color : color + '55',
+                                opacity: selected ? 1 : 0.75,
+                              }}>
                               {fl}
+                              {selected ? <Typography as="span" size="xs">✓</Typography> : null}
                             </Button>
                           );
                         })}

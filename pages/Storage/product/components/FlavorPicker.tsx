@@ -1,12 +1,12 @@
 /**
- * FlavorPicker — chọn "vị" cho sản phẩm dạng multi-select tự do.
- * Gõ tên vị + Enter (hoặc dấu phẩy) để thêm chip; bấm × để xoá. Không ảnh hưởng giá.
+ * FlavorPicker — chọn "vị" cho sản phẩm (multi-select) từ danh sách vị quản lý (có màu).
+ * Bấm chip để chọn/bỏ. Quản lý danh sách vị ở Cài đặt → Vị.
  */
-import React, { useState } from 'react';
-import { X, IceCream } from 'lucide-react';
+import React from 'react';
+import { IceCream } from 'lucide-react';
+import { useFlavors } from '@/hooks/queries/useFlavorsQuery';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Typography from '@/components/ui/Typography';
 
@@ -15,28 +15,13 @@ interface FlavorPickerProps {
   onChange: (flavors: string[]) => void;
 }
 
-const normalize = (raw: string) => raw.trim().replace(/\s+/g, ' ');
-
 const FlavorPicker: React.FC<FlavorPickerProps> = ({ flavors, onChange }) => {
-  const [draft, setDraft] = useState('');
+  const { flavors: allFlavors } = useFlavors();
 
-  const add = (raw: string) => {
-    const n = normalize(raw);
-    if (!n) return;
-    if (flavors.some((f) => f.toLowerCase() === n.toLowerCase())) { setDraft(''); return; }
-    onChange([...flavors, n]);
-    setDraft('');
-  };
-
-  const remove = (value: string) => onChange(flavors.filter((f) => f !== value));
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      add(draft);
-    } else if (e.key === 'Backspace' && !draft && flavors.length) {
-      remove(flavors[flavors.length - 1]);
-    }
+  const has = (name: string) => flavors.some((f) => f.toLowerCase() === name.toLowerCase());
+  const toggle = (name: string) => {
+    if (has(name)) onChange(flavors.filter((f) => f.toLowerCase() !== name.toLowerCase()));
+    else onChange([...flavors, name]);
   };
 
   return (
@@ -48,46 +33,45 @@ const FlavorPicker: React.FC<FlavorPickerProps> = ({ flavors, onChange }) => {
             Vị
           </Typography>
         </Box>
-        <Typography as="span" size="xs" variant="muted">{flavors.length} vị</Typography>
+        <Typography as="span" size="xs" variant="muted">{flavors.length} đã chọn</Typography>
       </Box>
 
-      {flavors.length > 0 ? (
+      {allFlavors.length > 0 ? (
         <Box layoutClassName="flex flex-wrap gap-2">
-          {flavors.map((f) => (
-            <Box
-              key={f}
-              layoutClassName="inline-flex items-center gap-1 rounded-full px-2.5 py-1"
-              borderClassName="border border-primary-200 dark:border-primary-700"
-              backgroundClassName="bg-primary-50 dark:bg-primary-900/20">
-              <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-primary-700 dark:text-primary-300">{f}</Typography>
+          {allFlavors.map((fl) => {
+            const selected = has(fl.name);
+            const color = fl.color || '#64748b';
+            return (
               <Button
+                key={fl.id}
                 type="button"
-                onClick={() => remove(f)}
-                aria-label={`Xoá vị ${f}`}
+                onClick={() => toggle(fl.name)}
                 variant="ghost"
                 disableVariantHover
                 disableVariantTextColor
-                sizeClassName="p-0.5"
+                sizeClassName="px-2.5 py-1 text-xs"
                 roundedClassName="rounded-full"
-                borderClassName="border border-transparent"
-                textClassName="text-primary-500 dark:text-primary-400"
-                hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-800/40">
-                <X className="h-3 w-3" />
+                borderClassName="border-2"
+                layoutClassName="inline-flex items-center gap-1"
+                textClassName="font-medium"
+                stateClassName="transition-all"
+                style={{
+                  backgroundColor: selected ? color + '33' : 'transparent',
+                  color,
+                  borderColor: selected ? color : color + '55',
+                  opacity: selected ? 1 : 0.75,
+                }}>
+                {fl.name}
+                {selected ? <Typography as="span" size="xs">✓</Typography> : null}
               </Button>
-            </Box>
-          ))}
+            );
+          })}
         </Box>
-      ) : null}
-
-      <Input
-        type="text"
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onBlur={() => add(draft)}
-        placeholder="Gõ vị rồi Enter (vd: Matcha, Socola, Dâu)"
-        backgroundClassName="bg-slate-50 dark:bg-slate-700"
-      />
+      ) : (
+        <Typography size="xs" variant="muted">
+          Chưa có vị nào. Tạo trong Cài đặt → Vị.
+        </Typography>
+      )}
     </Card>
   );
 };
