@@ -20,9 +20,7 @@ import {
   Tag,
   Monitor,
   MessageSquare,
-  Award,
   QrCode,
-  IceCream,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { ScreenVisibilityMap } from "@/types";
@@ -200,23 +198,9 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/settings/badges",
-    labelKey: "nav.settingsBadges",
-    icon: Award,
-    roles: [UserRole.SUPER_ADMIN],
-  },
-  {
-    type: "page",
-    path: "/settings/categories",
-    labelKey: "nav.settingsCategories",
-    icon: Tag,
-    roles: [UserRole.SUPER_ADMIN],
-  },
-  {
-    type: "page",
-    path: "/settings/flavors",
-    labelKey: "nav.settingsFlavors",
-    icon: IceCream,
+    path: "/settings/product",
+    labelKey: "nav.settingsProduct",
+    icon: Package,
     roles: [UserRole.SUPER_ADMIN],
   },
 ];
@@ -361,9 +345,7 @@ export const navGroups: NavGroupConfig[] = [
       "/settings/zalo",
       "/settings/order",
       "/settings/sepay",
-      "/settings/badges",
-      "/settings/categories",
-      "/settings/flavors",
+      "/settings/product",
     ],
   },
 ];
