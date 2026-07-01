@@ -6,6 +6,7 @@ import RoleBasedRoute from "./components/RoleBasedRoute";
 import DashboardPage from "./pages/Dashboard/index";
 import OrdersPage from "./pages/Orders/index";
 import FinanceOverviewPage from "./pages/Finance/Overview";
+import FinanceCashFlowPage from "./pages/Finance/CashFlow";
 import FinanceTransactionsPage from "./pages/Finance/Transactions";
 import FinanceReconciliationPage from "./pages/Finance/Reconciliation";
 import PromotionsPage from "./pages/Promotions/index";
@@ -69,6 +70,14 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/overview")?.roles}>
             <FinanceOverviewPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="finance/cashflow"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/cashflow")?.roles}>
+            <FinanceCashFlowPage />
           </RoleBasedRoute>
         }
       />
