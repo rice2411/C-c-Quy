@@ -6,7 +6,6 @@ import RoleBasedRoute from "./components/RoleBasedRoute";
 import DashboardPage from "./pages/Dashboard/index";
 import OrdersPage from "./pages/Orders/index";
 import FinanceOverviewPage from "./pages/Finance/Overview";
-import FinanceRevenuePage from "./pages/Finance/Revenue";
 import FinanceTransactionsPage from "./pages/Finance/Transactions";
 import FinanceReconciliationPage from "./pages/Finance/Reconciliation";
 import PromotionsPage from "./pages/Promotions/index";
@@ -74,14 +73,6 @@ const AppRoutes: React.FC = () => (
         }
       />
       <Route
-        path="finance/revenue"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/revenue")?.roles}>
-            <FinanceRevenuePage />
-          </RoleBasedRoute>
-        }
-      />
-      <Route
         path="finance/transactions"
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/transactions")?.roles}>
@@ -99,7 +90,7 @@ const AppRoutes: React.FC = () => (
       />
       {/* Back-compat redirect các path cũ */}
       <Route path="finance" element={<Navigate to="/finance/overview" replace />} />
-      <Route path="revenue" element={<Navigate to="/finance/revenue" replace />} />
+      <Route path="revenue" element={<Navigate to="/finance/overview" replace />} />
       <Route path="transactions" element={<Navigate to="/finance/transactions" replace />} />
       <Route
         path="promotions"

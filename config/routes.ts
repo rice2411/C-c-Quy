@@ -74,13 +74,6 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/finance/revenue",
-    labelKey: "nav.financeRevenue",
-    icon: TrendingUp,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  },
-  {
-    type: "page",
     path: "/finance/transactions",
     labelKey: "nav.financeTransactions",
     icon: Coins,
@@ -326,7 +319,6 @@ export const navGroups: NavGroupConfig[] = [
     icon: Wallet,
     childPaths: [
       "/finance/overview",
-      "/finance/revenue",
       "/finance/transactions",
       "/finance/reconciliation",
     ],
