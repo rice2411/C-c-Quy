@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   Wallet, Coins, Boxes, TrendingUp, Banknote, PieChart as PieIcon, LineChart as LineIcon,
   BadgeDollarSign,
@@ -8,7 +8,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell,
 } from 'recharts';
-import { useRevenueReport } from '@/hooks/queries/useTransactionsQuery';
+import { useRevenueReport, useTransactions } from '@/hooks/queries/useTransactionsQuery';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Box from '@/components/ui/Box';
@@ -16,6 +16,7 @@ import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
 import StatsBanner from '@/pages/StockReceipts/StatsBanner';
+import BankStatsCard from '@/pages/Transactions/components/BankStatsCard';
 
 const pctText = (v: number) => `${(v * 100).toFixed(1)}%`;
 
@@ -23,6 +24,16 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
   const { t } = useLanguage();
   // BE tự fetch mọi nguồn & tính; báo cáo nạp lại khi đổi khoảng thời gian (queryKey theo from/to)
   const { report, loading, error } = useRevenueReport({ from: fromDate, to: toDate });
+  const { transactions } = useTransactions();
+  const periodTx = useMemo(() => {
+    const from = fromDate ? new Date(fromDate) : null;
+    const to = toDate ? new Date(toDate) : null;
+    if (to) to.setHours(23, 59, 59, 999);
+    return transactions.filter((tr) => {
+      const d = new Date(tr.transactionDate);
+      return (!from || d >= from) && (!to || d <= to);
+    });
+  }, [transactions, fromDate, toDate]);
 
   useEffect(() => {
     if (error) toast.error('Không tải được dữ liệu doanh thu');
@@ -73,6 +84,9 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
           { icon: TrendingUp, label: '= Lợi nhuận', value: formatVND(report.profit), accent: profitPositive ? '#16a34a' : '#dc2626' },
         ]}
       />
+
+      {/* Thống kê theo ngân hàng */}
+      <BankStatsCard transactions={periodTx} />
 
       {/* Charts */}
       <Box layoutClassName="grid grid-cols-1 gap-4 lg:grid-cols-3">
