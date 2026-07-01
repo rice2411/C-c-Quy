@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Wallet, Award } from 'lucide-react';
+import { Award } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { OrderStatus } from '@/types/enums';
 import { useMyCommission } from '@/hooks/queries/useCommissionQuery';
@@ -88,23 +88,11 @@ const MyCommissionPage: React.FC = () => {
 
   return (
     <Box layoutClassName="flex h-full flex-col space-y-4 sm:space-y-5">
-      {/* Header */}
-      <Box layoutClassName="flex items-center gap-3">
-        <Box layoutClassName="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
-          <Wallet className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-        </Box>
-        <Box layoutClassName="min-w-0 flex-1">
-          <Typography as="p" layoutClassName="text-lg font-bold sm:text-xl" textClassName="text-slate-900 dark:text-white">
-            Hoa hồng của tôi
-          </Typography>
-          <Typography as="p" size="xs" variant="muted">
-            Theo dõi hoa hồng từ các đơn bạn đã bán
-          </Typography>
-        </Box>
-        {hasAnyOrder && (
+      {hasAnyOrder && (
+        <Box layoutClassName="flex items-center justify-end">
           <FilterPill label="Tháng" value={period} options={periodOptions} onChange={setPeriod} />
-        )}
-      </Box>
+        </Box>
+      )}
 
       {/* Content */}
       <Box layoutClassName="flex-1 overflow-y-auto">

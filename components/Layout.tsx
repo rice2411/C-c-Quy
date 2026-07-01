@@ -4,7 +4,7 @@ import { LogOut, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
-import { buildNavTree, RouteConfig } from '@/config/routes';
+import { buildNavTree, RouteConfig, routes, navGroups } from '@/config/routes';
 import { getUserFromLocalStorage } from '@/utils/user/userUtil';
 import ThemeToggle from './ThemeToggle';
 import toast from 'react-hot-toast';
@@ -81,22 +81,19 @@ const Layout: React.FC = () => {
     );
   };
 
+  // Tiêu đề trang lấy từ routes.ts (nguồn sự thật) — tránh map hardcode lỗi thời.
+  // Route thuộc 1 nhóm sidebar → hiện breadcrumb "Nhóm › Trang" cho rõ ngữ cảnh.
   const getPageTitle = () => {
-    if (location.pathname === '/') return t('header.dashboardTitle');
-    if (location.pathname === '/orders') return t('header.ordersTitle');
-    if (location.pathname === '/transactions') return t('header.transactionsTitle');
-    if (location.pathname === '/commission') return 'Hoa hồng CTV';
-    if (location.pathname === '/commission-settings') return 'Cài đặt hoa hồng';
-    if (location.pathname === '/my-commission') return 'Hoa hồng của tôi';
-    if (location.pathname === '/commission-guide') return 'Hướng dẫn hoa hồng';
-    if (location.pathname === '/storage') return t('header.inventoryTitle');
-    if (location.pathname === '/stock-receipts') return t('header.stockReceiptsTitle');
-    if (location.pathname === '/suppliers') return t('header.suppliersTitle');
-    if (location.pathname === '/materials') return t('header.materialsTitle');
-    if (location.pathname === '/customers') return t('header.customersTitle');
-    if (location.pathname === '/users') return t('header.usersTitle');
-    if (location.pathname === '/admin/request-logs') return t('nav.requestLogs');
-    return 'Tiệm Bánh Cúc Quy';
+    const path = location.pathname;
+    const route =
+      routes.find((r) => r.path === path) ??
+      routes
+        .filter((r) => r.path !== '/' && path.startsWith(`${r.path}/`))
+        .sort((a, b) => b.path.length - a.path.length)[0];
+    if (!route) return 'Tiệm Bánh Cúc Quy';
+    const group = navGroups.find((g) => g.childPaths.includes(route.path));
+    const leaf = t(route.labelKey);
+    return group ? `${t(group.labelKey)} › ${leaf}` : leaf;
   };
 
   return (
