@@ -1,28 +1,32 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowDownLeft, TrendingUp, Building2 } from 'lucide-react';
+import { ArrowDownLeft, TrendingUp, Building2, ArrowRightLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions } from '@/hooks/queries/useTransactionsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import StatsBanner from '@/pages/StockReceipts/StatsBanner';
 import FilterToolbar from '@/components/shared/FilterToolbar';
+import BaseModal from '@/components/BaseModal';
 import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 import TransactionsDesktopTable from './components/desktop/TransactionsDesktopTable';
 import TransactionsMobileList from './components/mobile/TransactionsMobileList';
 import TransactionDetailModal from './components/TransactionDetailModal';
+import ReconciliationTab from './ReconciliationTab';
 import { Transaction } from '@/types';
 
-// Màn Giao dịch (gọn): chỉ tổng tiền vào / tiền ra + danh sách giao dịch (xem).
-// Phần đối soát (khớp đơn / hoàn tiền / kết toán) nằm ở màn Doanh thu.
+// Màn Giao dịch: thống kê (tổng vào/ra + theo ngân hàng) + lịch sử giao dịch.
+// Đối soát (khớp đơn / hoàn tiền / kết toán) mở dạng modal từ nút trên toolbar.
 const TransactionsSummary: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, toDate }) => {
   const { t } = useLanguage();
   const { transactions, loading, error } = useTransactions();
   const [searchTerm, setSearchTerm] = useState('');
   const [selected, setSelected] = useState<Transaction | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [reconcileOpen, setReconcileOpen] = useState(false);
 
   React.useEffect(() => {
     if (error) toast.error(t('transactions.loadError') || 'Không tải được giao dịch');
@@ -128,6 +132,23 @@ const TransactionsSummary: React.FC<{ fromDate: string; toDate: string }> = ({ f
         search={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder={t('transactions.searchPlaceholder') || 'Tìm nội dung, mã đơn...'}
+        actions={
+          <Button
+            type="button"
+            onClick={() => setReconcileOpen(true)}
+            variant="ghost"
+            disableVariantHover
+            disableVariantTextColor
+            layoutClassName="flex shrink-0 items-center gap-1.5"
+            roundedClassName="rounded-xl"
+            borderClassName="border border-slate-200 hover:border-primary-300 dark:border-slate-700"
+            backgroundClassName="bg-white hover:bg-primary-50 dark:bg-slate-800"
+            sizeClassName="px-3 py-2.5 text-xs"
+            textClassName="font-medium text-slate-600 hover:text-primary-600 dark:text-slate-300"
+            stateClassName="transition-colors">
+            <ArrowRightLeft className="h-4 w-4" /> Đối soát
+          </Button>
+        }
       />
 
       {filtered.length === 0 ? (
@@ -147,6 +168,15 @@ const TransactionsSummary: React.FC<{ fromDate: string; toDate: string }> = ({ f
         transaction={selected}
         formatDate={formatDate}
       />
+
+      <BaseModal
+        isOpen={reconcileOpen}
+        onClose={() => setReconcileOpen(false)}
+        title="Đối soát giao dịch"
+        size="xl"
+      >
+        <ReconciliationTab fromDate={fromDate} toDate={toDate} />
+      </BaseModal>
     </Box>
   );
 };
