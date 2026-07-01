@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowDownLeft, TrendingUp } from 'lucide-react';
+import { ArrowDownLeft, TrendingUp, Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTransactions } from '@/hooks/queries/useTransactionsQuery';
@@ -7,6 +7,7 @@ import { formatVND } from '@/utils/format/currencyUtil';
 import StatsBanner from '@/pages/StockReceipts/StatsBanner';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import Box from '@/components/ui/Box';
+import Card from '@/components/ui/Card';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 import TransactionsDesktopTable from './components/desktop/TransactionsDesktopTable';
@@ -67,6 +68,20 @@ const TransactionsSummary: React.FC<{ fromDate: string; toDate: string }> = ({ f
     [filtered],
   );
 
+  // Thống kê tiền vào/ra + số GD theo từng ngân hàng (gateway)
+  const bankStats = useMemo(() => {
+    const map = new Map<string, { bank: string; in: number; out: number; count: number }>();
+    filtered.forEach((tr) => {
+      const bank = tr.gateway || 'Khác';
+      const cur = map.get(bank) ?? { bank, in: 0, out: 0, count: 0 };
+      if (tr.transferType === 'out') cur.out += tr.transferAmount;
+      else cur.in += tr.transferAmount;
+      cur.count += 1;
+      map.set(bank, cur);
+    });
+    return Array.from(map.values()).sort((a, b) => (b.in + b.out) - (a.in + a.out));
+  }, [filtered]);
+
   const handleClick = (tr: Transaction) => { setSelected(tr); setDetailOpen(true); };
 
   if (loading) {
@@ -81,6 +96,33 @@ const TransactionsSummary: React.FC<{ fromDate: string; toDate: string }> = ({ f
           { icon: ArrowDownLeft, label: 'Tổng tiền ra', value: formatVND(totalOut), accent: '#e11d48' },
         ]}
       />
+
+      {bankStats.length > 0 ? (
+        <Card padding="md" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
+          <Box layoutClassName="mb-3 flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-primary-500" />
+            <Typography size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">Thống kê theo ngân hàng</Typography>
+          </Box>
+          <Box layoutClassName="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {bankStats.map((b) => (
+              <Box
+                key={b.bank}
+                layoutClassName="flex flex-col gap-1.5 rounded-xl p-3"
+                borderClassName="border border-slate-100 dark:border-slate-700"
+                backgroundClassName="bg-slate-50/60 dark:bg-slate-900/30">
+                <Box layoutClassName="flex items-center justify-between gap-2">
+                  <Typography as="span" size="sm" layoutClassName="truncate font-semibold" textClassName="text-slate-800 dark:text-slate-100">{b.bank}</Typography>
+                  <Typography as="span" size="xs" variant="muted">{b.count} GD</Typography>
+                </Box>
+                <Box layoutClassName="flex items-center justify-between gap-2">
+                  <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-emerald-600 dark:text-emerald-400">+{formatVND(b.in)}</Typography>
+                  <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-rose-600 dark:text-rose-400">−{formatVND(b.out)}</Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Card>
+      ) : null}
 
       <FilterToolbar
         search={searchTerm}
