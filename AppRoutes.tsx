@@ -25,9 +25,7 @@ import ScreenVisibilityTab from "./pages/Settings/ScreenVisibilityTab";
 import ZaloSettingsTab from "./pages/Settings/ZaloSettingsTab";
 import OrderSettingsTab from "./pages/Settings/OrderSettingsTab";
 import SepaySettingsTab from "./pages/Settings/SepaySettingsTab";
-import BadgesTab from "./pages/Settings/BadgesTab";
-import CategoriesTab from "./pages/Settings/CategoriesTab";
-import FlavorsTab from "./pages/Settings/FlavorsTab";
+import ProductSettings from "./pages/Settings/ProductSettings";
 import LoginPage from "./pages/Login/index";
 import SerpApiMapsTestPage from "./pages/Test/SerpApiMaps/index";
 import { routes } from "./config/routes";
@@ -234,29 +232,17 @@ const AppRoutes: React.FC = () => (
         }
       />
       <Route
-        path="settings/badges"
+        path="settings/product"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/badges")?.roles}>
-            <BadgesTab />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/product")?.roles}>
+            <ProductSettings />
           </RoleBasedRoute>
         }
       />
-      <Route
-        path="settings/categories"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/categories")?.roles}>
-            <CategoriesTab />
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="settings/flavors"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/flavors")?.roles}>
-            <FlavorsTab />
-          </RoleBasedRoute>
-        }
-      />
+      {/* Back-compat: các path cũ đã gộp vào "Cài đặt sản phẩm" */}
+      <Route path="settings/badges" element={<Navigate to="/settings/product" replace />} />
+      <Route path="settings/categories" element={<Navigate to="/settings/product" replace />} />
+      <Route path="settings/flavors" element={<Navigate to="/settings/product" replace />} />
       <Route path="test/serpapi-maps" element={<SerpApiMapsTestPage />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
