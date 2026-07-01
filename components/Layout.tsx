@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, ChevronDown, ChevronsRight, LayoutGrid } from 'lucide-react';
+import { LogOut, ChevronDown, Menu, LayoutGrid } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
@@ -213,7 +213,7 @@ const Layout: React.FC = () => {
               title={sidebarCollapsed ? 'Mở sidebar' : 'Thu gọn sidebar'}
               className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors active:scale-90"
             >
-              <ChevronsRight className={`w-5 h-5 transition-transform duration-300 ease-in-out ${sidebarCollapsed ? 'rotate-0' : 'rotate-180'}`} />
+              <Menu className="w-5 h-5" />
             </button>
             <div className="md:hidden flex items-center gap-2">
               <img src="/icon-v4.svg" alt="Tiệm Bánh Cúc Quy" className="w-8 h-8 rounded-lg shadow-sm shadow-primary-300 dark:shadow-none" />
