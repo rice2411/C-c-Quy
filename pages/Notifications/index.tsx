@@ -383,18 +383,6 @@ const NotificationsPage: React.FC = () => {
 
   return (
     <Box layoutClassName="mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-      <Box layoutClassName="mb-6">
-        <Box layoutClassName="mb-2 flex items-center gap-3">
-          <Bell className="h-8 w-8 text-primary-600 dark:text-primary-400" />
-          <Heading level={1} textClassName="text-2xl sm:text-3xl">
-            {t('notifications.title')}
-          </Heading>
-        </Box>
-        <Typography variant="muted" size="base">
-          {t('notifications.subtitle')}
-        </Typography>
-      </Box>
-
       <Box layoutClassName="relative flex flex-col space-y-6">
         <Tabs
           items={tabItems}
@@ -405,10 +393,7 @@ const NotificationsPage: React.FC = () => {
         <Box>
           <Box layoutClassName="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
             <Box layoutClassName="flex items-center gap-2">
-              <ActiveSectionIcon
-                className="h-5 w-5 shrink-0 text-primary-600 dark:text-primary-400"
-                aria-hidden
-              />
+              <ActiveSectionIcon className="h-5 w-5 shrink-0 text-primary-600 dark:text-primary-400" aria-hidden />
               <Heading level={2} textClassName="text-lg font-semibold text-slate-900 dark:text-white">
                 {t(GROUP_META[activeTab].titleKey)}
               </Heading>
