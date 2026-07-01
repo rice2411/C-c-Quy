@@ -107,6 +107,15 @@ const FlavorsTab: React.FC = () => {
                 {' '}
               </Button>
             ))}
+            {/* Màu tùy chọn — không giới hạn */}
+            <Input
+              type="color"
+              value={draftColor}
+              onChange={(e) => setDraftColor(e.target.value)}
+              aria-label="Màu tùy chọn"
+              containerClassName="w-9 shrink-0"
+              sizeClassName="h-7 p-0.5"
+              backgroundClassName="bg-white dark:bg-slate-700" />
           </Box>
           <Button
             type="button"
@@ -151,6 +160,15 @@ const FlavorsTab: React.FC = () => {
                       {' '}
                     </Button>
                   ))}
+                  {/* Màu tùy chọn — không giới hạn */}
+                  <Input
+                    type="color"
+                    value={f.color || '#64748b'}
+                    onChange={(e) => handleColor(f.id, e.target.value)}
+                    aria-label={`Màu tùy chọn cho ${f.name}`}
+                    containerClassName="w-8 shrink-0"
+                    sizeClassName="h-6 p-0.5"
+                    backgroundClassName="bg-white dark:bg-slate-700" />
                 </Box>
                 <Button
                   type="button"
