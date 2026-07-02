@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DollarSign, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Product } from '@/types';
-import { flavorColor } from '@/types/flavor';
-import { useFlavors } from '@/hooks/queries/useFlavorsQuery';
+import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor, orderLineImage } from '@/types';
 import { FormItem } from '@/pages/Orders/components/modals/OrderForm';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -47,7 +45,6 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
   recentlyAddedId,
 }) => {
   const { t } = useLanguage();
-  const { flavors: allFlavors } = useFlavors();
   const [quantityInputs, setQuantityInputs] = useState<Record<string, string>>({});
   const [shippingInput, setShippingInput] = useState<string>(String(shippingCost ?? 0));
   // Lưu giá trị shipping > 0 cuối cùng để khôi phục khi user "Bỏ freeship"
@@ -231,16 +228,29 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                             <Button
                               key={sz.name}
                               type="button"
-                              onClick={() => { onUpdateItem(item.id, 'size', sz.name); onUpdateItem(item.id, 'unitPrice', sz.price); }}
+                              onClick={() => {
+                                onUpdateItem(item.id, 'size', sz.name);
+                                onUpdateItem(item.id, 'unitPrice', sz.price);
+                                if (itemProduct) {
+                                  const img = orderLineImage(itemProduct, { size: sz.name, flavors: item.flavors });
+                                  if (img) onUpdateItem(item.id, 'image', img);
+                                }
+                              }}
                               variant="ghost"
                               disableVariantHover
                               disableVariantTextColor
-                              sizeClassName="px-2 py-0.5 text-xs"
+                              sizeClassName="py-0.5 pl-1 pr-2 text-xs"
                               roundedClassName="rounded-full"
                               stateClassName="transition-colors"
+                              layoutClassName="inline-flex items-center gap-1.5"
                               borderClassName={active ? 'border border-primary-400 dark:border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
                               backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
                               textClassName={active ? 'font-semibold text-primary-700 dark:text-primary-300' : 'font-medium text-slate-600 dark:text-slate-300'}>
+                              {sz.image ? (
+                                <Box layoutClassName="h-5 w-5 shrink-0 overflow-hidden rounded-full" borderClassName="border border-white/60 dark:border-slate-700">
+                                  <Image src={sz.image} alt="" layoutClassName="h-full w-full object-cover" />
+                                </Box>
+                              ) : null}
                               {sz.name} · {formatVNDOrDash(sz.price)}
                             </Button>
                           );
@@ -252,19 +262,32 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                         <Typography as="span" size="xs" variant="muted" layoutClassName="mr-0.5">Vị:</Typography>
                         {itemFlavors.map((fl) => {
                           const selected = (item.flavors ?? []).includes(fl);
-                          const color = flavorColor(fl, allFlavors);
+                          const color = itemProduct ? flavorVariantColor(itemProduct, fl) : '#64748b';
                           const next = selected
                             ? (item.flavors ?? []).filter((x) => x !== fl)
                             : [...(item.flavors ?? []), fl];
+                          const thumb = itemProduct ? flavorImage(itemProduct, fl) : undefined;
+                          const onPick = () => {
+                            onUpdateItem(item.id, 'flavors', next);
+                            // Giá dòng = tổng vị chọn (nếu sp tính giá theo vị)
+                            if (itemProduct && productUsesFlavorPricing(itemProduct)) {
+                              onUpdateItem(item.id, 'unitPrice', flavorSumPrice(itemProduct, next));
+                            }
+                            // Ảnh dòng theo biến thể đã chọn
+                            if (itemProduct) {
+                              const img = orderLineImage(itemProduct, { size: item.size, flavors: next });
+                              if (img) onUpdateItem(item.id, 'image', img);
+                            }
+                          };
                           return (
                             <Button
                               key={fl}
                               type="button"
-                              onClick={() => onUpdateItem(item.id, 'flavors', next)}
+                              onClick={onPick}
                               variant="ghost"
                               disableVariantHover
                               disableVariantTextColor
-                              sizeClassName="px-2 py-0.5 text-xs"
+                              sizeClassName="py-0.5 pl-1 pr-2 text-xs"
                               roundedClassName="rounded-full"
                               borderClassName="border"
                               layoutClassName="inline-flex items-center gap-1.5"
@@ -276,7 +299,13 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                 backgroundColor: selected ? color + '26' : 'transparent',
                                 borderColor: selected ? color : color + '80',
                               }}>
-                              <Box layoutClassName="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                              {thumb ? (
+                                <Box layoutClassName="h-5 w-5 shrink-0 overflow-hidden rounded-full" borderClassName="border border-white/60 dark:border-slate-700">
+                                  <Image src={thumb} alt="" layoutClassName="h-full w-full object-cover" />
+                                </Box>
+                              ) : (
+                                <Box layoutClassName="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                              )}
                               {fl}
                               {selected ? <Typography as="span" size="xs" textClassName="text-emerald-600 dark:text-emerald-400">✓</Typography> : null}
                             </Button>

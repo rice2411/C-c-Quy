@@ -35,7 +35,8 @@ import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { qk } from '@/hooks/queryKeys';
 import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber, fetchOutUnlinkedTransactions } from '@/services/transactionService';
-import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction } from '@/types';
+import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor } from '@/types';
+import { useProducts } from '@/hooks/queries/useProductsQuery';
 import { UserRole } from '@/types/user';
 import { orderAddressFallbackKey, surchargeTagLabel, reconcileMethodLabel } from '@/types/order';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
@@ -77,6 +78,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   onUpdateOrder,
 }) => {
   const { t } = useLanguage();
+  const { products } = useProducts();
   const { currentUser, userData } = useAuth();
   const { surchargeTags } = useSurchargeTags();
   const { activeAccount } = usePaymentAccounts();
@@ -695,20 +697,61 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
                    <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('detail.items')}</Heading>
                    <div className="space-y-4">
-                     {currentOrder.items.map((item) => (
-                       <div key={item.id} className="flex items-center gap-4 py-2">
-                         <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover bg-slate-100 dark:bg-slate-700" />
-                         <div className="flex-1">
-                           <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name}{item.size ? ` · ${item.size}` : ''}</Heading>
-                           {item.flavors && item.flavors.length ? <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">Vị: {item.flavors.join(', ')}</p> : null}
-                           <p className="text-xs text-slate-500 dark:text-slate-400">ID: {item.id}</p>
+                     {currentOrder.items.flatMap((item) => {
+                       const product = products.find((p) => p.id === item.productId);
+                       const flavors = item.flavors ?? [];
+                       // Sản phẩm tính giá theo vị + nhiều vị → tách mỗi vị 1 dòng item riêng.
+                       if (product && productUsesFlavorPricing(product) && flavors.length > 0) {
+                         return flavors.map((fl) => {
+                           const variant = product.flavorVariants?.find((v) => v.name === fl);
+                           const img = variant?.image || item.image;
+                           const color = variant?.color || '#64748b';
+                           const lineTotal = (variant?.price ?? 0) * (item.quantity || 0);
+                           return (
+                             <div key={`${item.id}-${fl}`} className="flex items-center gap-4 py-2">
+                               <img src={img} alt={fl} className="w-16 h-16 rounded-lg object-cover bg-slate-100 dark:bg-slate-700" />
+                               <div className="flex-1">
+                                 <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name} · {fl}</Heading>
+                                 <span className="mt-1 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5" style={{ borderColor: color + '80', backgroundColor: color + '26' }}>
+                                   <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                                   <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{fl}</span>
+                                 </span>
+                               </div>
+                               <div className="text-right">
+                                 <p className="text-sm font-medium text-slate-900 dark:text-white">{formatVND(lineTotal)}</p>
+                                 <p className="text-xs text-slate-500 dark:text-slate-400">Qty: {item.quantity}</p>
+                               </div>
+                             </div>
+                           );
+                         });
+                       }
+                       // Mặc định: 1 dòng (kèm size + vị dạng text nếu có).
+                       return [(
+                         <div key={item.id} className="flex items-center gap-4 py-2">
+                           <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover bg-slate-100 dark:bg-slate-700" />
+                           <div className="flex-1">
+                             <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name}{item.size ? ` · ${item.size}` : ''}</Heading>
+                             {flavors.length ? (
+                               <div className="mt-1 flex flex-wrap gap-1">
+                                 {flavors.map((fl) => {
+                                   const color = product ? flavorVariantColor(product, fl) : '#64748b';
+                                   return (
+                                     <span key={fl} className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5" style={{ borderColor: color + '80', backgroundColor: color + '26' }}>
+                                       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                                       <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{fl}</span>
+                                     </span>
+                                   );
+                                 })}
+                               </div>
+                             ) : null}
+                           </div>
+                           <div className="text-right">
+                             <p className="text-sm font-medium text-slate-900 dark:text-white">{formatVND(calculateLineItemTotal(item))}</p>
+                             <p className="text-xs text-slate-500 dark:text-slate-400">Qty: {item.quantity}</p>
+                           </div>
                          </div>
-                         <div className="text-right">
-                           <p className="text-sm font-medium text-slate-900 dark:text-white">{formatVND(calculateLineItemTotal(item))}</p>
-                           <p className="text-xs text-slate-500 dark:text-slate-400">Qty: {item.quantity}</p>
-                         </div>
-                       </div>
-                     ))}
+                       )];
+                     })}
                    </div>
 
                    {currentOrder.decorations && currentOrder.decorations.length > 0 ? (
