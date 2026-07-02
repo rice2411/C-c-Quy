@@ -109,6 +109,36 @@ export const sizeCount = (
 ): number | undefined =>
   name ? (p.sizes ?? []).find((s) => s.name === name)?.count : undefined;
 
+/** 1 dòng đơn có thể chứa nhiều size + số lượng. */
+export interface OrderSizeCount { name: string; qty: number; }
+
+/** Tổng giá theo sizeCounts = Σ(qty × giá size). */
+export const sizeCountsPrice = (
+  p: { sizes?: ProductSize[] },
+  sc?: OrderSizeCount[],
+): number =>
+  (sc ?? []).reduce((s, x) => {
+    const sz = (p.sizes ?? []).find((z) => z.name === x.name);
+    return s + (sz?.price ?? 0) * (x.qty || 0);
+  }, 0);
+
+/** Tổng số cái theo sizeCounts = Σ(qty × số cái mỗi size). */
+export const sizeCountsCakes = (
+  p: { sizes?: ProductSize[] },
+  sc?: OrderSizeCount[],
+): number =>
+  (sc ?? []).reduce((s, x) => {
+    const sz = (p.sizes ?? []).find((z) => z.name === x.name);
+    return s + (sz?.count ?? 1) * (x.qty || 0);
+  }, 0);
+
+/** Nhãn "Gia Đình ×2, Lẻ" từ sizeCounts (bỏ qty 0, bỏ ×1 cho gọn). */
+export const sizeCountsLabel = (sc?: OrderSizeCount[]): string =>
+  (sc ?? [])
+    .filter((x) => x.qty > 0)
+    .map((x) => (x.qty > 1 ? `${x.name} ×${x.qty}` : x.name))
+    .join(', ');
+
 /** Gom mảng vị (có lặp) thành [{name, qty}] để hiển thị: vd ['M','M','S'] → [{M,2},{S,1}]. */
 export const groupFlavors = (flavors?: string[]): { name: string; qty: number }[] => {
   const m = new Map<string, number>();

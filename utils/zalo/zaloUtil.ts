@@ -1,4 +1,4 @@
-import { Order, OrderFieldChange } from "@/types";
+import { Order, OrderFieldChange, sizeCountsLabel } from "@/types";
 import { surchargeTagLabel } from "@/types/order";
 import { parseDateValue } from "../format/dateUtil";
 import { formatVND } from "../format/currencyUtil";
@@ -10,7 +10,9 @@ const DIVIDER = '─────────────────────
 /** Nhãn item cho noti Zalo: tên + size + vị (gom số cái nếu lặp). */
 const itemLabel = (it: any): string => {
   let s = it?.name ?? '';
-  if (it?.size) s += ` · ${it.size}`;
+  const scLabel = sizeCountsLabel(it?.sizeCounts);
+  if (scLabel) s += ` · ${scLabel}`;
+  else if (it?.size) s += ` · ${it.size}`;
   if (Array.isArray(it?.flavors) && it.flavors.length) {
     const m = new Map<string, number>();
     it.flavors.forEach((f: string) => m.set(f, (m.get(f) || 0) + 1));

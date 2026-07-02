@@ -54,6 +54,8 @@ export interface FormItem {
   flavors?: string[];
   /** Size đã chọn (nếu sản phẩm có size) */
   size?: string;
+  /** Nhiều size + số lượng trong 1 dòng (vd 2 Gia Đình + 1 Lẻ) */
+  sizeCounts?: { name: string; qty: number }[];
 }
 const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCancel }) => {
   const { t } = useLanguage();
@@ -197,6 +199,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
           image: item.image,
           flavors: item.flavors,
           size: item.size,
+          sizeCounts: item.sizeCounts,
         }));
         setItems(loadedItems);
       } else if (products.length > 0) {
@@ -278,14 +281,16 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
     // (vd 2 Combo Gia Đình + 1 Lẻ). Sản phẩm thường → cộng dồn số lượng như cũ.
     const hasVariants = (product.sizes?.length ?? 0) > 0 || (product.flavorVariants?.length ?? 0) > 0;
     setItems(prev => {
-      const existingIdx = hasVariants ? -1 : prev.findIndex(i => i.productId === product.id);
+      const existingIdx = prev.findIndex(i => i.productId === product.id);
       if (existingIdx >= 0) {
         resolvedId = prev[existingIdx].id;
+        // SP biến thể (size/vị) → 1 dòng duy nhất, cấu hình size/vị bằng stepper trong dòng.
+        if (hasVariants) return prev;
         return prev.map((item, idx) =>
           idx === existingIdx ? { ...item, quantity: (item.quantity || 0) + 1 } : item,
         );
       }
-      // Sản phẩm có size → mặc định size đầu tiên + giá theo size đó.
+      // Sản phẩm có size → mặc định size đầu tiên số lượng 1 (dùng sizeCounts).
       const firstSize = product.sizes?.[0];
       return [...prev, {
         id: newId,
@@ -295,6 +300,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         unitPrice: firstSize ? firstSize.price : product.price,
         image: (firstSize?.image) || product.image,
         size: firstSize?.name,
+        sizeCounts: firstSize ? [{ name: firstSize.name, qty: 1 }] : undefined,
       }];
     });
     flashHighlight(resolvedId);
@@ -505,6 +511,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
            image: item.image,
            flavors: item.flavors && item.flavors.length ? item.flavors : undefined,
            size: item.size || undefined,
+           sizeCounts: item.sizeCounts && item.sizeCounts.length ? item.sizeCounts : undefined,
          };
       });
 

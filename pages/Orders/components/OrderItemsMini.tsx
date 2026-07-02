@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import type { OrderItem } from '@/types';
-import { groupFlavors } from '@/types';
+import { groupFlavors, sizeCountsLabel } from '@/types';
 import Box from '@/components/ui/Box';
 import Image from '@/components/ui/Image';
 import Typography from '@/components/ui/Typography';
@@ -15,7 +15,9 @@ const flavorText = (flavors?: string[]): string =>
 
 const label = (it: OrderItem): string => {
   let s = it.name || '';
-  if (it.size) s += ` · ${it.size}`;
+  const scLabel = sizeCountsLabel(it.sizeCounts);
+  if (scLabel) s += ` · ${scLabel}`;
+  else if (it.size) s += ` · ${it.size}`;
   const ft = flavorText(it.flavors);
   if (ft) s += ` (${ft})`;
   return s;
