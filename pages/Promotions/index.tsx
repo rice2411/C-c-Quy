@@ -106,7 +106,10 @@ const PromotionsPage: React.FC = () => {
       discountType: p.discountType,
       discountValue: p.discountValue != null ? String(p.discountValue) : '',
       maxDiscount: p.maxDiscount != null ? String(p.maxDiscount) : '',
-      groupCategoryId: p.groupCategoryId ?? '',
+      groupCategoryId:
+        categories.find((c) => c.id === p.groupCategoryId || c.name === p.groupCategoryId)?.id ??
+        p.groupCategoryId ??
+        '',
       buyQuantity: p.buyQuantity != null ? String(p.buyQuantity) : '3',
       getQuantity: p.getQuantity != null ? String(p.getQuantity) : '1',
       scope: p.scope,
@@ -205,7 +208,8 @@ const PromotionsPage: React.FC = () => {
     if (p.discountType === 'FIXED') return formatVND(p.discountValue ?? 0);
     if (p.discountType === 'FREE_SHIP') return 'Miễn ship';
     if (p.discountType === 'BUY_X_GET_Y') {
-      const gn = p.groupCategoryId;
+      const cat = categories.find((c) => c.id === p.groupCategoryId || c.name === p.groupCategoryId);
+      const gn = cat?.name ?? p.groupCategoryId;
       return `Mua ${p.buyQuantity ?? 3} tặng ${p.getQuantity ?? 1}${gn ? ` · nhóm ${gn}` : ''}`;
     }
     return '—';
@@ -289,7 +293,7 @@ const PromotionsPage: React.FC = () => {
                 >
                   <Select value={form.groupCategoryId} onChange={(e) => setForm((f) => ({ ...f, groupCategoryId: e.target.value }))} fullWidth>
                     <option value="">— Chọn danh mục —</option>
-                    {categories.map((c) => <option key={c.id} value={c.name}>{`${c.icon ?? ''} ${c.name}`.trim()}</option>)}
+                    {categories.map((c) => <option key={c.id} value={c.id}>{`${c.icon ?? ''} ${c.name}`.trim()}</option>)}
                   </Select>
                 </Field>
                 <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2">
