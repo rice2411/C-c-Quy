@@ -1,13 +1,12 @@
 /**
- * FlavorVariantEditor — khai báo vị cho sản phẩm: chọn vị (từ danh sách quản lý, có màu),
- * mỗi vị gán ảnh riêng (chọn từ gallery sản phẩm) + giá riêng (tùy chọn).
+ * FlavorVariantEditor — khai báo vị NGAY TRONG sản phẩm (không dùng danh sách config chung).
+ * Mỗi vị: tên + màu + giá riêng (tùy chọn) + ảnh riêng (chọn từ gallery sản phẩm).
  * Giá dòng đơn = tổng giá các vị chọn (nếu vị có đặt giá).
  */
-import React from 'react';
-import { IceCream } from 'lucide-react';
+import React, { useState } from 'react';
+import { IceCream, Plus, Trash2 } from 'lucide-react';
 import type { ProductFlavorVariant } from '@/types';
-import { flavorColor } from '@/types/flavor';
-import { useFlavors } from '@/hooks/queries/useFlavorsQuery';
+import { DEFAULT_FLAVOR_COLORS } from '@/types/flavor';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -22,15 +21,19 @@ interface FlavorVariantEditorProps {
 }
 
 const FlavorVariantEditor: React.FC<FlavorVariantEditorProps> = ({ variants, onChange, galleryImages }) => {
-  const { flavors: allFlavors } = useFlavors();
+  const [name, setName] = useState('');
 
-  const has = (name: string) => variants.some((v) => v.name.toLowerCase() === name.toLowerCase());
-  const toggle = (name: string) => {
-    if (has(name)) onChange(variants.filter((v) => v.name.toLowerCase() !== name.toLowerCase()));
-    else onChange([...variants, { name }]);
+  const add = () => {
+    const n = name.trim().replace(/\s+/g, ' ');
+    if (!n) return;
+    if (variants.some((v) => v.name.toLowerCase() === n.toLowerCase())) { setName(''); return; }
+    const color = DEFAULT_FLAVOR_COLORS[variants.length % DEFAULT_FLAVOR_COLORS.length];
+    onChange([...variants, { name: n, color }]);
+    setName('');
   };
-  const patch = (name: string, p: Partial<ProductFlavorVariant>) =>
-    onChange(variants.map((v) => (v.name === name ? { ...v, ...p } : v)));
+  const patch = (idx: number, p: Partial<ProductFlavorVariant>) =>
+    onChange(variants.map((v, i) => (i === idx ? { ...v, ...p } : v)));
+  const remove = (idx: number) => onChange(variants.filter((_, i) => i !== idx));
 
   return (
     <Card padding="md" layoutClassName="space-y-3">
@@ -44,70 +47,89 @@ const FlavorVariantEditor: React.FC<FlavorVariantEditorProps> = ({ variants, onC
         <Typography as="span" size="xs" variant="muted">{variants.length} vị</Typography>
       </Box>
 
-      {/* Chọn vị áp dụng cho sản phẩm */}
-      {allFlavors.length > 0 ? (
-        <Box layoutClassName="flex flex-wrap gap-2">
-          {allFlavors.map((fl) => {
-            const selected = has(fl.name);
-            const color = fl.color || '#64748b';
-            return (
-              <Button
-                key={fl.id}
-                type="button"
-                onClick={() => toggle(fl.name)}
-                variant="ghost"
-                disableVariantHover
-                disableVariantTextColor
-                sizeClassName="px-2.5 py-1 text-xs"
-                roundedClassName="rounded-full"
-                borderClassName="border"
-                layoutClassName="inline-flex items-center gap-1.5"
-                textClassName={selected ? 'font-semibold text-slate-800 dark:text-slate-100' : 'font-medium text-slate-600 dark:text-slate-300'}
-                stateClassName="transition-all"
-                style={{ backgroundColor: selected ? color + '26' : 'transparent', borderColor: selected ? color : color + '80' }}>
-                <Box layoutClassName="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-                {fl.name}
-                {selected ? <Typography as="span" size="xs" textClassName="text-emerald-600 dark:text-emerald-400">✓</Typography> : null}
-              </Button>
-            );
-          })}
-        </Box>
-      ) : (
-        <Typography size="xs" variant="muted">Chưa có vị nào. Tạo trong Cài đặt → Cài đặt sản phẩm → Vị.</Typography>
-      )}
-
-      {/* Ảnh + giá cho từng vị đã chọn */}
+      {/* Danh sách vị đã khai báo */}
       {variants.length > 0 ? (
         <Box layoutClassName="flex flex-col gap-2">
-          {variants.map((v) => (
+          {variants.map((v, idx) => (
             <Box
-              key={v.name}
+              key={idx}
               layoutClassName="flex flex-col gap-2 rounded-lg p-2"
               borderClassName="border border-slate-100 dark:border-slate-700"
               backgroundClassName="bg-slate-50/60 dark:bg-slate-900/30">
               <Box layoutClassName="flex items-center gap-2">
-                <Box layoutClassName="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: flavorColor(v.name, allFlavors) }} />
-                <Typography as="span" size="sm" layoutClassName="min-w-0 flex-1 truncate font-medium" textClassName="text-slate-800 dark:text-slate-100">{v.name}</Typography>
+                <Box layoutClassName="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: v.color || '#64748b' }} />
+                <Input
+                  type="text"
+                  value={v.name}
+                  onChange={(e) => patch(idx, { name: e.target.value })}
+                  placeholder="Tên vị"
+                  backgroundClassName="bg-white dark:bg-slate-700"
+                  containerClassName="min-w-0 flex-1" />
                 <Input
                   type="number"
                   min={0}
                   step={1000}
                   value={v.price ?? 0}
-                  onChange={(e) => patch(v.name, { price: Math.max(0, Number(e.target.value) || 0) })}
+                  onChange={(e) => patch(idx, { price: Math.max(0, Number(e.target.value) || 0) })}
                   placeholder="Giá"
                   backgroundClassName="bg-white dark:bg-slate-700"
-                  containerClassName="w-28 shrink-0" />
+                  containerClassName="w-24 shrink-0" />
+                <Button
+                  type="button"
+                  onClick={() => remove(idx)}
+                  aria-label={`Xoá vị ${v.name}`}
+                  variant="ghost"
+                  disableVariantHover
+                  disableVariantTextColor
+                  sizeClassName="p-1.5"
+                  roundedClassName="rounded-lg"
+                  borderClassName="border border-transparent"
+                  textClassName="text-slate-400"
+                  hoverClassName="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </Box>
-              {/* Chọn ảnh cho vị từ gallery */}
+
+              {/* Màu vị */}
+              <Box layoutClassName="flex flex-wrap items-center gap-1.5">
+                <Typography as="span" size="xs" variant="muted" layoutClassName="mr-0.5">Màu:</Typography>
+                {DEFAULT_FLAVOR_COLORS.map((c) => (
+                  <Button
+                    key={c}
+                    type="button"
+                    onClick={() => patch(idx, { color: c })}
+                    aria-label={`Màu ${c}`}
+                    variant="ghost"
+                    disableVariantHover
+                    disableVariantTextColor
+                    layoutClassName="h-5 w-5"
+                    roundedClassName="rounded-full"
+                    borderClassName={v.color === c ? 'border-2 border-slate-700 dark:border-white' : 'border border-transparent'}
+                    style={{ backgroundColor: c }}>
+                    {' '}
+                  </Button>
+                ))}
+                <Input
+                  type="color"
+                  value={v.color || '#64748b'}
+                  onChange={(e) => patch(idx, { color: e.target.value })}
+                  aria-label="Màu tùy chọn"
+                  containerClassName="w-8 shrink-0"
+                  sizeClassName="h-6 p-0.5"
+                  backgroundClassName="bg-white dark:bg-slate-700" />
+              </Box>
+
+              {/* Ảnh vị (chọn từ gallery) */}
               {galleryImages.length > 0 ? (
-                <Box layoutClassName="flex flex-wrap gap-1.5">
+                <Box layoutClassName="flex flex-wrap items-center gap-1.5">
+                  <Typography as="span" size="xs" variant="muted" layoutClassName="mr-0.5">Ảnh:</Typography>
                   {galleryImages.map((img) => {
                     const active = v.image === img;
                     return (
                       <Button
                         key={img}
                         type="button"
-                        onClick={() => patch(v.name, { image: active ? undefined : img })}
+                        onClick={() => patch(idx, { image: active ? undefined : img })}
                         aria-label="Chọn ảnh cho vị"
                         variant="ghost"
                         disableVariantHover
@@ -127,7 +149,30 @@ const FlavorVariantEditor: React.FC<FlavorVariantEditorProps> = ({ variants, onC
             </Box>
           ))}
         </Box>
-      ) : null}
+      ) : (
+        <Typography size="xs" variant="muted">Chưa có vị. Thêm ở dưới.</Typography>
+      )}
+
+      {/* Thêm vị mới */}
+      <Box layoutClassName="flex items-center gap-2">
+        <Input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(); } }}
+          placeholder="Tên vị mới (vd: Matcha)"
+          backgroundClassName="bg-slate-50 dark:bg-slate-700"
+          containerClassName="flex-1" />
+        <Button
+          type="button"
+          onClick={add}
+          variant="primary"
+          leftIcon={<Plus className="h-4 w-4" />}
+          sizeClassName="px-3 py-2 text-sm"
+          roundedClassName="rounded-lg">
+          Thêm
+        </Button>
+      </Box>
     </Card>
   );
 };

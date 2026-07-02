@@ -9,9 +9,10 @@ export interface ProductSize {
   price: number;
 }
 
-/** 1 biến thể vị: tên + ảnh riêng (từ gallery) + giá riêng (tùy chọn). */
+/** 1 biến thể vị: tên + màu + ảnh riêng (từ gallery) + giá riêng (tùy chọn). Khai báo per-sản phẩm. */
 export interface ProductFlavorVariant {
   name: string;
+  color?: string;
   image?: string;
   price?: number;
 }
@@ -82,3 +83,10 @@ export const flavorImage = (
   name: string,
 ): string | undefined =>
   (p.flavorVariants ?? []).find((v) => v.name === name)?.image;
+
+/** Màu của 1 vị theo khai báo trong sản phẩm (fallback xám). */
+export const flavorVariantColor = (
+  p: { flavorVariants?: ProductFlavorVariant[] },
+  name: string,
+): string =>
+  (p.flavorVariants ?? []).find((v) => v.name === name)?.color || '#64748b';
