@@ -52,6 +52,8 @@ export interface FormItem {
   unitPrice: number;
   /** Các vị đã chọn (nếu sản phẩm có vị) */
   flavors?: string[];
+  /** Size đã chọn (nếu sản phẩm có size) */
+  size?: string;
 }
 const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCancel }) => {
   const { t } = useLanguage();
@@ -194,6 +196,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
           unitPrice: item.price,
           image: item.image,
           flavors: item.flavors,
+          size: item.size,
         }));
         setItems(loadedItems);
       } else if (products.length > 0) {
@@ -279,13 +282,16 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
           idx === existingIdx ? { ...item, quantity: (item.quantity || 0) + 1 } : item,
         );
       }
+      // Sản phẩm có size → mặc định size đầu tiên + giá theo size đó.
+      const firstSize = product.sizes?.[0];
       return [...prev, {
         id: newId,
         productId: product.id,
         productName: product.name,
         quantity: 1,
-        unitPrice: product.price,
+        unitPrice: firstSize ? firstSize.price : product.price,
         image: product.image,
+        size: firstSize?.name,
       }];
     });
     flashHighlight(resolvedId);
@@ -495,6 +501,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
            price: Number(item.unitPrice),
            image: item.image,
            flavors: item.flavors && item.flavors.length ? item.flavors : undefined,
+           size: item.size || undefined,
          };
       });
 

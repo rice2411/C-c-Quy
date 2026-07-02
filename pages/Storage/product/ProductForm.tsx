@@ -14,6 +14,8 @@ import GallerySection from '@/pages/Storage/product/components/GallerySection';
 import CategoryPicker from '@/pages/Storage/product/components/CategoryPicker';
 import TagPicker from '@/pages/Storage/product/components/TagPicker';
 import FlavorPicker from '@/pages/Storage/product/components/FlavorPicker';
+import SizeEditor from '@/pages/Storage/product/components/SizeEditor';
+import type { ProductSize } from '@/types';
 import ProductHistoryView from '@/pages/Storage/product/components/ProductHistoryView';
 import Field from '@/components/ui/Field';
 import Select from '@/components/ui/Select';
@@ -46,6 +48,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
   const [category, setCategory] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [flavors, setFlavors] = useState<string[]>([]);
+  const [sizes, setSizes] = useState<ProductSize[]>([]);
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
 
@@ -79,6 +82,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
       const allowed = new Set(productBadges.map((b) => b.name.toLowerCase()));
       setTags((initialData.tags || []).filter((tag) => allowed.has(tag.trim().toLowerCase())));
       setFlavors(initialData.flavors || []);
+      setSizes(initialData.sizes || []);
       setDescription(initialData.description || '');
       setStatus(initialData.status);
     } else {
@@ -89,6 +93,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
       setCategory('');
       setTags([]);
       setFlavors([]);
+      setSizes([]);
       setDescription('');
       setStatus('active');
     }
@@ -176,6 +181,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
         category: category || 'General',
         tags: tags.filter((tag) => badgeByName.has(tag)),
         flavors,
+        sizes,
         description,
         status,
       });
@@ -353,8 +359,11 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
               {/* Tag picker */}
               <TagPicker tags={tags} productBadges={productBadges} onChange={setTags} />
 
-              {/* Flavor picker (vị — multi-select tự do) */}
+              {/* Flavor picker (vị — multi-select) */}
               <FlavorPicker flavors={flavors} onChange={setFlavors} />
+
+              {/* Size (biến thể giá) */}
+              <SizeEditor sizes={sizes} onChange={setSizes} />
 
               {/* Status */}
               <Field label={t('inventory.status')}>

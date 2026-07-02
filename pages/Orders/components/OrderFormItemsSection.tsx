@@ -187,7 +187,9 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
             const lineTotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
             const isHighlighted = recentlyAddedId === item.id;
             const isEditingPrice = editingPriceId === item.id;
-            const itemFlavors = products.find((p) => p.id === item.productId)?.flavors ?? [];
+            const itemProduct = products.find((p) => p.id === item.productId);
+            const itemFlavors = itemProduct?.flavors ?? [];
+            const itemSizes = itemProduct?.sizes ?? [];
             return (
               <Box
                 key={item.id}
@@ -220,6 +222,31 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                     <Typography size="sm" layoutClassName="truncate font-semibold">
                       {item.productName || `Item #${index + 1}`}
                     </Typography>
+                    {itemSizes.length > 0 ? (
+                      <Box layoutClassName="mt-1 flex flex-wrap items-center gap-1">
+                        <Typography as="span" size="xs" variant="muted" layoutClassName="mr-0.5">Size:</Typography>
+                        {itemSizes.map((sz) => {
+                          const active = item.size === sz.name;
+                          return (
+                            <Button
+                              key={sz.name}
+                              type="button"
+                              onClick={() => { onUpdateItem(item.id, 'size', sz.name); onUpdateItem(item.id, 'unitPrice', sz.price); }}
+                              variant="ghost"
+                              disableVariantHover
+                              disableVariantTextColor
+                              sizeClassName="px-2 py-0.5 text-xs"
+                              roundedClassName="rounded-full"
+                              stateClassName="transition-colors"
+                              borderClassName={active ? 'border border-primary-400 dark:border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
+                              backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
+                              textClassName={active ? 'font-semibold text-primary-700 dark:text-primary-300' : 'font-medium text-slate-600 dark:text-slate-300'}>
+                              {sz.name} · {formatVNDOrDash(sz.price)}
+                            </Button>
+                          );
+                        })}
+                      </Box>
+                    ) : null}
                     {itemFlavors.length > 0 ? (
                       <Box layoutClassName="mt-1 flex flex-wrap items-center gap-1">
                         <Typography as="span" size="xs" variant="muted" layoutClassName="mr-0.5">Vị:</Typography>
