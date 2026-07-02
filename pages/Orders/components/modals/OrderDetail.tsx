@@ -702,11 +702,13 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                        const flavors = item.flavors ?? [];
                        // Sản phẩm tính giá theo vị + nhiều vị → tách mỗi vị 1 dòng item riêng.
                        if (product && productUsesFlavorPricing(product) && flavors.length > 0) {
+                         // SL mỗi vị = tổng SL dòng chia số vị (model: SL dòng = số vị chọn → thường 1/vị).
+                         const perFlavorQty = Math.max(1, Math.round((item.quantity || 0) / flavors.length));
                          return flavors.map((fl) => {
                            const variant = product.flavorVariants?.find((v) => v.name === fl);
                            const img = variant?.image || item.image;
                            const color = variant?.color || '#64748b';
-                           const lineTotal = (variant?.price ?? 0) * (item.quantity || 0);
+                           const lineTotal = (variant?.price ?? 0) * perFlavorQty;
                            return (
                              <div key={`${item.id}-${fl}`} className="flex items-center gap-4 py-2">
                                <img src={img} alt={fl} className="w-16 h-16 rounded-lg object-cover bg-slate-100 dark:bg-slate-700" />
@@ -719,7 +721,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                </div>
                                <div className="text-right">
                                  <p className="text-sm font-medium text-slate-900 dark:text-white">{formatVND(lineTotal)}</p>
-                                 <p className="text-xs text-slate-500 dark:text-slate-400">Qty: {item.quantity}</p>
+                                 <p className="text-xs text-slate-500 dark:text-slate-400">Qty: {perFlavorQty}</p>
                                </div>
                              </div>
                            );
