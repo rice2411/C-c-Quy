@@ -696,7 +696,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
                 <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
                    <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('detail.items')}</Heading>
-                   <div className="space-y-4">
+                   <Box layoutClassName="space-y-4">
                      {currentOrder.items.flatMap((item) => {
                        const product = products.find((p) => p.id === item.productId);
                        const flavors = item.flavors ?? [];
@@ -710,51 +710,55 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                            const color = variant?.color || '#64748b';
                            const lineTotal = (variant?.price ?? 0) * perFlavorQty;
                            return (
-                             <div key={`${item.id}-${fl}`} className="flex items-center gap-4 py-2">
-                               <img src={img} alt={fl} className="w-16 h-16 rounded-lg object-cover bg-slate-100 dark:bg-slate-700" />
-                               <div className="flex-1">
+                             <Box key={`${item.id}-${fl}`} layoutClassName="flex items-center gap-4 py-2">
+                               <Box layoutClassName="h-16 w-16 shrink-0 overflow-hidden" roundedClassName="rounded-lg" backgroundClassName="bg-slate-100 dark:bg-slate-700">
+                                 <Image src={img} alt={fl} layoutClassName="h-full w-full object-cover" />
+                               </Box>
+                               <Box layoutClassName="min-w-0 flex-1">
                                  <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name} · {fl}</Heading>
-                                 <span className="mt-1 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5" style={{ borderColor: color + '80', backgroundColor: color + '26' }}>
-                                   <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-                                   <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{fl}</span>
-                                 </span>
-                               </div>
-                               <div className="text-right">
-                                 <p className="text-sm font-medium text-slate-900 dark:text-white">{formatVND(lineTotal)}</p>
-                                 <p className="text-xs text-slate-500 dark:text-slate-400">Qty: {perFlavorQty}</p>
-                               </div>
-                             </div>
+                                 <Box layoutClassName="mt-1 inline-flex items-center gap-1.5 px-2 py-0.5" roundedClassName="rounded-full" borderClassName="border" style={{ borderColor: color + '80', backgroundColor: color + '26' }}>
+                                   <Box layoutClassName="h-2 w-2 shrink-0" roundedClassName="rounded-full" style={{ backgroundColor: color }} />
+                                   <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{fl}</Typography>
+                                 </Box>
+                               </Box>
+                               <Box layoutClassName="text-right">
+                                 <Typography as="p" size="sm" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{formatVND(lineTotal)}</Typography>
+                                 <Typography as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">Qty: {perFlavorQty}</Typography>
+                               </Box>
+                             </Box>
                            );
                          });
                        }
-                       // Mặc định: 1 dòng (kèm size + vị dạng text nếu có).
+                       // Mặc định: 1 dòng (kèm size + vị dạng chip nếu có).
                        return [(
-                         <div key={item.id} className="flex items-center gap-4 py-2">
-                           <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover bg-slate-100 dark:bg-slate-700" />
-                           <div className="flex-1">
+                         <Box key={item.id} layoutClassName="flex items-center gap-4 py-2">
+                           <Box layoutClassName="h-16 w-16 shrink-0 overflow-hidden" roundedClassName="rounded-lg" backgroundClassName="bg-slate-100 dark:bg-slate-700">
+                             <Image src={item.image} alt={item.name} layoutClassName="h-full w-full object-cover" />
+                           </Box>
+                           <Box layoutClassName="min-w-0 flex-1">
                              <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name}{item.size ? ` · ${item.size}` : ''}</Heading>
                              {flavors.length ? (
-                               <div className="mt-1 flex flex-wrap gap-1">
+                               <Box layoutClassName="mt-1 flex flex-wrap gap-1">
                                  {flavors.map((fl) => {
                                    const color = product ? flavorVariantColor(product, fl) : '#64748b';
                                    return (
-                                     <span key={fl} className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5" style={{ borderColor: color + '80', backgroundColor: color + '26' }}>
-                                       <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-                                       <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{fl}</span>
-                                     </span>
+                                     <Box key={fl} layoutClassName="inline-flex items-center gap-1 px-2 py-0.5" roundedClassName="rounded-full" borderClassName="border" style={{ borderColor: color + '80', backgroundColor: color + '26' }}>
+                                       <Box layoutClassName="h-2 w-2 shrink-0" roundedClassName="rounded-full" style={{ backgroundColor: color }} />
+                                       <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{fl}</Typography>
+                                     </Box>
                                    );
                                  })}
-                               </div>
+                               </Box>
                              ) : null}
-                           </div>
-                           <div className="text-right">
-                             <p className="text-sm font-medium text-slate-900 dark:text-white">{formatVND(calculateLineItemTotal(item))}</p>
-                             <p className="text-xs text-slate-500 dark:text-slate-400">Qty: {item.quantity}</p>
-                           </div>
-                         </div>
+                           </Box>
+                           <Box layoutClassName="text-right">
+                             <Typography as="p" size="sm" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{formatVND(calculateLineItemTotal(item))}</Typography>
+                             <Typography as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">Qty: {item.quantity}</Typography>
+                           </Box>
+                         </Box>
                        )];
                      })}
-                   </div>
+                   </Box>
 
                    {currentOrder.decorations && currentOrder.decorations.length > 0 ? (
                      <Box layoutClassName="mt-4 border-t border-slate-100 pt-4 dark:border-slate-700">
