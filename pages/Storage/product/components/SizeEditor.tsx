@@ -19,9 +19,10 @@ const SizeEditor: React.FC<SizeEditorProps> = ({ sizes, onChange, galleryImages 
     title="Size"
     hint="giá dòng theo size chọn"
     namePlaceholder="Tên size (vd: Combo Gia Đình 5 cái)"
+    withCount
     galleryImages={galleryImages}
     items={sizes as VariantRow[]}
-    onChange={(rows) => onChange(rows.map((r) => ({ name: r.name, price: r.price ?? 0, image: r.image })))}
+    onChange={(rows) => onChange(rows.map((r) => ({ name: r.name, price: r.price ?? 0, image: r.image, count: r.count })))}
   />
 );
 
