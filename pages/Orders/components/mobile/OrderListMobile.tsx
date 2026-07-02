@@ -19,6 +19,7 @@ import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
+import OrderItemsMini from '@/pages/Orders/components/OrderItemsMini';
 
 interface OrderListMobileProps {
   orders: Order[];
@@ -32,13 +33,6 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
 
   const getItemCount = (order: Order) =>
     order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
-
-  const getItemsPreview = (order: Order) => {
-    if (!order.items || order.items.length === 0) return '';
-    const names = order.items.map((it) => it.name).filter(Boolean);
-    if (names.length <= 2) return names.join(', ');
-    return `${names.slice(0, 2).join(', ')} +${names.length - 2}`;
-  };
 
   const getOrderImage = (order: Order) =>
     order.items?.[0]?.image ||
@@ -150,11 +144,12 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                       </Typography>
                     </Box>
                   )}
-                  <Box layoutClassName="mt-1.5 flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
-                    <Package className="h-3 w-3 shrink-0" />
-                    <span className="truncate">
-                      {getItemCount(order)} món · {getItemsPreview(order) || '—'}
-                    </span>
+                  <Box layoutClassName="mt-1.5">
+                    <Box layoutClassName="mb-1 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                      <Package className="h-3 w-3 shrink-0" />
+                      <span className="font-medium">{getItemCount(order)} món</span>
+                    </Box>
+                    <OrderItemsMini items={order.items ?? []} />
                   </Box>
                 </Box>
               </Box>
