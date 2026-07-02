@@ -98,3 +98,18 @@ export const sizeImage = (
   name?: string,
 ): string | undefined =>
   name ? (p.sizes ?? []).find((s) => s.name === name)?.image : undefined;
+
+/**
+ * Ảnh nên hiển thị cho 1 dòng đơn theo biến thể khách chọn:
+ * ưu tiên ảnh size → ảnh vị (đầu tiên có ảnh) → ảnh gốc sản phẩm.
+ */
+export const orderLineImage = (
+  p: { image?: string; sizes?: ProductSize[]; flavorVariants?: ProductFlavorVariant[] },
+  opts: { size?: string; flavors?: string[] },
+): string | undefined => {
+  const si = sizeImage(p, opts.size);
+  if (si) return si;
+  const fi = (opts.flavors ?? []).map((n) => flavorImage(p, n)).find(Boolean);
+  if (fi) return fi;
+  return p.image;
+};

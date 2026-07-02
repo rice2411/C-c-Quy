@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DollarSign, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor } from '@/types';
+import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor, orderLineImage } from '@/types';
 import { FormItem } from '@/pages/Orders/components/modals/OrderForm';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -228,7 +228,14 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                             <Button
                               key={sz.name}
                               type="button"
-                              onClick={() => { onUpdateItem(item.id, 'size', sz.name); onUpdateItem(item.id, 'unitPrice', sz.price); }}
+                              onClick={() => {
+                                onUpdateItem(item.id, 'size', sz.name);
+                                onUpdateItem(item.id, 'unitPrice', sz.price);
+                                if (itemProduct) {
+                                  const img = orderLineImage(itemProduct, { size: sz.name, flavors: item.flavors });
+                                  if (img) onUpdateItem(item.id, 'image', img);
+                                }
+                              }}
                               variant="ghost"
                               disableVariantHover
                               disableVariantTextColor
@@ -265,6 +272,11 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                             // Giá dòng = tổng vị chọn (nếu sp tính giá theo vị)
                             if (itemProduct && productUsesFlavorPricing(itemProduct)) {
                               onUpdateItem(item.id, 'unitPrice', flavorSumPrice(itemProduct, next));
+                            }
+                            // Ảnh dòng theo biến thể đã chọn
+                            if (itemProduct) {
+                              const img = orderLineImage(itemProduct, { size: item.size, flavors: next });
+                              if (img) onUpdateItem(item.id, 'image', img);
                             }
                           };
                           return (
