@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DollarSign, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Product } from '@/types';
+import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage } from '@/types';
 import { flavorColor } from '@/types/flavor';
 import { useFlavors } from '@/hooks/queries/useFlavorsQuery';
 import { FormItem } from '@/pages/Orders/components/modals/OrderForm';
@@ -256,15 +256,23 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                           const next = selected
                             ? (item.flavors ?? []).filter((x) => x !== fl)
                             : [...(item.flavors ?? []), fl];
+                          const thumb = itemProduct ? flavorImage(itemProduct, fl) : undefined;
+                          const onPick = () => {
+                            onUpdateItem(item.id, 'flavors', next);
+                            // Giá dòng = tổng vị chọn (nếu sp tính giá theo vị)
+                            if (itemProduct && productUsesFlavorPricing(itemProduct)) {
+                              onUpdateItem(item.id, 'unitPrice', flavorSumPrice(itemProduct, next));
+                            }
+                          };
                           return (
                             <Button
                               key={fl}
                               type="button"
-                              onClick={() => onUpdateItem(item.id, 'flavors', next)}
+                              onClick={onPick}
                               variant="ghost"
                               disableVariantHover
                               disableVariantTextColor
-                              sizeClassName="px-2 py-0.5 text-xs"
+                              sizeClassName="py-0.5 pl-1 pr-2 text-xs"
                               roundedClassName="rounded-full"
                               borderClassName="border"
                               layoutClassName="inline-flex items-center gap-1.5"
@@ -276,7 +284,13 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                 backgroundColor: selected ? color + '26' : 'transparent',
                                 borderColor: selected ? color : color + '80',
                               }}>
-                              <Box layoutClassName="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                              {thumb ? (
+                                <Box layoutClassName="h-5 w-5 shrink-0 overflow-hidden rounded-full" borderClassName="border border-white/60 dark:border-slate-700">
+                                  <Image src={thumb} alt="" layoutClassName="h-full w-full object-cover" />
+                                </Box>
+                              ) : (
+                                <Box layoutClassName="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                              )}
                               {fl}
                               {selected ? <Typography as="span" size="xs" textClassName="text-emerald-600 dark:text-emerald-400">✓</Typography> : null}
                             </Button>
