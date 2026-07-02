@@ -265,9 +265,11 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                         })}
                       </Box>
                     ) : null}
-                    {itemFlavors.length > 0 ? (isCombo ? (
+                    {itemFlavors.length > 0 ? (
                       <Box layoutClassName="mt-1 flex flex-col gap-1">
-                        <Typography as="span" size="xs" variant="muted">Vị ({pickedTotal}/{comboCount}):</Typography>
+                        <Typography as="span" size="xs" variant="muted">
+                          Vị{isCombo ? ` (${pickedTotal}/${comboCount})` : (pickedTotal ? ` (${pickedTotal})` : '')}:
+                        </Typography>
                         <Box layoutClassName="flex flex-wrap gap-1.5">
                           {itemFlavors.map((fl) => {
                             const qty = (item.flavors ?? []).filter((x) => x === fl).length;
@@ -275,10 +277,25 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                             const th = itemProduct ? flavorImage(itemProduct, fl) : undefined;
                             const apply = (arr: string[]) => {
                               onUpdateItem(item.id, 'flavors', arr);
-                              if (itemProduct) { const im = orderLineImage(itemProduct, { size: item.size, flavors: arr }); if (im) onUpdateItem(item.id, 'image', im); }
+                              if (itemProduct) {
+                                if (isCombo) {
+                                  // Combo: SL = 1 combo, giá theo size (không đổi).
+                                } else if (productUsesFlavorPricing(itemProduct)) {
+                                  // Giá theo vị: SL = tổng số cái, đơn giá = giá mỗi cái (tổng / SL).
+                                  const total = arr.length;
+                                  const sum = flavorSumPrice(itemProduct, arr);
+                                  onUpdateItem(item.id, 'quantity', Math.max(1, total));
+                                  onUpdateItem(item.id, 'unitPrice', total ? Math.round(sum / total) : (itemProduct.price || 0));
+                                } else {
+                                  // Vị không đặt giá: SL = tổng số cái, đơn giá = giá gốc.
+                                  onUpdateItem(item.id, 'quantity', Math.max(1, arr.length));
+                                }
+                                const im = orderLineImage(itemProduct, { size: item.size, flavors: arr });
+                                if (im) onUpdateItem(item.id, 'image', im);
+                              }
                             };
                             const dec = () => { const a = [...(item.flavors ?? [])]; const i = a.indexOf(fl); if (i >= 0) { a.splice(i, 1); apply(a); } };
-                            const inc = () => { if (pickedTotal < (comboCount || 0)) apply([...(item.flavors ?? []), fl]); };
+                            const inc = () => { if (!isCombo || pickedTotal < (comboCount || 0)) apply([...(item.flavors ?? []), fl]); };
                             return (
                               <Box key={fl} layoutClassName="inline-flex items-center gap-1 rounded-full py-0.5 pl-1 pr-1.5" borderClassName="border" backgroundClassName="bg-white dark:bg-slate-800" style={{ borderColor: qty ? cc : cc + '80' }}>
                                 {th ? (
@@ -293,7 +310,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                   <Minus className="h-3 w-3" />
                                 </Button>
                                 <Typography as="span" size="xs" layoutClassName="w-3 text-center font-semibold" textClassName="text-slate-800 dark:text-slate-100">{qty}</Typography>
-                                <Button type="button" onClick={inc} disabled={pickedTotal >= (comboCount || 0)} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-0.5" roundedClassName="rounded-full" borderClassName="border border-transparent" textClassName="text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <Button type="button" onClick={inc} disabled={isCombo && pickedTotal >= (comboCount || 0)} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-0.5" roundedClassName="rounded-full" borderClassName="border border-transparent" textClassName="text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
                                   <Plus className="h-3 w-3" />
                                 </Button>
                               </Box>
@@ -301,65 +318,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                           })}
                         </Box>
                       </Box>
-                    ) : (
-                      <Box layoutClassName="mt-1 flex flex-wrap items-center gap-1">
-                        <Typography as="span" size="xs" variant="muted" layoutClassName="mr-0.5">Vị:</Typography>
-                        {itemFlavors.map((fl) => {
-                          const selected = (item.flavors ?? []).includes(fl);
-                          const color = itemProduct ? flavorVariantColor(itemProduct, fl) : '#64748b';
-                          const next = selected
-                            ? (item.flavors ?? []).filter((x) => x !== fl)
-                            : [...(item.flavors ?? []), fl];
-                          const thumb = itemProduct ? flavorImage(itemProduct, fl) : undefined;
-                          const onPick = () => {
-                            onUpdateItem(item.id, 'flavors', next);
-                            // SP tính giá theo vị: mỗi vị = 1 món → SL = số vị chọn, đơn giá = giá mỗi vị.
-                            if (itemProduct && productUsesFlavorPricing(itemProduct)) {
-                              const qty = Math.max(1, next.length);
-                              const sum = flavorSumPrice(itemProduct, next);
-                              onUpdateItem(item.id, 'quantity', qty);
-                              onUpdateItem(item.id, 'unitPrice', next.length ? Math.round(sum / next.length) : (itemProduct.price || 0));
-                            }
-                            // Ảnh dòng theo biến thể đã chọn
-                            if (itemProduct) {
-                              const img = orderLineImage(itemProduct, { size: item.size, flavors: next });
-                              if (img) onUpdateItem(item.id, 'image', img);
-                            }
-                          };
-                          return (
-                            <Button
-                              key={fl}
-                              type="button"
-                              onClick={onPick}
-                              variant="ghost"
-                              disableVariantHover
-                              disableVariantTextColor
-                              sizeClassName="py-0.5 pl-1 pr-2 text-xs"
-                              roundedClassName="rounded-full"
-                              borderClassName="border"
-                              layoutClassName="inline-flex items-center gap-1.5"
-                              textClassName={selected
-                                ? 'font-semibold text-slate-800 dark:text-slate-100'
-                                : 'font-medium text-slate-600 dark:text-slate-300'}
-                              stateClassName="transition-all"
-                              style={{
-                                backgroundColor: selected ? color + '26' : 'transparent',
-                                borderColor: selected ? color : color + '80',
-                              }}>
-                              {thumb ? (
-                                <Box layoutClassName="h-5 w-5 shrink-0 overflow-hidden rounded-full" borderClassName="border border-white/60 dark:border-slate-700">
-                                  <Image src={thumb} alt="" layoutClassName="h-full w-full object-cover" />
-                                </Box>
-                              ) : (
-                                <Box layoutClassName="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-                              )}
-                              {fl}
-                              {selected ? <Typography as="span" size="xs" textClassName="text-emerald-600 dark:text-emerald-400">✓</Typography> : null}
-                            </Button>
-                          );
-                        })}
-                      </Box>
-                    )) : null}
+                    ) : null}
                     <Box layoutClassName="mt-0.5 flex items-center gap-1 text-xs">
                       {isEditingPrice ? (
                         <Input

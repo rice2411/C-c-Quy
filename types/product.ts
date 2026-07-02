@@ -71,14 +71,15 @@ export const productUsesFlavorPricing = (p: {
   (!p.sizes || p.sizes.length === 0) &&
   !!p.flavorVariants?.some((v) => (v.price ?? 0) > 0);
 
-/** Tổng giá các vị đang chọn (theo flavorVariants). */
+/** Tổng giá các vị đang chọn — cộng theo TỪNG lần xuất hiện (mảng có thể lặp = số cái mỗi vị). */
 export const flavorSumPrice = (
   p: { flavorVariants?: ProductFlavorVariant[] },
   selected: string[],
 ): number =>
-  (p.flavorVariants ?? [])
-    .filter((v) => selected.includes(v.name))
-    .reduce((s, v) => s + (v.price ?? 0), 0);
+  (selected ?? []).reduce((s, name) => {
+    const v = (p.flavorVariants ?? []).find((x) => x.name === name);
+    return s + (v?.price ?? 0);
+  }, 0);
 
 /** Ảnh riêng của 1 vị (nếu có). */
 export const flavorImage = (

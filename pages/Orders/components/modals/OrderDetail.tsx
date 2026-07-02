@@ -749,13 +749,12 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                        const flavors = item.flavors ?? [];
                        // Sản phẩm tính giá theo vị + nhiều vị → tách mỗi vị 1 dòng item riêng.
                        if (product && productUsesFlavorPricing(product) && flavors.length > 0) {
-                         // SL mỗi vị = tổng SL dòng chia số vị (model: SL dòng = số vị chọn → thường 1/vị).
-                         const perFlavorQty = Math.max(1, Math.round((item.quantity || 0) / flavors.length));
-                         return flavors.map((fl) => {
+                         // Gom vị lặp → mỗi vị 1 dòng, SL = số cái vị đó, giá = giá vị × SL.
+                         return groupFlavors(flavors).map(({ name: fl, qty }) => {
                            const variant = product.flavorVariants?.find((v) => v.name === fl);
                            const img = variant?.image || item.image;
                            const color = variant?.color || '#64748b';
-                           const lineTotal = (variant?.price ?? 0) * perFlavorQty;
+                           const lineTotal = (variant?.price ?? 0) * qty;
                            return (
                              <Box key={`${item.id}-${fl}`} layoutClassName="flex items-center gap-4 py-2">
                                <Box layoutClassName="h-16 w-16 shrink-0 overflow-hidden" roundedClassName="rounded-lg" backgroundClassName="bg-slate-100 dark:bg-slate-700">
@@ -770,7 +769,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                </Box>
                                <Box layoutClassName="text-right">
                                  <Typography as="p" size="sm" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{formatVND(lineTotal)}</Typography>
-                                 <Typography as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">Qty: {perFlavorQty}</Typography>
+                                 <Typography as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">Qty: {qty}</Typography>
                                </Box>
                              </Box>
                            );
