@@ -274,8 +274,11 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const handleAddItemWithProduct = (product: Product) => {
     const newId = genItemId();
     let resolvedId = newId;
+    // Sản phẩm có biến thể (size/vị) → mỗi lần thêm là 1 DÒNG RIÊNG để cấu hình khác nhau
+    // (vd 2 Combo Gia Đình + 1 Lẻ). Sản phẩm thường → cộng dồn số lượng như cũ.
+    const hasVariants = (product.sizes?.length ?? 0) > 0 || (product.flavorVariants?.length ?? 0) > 0;
     setItems(prev => {
-      const existingIdx = prev.findIndex(i => i.productId === product.id);
+      const existingIdx = hasVariants ? -1 : prev.findIndex(i => i.productId === product.id);
       if (existingIdx >= 0) {
         resolvedId = prev[existingIdx].id;
         return prev.map((item, idx) =>
