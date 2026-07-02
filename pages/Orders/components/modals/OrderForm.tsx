@@ -290,7 +290,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         productName: product.name,
         quantity: 1,
         unitPrice: firstSize ? firstSize.price : product.price,
-        image: product.image,
+        image: (firstSize?.image) || product.image,
         size: firstSize?.name,
       }];
     });
