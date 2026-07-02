@@ -95,5 +95,19 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "."),
       },
     },
+    build: {
+      // Tách vendor nặng thành chunk riêng → cache lâu + bundle chính nhẹ.
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            react: ["react", "react-dom", "react-router-dom"],
+            charts: ["recharts"],
+            xlsx: ["xlsx-js-style"],
+            firebase: ["firebase/app", "firebase/auth", "firebase/storage"],
+          },
+        },
+      },
+      chunkSizeWarningLimit: 1200,
+    },
   };
 });

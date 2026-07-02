@@ -7,6 +7,7 @@ import { useScreenConfig } from '@/contexts/ScreenConfigContext';
 import { buildNavTree, RouteConfig, routes, navGroups } from '@/config/routes';
 import { getUserFromLocalStorage } from '@/utils/user/userUtil';
 import ThemeToggle from './ThemeToggle';
+import Spinner from '@/components/ui/Spinner';
 import toast from 'react-hot-toast';
 import MobileFooterNav from './MobileFooterNav';
 
@@ -313,7 +314,13 @@ const Layout: React.FC = () => {
         {/* Scrollable Main Area */}
         <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-8 md:pb-8 scroll-smooth">
           <div className=" mx-auto w-full">
-            <Outlet />
+            <React.Suspense fallback={
+              <div className="flex h-full min-h-[40vh] items-center justify-center">
+                <Spinner size="lg" textClassName="text-primary-500" />
+              </div>
+            }>
+              <Outlet />
+            </React.Suspense>
           </div>
         </main>
 
