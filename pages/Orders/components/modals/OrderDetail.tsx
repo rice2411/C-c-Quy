@@ -528,9 +528,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
       headerContent={headerContent}
       footer={footer}
     >
-      <div className="flex flex-col h-full">
+      <Box layoutClassName="flex flex-col h-full">
         <Box
-          layoutClassName="flex space-x-6 border-b border-slate-100 bg-white px-6 dark:border-slate-700 dark:bg-slate-800"
+          layoutClassName="flex space-x-6 px-6"
+          borderClassName="border-b border-slate-100 dark:border-slate-700"
+          backgroundClassName="bg-white dark:bg-slate-800"
           stateClassName="transition-colors"
         >
           <Button
@@ -572,9 +574,14 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           >
             {t('detail.tabRefund')}
             {Array.isArray(currentOrder.refunds) && currentOrder.refunds.length > 0 ? (
-              <span className="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-amber-100 px-1.5 text-[10px] font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+              <Box
+                layoutClassName="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center px-1.5"
+                roundedClassName="rounded-full"
+                backgroundClassName="bg-amber-100 dark:bg-amber-900/40"
+                textClassName="text-[10px] font-bold text-amber-700 dark:text-amber-300"
+              >
                 {currentOrder.refunds.length}
-              </span>
+              </Box>
             ) : null}
           </Button>
           <Button
@@ -606,57 +613,73 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 : 0;
               const total = historyChangesCount + relatedTransactions.length;
               return total > 0 ? (
-                <span className="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-sky-100 px-1.5 text-[10px] font-bold text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+                <Box
+                  layoutClassName="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center px-1.5"
+                  roundedClassName="rounded-full"
+                  backgroundClassName="bg-sky-100 dark:bg-sky-900/40"
+                  textClassName="text-[10px] font-bold text-sky-700 dark:text-sky-300"
+                >
                   {total}
-                </span>
+                </Box>
               ) : null;
             })()}
           </Button>
         </Box>
 
-        <div className="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/50 p-6 transition-colors">
+        <Box
+          layoutClassName="flex-1 overflow-y-auto p-6"
+          backgroundClassName="bg-slate-50/50 dark:bg-slate-900/50"
+          stateClassName="transition-colors"
+        >
             {activeTab === 'details' ? (
-              <div className="space-y-6">
-                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
-                  <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('detail.customer')}</Heading>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-3">
+              <Box layoutClassName="space-y-6">
+                <Box
+                  layoutClassName="p-5"
+                  backgroundClassName="bg-white dark:bg-slate-800"
+                  roundedClassName="rounded-xl"
+                  borderClassName="border border-slate-100 dark:border-slate-700"
+                  shadowClassName="shadow-sm"
+                  stateClassName="transition-colors"
+                >
+                  <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white" layoutClassName="mb-4 uppercase tracking-wide">{t('detail.customer')}</Heading>
+                  <Box layoutClassName="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Box layoutClassName="space-y-3">
                       {currentOrder.customer.name && (
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-300">
+                        <Box layoutClassName="flex items-center gap-3">
+                          <Box layoutClassName="p-2" backgroundClassName="bg-slate-100 dark:bg-slate-700" roundedClassName="rounded-lg" textClassName="text-slate-500 dark:text-slate-300">
                             <User className="w-4 h-4" />
-                          </div>
-                          <div className="text-sm">
-                            <p className="font-medium text-slate-900 dark:text-white">{t('detail.customerName')}</p>
-                            <p className="text-slate-600 dark:text-slate-300">{currentOrder.customer.name}</p>
-                          </div>
-                        </div>
+                          </Box>
+                          <Box layoutClassName="text-sm">
+                            <Typography as="p" size="inherit" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{t('detail.customerName')}</Typography>
+                            <Typography as="p" size="inherit" textClassName="text-slate-600 dark:text-slate-300">{currentOrder.customer.name}</Typography>
+                          </Box>
+                        </Box>
                       )}
                       {currentOrder.customer.email && (
-                        <div className="flex items-center gap-3">
-                           <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-300">
+                        <Box layoutClassName="flex items-center gap-3">
+                           <Box layoutClassName="p-2" backgroundClassName="bg-slate-100 dark:bg-slate-700" roundedClassName="rounded-lg" textClassName="text-slate-500 dark:text-slate-300">
                              <Mail className="w-4 h-4" />
-                           </div>
-                           <div className="text-sm">
-                             <p className="font-medium text-slate-900 dark:text-white">{t('detail.email')}</p>
-                             <span className="text-slate-600 dark:text-slate-300">{currentOrder.customer.email}</span>
-                           </div>
-                        </div>
+                           </Box>
+                           <Box layoutClassName="text-sm">
+                             <Typography as="p" size="inherit" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{t('detail.email')}</Typography>
+                             <Typography as="span" size="inherit" textClassName="text-slate-600 dark:text-slate-300">{currentOrder.customer.email}</Typography>
+                           </Box>
+                        </Box>
                       )}
                       {currentOrder.customer.phone && (
-                        <div className="flex items-center gap-3">
-                           <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-300">
+                        <Box layoutClassName="flex items-center gap-3">
+                           <Box layoutClassName="p-2" backgroundClassName="bg-slate-100 dark:bg-slate-700" roundedClassName="rounded-lg" textClassName="text-slate-500 dark:text-slate-300">
                              <Phone className="w-4 h-4" />
-                           </div>
-                           <div className="text-sm">
-                             <p className="font-medium text-slate-900 dark:text-white">{t('detail.phone')}</p>
-                             <span className="text-slate-600 dark:text-slate-300">{currentOrder.customer.phone}</span>
-                           </div>
-                        </div>
+                           </Box>
+                           <Box layoutClassName="text-sm">
+                             <Typography as="p" size="inherit" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{t('detail.phone')}</Typography>
+                             <Typography as="span" size="inherit" textClassName="text-slate-600 dark:text-slate-300">{currentOrder.customer.phone}</Typography>
+                           </Box>
+                        </Box>
                       )}
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-500 dark:text-slate-300">
+                    </Box>
+                    <Box layoutClassName="flex items-start gap-3">
+                      <Box layoutClassName="p-2" backgroundClassName="bg-slate-100 dark:bg-slate-700" roundedClassName="rounded-lg" textClassName="text-slate-500 dark:text-slate-300">
                         {!currentOrder.customer.address && currentOrder.deliveryType === DeliveryType.PICKUP ? (
                           <Store className="w-4 h-4" />
                         ) : !currentOrder.customer.address && currentOrder.deliveryType === DeliveryType.SHIP_PROVINCE ? (
@@ -664,38 +687,62 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                         ) : (
                           <MapPin className="w-4 h-4" />
                         )}
-                      </div>
-                      <div className="text-sm">
-                        <p className="font-medium text-slate-900 dark:text-white">{t('detail.shippingAddress')}</p>
-                        <p className="text-slate-500 dark:text-slate-400">{currentOrder.customer.address || t(orderAddressFallbackKey(currentOrder.deliveryType))}</p>
-                        {currentOrder.customer.city && <p className="text-slate-500 dark:text-slate-400">{currentOrder.customer.city}, {currentOrder.customer.country}</p>}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                      </Box>
+                      <Box layoutClassName="text-sm">
+                        <Typography as="p" size="inherit" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{t('detail.shippingAddress')}</Typography>
+                        <Typography as="p" size="inherit" textClassName="text-slate-500 dark:text-slate-400">{currentOrder.customer.address || t(orderAddressFallbackKey(currentOrder.deliveryType))}</Typography>
+                        {currentOrder.customer.city && <Typography as="p" size="inherit" textClassName="text-slate-500 dark:text-slate-400">{currentOrder.customer.city}, {currentOrder.customer.country}</Typography>}
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
 
                 {/* Note Section - Separate card */}
-                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
-                  <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide flex items-center gap-2">
+                <Box
+                  layoutClassName="p-5"
+                  backgroundClassName="bg-white dark:bg-slate-800"
+                  roundedClassName="rounded-xl"
+                  borderClassName="border border-slate-100 dark:border-slate-700"
+                  shadowClassName="shadow-sm"
+                  stateClassName="transition-colors"
+                >
+                  <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white" layoutClassName="mb-4 flex items-center gap-2 uppercase tracking-wide">
                     {t('detail.note')}
                   </Heading>
                   {currentOrder.note ? (
-                    <div className="bg-slate-50 dark:bg-slate-700/30 border border-slate-100 dark:border-slate-700 rounded-lg p-4">
-                      <p className="text-sm font-medium text-slate-900 dark:text-white leading-relaxed whitespace-pre-wrap">
+                    <Box
+                      layoutClassName="p-4"
+                      backgroundClassName="bg-slate-50 dark:bg-slate-700/30"
+                      borderClassName="border border-slate-100 dark:border-slate-700"
+                      roundedClassName="rounded-lg"
+                    >
+                      <Typography as="p" size="sm" layoutClassName="font-medium leading-relaxed whitespace-pre-wrap" textClassName="text-slate-900 dark:text-white">
                         {currentOrder.note}
-                      </p>
-                    </div>
+                      </Typography>
+                    </Box>
                   ) : (
-                    <div className="bg-slate-50 dark:bg-slate-700/30 border border-slate-100 dark:border-slate-700 rounded-lg p-4">
-                      <p className="text-sm text-slate-400 dark:text-slate-500 italic">
+                    <Box
+                      layoutClassName="p-4"
+                      backgroundClassName="bg-slate-50 dark:bg-slate-700/30"
+                      borderClassName="border border-slate-100 dark:border-slate-700"
+                      roundedClassName="rounded-lg"
+                    >
+                      <Typography as="p" size="sm" layoutClassName="italic" textClassName="text-slate-400 dark:text-slate-500">
                         {t('detail.noNote') || 'No note provided'}
-                      </p>
-                    </div>
+                      </Typography>
+                    </Box>
                   )}
-                </div>
+                </Box>
 
-                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
-                   <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('detail.items')}</Heading>
+                <Box
+                  layoutClassName="p-5"
+                  backgroundClassName="bg-white dark:bg-slate-800"
+                  roundedClassName="rounded-xl"
+                  borderClassName="border border-slate-100 dark:border-slate-700"
+                  shadowClassName="shadow-sm"
+                  stateClassName="transition-colors"
+                >
+                   <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white" layoutClassName="mb-4 uppercase tracking-wide">{t('detail.items')}</Heading>
                    <Box layoutClassName="space-y-4">
                      {currentOrder.items.flatMap((item) => {
                        const product = products.find((p) => p.id === item.productId);
@@ -796,11 +843,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                      </Box>
                    ) : null}
 
-                   <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 space-y-2">
-                     <div className="flex justify-between items-center text-sm text-slate-500 dark:text-slate-400">
-                       <span>{t('detail.subtotal')}</span>
-                       <span>{formatVND(subtotal)}</span>
-                     </div>
+                   <Box layoutClassName="mt-4 pt-4 space-y-2" borderClassName="border-t border-slate-100 dark:border-slate-700">
+                     <Box layoutClassName="flex justify-between items-center" textClassName="text-sm text-slate-500 dark:text-slate-400">
+                       <Typography as="span" size="inherit">{t('detail.subtotal')}</Typography>
+                       <Typography as="span" size="inherit">{formatVND(subtotal)}</Typography>
+                     </Box>
                      {currentOrder.surchargeAmount && currentOrder.surchargeAmount > 0 ? (
                        <Box layoutClassName="flex items-center justify-between" textClassName="text-sm text-primary-600 dark:text-primary-400">
                          <Typography as="span" size="sm">
@@ -810,10 +857,10 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                          <Typography as="span" size="sm">+{formatVND(currentOrder.surchargeAmount)}</Typography>
                        </Box>
                      ) : null}
-                     <div className="flex justify-between items-center text-sm text-slate-500 dark:text-slate-400">
-                       <span>{t('detail.shipping')}</span>
-                       <span>{formatVND(shippingCost)}</span>
-                     </div>
+                     <Box layoutClassName="flex justify-between items-center" textClassName="text-sm text-slate-500 dark:text-slate-400">
+                       <Typography as="span" size="inherit">{t('detail.shipping')}</Typography>
+                       <Typography as="span" size="inherit">{formatVND(shippingCost)}</Typography>
+                     </Box>
                      {currentOrder.decorations && currentOrder.decorations.length > 0 ? (
                        <Box layoutClassName="flex items-center justify-between" textClassName="text-sm text-slate-500 dark:text-slate-400">
                          <Typography as="span" size="sm">Trang trí</Typography>
@@ -831,39 +878,60 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                          <Typography as="span" size="sm" layoutClassName="shrink-0 font-medium" textClassName="text-emerald-600 dark:text-emerald-400">−{formatVND(currentOrder.discountAmount)}</Typography>
                        </Box>
                      ) : null}
-                     <div className="flex justify-between items-center pt-2 border-t border-slate-50 dark:border-slate-700">
-                       <span className="font-medium text-slate-900 dark:text-white">{t('detail.total')}</span>
-                       <span className="text-lg font-bold text-primary-600 dark:text-primary-400">{formatVND(finalTotal)}</span>
-                     </div>
-                   </div>
-                </div>
+                     <Box layoutClassName="flex justify-between items-center pt-2" borderClassName="border-t border-slate-50 dark:border-slate-700">
+                       <Typography as="span" size="inherit" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{t('detail.total')}</Typography>
+                       <Typography as="span" size="lg" layoutClassName="font-bold" textClassName="text-primary-600 dark:text-primary-400">{formatVND(finalTotal)}</Typography>
+                     </Box>
+                   </Box>
+                </Box>
 
                 {/* STATUS STEPPER CARD */}
-                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
-                  <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide flex items-center gap-2">
+                <Box
+                  layoutClassName="p-5"
+                  backgroundClassName="bg-white dark:bg-slate-800"
+                  roundedClassName="rounded-xl"
+                  borderClassName="border border-slate-100 dark:border-slate-700"
+                  shadowClassName="shadow-sm"
+                  stateClassName="transition-colors"
+                >
+                  <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white" layoutClassName="mb-4 flex items-center gap-2 uppercase tracking-wide">
                     <StickyNote className="w-4 h-4" />
                     {t('orders.tableStatus')}
                   </Heading>
 
                   {currentOrder.status === OrderStatus.CANCELLED || currentOrder.status === OrderStatus.RETURNED ? (
                     /* Terminal state banner */
-                    <div className={`flex flex-col items-center gap-3 rounded-xl border p-5 ${
-                      currentOrder.status === OrderStatus.CANCELLED
-                        ? 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
-                        : 'bg-primary-50 border-primary-200 dark:bg-primary-900/20 dark:border-primary-800'
-                    }`}>
-                      <span className={`text-base font-bold ${
+                    <Box
+                      layoutClassName="flex flex-col items-center gap-3 p-5"
+                      roundedClassName="rounded-xl"
+                      borderClassName={
                         currentOrder.status === OrderStatus.CANCELLED
-                          ? 'text-red-700 dark:text-red-200'
-                          : 'text-primary-700 dark:text-primary-200'
-                      }`}>
+                          ? 'border border-red-200 dark:border-red-800'
+                          : 'border border-primary-200 dark:border-primary-800'
+                      }
+                      backgroundClassName={
+                        currentOrder.status === OrderStatus.CANCELLED
+                          ? 'bg-red-50 dark:bg-red-900/20'
+                          : 'bg-primary-50 dark:bg-primary-900/20'
+                      }
+                    >
+                      <Typography
+                        as="span"
+                        size="base"
+                        layoutClassName="font-bold"
+                        textClassName={
+                          currentOrder.status === OrderStatus.CANCELLED
+                            ? 'text-red-700 dark:text-red-200'
+                            : 'text-primary-700 dark:text-primary-200'
+                        }
+                      >
                         {t(`orders.statusLabels.${currentOrder.status}`)}
-                      </span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                      </Typography>
+                      <Typography as="span" size="xs" layoutClassName="text-center" textClassName="text-slate-500 dark:text-slate-400">
                         {currentOrder.status === OrderStatus.CANCELLED
                           ? 'Đơn này đã bị huỷ. Bấm "Khôi phục" để đưa về trạng thái Chờ xử lý.'
                           : 'Đơn này đã được trả hàng. Bấm "Khôi phục" để đưa về trạng thái Chờ xử lý.'}
-                      </span>
+                      </Typography>
                       {canEdit ? (
                         <Button
                           type="button"
@@ -884,7 +952,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                           Khôi phục đơn
                         </Button>
                       ) : null}
-                    </div>
+                    </Box>
                   ) : (
                     /* Stepper for happy path: PENDING -> PROCESSING -> DELIVERED */
                     (() => {
@@ -893,7 +961,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                       const nextStatus = currentIdx >= 0 && currentIdx < HAPPY_PATH.length - 1 ? HAPPY_PATH[currentIdx + 1] : null;
                       return (
                         <>
-                          <div className="flex items-center justify-between gap-1 sm:gap-2">
+                          <Box layoutClassName="flex items-center justify-between gap-1 sm:gap-2">
                             {HAPPY_PATH.map((step, idx, arr) => {
                               const isActive = currentOrder.status === step;
                               const isPast = currentIdx > idx;
@@ -924,24 +992,31 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                     roundedClassName=""
                                     stateClassName={!canEdit || updatingStatus ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
                                   >
-                                    <span className={`${baseCircle} ${circleCls}`}>
+                                    <Typography as="span" size="inherit" layoutClassName={baseCircle} className={circleCls}>
                                       {idx + 1}
-                                    </span>
-                                    <span className={`text-[11px] sm:text-xs text-center whitespace-nowrap ${labelCls}`}>
+                                    </Typography>
+                                    <Typography as="span" size="inherit" layoutClassName="text-[11px] sm:text-xs text-center whitespace-nowrap" className={labelCls}>
                                       {t(`orders.statusLabels.${step}`)}
-                                    </span>
+                                    </Typography>
                                   </Button>
                                   {idx < arr.length - 1 ? (
-                                    <span className={`mb-5 h-1 flex-1 rounded-full ${isPast ? 'bg-primary-500 dark:bg-primary-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                                    <Box
+                                      layoutClassName="mb-5 h-1 flex-1"
+                                      roundedClassName="rounded-full"
+                                      backgroundClassName={isPast ? 'bg-primary-500 dark:bg-primary-500' : 'bg-slate-200 dark:bg-slate-700'}
+                                    />
                                   ) : null}
                                 </React.Fragment>
                               );
                             })}
-                          </div>
+                          </Box>
 
                           {canEdit ? (
-                            <div className="mt-5 flex flex-col-reverse gap-2 border-t border-slate-100 dark:border-slate-700 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                              <div className="flex flex-wrap items-center gap-2">
+                            <Box
+                              layoutClassName="mt-5 flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:items-center sm:justify-between"
+                              borderClassName="border-t border-slate-100 dark:border-slate-700"
+                            >
+                              <Box layoutClassName="flex flex-wrap items-center gap-2">
                                 <Button
                                   type="button"
                                   variant="ghost"
@@ -1000,7 +1075,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                 >
                                   Trả hàng
                                 </Button>
-                              </div>
+                              </Box>
                               {nextStatus ? (
                                 <Button
                                   type="button"
@@ -1017,37 +1092,59 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                   stateClassName="transition-colors"
                                 >
                                   Chuyển sang {t(`orders.statusLabels.${nextStatus}`)}
-                                  <span aria-hidden="true">→</span>
+                                  <Typography as="span" size="inherit" aria-hidden="true">→</Typography>
                                 </Button>
                               ) : (
-                                <span className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+                                <Box
+                                  layoutClassName="inline-flex items-center justify-center gap-2 px-4 py-2"
+                                  roundedClassName="rounded-lg"
+                                  backgroundClassName="bg-emerald-50 dark:bg-emerald-900/30"
+                                  textClassName="text-sm font-semibold text-emerald-700 dark:text-emerald-200"
+                                >
                                   ✓ Đơn đã hoàn tất
-                                </span>
+                                </Box>
                               )}
-                            </div>
+                            </Box>
                           ) : null}
                         </>
                       );
                     })()
                   )}
-                </div>
+                </Box>
 
-                <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors">
-                   <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('detail.fulfillment')}</Heading>
-                   <div className="flex flex-col gap-3">
-                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-3">
+                <Box
+                  layoutClassName="p-5"
+                  backgroundClassName="bg-white dark:bg-slate-800"
+                  roundedClassName="rounded-xl"
+                  borderClassName="border border-slate-100 dark:border-slate-700"
+                  shadowClassName="shadow-sm"
+                  stateClassName="transition-colors"
+                >
+                   <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white" layoutClassName="mb-4 uppercase tracking-wide">{t('detail.fulfillment')}</Heading>
+                   <Box layoutClassName="flex flex-col gap-3">
+                      <Box
+                        layoutClassName="flex justify-between items-center p-3"
+                        backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+                        roundedClassName="rounded-lg"
+                        borderClassName="border border-slate-100 dark:border-slate-700"
+                      >
+                        <Box layoutClassName="flex items-center gap-3">
                           <Truck className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                          <span className="text-sm text-slate-600 dark:text-slate-300">Order Number</span>
-                        </div>
-                        <span className="text-sm font-mono font-medium text-slate-900 dark:text-white">{currentOrder.orderNumber || t('detail.notAssigned')}</span>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-3">
+                          <Typography as="span" size="sm" textClassName="text-slate-600 dark:text-slate-300">Order Number</Typography>
+                        </Box>
+                        <Typography as="span" size="sm" layoutClassName="font-mono font-medium" textClassName="text-slate-900 dark:text-white">{currentOrder.orderNumber || t('detail.notAssigned')}</Typography>
+                      </Box>
+                      <Box
+                        layoutClassName="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3"
+                        backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+                        roundedClassName="rounded-lg"
+                        borderClassName="border border-slate-100 dark:border-slate-700"
+                      >
+                        <Box layoutClassName="flex items-center gap-3">
                           <CreditCard className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                          <span className="text-sm text-slate-600 dark:text-slate-300">{t('detail.payment')}</span>
-                        </div>
-                        <div className="flex items-center gap-2 flex-wrap">
+                          <Typography as="span" size="sm" textClassName="text-slate-600 dark:text-slate-300">{t('detail.payment')}</Typography>
+                        </Box>
+                        <Box layoutClassName="flex items-center gap-2 flex-wrap">
                           {[PaymentStatus.PAID, PaymentStatus.UNPAID].map((status) => {
                             const isActive = currentOrder.paymentStatus === status;
                             return (
@@ -1086,14 +1183,19 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                               </Button>
                             );
                           })}
-                        </div>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-3">
+                        </Box>
+                      </Box>
+                      <Box
+                        layoutClassName="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3"
+                        backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+                        roundedClassName="rounded-lg"
+                        borderClassName="border border-slate-100 dark:border-slate-700"
+                      >
+                        <Box layoutClassName="flex items-center gap-3">
                           <Wallet className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                          <span className="text-sm text-slate-600 dark:text-slate-300">{t('detail.paymentMethod')}</span>
-                        </div>
-                        <div className="flex items-center gap-2 flex-wrap">
+                          <Typography as="span" size="sm" textClassName="text-slate-600 dark:text-slate-300">{t('detail.paymentMethod')}</Typography>
+                        </Box>
+                        <Box layoutClassName="flex items-center gap-2 flex-wrap">
                           {[PaymentMethod.BANKING, PaymentMethod.CASH].map((method) => {
                             const isActive = currentOrder.paymentMethod === method;
                             return (
@@ -1124,19 +1226,24 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                               </Button>
                             );
                           })}
-                        </div>
-                      </div>
+                        </Box>
+                      </Box>
                       {/* Delivery type row */}
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-3">
+                      <Box
+                        layoutClassName="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 p-3"
+                        backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+                        roundedClassName="rounded-lg"
+                        borderClassName="border border-slate-100 dark:border-slate-700"
+                      >
+                        <Box layoutClassName="flex items-center gap-3">
                           {currentOrder.deliveryType === DeliveryType.PICKUP
                             ? <Store className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                             : currentOrder.deliveryType === DeliveryType.SHIP_PROVINCE
                               ? <Globe className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                               : <Truck className="w-4 h-4 text-slate-500 dark:text-slate-400" />}
-                          <span className="text-sm text-slate-600 dark:text-slate-300">{t('deliveryType.label')}</span>
-                        </div>
-                        <div className="flex items-center gap-2 flex-wrap">
+                          <Typography as="span" size="sm" textClassName="text-slate-600 dark:text-slate-300">{t('deliveryType.label')}</Typography>
+                        </Box>
+                        <Box layoutClassName="flex items-center gap-2 flex-wrap">
                           {([
                             { dt: DeliveryType.SHIP,          label: t('deliveryType.ship') },
                             { dt: DeliveryType.SHIP_PROVINCE,  label: t('deliveryType.shipProvince') },
@@ -1171,78 +1278,127 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                               </Button>
                             );
                           })}
-                        </div>
-                      </div>
+                        </Box>
+                      </Box>
 
-                      <div className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-3">
+                      <Box
+                        layoutClassName="flex justify-between items-center p-3"
+                        backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+                        roundedClassName="rounded-lg"
+                        borderClassName="border border-slate-100 dark:border-slate-700"
+                      >
+                        <Box layoutClassName="flex items-center gap-3">
                           <Receipt className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                          <span className="text-sm text-slate-600 dark:text-slate-300">{t('detail.transactionNumber')}</span>
-                        </div>
-                        <span className="text-sm font-mono font-medium text-slate-900 dark:text-white">
+                          <Typography as="span" size="sm" textClassName="text-slate-600 dark:text-slate-300">{t('detail.transactionNumber')}</Typography>
+                        </Box>
+                        <Typography as="span" size="sm" layoutClassName="font-mono font-medium" textClassName="text-slate-900 dark:text-white">
                             {currentOrder.sepayId ? `#${currentOrder.sepayId}` : t('detail.notAssigned')}
-                        </span>
-                      </div>
-                   </div>
-                </div>
+                        </Typography>
+                      </Box>
+                   </Box>
+                </Box>
 
                 {/* Payment QR Section — hiển thị khi có URL hợp lệ (config đủ số TK/bank); ẩn nếu thiếu để không vỡ ảnh */}
                 {qrUrl && activeAccount ? (
-                  <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm transition-colors animate-fade-in">
-                     <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white mb-4 uppercase tracking-wide">{t('qr.sectionTitle')}</Heading>
-                     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start">
-                        <div className="shrink-0 bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                            <img 
-                              src={qrUrl} 
-                              alt="Payment QR" 
-                              className="w-32 h-32 object-contain"
+                  <Box
+                    layoutClassName="p-5 animate-fade-in"
+                    backgroundClassName="bg-white dark:bg-slate-800"
+                    roundedClassName="rounded-xl"
+                    borderClassName="border border-slate-100 dark:border-slate-700"
+                    shadowClassName="shadow-sm"
+                    stateClassName="transition-colors"
+                  >
+                     <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white" layoutClassName="mb-4 uppercase tracking-wide">{t('qr.sectionTitle')}</Heading>
+                     <Box
+                       layoutClassName="p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start"
+                       backgroundClassName="bg-blue-50 dark:bg-blue-900/20"
+                       borderClassName="border border-blue-100 dark:border-blue-800"
+                       roundedClassName="rounded-xl"
+                     >
+                        <Box
+                          layoutClassName="shrink-0 p-2"
+                          backgroundClassName="bg-white"
+                          roundedClassName="rounded-lg"
+                          borderClassName="border border-slate-200"
+                          shadowClassName="shadow-sm"
+                        >
+                            <Image
+                              src={qrUrl}
+                              alt="Payment QR"
+                              layoutClassName="w-32 h-32 object-contain"
                             />
-                        </div>
-                        
-                        <div className="flex-1 space-y-2 w-full text-center sm:text-left">
-                            <div className="flex items-center justify-center sm:justify-start gap-2 text-blue-800 dark:text-blue-300 font-semibold">
+                        </Box>
+
+                        <Box layoutClassName="flex-1 space-y-2 w-full text-center sm:text-left">
+                            <Box layoutClassName="flex items-center justify-center sm:justify-start gap-2 font-semibold" textClassName="text-blue-800 dark:text-blue-300">
                               <QrCode className="w-4 h-4" />
-                              <span>{t('qr.title')}</span>
-                            </div>
-                            
-                            <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
-                              <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
-                                  <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.bank')}</span>
-                                  <span className="font-bold text-slate-800 dark:text-slate-200">{activeAccount.bankCode}</span>
-                              </div>
-                              <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 group cursor-pointer" onClick={() => copyToClipboard(activeAccount.accountNumber)}>
-                                  <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.account')}</span>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">{activeAccount.accountNumber}</span>
+                              <Typography as="span" size="inherit">{t('qr.title')}</Typography>
+                            </Box>
+
+                            <Box layoutClassName="space-y-1" textClassName="text-sm text-slate-600 dark:text-slate-400">
+                              <Box
+                                layoutClassName="flex justify-between sm:justify-start sm:gap-4 items-center px-3 py-1.5"
+                                backgroundClassName="bg-white dark:bg-slate-800"
+                                roundedClassName="rounded"
+                                borderClassName="border border-slate-200 dark:border-slate-700"
+                              >
+                                  <Typography as="span" size="xs" layoutClassName="uppercase font-medium min-w-[60px]" textClassName="text-slate-500">{t('qr.bank')}</Typography>
+                                  <Typography as="span" size="inherit" layoutClassName="font-bold" textClassName="text-slate-800 dark:text-slate-200">{activeAccount.bankCode}</Typography>
+                              </Box>
+                              <Box
+                                layoutClassName="flex justify-between sm:justify-start sm:gap-4 items-center px-3 py-1.5 group cursor-pointer"
+                                backgroundClassName="bg-white dark:bg-slate-800"
+                                roundedClassName="rounded"
+                                borderClassName="border border-slate-200 dark:border-slate-700"
+                                onClick={() => copyToClipboard(activeAccount.accountNumber)}
+                              >
+                                  <Typography as="span" size="xs" layoutClassName="uppercase font-medium min-w-[60px]" textClassName="text-slate-500">{t('qr.account')}</Typography>
+                                  <Box layoutClassName="flex items-center gap-2">
+                                    <Typography as="span" size="inherit" layoutClassName="font-bold font-mono" textClassName="text-slate-800 dark:text-slate-200">{activeAccount.accountNumber}</Typography>
                                     <Copy className="w-3 h-3 text-slate-400 group-hover:text-blue-500" />
-                                  </div>
-                              </div>
-                              <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
-                                  <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.accountName')}</span>
-                                  <span className="font-bold text-slate-800 dark:text-slate-200 uppercase">{activeAccount.accountHolder}</span>
-                              </div>
-                              <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
-                                  <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.amount')}</span>
-                                  <span className="font-bold text-primary-600 dark:text-primary-400">
+                                  </Box>
+                              </Box>
+                              <Box
+                                layoutClassName="flex justify-between sm:justify-start sm:gap-4 items-center px-3 py-1.5"
+                                backgroundClassName="bg-white dark:bg-slate-800"
+                                roundedClassName="rounded"
+                                borderClassName="border border-slate-200 dark:border-slate-700"
+                              >
+                                  <Typography as="span" size="xs" layoutClassName="uppercase font-medium min-w-[60px]" textClassName="text-slate-500">{t('qr.accountName')}</Typography>
+                                  <Typography as="span" size="inherit" layoutClassName="font-bold uppercase" textClassName="text-slate-800 dark:text-slate-200">{activeAccount.accountHolder}</Typography>
+                              </Box>
+                              <Box
+                                layoutClassName="flex justify-between sm:justify-start sm:gap-4 items-center px-3 py-1.5"
+                                backgroundClassName="bg-white dark:bg-slate-800"
+                                roundedClassName="rounded"
+                                borderClassName="border border-slate-200 dark:border-slate-700"
+                              >
+                                  <Typography as="span" size="xs" layoutClassName="uppercase font-medium min-w-[60px]" textClassName="text-slate-500">{t('qr.amount')}</Typography>
+                                  <Typography as="span" size="inherit" layoutClassName="font-bold" textClassName="text-primary-600 dark:text-primary-400">
                                     {formatVND(finalTotal)}
-                                  </span>
-                              </div>
-                              <div className="flex justify-between sm:justify-start sm:gap-4 items-center bg-white dark:bg-slate-800 px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700">
-                                  <span className="text-xs text-slate-500 uppercase font-medium min-w-[60px]">{t('qr.content')}</span>
-                                  <span className="font-bold text-slate-800 dark:text-slate-200 break-all">
+                                  </Typography>
+                              </Box>
+                              <Box
+                                layoutClassName="flex justify-between sm:justify-start sm:gap-4 items-center px-3 py-1.5"
+                                backgroundClassName="bg-white dark:bg-slate-800"
+                                roundedClassName="rounded"
+                                borderClassName="border border-slate-200 dark:border-slate-700"
+                              >
+                                  <Typography as="span" size="xs" layoutClassName="uppercase font-medium min-w-[60px]" textClassName="text-slate-500">{t('qr.content')}</Typography>
+                                  <Typography as="span" size="inherit" layoutClassName="font-bold break-all" textClassName="text-slate-800 dark:text-slate-200">
                                     {description}
-                                  </span>
-                              </div>
-                            </div>
-                            <p className="text-[10px] text-slate-400 mt-2">
+                                  </Typography>
+                              </Box>
+                            </Box>
+                            <Typography as="p" size="inherit" layoutClassName="text-[10px] mt-2" textClassName="text-slate-400">
                                {t('qr.instruction')}
-                            </p>
-                        </div>
-                     </div>
-                  </div>
+                            </Typography>
+                        </Box>
+                     </Box>
+                  </Box>
                 ) : null}
 
-              </div>
+              </Box>
             ) : activeTab === 'refund' ? (
               /* REFUND TAB (#186) — tách từ tab Chi tiết; rỗng → EmptyState */
               Array.isArray(currentOrder.refunds) && currentOrder.refunds.length > 0 ? (
@@ -1639,30 +1795,35 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 ];
 
                 return (
-                  <div className="space-y-4">
+                  <Box layoutClassName="space-y-4">
                     {CATEGORY_META.map((meta) => {
                       const Icon = meta.icon;
                       const items = groups[meta.key];
                       const isEmpty = items.length === 0;
                       return (
-                        <div
+                        <Box
                           key={meta.key}
-                          className={`rounded-xl border-2 bg-white p-5 shadow-sm transition-colors dark:bg-slate-800 ${meta.borderClass}`}
+                          layoutClassName="p-5"
+                          roundedClassName="rounded-xl"
+                          borderClassName={`border-2 ${meta.borderClass}`}
+                          backgroundClassName="bg-white dark:bg-slate-800"
+                          shadowClassName="shadow-sm"
+                          stateClassName="transition-colors"
                         >
                           {/* Category header */}
-                          <div className="mb-4 flex items-center gap-3">
-                            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${meta.iconBgClass}`}>
+                          <Box layoutClassName="mb-4 flex items-center gap-3">
+                            <Typography as="span" size="inherit" layoutClassName="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" className={meta.iconBgClass}>
                               <Icon className="h-5 w-5" />
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-sm font-bold uppercase tracking-wide text-slate-900 dark:text-white">
+                            </Typography>
+                            <Box layoutClassName="min-w-0 flex-1">
+                              <Box layoutClassName="text-sm font-bold uppercase tracking-wide" textClassName="text-slate-900 dark:text-white">
                                 {meta.title}
-                              </div>
-                              <div className="text-xs text-slate-500 dark:text-slate-400">
+                              </Box>
+                              <Box layoutClassName="text-xs" textClassName="text-slate-500 dark:text-slate-400">
                                 {isEmpty ? 'Chưa có thay đổi' : `${items.length} thay đổi`}
-                              </div>
-                            </div>
-                          </div>
+                              </Box>
+                            </Box>
+                          </Box>
 
                           {isEmpty ? (
                             /* Empty placeholder */
@@ -1673,56 +1834,74 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                             />
                           ) : (
                             /* Timeline */
-                            <ol className="relative space-y-4 border-l-2 border-slate-200 dark:border-slate-700 pl-5">
+                            <Box
+                              layoutClassName="relative space-y-4 pl-5"
+                              borderClassName="border-l-2 border-slate-200 dark:border-slate-700"
+                            >
                               {items.map((g, ci) => {
                                 const at = g.entry?.at?.toDate ? g.entry.at.toDate() : new Date(g.entry?.at);
                                 const atLabel = at && !isNaN(at.getTime())
                                   ? at.toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                                   : '—';
                                 return (
-                                  <li key={ci} className="relative">
-                                    <span className={`absolute -left-[27px] top-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white ring-2 dark:border-slate-800 ${meta.dotClass} ${meta.dotRingClass}`} />
-                                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                      <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                                  <Box key={ci} layoutClassName="relative">
+                                    <Typography as="span" size="inherit" layoutClassName="absolute -left-[27px] top-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white ring-2 dark:border-slate-800" className={`${meta.dotClass} ${meta.dotRingClass}`} />
+                                    <Box layoutClassName="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                      <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">
                                         {g.entry?.byUid === 'system'
                                           ? (g.entry?.by || 'System')
                                           : (g.entry?.by || 'Unknown')}
-                                      </span>
+                                      </Typography>
                                       {g.entry?.byUid === 'system' ? (
-                                        <span className="rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200">
+                                        <Box
+                                          layoutClassName="px-1.5 py-0.5"
+                                          roundedClassName="rounded-full"
+                                          backgroundClassName="bg-indigo-100 dark:bg-indigo-900/40"
+                                          textClassName="text-[10px] font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-200"
+                                        >
                                           AUTO
-                                        </span>
+                                        </Box>
                                       ) : null}
-                                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                                      <Typography as="span" size="xs" textClassName="text-slate-500 dark:text-slate-400">
                                         {atLabel}
-                                      </span>
-                                    </div>
-                                    <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-slate-100 bg-slate-50/70 p-2 text-xs dark:border-slate-700 dark:bg-slate-700/30">
-                                      <span className="rounded bg-slate-200 px-1.5 py-0.5 font-semibold text-slate-700 dark:bg-slate-600 dark:text-slate-200">
+                                      </Typography>
+                                    </Box>
+                                    <Box
+                                      layoutClassName="mt-2 flex flex-wrap items-center gap-2 p-2 text-xs"
+                                      roundedClassName="rounded-md"
+                                      borderClassName="border border-slate-100 dark:border-slate-700"
+                                      backgroundClassName="bg-slate-50/70 dark:bg-slate-700/30"
+                                    >
+                                      <Box
+                                        layoutClassName="px-1.5 py-0.5 font-semibold"
+                                        roundedClassName="rounded"
+                                        backgroundClassName="bg-slate-200 dark:bg-slate-600"
+                                        textClassName="text-slate-700 dark:text-slate-200"
+                                      >
                                         {g.change.label || g.change.field}
-                                      </span>
-                                      <span className="text-slate-500 line-through dark:text-slate-400 break-all">
+                                      </Box>
+                                      <Typography as="span" size="inherit" layoutClassName="line-through break-all" textClassName="text-slate-500 dark:text-slate-400">
                                         {formatHistoryValue(g.change.field, g.change.oldValue)}
-                                      </span>
-                                      <span className="text-slate-400" aria-hidden="true">→</span>
-                                      <span className="font-semibold text-primary-700 dark:text-primary-300 break-all">
+                                      </Typography>
+                                      <Typography as="span" size="inherit" textClassName="text-slate-400" aria-hidden="true">→</Typography>
+                                      <Typography as="span" size="inherit" layoutClassName="font-semibold break-all" textClassName="text-primary-700 dark:text-primary-300">
                                         {formatHistoryValue(g.change.field, g.change.newValue)}
-                                      </span>
-                                    </div>
-                                  </li>
+                                      </Typography>
+                                    </Box>
+                                  </Box>
                                 );
                               })}
-                            </ol>
+                            </Box>
                           )}
-                        </div>
+                        </Box>
                       );
                     })}
-                  </div>
+                  </Box>
                 );
               })()
             ) : null}
-        </div>
-      </div>
+        </Box>
+      </Box>
     </BaseSlidePanel>
 
     <CancelRefundModal
