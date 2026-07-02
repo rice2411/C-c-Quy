@@ -239,18 +239,19 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                               disableVariantTextColor
                               sizeClassName="px-2 py-0.5 text-xs"
                               roundedClassName="rounded-full"
-                              borderClassName="border-2"
-                              layoutClassName="inline-flex items-center gap-1"
-                              textClassName="font-medium"
+                              borderClassName="border"
+                              layoutClassName="inline-flex items-center gap-1.5"
+                              textClassName={selected
+                                ? 'font-semibold text-slate-800 dark:text-slate-100'
+                                : 'font-medium text-slate-600 dark:text-slate-300'}
                               stateClassName="transition-all"
                               style={{
-                                backgroundColor: selected ? color + '33' : 'transparent',
-                                color,
-                                borderColor: selected ? color : color + '55',
-                                opacity: selected ? 1 : 0.75,
+                                backgroundColor: selected ? color + '26' : 'transparent',
+                                borderColor: selected ? color : color + '80',
                               }}>
+                              <Box layoutClassName="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
                               {fl}
-                              {selected ? <Typography as="span" size="xs">✓</Typography> : null}
+                              {selected ? <Typography as="span" size="xs" textClassName="text-emerald-600 dark:text-emerald-400">✓</Typography> : null}
                             </Button>
                           );
                         })}
