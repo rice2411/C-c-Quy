@@ -7,6 +7,14 @@ import { allocateSurcharge, getOrderTotal } from "../order/orderUtils";
 
 const DIVIDER = '─────────────────────────';
 
+/** Nhãn item cho noti Zalo: tên + size + vị (nếu có). */
+const itemLabel = (it: any): string => {
+  let s = it?.name ?? '';
+  if (it?.size) s += ` · ${it.size}`;
+  if (Array.isArray(it?.flavors) && it.flavors.length) s += ` (${it.flavors.join(', ')})`;
+  return s;
+};
+
 export const formatDate = (date: Date | null): string => {
   if (!date) return '(không có)';
   return date.toLocaleString('vi-VN', {
@@ -62,7 +70,7 @@ export const formatOrderMessage = (order: any): string => {
   lines.push(`📋 Sản phẩm (${totalItems}):`);
   if (order.items && order.items.length > 0) {
     order.items.forEach((it: any) => {
-      lines.push(`   • ${it.name} × ${it.quantity || 0}`);
+      lines.push(`   • ${itemLabel(it)} × ${it.quantity || 0}`);
     });
   } else {
     lines.push('   (không có)');
@@ -74,7 +82,7 @@ export const formatOrderMessage = (order: any): string => {
     lines.push(`✨ Phụ thu: ${formatVND(surcharge)} · ${surchargeTagLabel(order.surchargeTag)}`);
     const shares = allocateSurcharge(surcharge, order.items || []);
     (order.items || []).forEach((it: any, idx: number) => {
-      lines.push(`   • ${it.name} +${formatVND(shares[idx] || 0)}`);
+      lines.push(`   • ${itemLabel(it)} +${formatVND(shares[idx] || 0)}`);
     });
   }
   lines.push(`🚚 Ship:    ${formatVND(shipping)}`);
@@ -108,7 +116,7 @@ const renderOrderSnapshot = (order: any, title: string): string[] => {
   } else {
     lines.push(`📋 SP (${totalItems}):`);
     items.forEach((it: any) => {
-      lines.push(`   • ${it.name} × ${it.quantity || 0}`);
+      lines.push(`   • ${itemLabel(it)} × ${it.quantity || 0}`);
     });
   }
   lines.push(`💰 Hàng:  ${formatVND(subtotal)}`);
@@ -226,7 +234,7 @@ export const formatPendingOrdersMessage = (orders: Order[]): string => {
     if (dd) lines.push(`   📅 Giao: ${formatDateShort(dd)}${o.deliveryTime ? ' ' + o.deliveryTime : ''}`);
     lines.push(`   📦 ${totalItems} sp · ${o.status} · ${o.paymentStatus}`);
     if (o.items && o.items.length > 0) {
-      o.items.forEach((it) => lines.push(`      • ${it.name} × ${it.quantity || 0}`));
+      o.items.forEach((it) => lines.push(`      • ${itemLabel(it)} × ${it.quantity || 0}`));
     }
   });
   return lines.join('\n');
@@ -249,7 +257,7 @@ export const formatDeliveryDueMessage = (orders: Order[], targetDate?: Date): st
     if (dd) lines.push(`   📅 Giao: ${formatDateShort(dd)}${o.deliveryTime ? ' ' + o.deliveryTime : ''}`);
     lines.push(`   📦 ${totalItems} sp`);
     if (o.items && o.items.length > 0) {
-      o.items.forEach((it) => lines.push(`      • ${it.name} × ${it.quantity || 0}`));
+      o.items.forEach((it) => lines.push(`      • ${itemLabel(it)} × ${it.quantity || 0}`));
     }
   });
   return lines.join('\n');
