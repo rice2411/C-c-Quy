@@ -4,14 +4,20 @@
  */
 import React from 'react';
 import type { OrderItem } from '@/types';
+import { groupFlavors } from '@/types';
 import Box from '@/components/ui/Box';
 import Image from '@/components/ui/Image';
 import Typography from '@/components/ui/Typography';
 
+/** "Matcha ×2, Socola" — gom vị lặp thành số cái. */
+const flavorText = (flavors?: string[]): string =>
+  groupFlavors(flavors).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
+
 const label = (it: OrderItem): string => {
   let s = it.name || '';
   if (it.size) s += ` · ${it.size}`;
-  if (it.flavors && it.flavors.length) s += ` (${it.flavors.join(', ')})`;
+  const ft = flavorText(it.flavors);
+  if (ft) s += ` (${ft})`;
   return s;
 };
 

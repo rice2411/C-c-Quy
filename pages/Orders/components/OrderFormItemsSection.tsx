@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { DollarSign, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
+import { DollarSign, Minus, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor, orderLineImage } from '@/types';
+import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor, orderLineImage, sizeCount } from '@/types';
 import { FormItem } from '@/pages/Orders/components/modals/OrderForm';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -187,6 +187,10 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
             const itemProduct = products.find((p) => p.id === item.productId);
             const itemFlavors = itemProduct?.flavors ?? [];
             const itemSizes = itemProduct?.sizes ?? [];
+            // Combo có N cái → chọn vị bằng stepper (tổng số cái = N). Ngược lại: chip toggle.
+            const comboCount = itemProduct ? sizeCount(itemProduct, item.size) : undefined;
+            const isCombo = !!comboCount && comboCount > 1;
+            const pickedTotal = (item.flavors ?? []).length;
             return (
               <Box
                 key={item.id}
@@ -231,6 +235,10 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                               onClick={() => {
                                 onUpdateItem(item.id, 'size', sz.name);
                                 onUpdateItem(item.id, 'unitPrice', sz.price);
+                                // Đổi size combo → cắt bớt vị nếu vượt số cái mới
+                                if (sz.count && (item.flavors?.length ?? 0) > sz.count) {
+                                  onUpdateItem(item.id, 'flavors', (item.flavors ?? []).slice(0, sz.count));
+                                }
                                 if (itemProduct) {
                                   const img = orderLineImage(itemProduct, { size: sz.name, flavors: item.flavors });
                                   if (img) onUpdateItem(item.id, 'image', img);
@@ -257,7 +265,43 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                         })}
                       </Box>
                     ) : null}
-                    {itemFlavors.length > 0 ? (
+                    {itemFlavors.length > 0 ? (isCombo ? (
+                      <Box layoutClassName="mt-1 flex flex-col gap-1">
+                        <Typography as="span" size="xs" variant="muted">Vị ({pickedTotal}/{comboCount}):</Typography>
+                        <Box layoutClassName="flex flex-wrap gap-1.5">
+                          {itemFlavors.map((fl) => {
+                            const qty = (item.flavors ?? []).filter((x) => x === fl).length;
+                            const cc = itemProduct ? flavorVariantColor(itemProduct, fl) : '#64748b';
+                            const th = itemProduct ? flavorImage(itemProduct, fl) : undefined;
+                            const apply = (arr: string[]) => {
+                              onUpdateItem(item.id, 'flavors', arr);
+                              if (itemProduct) { const im = orderLineImage(itemProduct, { size: item.size, flavors: arr }); if (im) onUpdateItem(item.id, 'image', im); }
+                            };
+                            const dec = () => { const a = [...(item.flavors ?? [])]; const i = a.indexOf(fl); if (i >= 0) { a.splice(i, 1); apply(a); } };
+                            const inc = () => { if (pickedTotal < (comboCount || 0)) apply([...(item.flavors ?? []), fl]); };
+                            return (
+                              <Box key={fl} layoutClassName="inline-flex items-center gap-1 rounded-full py-0.5 pl-1 pr-1.5" borderClassName="border" backgroundClassName="bg-white dark:bg-slate-800" style={{ borderColor: qty ? cc : cc + '80' }}>
+                                {th ? (
+                                  <Box layoutClassName="h-5 w-5 shrink-0 overflow-hidden rounded-full" borderClassName="border border-white/60 dark:border-slate-700">
+                                    <Image src={th} alt="" layoutClassName="h-full w-full object-cover" />
+                                  </Box>
+                                ) : (
+                                  <Box layoutClassName="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: cc }} />
+                                )}
+                                <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{fl}</Typography>
+                                <Button type="button" onClick={dec} disabled={qty === 0} aria-label="Bớt" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-0.5" roundedClassName="rounded-full" borderClassName="border border-transparent" textClassName="text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <Typography as="span" size="xs" layoutClassName="w-3 text-center font-semibold" textClassName="text-slate-800 dark:text-slate-100">{qty}</Typography>
+                                <Button type="button" onClick={inc} disabled={pickedTotal >= (comboCount || 0)} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-0.5" roundedClassName="rounded-full" borderClassName="border border-transparent" textClassName="text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      </Box>
+                    ) : (
                       <Box layoutClassName="mt-1 flex flex-wrap items-center gap-1">
                         <Typography as="span" size="xs" variant="muted" layoutClassName="mr-0.5">Vị:</Typography>
                         {itemFlavors.map((fl) => {
@@ -315,7 +359,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                           );
                         })}
                       </Box>
-                    ) : null}
+                    )) : null}
                     <Box layoutClassName="mt-0.5 flex items-center gap-1 text-xs">
                       {isEditingPrice ? (
                         <Input

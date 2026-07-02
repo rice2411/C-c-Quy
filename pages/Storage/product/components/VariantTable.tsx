@@ -18,6 +18,7 @@ export interface VariantRow {
   price?: number;
   image?: string;
   color?: string;
+  count?: number;
 }
 
 interface VariantTableProps {
@@ -26,6 +27,8 @@ interface VariantTableProps {
   hint: string;
   namePlaceholder: string;
   withColor?: boolean;
+  /** Cột "Số cái" (combo) — chỉ dùng cho size. */
+  withCount?: boolean;
   items: VariantRow[];
   onChange: (items: VariantRow[]) => void;
   galleryImages: string[];
@@ -34,7 +37,7 @@ interface VariantTableProps {
 const th = 'px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-400';
 
 const VariantTable: React.FC<VariantTableProps> = ({
-  icon, title, hint, namePlaceholder, withColor, items, onChange, galleryImages,
+  icon, title, hint, namePlaceholder, withColor, withCount, items, onChange, galleryImages,
 }) => {
   const [name, setName] = useState('');
 
@@ -66,6 +69,7 @@ const VariantTable: React.FC<VariantTableProps> = ({
                 <TableHeaderCell layoutClassName={th}>Ảnh</TableHeaderCell>
                 <TableHeaderCell layoutClassName={th}>Tên</TableHeaderCell>
                 {withColor ? <TableHeaderCell layoutClassName={th}>Màu</TableHeaderCell> : null}
+                {withCount ? <TableHeaderCell layoutClassName={th}>Số cái</TableHeaderCell> : null}
                 <TableHeaderCell layoutClassName={`${th} text-right`}>Giá</TableHeaderCell>
                 <TableHeaderCell layoutClassName={th}> </TableHeaderCell>
               </TableRow>
@@ -95,6 +99,19 @@ const VariantTable: React.FC<VariantTableProps> = ({
                         containerClassName="w-9"
                         sizeClassName="h-8 p-0.5"
                         backgroundClassName="bg-white dark:bg-slate-700" />
+                    </TableCell>
+                  ) : null}
+                  {withCount ? (
+                    <TableCell layoutClassName="px-3 py-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={x.count ?? 1}
+                        onChange={(e) => patch(idx, { count: Math.max(1, Number(e.target.value) || 1) })}
+                        aria-label="Số cái"
+                        backgroundClassName="bg-slate-50 dark:bg-slate-700"
+                        containerClassName="w-16" />
                     </TableCell>
                   ) : null}
                   <TableCell layoutClassName="px-3 py-2 text-right">

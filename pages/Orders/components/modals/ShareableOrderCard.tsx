@@ -1,6 +1,9 @@
 import React from 'react';
-import { Order } from '@/types';
+import { Order, groupFlavors } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
+
+const flavorText = (flavors?: string[]): string =>
+  groupFlavors(flavors).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
 import Heading from '@/components/ui/Heading';
@@ -89,7 +92,7 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
                 <Box layoutClassName="h-10 w-10 shrink-0 rounded-md" backgroundClassName="bg-slate-100" />
               )}
               <Box layoutClassName="min-w-0 flex-1">
-                <Typography as="p" size="sm" textClassName="text-slate-700">{it.name}{it.size ? ` · ${it.size}` : ''}{it.flavors && it.flavors.length ? ` · ${it.flavors.join(', ')}` : ''}</Typography>
+                <Typography as="p" size="sm" textClassName="text-slate-700">{it.name}{it.size ? ` · ${it.size}` : ''}{it.flavors && it.flavors.length ? ` · ${flavorText(it.flavors)}` : ''}</Typography>
                 <Typography as="p" size="xs" textClassName="text-slate-400">{formatVND(it.price)} × {it.quantity}</Typography>
               </Box>
               <Typography as="span" size="sm" layoutClassName="shrink-0 font-medium" textClassName="text-slate-700">{formatVND(it.price * it.quantity)}</Typography>

@@ -7,11 +7,16 @@ import { allocateSurcharge, getOrderTotal } from "../order/orderUtils";
 
 const DIVIDER = '─────────────────────────';
 
-/** Nhãn item cho noti Zalo: tên + size + vị (nếu có). */
+/** Nhãn item cho noti Zalo: tên + size + vị (gom số cái nếu lặp). */
 const itemLabel = (it: any): string => {
   let s = it?.name ?? '';
   if (it?.size) s += ` · ${it.size}`;
-  if (Array.isArray(it?.flavors) && it.flavors.length) s += ` (${it.flavors.join(', ')})`;
+  if (Array.isArray(it?.flavors) && it.flavors.length) {
+    const m = new Map<string, number>();
+    it.flavors.forEach((f: string) => m.set(f, (m.get(f) || 0) + 1));
+    const parts = Array.from(m.entries()).map(([n, q]) => (q > 1 ? `${n} ×${q}` : n));
+    s += ` (${parts.join(', ')})`;
+  }
   return s;
 };
 
