@@ -25,6 +25,10 @@ import DashboardRecentUsers from '@/pages/Dashboard/components/DashboardRecentUs
 
 type TimeRange = 'week' | 'month' | 'year';
 
+/** Ngày LOCAL dạng yyyy-mm-dd — tránh toISOString() lệch về hôm trước do UTC. */
+const toLocalYMD = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 const DashboardPage: React.FC = () => {
   const { orders, loading, refreshOrders } = useOrders();
   const { language } = useLanguage();
@@ -275,7 +279,7 @@ const DashboardPage: React.FC = () => {
       {/* DẢI 2 — Lợi nhuận & chi phí (2/3) + Top sản phẩm (1/3) */}
       <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Box layoutClassName="lg:col-span-2">
-          <DashboardProfit fromISO={startDate.toISOString()} toISO={endDate.toISOString()} isDarkMode={isDarkMode} />
+          <DashboardProfit fromISO={toLocalYMD(startDate)} toISO={toLocalYMD(endDate)} isDarkMode={isDarkMode} />
         </Box>
         <DashboardTopProducts orders={orders} startDate={startDate} endDate={endDate} />
       </Box>
