@@ -1,9 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DollarSign, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage } from '@/types';
-import { flavorColor } from '@/types/flavor';
-import { useFlavors } from '@/hooks/queries/useFlavorsQuery';
+import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor } from '@/types';
 import { FormItem } from '@/pages/Orders/components/modals/OrderForm';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -47,7 +45,6 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
   recentlyAddedId,
 }) => {
   const { t } = useLanguage();
-  const { flavors: allFlavors } = useFlavors();
   const [quantityInputs, setQuantityInputs] = useState<Record<string, string>>({});
   const [shippingInput, setShippingInput] = useState<string>(String(shippingCost ?? 0));
   // Lưu giá trị shipping > 0 cuối cùng để khôi phục khi user "Bỏ freeship"
@@ -252,7 +249,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                         <Typography as="span" size="xs" variant="muted" layoutClassName="mr-0.5">Vị:</Typography>
                         {itemFlavors.map((fl) => {
                           const selected = (item.flavors ?? []).includes(fl);
-                          const color = flavorColor(fl, allFlavors);
+                          const color = itemProduct ? flavorVariantColor(itemProduct, fl) : '#64748b';
                           const next = selected
                             ? (item.flavors ?? []).filter((x) => x !== fl)
                             : [...(item.flavors ?? []), fl];

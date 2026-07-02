@@ -5,10 +5,10 @@ import React, { useState } from 'react';
 import Box from '@/components/ui/Box';
 import Tabs from '@/components/ui/Tabs';
 import CategoriesTab from '@/pages/Settings/CategoriesTab';
-import FlavorsTab from '@/pages/Settings/FlavorsTab';
 import BadgesTab from '@/pages/Settings/BadgesTab';
 
-type ProductSettingsTab = 'categories' | 'flavors' | 'badges';
+// Vị KHÔNG còn config tập trung — khai báo ngay trong từng sản phẩm.
+type ProductSettingsTab = 'categories' | 'badges';
 
 const ProductSettings: React.FC = () => {
   const [tab, setTab] = useState<ProductSettingsTab>('categories');
@@ -18,7 +18,6 @@ const ProductSettings: React.FC = () => {
       <Tabs
         items={[
           { id: 'categories', label: 'Danh mục' },
-          { id: 'flavors', label: 'Vị' },
           { id: 'badges', label: 'Nhãn' },
         ]}
         value={tab}
@@ -26,7 +25,6 @@ const ProductSettings: React.FC = () => {
       />
       <Box layoutClassName="min-h-0 flex-1">
         {tab === 'categories' ? <CategoriesTab /> : null}
-        {tab === 'flavors' ? <FlavorsTab /> : null}
         {tab === 'badges' ? <BadgesTab /> : null}
       </Box>
     </Box>
