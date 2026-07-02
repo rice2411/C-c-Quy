@@ -9,6 +9,13 @@ export interface ProductSize {
   price: number;
 }
 
+/** 1 biến thể vị: tên + ảnh riêng (từ gallery) + giá riêng (tùy chọn). */
+export interface ProductFlavorVariant {
+  name: string;
+  image?: string;
+  price?: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -22,6 +29,8 @@ export interface Product {
   flavors?: string[];
   /** Size (biến thể giá) — giá dòng đơn lấy theo size chọn */
   sizes?: ProductSize[];
+  /** Biến thể vị: mỗi vị có ảnh + giá riêng (giá dòng = tổng vị chọn) */
+  flavorVariants?: ProductFlavorVariant[];
   description?: string;
   status: 'active' | 'inactive';
   materials?: ProductMaterial[];
@@ -49,3 +58,27 @@ export interface ProductVersion {
   changes?: Record<string, unknown>;
   after?: Record<string, unknown>;
 }
+
+/** Sản phẩm tính giá theo tổng vị chọn khi: không có size + có ≥1 vị đặt giá. */
+export const productUsesFlavorPricing = (p: {
+  sizes?: ProductSize[];
+  flavorVariants?: ProductFlavorVariant[];
+}): boolean =>
+  (!p.sizes || p.sizes.length === 0) &&
+  !!p.flavorVariants?.some((v) => (v.price ?? 0) > 0);
+
+/** Tổng giá các vị đang chọn (theo flavorVariants). */
+export const flavorSumPrice = (
+  p: { flavorVariants?: ProductFlavorVariant[] },
+  selected: string[],
+): number =>
+  (p.flavorVariants ?? [])
+    .filter((v) => selected.includes(v.name))
+    .reduce((s, v) => s + (v.price ?? 0), 0);
+
+/** Ảnh riêng của 1 vị (nếu có). */
+export const flavorImage = (
+  p: { flavorVariants?: ProductFlavorVariant[] },
+  name: string,
+): string | undefined =>
+  (p.flavorVariants ?? []).find((v) => v.name === name)?.image;
