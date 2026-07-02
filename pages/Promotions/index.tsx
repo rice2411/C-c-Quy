@@ -77,6 +77,22 @@ const num = (s: string): number | undefined => {
 const idList = (s: string): string[] =>
   s.split(',').map((x) => x.trim()).filter(Boolean);
 
+/**
+ * Về yyyy-mm-dd cho ô ngày (Input type date). apiClient hồi sinh chuỗi ISO timestamptz
+ * thành object Timestamp-like (có .toDate()), nên startAt/endAt có thể là string HOẶC object.
+ */
+const toDateInput = (v: unknown): string => {
+  if (!v) return '';
+  if (typeof v === 'string') return v.slice(0, 10);
+  const d =
+    typeof (v as any)?.toDate === 'function'
+      ? (v as any).toDate()
+      : typeof (v as any)?.toMillis === 'function'
+        ? new Date((v as any).toMillis())
+        : null;
+  return d instanceof Date && !Number.isNaN(d.getTime()) ? d.toISOString().slice(0, 10) : '';
+};
+
 const PromotionsPage: React.FC = () => {
   const { userData } = useAuth();
   const { promotions, loading, error } = usePromotions();
@@ -116,8 +132,8 @@ const PromotionsPage: React.FC = () => {
       productIds: (p.productIds ?? []).join(', '),
       categoryIds: (p.categoryIds ?? []).join(', '),
       minOrderValue: p.minOrderValue != null ? String(p.minOrderValue) : '',
-      startAt: p.startAt ? p.startAt.slice(0, 10) : '',
-      endAt: p.endAt ? p.endAt.slice(0, 10) : '',
+      startAt: toDateInput(p.startAt),
+      endAt: toDateInput(p.endAt),
       maxUses: p.maxUses != null ? String(p.maxUses) : '',
       status: p.status,
     });
