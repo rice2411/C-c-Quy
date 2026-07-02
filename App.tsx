@@ -1,5 +1,5 @@
 import React from "react";
-import { HashRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./config/queryClient";
 import { LanguageProvider } from "./contexts/LanguageContext";
@@ -25,7 +25,7 @@ const App: React.FC = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <HashRouter>
+      <BrowserRouter>
       <AuthProvider>
         <ScreenConfigProvider>
           <LanguageProvider>
@@ -45,7 +45,7 @@ const App: React.FC = () => {
           error: { iconTheme: { primary: "#dc2626", secondary: "#ffffff" } },
         }}
       />
-      </HashRouter>
+      </BrowserRouter>
       {((import.meta as any).env?.DEV) && (
         <React.Suspense fallback={null}>
           <ReactQueryDevtools initialIsOpen={false} />
