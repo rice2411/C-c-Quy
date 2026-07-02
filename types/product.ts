@@ -3,11 +3,13 @@ export interface ProductMaterial {
   quantity: number;
 }
 
-/** 1 size của sản phẩm: tên + giá + ảnh riêng (tùy chọn). Giá dòng đơn lấy theo size chọn. */
+/** 1 size của sản phẩm: tên + giá + ảnh + số cái (combo). Giá dòng đơn lấy theo size chọn. */
 export interface ProductSize {
   name: string;
   price: number;
   image?: string;
+  /** Số cái của combo (vd 3, 5). >1 → khi bán phân bổ vị theo số cái (stepper). */
+  count?: number;
 }
 
 /** 1 biến thể vị: tên + màu + ảnh riêng (từ gallery) + giá riêng (tùy chọn). Khai báo per-sản phẩm. */
@@ -69,14 +71,15 @@ export const productUsesFlavorPricing = (p: {
   (!p.sizes || p.sizes.length === 0) &&
   !!p.flavorVariants?.some((v) => (v.price ?? 0) > 0);
 
-/** Tổng giá các vị đang chọn (theo flavorVariants). */
+/** Tổng giá các vị đang chọn — cộng theo TỪNG lần xuất hiện (mảng có thể lặp = số cái mỗi vị). */
 export const flavorSumPrice = (
   p: { flavorVariants?: ProductFlavorVariant[] },
   selected: string[],
 ): number =>
-  (p.flavorVariants ?? [])
-    .filter((v) => selected.includes(v.name))
-    .reduce((s, v) => s + (v.price ?? 0), 0);
+  (selected ?? []).reduce((s, name) => {
+    const v = (p.flavorVariants ?? []).find((x) => x.name === name);
+    return s + (v?.price ?? 0);
+  }, 0);
 
 /** Ảnh riêng của 1 vị (nếu có). */
 export const flavorImage = (
@@ -98,6 +101,20 @@ export const sizeImage = (
   name?: string,
 ): string | undefined =>
   name ? (p.sizes ?? []).find((s) => s.name === name)?.image : undefined;
+
+/** Số cái của 1 size (combo). undefined nếu không phải combo nhiều cái. */
+export const sizeCount = (
+  p: { sizes?: ProductSize[] },
+  name?: string,
+): number | undefined =>
+  name ? (p.sizes ?? []).find((s) => s.name === name)?.count : undefined;
+
+/** Gom mảng vị (có lặp) thành [{name, qty}] để hiển thị: vd ['M','M','S'] → [{M,2},{S,1}]. */
+export const groupFlavors = (flavors?: string[]): { name: string; qty: number }[] => {
+  const m = new Map<string, number>();
+  (flavors ?? []).forEach((f) => m.set(f, (m.get(f) || 0) + 1));
+  return Array.from(m.entries()).map(([name, qty]) => ({ name, qty }));
+};
 
 /**
  * Ảnh nên hiển thị cho 1 dòng đơn theo biến thể khách chọn:

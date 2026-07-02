@@ -35,7 +35,7 @@ import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { qk } from '@/hooks/queryKeys';
 import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber, fetchOutUnlinkedTransactions } from '@/services/transactionService';
-import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor } from '@/types';
+import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor, groupFlavors } from '@/types';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
 import { UserRole } from '@/types/user';
 import { orderAddressFallbackKey, surchargeTagLabel, reconcileMethodLabel } from '@/types/order';
@@ -749,13 +749,12 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                        const flavors = item.flavors ?? [];
                        // Sản phẩm tính giá theo vị + nhiều vị → tách mỗi vị 1 dòng item riêng.
                        if (product && productUsesFlavorPricing(product) && flavors.length > 0) {
-                         // SL mỗi vị = tổng SL dòng chia số vị (model: SL dòng = số vị chọn → thường 1/vị).
-                         const perFlavorQty = Math.max(1, Math.round((item.quantity || 0) / flavors.length));
-                         return flavors.map((fl) => {
+                         // Gom vị lặp → mỗi vị 1 dòng, SL = số cái vị đó, giá = giá vị × SL.
+                         return groupFlavors(flavors).map(({ name: fl, qty }) => {
                            const variant = product.flavorVariants?.find((v) => v.name === fl);
                            const img = variant?.image || item.image;
                            const color = variant?.color || '#64748b';
-                           const lineTotal = (variant?.price ?? 0) * perFlavorQty;
+                           const lineTotal = (variant?.price ?? 0) * qty;
                            return (
                              <Box key={`${item.id}-${fl}`} layoutClassName="flex items-center gap-4 py-2">
                                <Box layoutClassName="h-16 w-16 shrink-0 overflow-hidden" roundedClassName="rounded-lg" backgroundClassName="bg-slate-100 dark:bg-slate-700">
@@ -770,7 +769,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                </Box>
                                <Box layoutClassName="text-right">
                                  <Typography as="p" size="sm" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{formatVND(lineTotal)}</Typography>
-                                 <Typography as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">Qty: {perFlavorQty}</Typography>
+                                 <Typography as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">Qty: {qty}</Typography>
                                </Box>
                              </Box>
                            );
@@ -786,12 +785,12 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                              <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name}{item.size ? ` · ${item.size}` : ''}</Heading>
                              {flavors.length ? (
                                <Box layoutClassName="mt-1 flex flex-wrap gap-1">
-                                 {flavors.map((fl) => {
+                                 {groupFlavors(flavors).map(({ name: fl, qty }) => {
                                    const color = product ? flavorVariantColor(product, fl) : '#64748b';
                                    return (
                                      <Box key={fl} layoutClassName="inline-flex items-center gap-1 px-2 py-0.5" roundedClassName="rounded-full" borderClassName="border" style={{ borderColor: color + '80', backgroundColor: color + '26' }}>
                                        <Box layoutClassName="h-2 w-2 shrink-0" roundedClassName="rounded-full" style={{ backgroundColor: color }} />
-                                       <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{fl}</Typography>
+                                       <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{fl}{qty > 1 ? ` ×${qty}` : ''}</Typography>
                                      </Box>
                                    );
                                  })}
