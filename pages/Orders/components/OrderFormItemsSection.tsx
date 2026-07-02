@@ -191,6 +191,8 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
             const comboCount = itemProduct ? sizeCount(itemProduct, item.size) : undefined;
             const isCombo = !!comboCount && comboCount > 1;
             const pickedTotal = (item.flavors ?? []).length;
+            // Cap số cái vị = số cái/combo × số lượng combo (đặt 2-3 combo → cap tăng theo).
+            const comboCap = isCombo ? (comboCount as number) * Math.max(1, item.quantity || 1) : 0;
             return (
               <Box
                 key={item.id}
@@ -268,7 +270,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                     {itemFlavors.length > 0 ? (
                       <Box layoutClassName="mt-1 flex flex-col gap-1">
                         <Typography as="span" size="xs" variant="muted">
-                          Vị{isCombo ? ` (${pickedTotal}/${comboCount})` : (pickedTotal ? ` (${pickedTotal})` : '')}:
+                          Vị{isCombo ? ` (${pickedTotal}/${comboCap})` : (pickedTotal ? ` (${pickedTotal})` : '')}:
                         </Typography>
                         <Box layoutClassName="flex flex-wrap gap-1.5">
                           {itemFlavors.map((fl) => {
@@ -295,7 +297,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                               }
                             };
                             const dec = () => { const a = [...(item.flavors ?? [])]; const i = a.indexOf(fl); if (i >= 0) { a.splice(i, 1); apply(a); } };
-                            const inc = () => { if (!isCombo || pickedTotal < (comboCount || 0)) apply([...(item.flavors ?? []), fl]); };
+                            const inc = () => { if (!isCombo || pickedTotal < comboCap) apply([...(item.flavors ?? []), fl]); };
                             return (
                               <Box key={fl} layoutClassName="inline-flex items-center gap-1 rounded-full py-0.5 pl-1 pr-1.5" borderClassName="border" backgroundClassName="bg-white dark:bg-slate-800" style={{ borderColor: qty ? cc : cc + '80' }}>
                                 {th ? (
@@ -310,7 +312,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                   <Minus className="h-3 w-3" />
                                 </Button>
                                 <Typography as="span" size="xs" layoutClassName="w-3 text-center font-semibold" textClassName="text-slate-800 dark:text-slate-100">{qty}</Typography>
-                                <Button type="button" onClick={inc} disabled={isCombo && pickedTotal >= (comboCount || 0)} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-0.5" roundedClassName="rounded-full" borderClassName="border border-transparent" textClassName="text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <Button type="button" onClick={inc} disabled={isCombo && pickedTotal >= comboCap} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-0.5" roundedClassName="rounded-full" borderClassName="border border-transparent" textClassName="text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
                                   <Plus className="h-3 w-3" />
                                 </Button>
                               </Box>
@@ -372,7 +374,13 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                           if (raw === '') return;
                           const parsed = Math.floor(Number(raw));
                           if (!isNaN(parsed)) {
-                            onUpdateItem(item.id, 'quantity', Math.max(1, parsed));
+                            const q = Math.max(1, parsed);
+                            onUpdateItem(item.id, 'quantity', q);
+                            // Combo: cắt bớt vị nếu vượt cap mới (N × số combo).
+                            if (isCombo) {
+                              const cap = (comboCount as number) * q;
+                              if ((item.flavors?.length ?? 0) > cap) onUpdateItem(item.id, 'flavors', (item.flavors ?? []).slice(0, cap));
+                            }
                           }
                         }}
                         onBlur={() => {
