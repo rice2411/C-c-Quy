@@ -11,6 +11,8 @@ export interface OrderItem {
   image: string;
   /** Các vị đã chọn cho dòng này (nếu sản phẩm có vị) */
   flavors?: string[];
+  /** Size đã chọn (nếu sản phẩm có size) */
+  size?: string;
   /** HH của cả dòng (qty × đơn giá HH), tính lúc hiển thị — KHÔNG lưu Firestore */
   commissionAmount?: number;
   /** Tên nhóm hoa hồng sản phẩm rơi vào (tính lúc hiển thị) */

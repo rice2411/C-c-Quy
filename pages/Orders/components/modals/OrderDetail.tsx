@@ -699,7 +699,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                        <div key={item.id} className="flex items-center gap-4 py-2">
                          <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover bg-slate-100 dark:bg-slate-700" />
                          <div className="flex-1">
-                           <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name}</Heading>
+                           <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name}{item.size ? ` · ${item.size}` : ''}</Heading>
                            {item.flavors && item.flavors.length ? <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">Vị: {item.flavors.join(', ')}</p> : null}
                            <p className="text-xs text-slate-500 dark:text-slate-400">ID: {item.id}</p>
                          </div>

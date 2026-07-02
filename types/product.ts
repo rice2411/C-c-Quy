@@ -3,6 +3,12 @@ export interface ProductMaterial {
   quantity: number;
 }
 
+/** 1 size của sản phẩm: tên + giá. Giá dòng đơn lấy theo size chọn. */
+export interface ProductSize {
+  name: string;
+  price: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -14,6 +20,8 @@ export interface Product {
   tags?: string[];
   /** Vị (multi-select) — không ảnh hưởng giá */
   flavors?: string[];
+  /** Size (biến thể giá) — giá dòng đơn lấy theo size chọn */
+  sizes?: ProductSize[];
   description?: string;
   status: 'active' | 'inactive';
   materials?: ProductMaterial[];
