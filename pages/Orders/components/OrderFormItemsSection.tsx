@@ -232,12 +232,18 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                               variant="ghost"
                               disableVariantHover
                               disableVariantTextColor
-                              sizeClassName="px-2 py-0.5 text-xs"
+                              sizeClassName="py-0.5 pl-1 pr-2 text-xs"
                               roundedClassName="rounded-full"
                               stateClassName="transition-colors"
+                              layoutClassName="inline-flex items-center gap-1.5"
                               borderClassName={active ? 'border border-primary-400 dark:border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
                               backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
                               textClassName={active ? 'font-semibold text-primary-700 dark:text-primary-300' : 'font-medium text-slate-600 dark:text-slate-300'}>
+                              {sz.image ? (
+                                <Box layoutClassName="h-5 w-5 shrink-0 overflow-hidden rounded-full" borderClassName="border border-white/60 dark:border-slate-700">
+                                  <Image src={sz.image} alt="" layoutClassName="h-full w-full object-cover" />
+                                </Box>
+                              ) : null}
                               {sz.name} · {formatVNDOrDash(sz.price)}
                             </Button>
                           );
