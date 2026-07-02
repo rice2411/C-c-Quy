@@ -1,40 +1,49 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleBasedRoute from "./components/RoleBasedRoute";
-import DashboardPage from "./pages/Dashboard/index";
-import OrdersPage from "./pages/Orders/index";
-import FinanceOverviewPage from "./pages/Finance/Overview";
-import FinanceTransactionsPage from "./pages/Finance/Transactions";
-import PromotionsPage from "./pages/Promotions/index";
-import CommissionPage from "./pages/Commission/index";
-import CommissionSettingsPage from "./pages/Commission/SettingsPage";
-import CommissionGuidePage from "./pages/Commission/GuidePage";
-import MyCommissionPage from "./pages/MyCommission/index";
-import InventoryPage from "./pages/Storage/index";
-import ProductDetailPage from "./pages/Storage/product/ProductDetailPage";
-import StockReceiptsPage from "./pages/StockReceipts/index";
-import SuppliersPage from "./pages/Suppliers/index";
-import MaterialsPage from "./pages/Materials/index";
-import CustomersPage from "./pages/Customers/index";
-import UsersPage from "./pages/Users/index";
-import RequestLogsPage from "./pages/Admin/RequestLogs/index";
-import NotificationsPage from "./pages/Notifications/index";
-import ScreenVisibilityTab from "./pages/Settings/ScreenVisibilityTab";
-import ZaloSettingsTab from "./pages/Settings/ZaloSettingsTab";
-import OrderSettingsTab from "./pages/Settings/OrderSettingsTab";
-import SepaySettingsTab from "./pages/Settings/SepaySettingsTab";
-import ProductSettings from "./pages/Settings/ProductSettings";
-import LoginPage from "./pages/Login/index";
-import SerpApiMapsTestPage from "./pages/Test/SerpApiMaps/index";
+import Spinner from "./components/ui/Spinner";
+// Lazy-load từng trang → mỗi trang là 1 chunk JS riêng, chỉ tải khi vào (giảm bundle đầu).
+const DashboardPage = lazy(() => import("./pages/Dashboard/index"));
+const OrdersPage = lazy(() => import("./pages/Orders/index"));
+const FinanceOverviewPage = lazy(() => import("./pages/Finance/Overview"));
+const FinanceTransactionsPage = lazy(() => import("./pages/Finance/Transactions"));
+const PromotionsPage = lazy(() => import("./pages/Promotions/index"));
+const CommissionPage = lazy(() => import("./pages/Commission/index"));
+const CommissionSettingsPage = lazy(() => import("./pages/Commission/SettingsPage"));
+const CommissionGuidePage = lazy(() => import("./pages/Commission/GuidePage"));
+const MyCommissionPage = lazy(() => import("./pages/MyCommission/index"));
+const InventoryPage = lazy(() => import("./pages/Storage/index"));
+const ProductDetailPage = lazy(() => import("./pages/Storage/product/ProductDetailPage"));
+const StockReceiptsPage = lazy(() => import("./pages/StockReceipts/index"));
+const SuppliersPage = lazy(() => import("./pages/Suppliers/index"));
+const MaterialsPage = lazy(() => import("./pages/Materials/index"));
+const CustomersPage = lazy(() => import("./pages/Customers/index"));
+const UsersPage = lazy(() => import("./pages/Users/index"));
+const RequestLogsPage = lazy(() => import("./pages/Admin/RequestLogs/index"));
+const NotificationsPage = lazy(() => import("./pages/Notifications/index"));
+const ScreenVisibilityTab = lazy(() => import("./pages/Settings/ScreenVisibilityTab"));
+const ZaloSettingsTab = lazy(() => import("./pages/Settings/ZaloSettingsTab"));
+const OrderSettingsTab = lazy(() => import("./pages/Settings/OrderSettingsTab"));
+const SepaySettingsTab = lazy(() => import("./pages/Settings/SepaySettingsTab"));
+const ProductSettings = lazy(() => import("./pages/Settings/ProductSettings"));
+const LoginPage = lazy(() => import("./pages/Login/index"));
+const SerpApiMapsTestPage = lazy(() => import("./pages/Test/SerpApiMaps/index"));
 import { routes } from "./config/routes";
+
+const PageLoader: React.FC = () => (
+  <div className="flex h-full min-h-[40vh] items-center justify-center">
+    <Spinner size="lg" textClassName="text-primary-500" />
+  </div>
+);
 
 /**
  * Bảng route của app — tách khỏi App.tsx (App.tsx chỉ còn provider tree + HashRouter + Toaster).
  * Giữ nguyên 100% route + phân quyền RoleBasedRoute + redirect như trước (no-visual-change).
  */
 const AppRoutes: React.FC = () => (
+  <Suspense fallback={<PageLoader />}>
   <Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route
@@ -247,6 +256,7 @@ const AppRoutes: React.FC = () => (
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
+  </Suspense>
 );
 
 export default AppRoutes;
