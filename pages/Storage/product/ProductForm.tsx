@@ -372,7 +372,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
               />
 
               {/* Size (biến thể giá) */}
-              <SizeEditor sizes={sizes} onChange={setSizes} />
+              <SizeEditor sizes={sizes} onChange={setSizes} galleryImages={[image, ...gallery].filter(Boolean)} />
 
               {/* Status */}
               <Field label={t('inventory.status')}>

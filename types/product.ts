@@ -3,10 +3,11 @@ export interface ProductMaterial {
   quantity: number;
 }
 
-/** 1 size của sản phẩm: tên + giá. Giá dòng đơn lấy theo size chọn. */
+/** 1 size của sản phẩm: tên + giá + ảnh riêng (tùy chọn). Giá dòng đơn lấy theo size chọn. */
 export interface ProductSize {
   name: string;
   price: number;
+  image?: string;
 }
 
 /** 1 biến thể vị: tên + màu + ảnh riêng (từ gallery) + giá riêng (tùy chọn). Khai báo per-sản phẩm. */
@@ -90,3 +91,10 @@ export const flavorVariantColor = (
   name: string,
 ): string =>
   (p.flavorVariants ?? []).find((v) => v.name === name)?.color || '#64748b';
+
+/** Ảnh của 1 size (nếu có). */
+export const sizeImage = (
+  p: { sizes?: ProductSize[] },
+  name?: string,
+): string | undefined =>
+  name ? (p.sizes ?? []).find((s) => s.name === name)?.image : undefined;
