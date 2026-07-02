@@ -269,9 +269,12 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                           const thumb = itemProduct ? flavorImage(itemProduct, fl) : undefined;
                           const onPick = () => {
                             onUpdateItem(item.id, 'flavors', next);
-                            // Giá dòng = tổng vị chọn (nếu sp tính giá theo vị)
+                            // SP tính giá theo vị: mỗi vị = 1 món → SL = số vị chọn, đơn giá = giá mỗi vị.
                             if (itemProduct && productUsesFlavorPricing(itemProduct)) {
-                              onUpdateItem(item.id, 'unitPrice', flavorSumPrice(itemProduct, next));
+                              const qty = Math.max(1, next.length);
+                              const sum = flavorSumPrice(itemProduct, next);
+                              onUpdateItem(item.id, 'quantity', qty);
+                              onUpdateItem(item.id, 'unitPrice', next.length ? Math.round(sum / next.length) : (itemProduct.price || 0));
                             }
                             // Ảnh dòng theo biến thể đã chọn
                             if (itemProduct) {
