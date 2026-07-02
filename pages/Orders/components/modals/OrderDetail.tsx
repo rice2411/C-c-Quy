@@ -35,7 +35,7 @@ import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { qk } from '@/hooks/queryKeys';
 import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber, fetchOutUnlinkedTransactions } from '@/services/transactionService';
-import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor, groupFlavors } from '@/types';
+import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor, groupFlavors, sizeCountsLabel } from '@/types';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
 import { UserRole } from '@/types/user';
 import { orderAddressFallbackKey, surchargeTagLabel, reconcileMethodLabel } from '@/types/order';
@@ -782,7 +782,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                              <Image src={item.image} alt={item.name} layoutClassName="h-full w-full object-cover" />
                            </Box>
                            <Box layoutClassName="min-w-0 flex-1">
-                             <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name}{item.size ? ` · ${item.size}` : ''}</Heading>
+                             <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name}{sizeCountsLabel(item.sizeCounts) ? ` · ${sizeCountsLabel(item.sizeCounts)}` : item.size ? ` · ${item.size}` : ''}</Heading>
                              {flavors.length ? (
                                <Box layoutClassName="mt-1 flex flex-wrap gap-1">
                                  {groupFlavors(flavors).map(({ name: fl, qty }) => {
@@ -1811,7 +1811,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                         >
                           {/* Category header */}
                           <Box layoutClassName="mb-4 flex items-center gap-3">
-                            <Typography as="span" size="inherit" layoutClassName="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" className={meta.iconBgClass}>
+                            <Typography as="span" size="inherit" layoutClassName="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg" backgroundClassName={meta.iconBgClass}>
                               <Icon className="h-5 w-5" />
                             </Typography>
                             <Box layoutClassName="min-w-0 flex-1">
@@ -1844,7 +1844,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                   : '—';
                                 return (
                                   <Box key={ci} layoutClassName="relative">
-                                    <Typography as="span" size="inherit" layoutClassName="absolute -left-[27px] top-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white ring-2 dark:border-slate-800" className={`${meta.dotClass} ${meta.dotRingClass}`} />
+                                    <Typography as="span" size="inherit" layoutClassName="absolute -left-[27px] top-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-white ring-2 dark:border-slate-800" backgroundClassName={meta.dotClass} stateClassName={meta.dotRingClass} />
                                     <Box layoutClassName="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                                       <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">
                                         {g.entry?.byUid === 'system'
