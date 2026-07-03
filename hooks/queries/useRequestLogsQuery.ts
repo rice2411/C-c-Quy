@@ -14,10 +14,14 @@ import {
   fetchRequestLogs,
   fetchRequestLogStats,
   fetchRequestLogTimeseries,
+  fetchRequestLogErrorGroups,
+  fetchHealth,
   type RequestLogPage,
   type RequestLogQuery,
   type RequestLogStats,
   type RequestLogTimePoint,
+  type RequestLogErrorGroup,
+  type HealthStatus,
 } from '@/services/requestLogService';
 
 /** Tham số chung cho stats/timeseries: khoảng thời gian + lọc lỗi. */
@@ -101,6 +105,46 @@ export const useRequestLogTimeseries = (
   });
   return {
     data: result.data,
+    loading: result.isLoading,
+    error: result.error,
+    refetch: async () => {
+      await result.refetch();
+    },
+  };
+};
+
+/** Gom lỗi theo endpoint+status (kiểu Sentry). */
+export const useRequestLogErrorGroups = (
+  query: Pick<RequestLogQuery, 'from' | 'to'> & { limit?: number },
+  enabled = true,
+) => {
+  const { currentUser } = useAuth();
+  const result = useQuery({
+    queryKey: qk.requestLogs.errorGroups(query),
+    queryFn: () => fetchRequestLogErrorGroups(query),
+    enabled: !!currentUser && enabled,
+  });
+  return {
+    data: result.data as RequestLogErrorGroup[] | undefined,
+    loading: result.isLoading,
+    error: result.error,
+    refetch: async () => {
+      await result.refetch();
+    },
+  };
+};
+
+/** Sức khỏe hệ thống (/health) — tự làm mới mỗi 30s. */
+export const useHealth = (enabled = true) => {
+  const { currentUser } = useAuth();
+  const result = useQuery({
+    queryKey: qk.requestLogs.health,
+    queryFn: fetchHealth,
+    enabled: !!currentUser && enabled,
+    refetchInterval: 30000,
+  });
+  return {
+    data: result.data as HealthStatus | undefined,
     loading: result.isLoading,
     error: result.error,
     refetch: async () => {

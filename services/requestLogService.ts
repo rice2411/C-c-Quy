@@ -46,16 +46,33 @@ export interface RequestLogPage {
   hasMore: boolean;
 }
 
+export interface NameCount {
+  name: string;
+  count: number;
+}
+
 export interface RequestLogStats {
   scanned: number;
   total: number;
   errorCount: number;
   uniqueIps: number;
+  uniqueUsers: number;
+  bandwidth: number; // bytes
   avgDuration: number; // ms
+  p50: number;
+  p90: number;
+  p95: number;
+  p99: number;
   statusBuckets: { s2xx: number; s3xx: number; s4xx: number; s5xx: number };
   methodBuckets: Array<{ method: string; count: number }>;
+  deviceBuckets: NameCount[];
+  browserBuckets: NameCount[];
+  osBuckets: NameCount[];
   topCountries: Array<{ country: string; count: number }>;
+  topReferers: Array<{ referer: string; count: number }>;
+  topUsers: Array<{ user: string; count: number }>;
   topPaths: Array<{ path: string; count: number }>;
+  slowestPaths: Array<{ path: string; p95: number; count: number }>;
   topIps: Array<{ ip: string; country?: string; count: number }>;
 }
 
@@ -65,6 +82,28 @@ export interface RequestLogTimePoint {
   requests: number;
   errors: number;
   uniqueIps: number;
+}
+
+/** 1 nhóm lỗi (gom theo method+path+status). */
+export interface RequestLogErrorGroup {
+  method: string;
+  path: string;
+  status: number;
+  count: number;
+  firstSeen: string;
+  lastSeen: string;
+}
+
+/** Sức khỏe hệ thống (/health). */
+export interface HealthStatus {
+  status: 'ok' | 'degraded';
+  service: string;
+  db: boolean;
+  dbLatencyMs: number | null;
+  uptimeSec: number;
+  env: string;
+  version: string;
+  time: string;
 }
 
 /** Bỏ các field undefined để không gửi query rỗng. */
@@ -88,4 +127,16 @@ export const fetchRequestLogTimeseries = async (
 ): Promise<RequestLogTimePoint[]> => {
   const res = await apiClient.get<RequestLogTimePoint[]>('/request-logs/timeseries', { params: clean(params as Record<string, unknown>) });
   return res.data ?? [];
+};
+
+export const fetchRequestLogErrorGroups = async (
+  params: Pick<RequestLogQuery, 'from' | 'to'> & { limit?: number } = {},
+): Promise<RequestLogErrorGroup[]> => {
+  const res = await apiClient.get<RequestLogErrorGroup[]>('/request-logs/error-groups', { params: clean(params as Record<string, unknown>) });
+  return res.data ?? [];
+};
+
+export const fetchHealth = async (): Promise<HealthStatus> => {
+  const res = await apiClient.get<HealthStatus>('/health');
+  return res.data;
 };
