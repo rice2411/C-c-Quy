@@ -21,6 +21,8 @@ import {
   Monitor,
   MessageSquare,
   QrCode,
+  AlertTriangle,
+  HeartPulse,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { ScreenVisibilityMap } from "@/types";
@@ -163,9 +165,30 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/admin/request-logs",
-    labelKey: "nav.requestLogs",
+    path: "/system/traffic",
+    labelKey: "nav.systemTraffic",
     icon: Activity,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/system/logs",
+    labelKey: "nav.systemLogs",
+    icon: FileText,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/system/errors",
+    labelKey: "nav.systemErrors",
+    icon: AlertTriangle,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/system/health",
+    labelKey: "nav.systemHealth",
+    icon: HeartPulse,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -333,7 +356,10 @@ export const navGroups: NavGroupConfig[] = [
     labelKey: "nav.systemGroup",
     icon: ShieldCheck,
     childPaths: [
-      "/admin/request-logs",
+      "/system/traffic",
+      "/system/logs",
+      "/system/errors",
+      "/system/health",
     ],
   },
   {
