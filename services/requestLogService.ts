@@ -51,8 +51,20 @@ export interface RequestLogStats {
   total: number;
   errorCount: number;
   uniqueIps: number;
+  avgDuration: number; // ms
+  statusBuckets: { s2xx: number; s3xx: number; s4xx: number; s5xx: number };
+  methodBuckets: Array<{ method: string; count: number }>;
+  topCountries: Array<{ country: string; count: number }>;
   topPaths: Array<{ path: string; count: number }>;
   topIps: Array<{ ip: string; country?: string; count: number }>;
+}
+
+/** 1 điểm trên chuỗi thời gian lưu lượng (gom theo giờ/ngày). */
+export interface RequestLogTimePoint {
+  ts: string; // ISO (đầu bucket)
+  requests: number;
+  errors: number;
+  uniqueIps: number;
 }
 
 /** Bỏ các field undefined để không gửi query rỗng. */
@@ -65,8 +77,15 @@ export const fetchRequestLogs = async (params: RequestLogQuery = {}): Promise<Re
 };
 
 export const fetchRequestLogStats = async (
-  params: Pick<RequestLogQuery, 'from' | 'to'> = {},
+  params: Pick<RequestLogQuery, 'from' | 'to'> & { errorsOnly?: boolean } = {},
 ): Promise<RequestLogStats> => {
   const res = await apiClient.get<RequestLogStats>('/request-logs/stats', { params: clean(params as Record<string, unknown>) });
   return res.data;
+};
+
+export const fetchRequestLogTimeseries = async (
+  params: Pick<RequestLogQuery, 'from' | 'to'> & { bucket?: 'hour' | 'day'; errorsOnly?: boolean } = {},
+): Promise<RequestLogTimePoint[]> => {
+  const res = await apiClient.get<RequestLogTimePoint[]>('/request-logs/timeseries', { params: clean(params as Record<string, unknown>) });
+  return res.data ?? [];
 };
