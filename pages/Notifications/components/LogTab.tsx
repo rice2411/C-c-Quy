@@ -3,7 +3,6 @@ import toast from 'react-hot-toast';
 import { AlertTriangle, Bell, ChevronLeft, ChevronRight, Inbox, RefreshCw, RotateCcw, Send } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
-import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -35,12 +34,13 @@ const statusMeta: Record<NotificationStatus, { label: string; bg: string; text: 
   pending: { label: 'Chờ gửi', bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300' },
 };
 
+/** Nhãn kênh (chung, dễ mở rộng nền tảng khác). */
 const kindMeta: Record<NotificationKind, { label: string; icon: React.ReactNode }> = {
   zalo: { label: 'Zalo', icon: <Send className="h-3.5 w-3.5" /> },
-  inapp: { label: 'In-app', icon: <Bell className="h-3.5 w-3.5" /> },
+  inapp: { label: 'Trong ứng dụng', icon: <Bell className="h-3.5 w-3.5" /> },
 };
 
-const SystemNotificationsPage: React.FC = () => {
+const LogTab: React.FC = () => {
   const [kind, setKind] = useState<'' | NotificationKind>('');
   const [status, setStatus] = useState<'' | NotificationStatus>('');
   const [page, setPage] = useState(1);
@@ -66,23 +66,20 @@ const SystemNotificationsPage: React.FC = () => {
   };
 
   return (
-    <Box layoutClassName="space-y-5">
+    <Box layoutClassName="space-y-4">
       <Box layoutClassName="flex items-center justify-between gap-3">
-        <Box>
-          <Heading level={2}>Nhật ký thông báo</Heading>
-          <Typography variant="muted" size="sm">Lịch sử gửi Zalo (thành công/thất bại) + sự kiện in-app. Gửi lại khi thất bại.</Typography>
-        </Box>
+        <Typography size="sm" variant="muted">Lịch sử gửi (thành công/thất bại) + sự kiện trong ứng dụng. Gửi lại khi thất bại.</Typography>
         <Button variant="secondary" size="sm" onClick={() => void refetch()} disabled={loading || fetching} leftIcon={<RefreshCw className="w-4 h-4" />}>Làm mới</Button>
       </Box>
 
       <Card padding="md">
         <Box layoutClassName="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Box layoutClassName="space-y-1">
-            <Typography size="xs" variant="muted">Loại</Typography>
+            <Typography size="xs" variant="muted">Kênh</Typography>
             <Select fullWidth value={kind} onChange={(e) => { setKind(e.target.value as NotificationKind | ''); setPage(1); }}>
               <option value="">Tất cả</option>
               <option value="zalo">Zalo</option>
-              <option value="inapp">In-app</option>
+              <option value="inapp">Trong ứng dụng</option>
             </Select>
           </Box>
           <Box layoutClassName="space-y-1">
@@ -113,7 +110,7 @@ const SystemNotificationsPage: React.FC = () => {
               <TableHead>
                 <TableRow>
                   <TableHeaderCell>Thời gian</TableHeaderCell>
-                  <TableHeaderCell>Loại</TableHeaderCell>
+                  <TableHeaderCell>Kênh</TableHeaderCell>
                   <TableHeaderCell>Nội dung</TableHeaderCell>
                   <TableHeaderCell>Đích</TableHeaderCell>
                   <TableHeaderCell>Trạng thái</TableHeaderCell>
@@ -167,4 +164,4 @@ const SystemNotificationsPage: React.FC = () => {
   );
 };
 
-export default SystemNotificationsPage;
+export default LogTab;
