@@ -75,6 +75,8 @@ export const qk = {
     list: (query: unknown) => ['request-logs', 'list', query] as const,
     stats: (query: unknown) => ['request-logs', 'stats', query] as const,
     timeseries: (query: unknown) => ['request-logs', 'timeseries', query] as const,
+    errorGroups: (query: unknown) => ['request-logs', 'error-groups', query] as const,
+    health: ['request-logs', 'health'] as const,
   },
   stockReceipt: {
     suppliers: ['stock-receipt', 'suppliers'] as const,
