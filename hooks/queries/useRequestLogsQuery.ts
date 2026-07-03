@@ -13,10 +13,16 @@ import { qk } from '@/hooks/queryKeys';
 import {
   fetchRequestLogs,
   fetchRequestLogStats,
+  fetchRequestLogTimeseries,
   type RequestLogPage,
   type RequestLogQuery,
   type RequestLogStats,
+  type RequestLogTimePoint,
 } from '@/services/requestLogService';
+
+/** Tham số chung cho stats/timeseries: khoảng thời gian + lọc lỗi. */
+type StatsQuery = Pick<RequestLogQuery, 'from' | 'to'> & { errorsOnly?: boolean };
+type TimeseriesQuery = StatsQuery & { bucket?: 'hour' | 'day' };
 
 export interface UseRequestLogsResult {
   data: RequestLogPage | undefined;
@@ -56,13 +62,41 @@ export interface UseRequestLogStatsResult {
  * lật trang. Key gồm {from,to} để cache theo khoảng thời gian lọc.
  */
 export const useRequestLogStats = (
-  query: Pick<RequestLogQuery, 'from' | 'to'>,
+  query: StatsQuery,
   enabled = true,
 ): UseRequestLogStatsResult => {
   const { currentUser } = useAuth();
   const result = useQuery({
     queryKey: qk.requestLogs.stats(query),
     queryFn: () => fetchRequestLogStats(query),
+    enabled: !!currentUser && enabled,
+  });
+  return {
+    data: result.data,
+    loading: result.isLoading,
+    error: result.error,
+    refetch: async () => {
+      await result.refetch();
+    },
+  };
+};
+
+export interface UseRequestLogTimeseriesResult {
+  data: RequestLogTimePoint[] | undefined;
+  loading: boolean;
+  error: Error | null;
+  refetch: () => Promise<void>;
+}
+
+/** Chuỗi thời gian lưu lượng cho biểu đồ (gom theo giờ/ngày). */
+export const useRequestLogTimeseries = (
+  query: TimeseriesQuery,
+  enabled = true,
+): UseRequestLogTimeseriesResult => {
+  const { currentUser } = useAuth();
+  const result = useQuery({
+    queryKey: qk.requestLogs.timeseries(query),
+    queryFn: () => fetchRequestLogTimeseries(query),
     enabled: !!currentUser && enabled,
   });
   return {
