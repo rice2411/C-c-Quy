@@ -194,7 +194,7 @@ const PromotionFormPanel: React.FC<PromotionFormPanelProps> = ({
       maxWidth="xl"
       footer={footer}
     >
-      <Box layoutClassName="space-y-6">
+      <Box layoutClassName="space-y-6 p-4 sm:p-6">
         <Section title="Thông tin chung">
           <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Tên chương trình" required>
