@@ -147,7 +147,7 @@ const NotificationBell: React.FC = () => {
               variant="ghost"
               size="sm"
               fullWidth
-              onClick={() => { setOpen(false); navigate('/system/notifications'); }}
+              onClick={() => { setOpen(false); navigate('/notifications'); }}
               textClassName="text-slate-600 dark:text-slate-300"
             >
               Xem tất cả nhật ký
