@@ -11,6 +11,7 @@ import Spinner from '@/components/ui/Spinner';
 import toast from 'react-hot-toast';
 import MobileFooterNav from './MobileFooterNav';
 import { useSystemPing } from '@/hooks/useSystemPing';
+import NotificationBell from './NotificationBell';
 
 const Layout: React.FC = () => {
   const { t, language, setLanguage } = useLanguage();
@@ -293,6 +294,8 @@ const Layout: React.FC = () => {
             </button>
 
             <ThemeToggle />
+
+            <NotificationBell />
 
              <div className="flex items-center gap-2" title={`${ping.label}${ping.ms !== null ? ` · ${ping.ms} ms` : ''}`}>
                <span className={`w-2 h-2 rounded-full ${pingDot} animate-pulse`}></span>

@@ -78,6 +78,11 @@ export const qk = {
     errorGroups: (query: unknown) => ['request-logs', 'error-groups', query] as const,
     health: ['request-logs', 'health'] as const,
   },
+  notifications: {
+    log: (query: unknown) => ['notifications', 'log', query] as const,
+    inbox: ['notifications', 'inbox'] as const,
+    unread: ['notifications', 'unread'] as const,
+  },
   stockReceipt: {
     suppliers: ['stock-receipt', 'suppliers'] as const,
     materials: ['stock-receipt', 'materials'] as const,

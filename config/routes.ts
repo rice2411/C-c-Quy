@@ -193,6 +193,13 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
+    path: "/system/notifications",
+    labelKey: "nav.systemNotifications",
+    icon: Bell,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
     path: "/settings/screens",
     labelKey: "nav.settingsScreens",
     icon: Monitor,
@@ -360,6 +367,7 @@ export const navGroups: NavGroupConfig[] = [
       "/system/logs",
       "/system/errors",
       "/system/health",
+      "/system/notifications",
     ],
   },
   {
