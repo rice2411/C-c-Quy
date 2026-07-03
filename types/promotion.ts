@@ -31,9 +31,21 @@ export interface Promotion {
   usedCount: number;
   status: PromotionStatus;
   priority?: number;
+  /** Lịch sử các đợt chạy đã đóng (mở lại → cất đợt hiện tại vào đây). */
+  runs?: PromotionRun[];
+  /** Số lần chạy = runs.length + 1 (đợt đang chạy) — BE tính. */
+  runCount?: number;
   createdAt?: string;
   updatedAt?: string;
   createdBy?: string;
+}
+
+/** 1 đợt chạy đã đóng của khuyến mãi. */
+export interface PromotionRun {
+  startAt?: string | null; // ISO
+  endAt?: string | null; // ISO
+  usedCount: number; // lượt dùng trong đợt
+  closedAt?: string | null; // ISO — thời điểm đóng đợt
 }
 
 /** Khuyến mãi đã áp vào đơn (lưu trong Order). */

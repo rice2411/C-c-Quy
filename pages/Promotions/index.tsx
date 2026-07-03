@@ -16,19 +16,22 @@ import EmptyState from '@/components/ui/EmptyState';
 import ConfirmModal from '@/components/ConfirmModal';
 import PromotionFormPanel from './components/PromotionFormPanel';
 import PromotionCard from './components/PromotionCard';
+import ReopenModal from './components/ReopenModal';
 
 const PromotionsPage: React.FC = () => {
   const { userData } = useAuth();
   const { promotions, loading, error } = usePromotions();
   const { products } = useProducts();
   const { categories } = useCategories();
-  const { addPromotion, updatePromotion, deletePromotion } = usePromotionMutations();
+  const { addPromotion, updatePromotion, deletePromotion, reopenPromotion } = usePromotionMutations();
 
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Promotion | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Promotion | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [reopenTarget, setReopenTarget] = useState<Promotion | null>(null);
+  const [reopening, setReopening] = useState(false);
 
   useEffect(() => {
     if (error) toast.error('Không tải được danh sách khuyến mãi');
@@ -81,6 +84,20 @@ const PromotionsPage: React.FC = () => {
     }
   };
 
+  const confirmReopen = async (data: { startAt: string | null; endAt: string | null }) => {
+    if (!reopenTarget) return;
+    setReopening(true);
+    try {
+      await reopenPromotion({ id: reopenTarget.id, data });
+      toast.success('Đã mở lại chương trình cho đợt mới');
+      setReopenTarget(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Không thể mở lại');
+    } finally {
+      setReopening(false);
+    }
+  };
+
   if (loading) {
     return (
       <Box layoutClassName="flex flex-1 items-center justify-center py-16">
@@ -119,7 +136,7 @@ const PromotionsPage: React.FC = () => {
       ) : (
         <Box layoutClassName="space-y-2.5">
           {promotions.map((p) => (
-            <PromotionCard key={p.id} promotion={p} categories={categories} onEdit={openEdit} onDelete={setDeleteTarget} />
+            <PromotionCard key={p.id} promotion={p} categories={categories} onEdit={openEdit} onDelete={setDeleteTarget} onReopen={setReopenTarget} />
           ))}
         </Box>
       )}
@@ -133,6 +150,14 @@ const PromotionsPage: React.FC = () => {
         saving={saving}
         onClose={closeForm}
         onSubmit={handleSubmit}
+      />
+
+      {/* Mở lại đợt mới */}
+      <ReopenModal
+        target={reopenTarget}
+        loading={reopening}
+        onClose={() => setReopenTarget(null)}
+        onConfirm={confirmReopen}
       />
 
       {/* Xác nhận xoá */}

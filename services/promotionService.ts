@@ -26,6 +26,14 @@ export const deletePromotion = async (id: string): Promise<void> => {
   await apiClient.delete(`${PATH}/${id}`);
 };
 
+/** Mở lại khuyến mãi chạy đợt mới (đặt kỳ mới, reset lượt, cất đợt cũ vào lịch sử). */
+export const reopenPromotion = async (
+  id: string,
+  data: { startAt?: string | null; endAt?: string | null },
+): Promise<void> => {
+  await apiClient.post(`${PATH}/${id}/reopen`, data);
+};
+
 /** Tính trước giảm giá cho giỏ hàng (màn tạo/sửa đơn gọi). */
 export const previewPromotion = async (cart: {
   items: { productId?: string; price: number; quantity: number }[];
