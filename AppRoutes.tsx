@@ -25,6 +25,7 @@ const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
 const SystemLogsPage = lazy(() => import("./pages/System/Requests/index"));
 const SystemErrorsPage = lazy(() => import("./pages/System/Errors/index"));
 const SystemHealthPage = lazy(() => import("./pages/System/Health/index"));
+const SystemNotificationsPage = lazy(() => import("./pages/System/Notifications/index"));
 const NotificationsPage = lazy(() => import("./pages/Notifications/index"));
 const ScreenVisibilityTab = lazy(() => import("./pages/Settings/ScreenVisibilityTab"));
 const ZaloSettingsTab = lazy(() => import("./pages/Settings/ZaloSettingsTab"));
@@ -223,6 +224,14 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/system/health")?.roles}>
             <SystemHealthPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="system/notifications"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/system/notifications")?.roles}>
+            <SystemNotificationsPage />
           </RoleBasedRoute>
         }
       />
