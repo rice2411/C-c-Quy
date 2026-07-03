@@ -1,4 +1,5 @@
 import type { ProductCategory } from '@/types/category';
+import type { Promotion } from '@/types/promotion';
 
 /** '' / NaN → undefined; ngược lại số. */
 export const num = (s: string): number | undefined => {
@@ -44,6 +45,32 @@ export const formatDateRange = (start: unknown, end: unknown): string => {
   if (e) return `Đến ${e}`;
   return 'Không giới hạn thời gian';
 };
+
+/** yyyy-mm-dd hôm nay theo giờ local. */
+export const todayYMD = (): string => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+export type PromotionState = 'running' | 'ended' | 'off';
+
+/**
+ * Trạng thái hiệu lực của khuyến mãi:
+ * - 'off'     : admin tắt (status=inactive)
+ * - 'ended'   : ngày kết thúc đã qua HOẶC hết lượt (usedCount ≥ maxUses)
+ * - 'running' : còn lại
+ */
+export const promotionState = (p: Promotion): PromotionState => {
+  if (p.status === 'inactive') return 'off';
+  const end = toDateInput(p.endAt);
+  const endPassed = !!end && end < todayYMD();
+  const usedUp = p.maxUses != null && p.maxUses > 0 && (p.usedCount || 0) >= p.maxUses;
+  return endPassed || usedUp ? 'ended' : 'running';
+};
+
+/** Số lần chạy = runCount (BE tính) hoặc suy từ runs.length + 1. */
+export const runsCount = (p: Promotion): number =>
+  p.runCount ?? (p.runs?.length ?? 0) + 1;
 
 /** Tên danh mục theo id (fallback về chính giá trị nếu không tìm thấy). */
 export const categoryName = (
