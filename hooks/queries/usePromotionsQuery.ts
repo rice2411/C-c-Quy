@@ -15,6 +15,7 @@ import {
   deletePromotion,
   fetchPromotions,
   previewPromotion,
+  reopenPromotion,
   updatePromotion,
 } from '@/services/promotionService';
 
@@ -52,6 +53,12 @@ export interface UsePromotionMutationsResult {
   addPromotion: (data: AddPromotionArgs) => Promise<{ id: string }>;
   updatePromotion: (args: UpdatePromotionArgs) => Promise<void>;
   deletePromotion: (id: string) => Promise<void>;
+  reopenPromotion: (args: ReopenPromotionArgs) => Promise<void>;
+}
+
+export interface ReopenPromotionArgs {
+  id: string;
+  data: { startAt?: string | null; endAt?: string | null };
 }
 
 export const usePromotionMutations = (): UsePromotionMutationsResult => {
@@ -70,11 +77,16 @@ export const usePromotionMutations = (): UsePromotionMutationsResult => {
     mutationFn: (id: string) => deletePromotion(id),
     onSuccess: invalidate,
   });
+  const reopenMutation = useMutation({
+    mutationFn: ({ id, data }: ReopenPromotionArgs) => reopenPromotion(id, data),
+    onSuccess: invalidate,
+  });
 
   return {
     addPromotion: (data) => addMutation.mutateAsync(data),
     updatePromotion: (args) => updateMutation.mutateAsync(args),
     deletePromotion: (id) => deleteMutation.mutateAsync(id),
+    reopenPromotion: (args) => reopenMutation.mutateAsync(args),
   };
 };
 
