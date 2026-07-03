@@ -10,6 +10,7 @@ import ThemeToggle from './ThemeToggle';
 import Spinner from '@/components/ui/Spinner';
 import toast from 'react-hot-toast';
 import MobileFooterNav from './MobileFooterNav';
+import { useSystemPing } from '@/hooks/useSystemPing';
 
 const Layout: React.FC = () => {
   const { t, language, setLanguage } = useLanguage();
@@ -17,6 +18,15 @@ const Layout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { screenVisibility, isScreenEnabled } = useScreenConfig();
+  const ping = useSystemPing();
+  const pingDot =
+    ping.level === 'good' ? 'bg-emerald-500' : ping.level === 'ok' ? 'bg-amber-500' : 'bg-red-500';
+  const pingText =
+    ping.level === 'good'
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : ping.level === 'ok'
+        ? 'text-amber-600 dark:text-amber-400'
+        : 'text-red-600 dark:text-red-400';
 
   // Thu gọn sidebar (desktop) — nhớ lựa chọn qua localStorage.
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState<boolean>(
@@ -284,9 +294,12 @@ const Layout: React.FC = () => {
 
             <ThemeToggle />
 
-             <div className="flex items-center gap-2">
-               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-               <span className="text-xs font-medium text-slate-500 dark:text-slate-400 hidden sm:inline-block">{t('header.systemOp')}</span>
+             <div className="flex items-center gap-2" title={`${ping.label}${ping.ms !== null ? ` · ${ping.ms} ms` : ''}`}>
+               <span className={`w-2 h-2 rounded-full ${pingDot} animate-pulse`}></span>
+               <span className={`text-xs font-semibold ${pingText}`}>
+                 {ping.ms !== null ? `${ping.ms} ms` : '— ms'}
+               </span>
+               <span className="text-xs font-medium text-slate-400 dark:text-slate-500 hidden sm:inline-block">{ping.label}</span>
              </div>
              
              <div className="flex items-center gap-3 pl-2 border-l border-slate-200 dark:border-slate-700">
