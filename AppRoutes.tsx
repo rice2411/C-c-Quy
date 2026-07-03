@@ -22,7 +22,7 @@ const MaterialsPage = lazy(() => import("./pages/Materials/index"));
 const CustomersPage = lazy(() => import("./pages/Customers/index"));
 const UsersPage = lazy(() => import("./pages/Users/index"));
 const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
-const SystemLogsPage = lazy(() => import("./pages/System/Logs/index"));
+const SystemLogsPage = lazy(() => import("./pages/System/Requests/index"));
 const SystemErrorsPage = lazy(() => import("./pages/System/Errors/index"));
 const SystemHealthPage = lazy(() => import("./pages/System/Health/index"));
 const NotificationsPage = lazy(() => import("./pages/Notifications/index"));
