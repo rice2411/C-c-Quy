@@ -19,3 +19,11 @@ export const exchangeGoogleCredential = async (
   const res = await axios.post(RICE_AUTH_URL, { credential });
   return res.data as { token: string; user: SsoUser };
 };
+
+/** Đổi Google OAuth access token (từ useGoogleLogin / nút tuỳ biến) lấy SSO JWT. */
+export const exchangeGoogleAccessToken = async (
+  accessToken: string,
+): Promise<{ token: string; user: SsoUser }> => {
+  const res = await axios.post(RICE_AUTH_URL, { accessToken });
+  return res.data as { token: string; user: SsoUser };
+};

@@ -1,19 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
-import { ChefHat } from 'lucide-react';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { exchangeGoogleCredential } from '@/services/auth/googleSso';
-import { setSsoToken, clearSsoToken } from '@/services/auth/ssoToken';
-import { getUserByEmail } from '@/services/userService';
-import { UserStatus } from '@/types/user';
+import { ChefHat, UserPlus, X } from 'lucide-react';
+import Button from '@/components/ui/Button';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
-import Typography from '@/components/ui/Typography';
+import Image from '@/components/ui/Image';
+import IconButton from '@/components/ui/IconButton';
 import Spinner from '@/components/ui/Spinner';
+import AvatarImage from '@/components/ui/AvatarImage';
+import Typography from '@/components/ui/Typography';
 import ThemeToggle from '@/components/ThemeToggle';
+import { getAccountsHistory, removeAccountFromHistory } from '@/utils/user/userUtil';
+import { exchangeGoogleAccessToken } from '@/services/auth/googleSso';
+import { setSsoToken, clearSsoToken } from '@/services/auth/ssoToken';
+import { getUserByEmail } from '@/services/userService';
+import { UserStatus } from '@/types/user';
 import toast from 'react-hot-toast';
 
 const LoginPage: React.FC = () => {
@@ -21,23 +26,23 @@ const LoginPage: React.FC = () => {
   const { currentUser, applyLogin } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [accountsHistory, setAccountsHistory] = useState(getAccountsHistory());
 
+  // Đã đăng nhập → về trang chủ
   useEffect(() => {
     if (currentUser) navigate('/', { replace: true });
   }, [currentUser, navigate]);
 
-  const handleCredential = async (res: CredentialResponse) => {
-    const credential = res.credential;
-    if (!credential) {
-      toast.error('Không lấy được thông tin Google');
-      return;
-    }
+  useEffect(() => {
+    setAccountsHistory(getAccountsHistory());
+  }, []);
+
+  // Đổi Google access token → SSO JWT (RiceService) → lấy hồ sơ (role/status) từ BE.
+  const finishLogin = async (accessToken: string) => {
     setLoading(true);
     try {
-      // 1) Đổi Google ID token → SSO JWT qua RiceService
-      const { token, user } = await exchangeGoogleCredential(credential);
+      const { token, user } = await exchangeGoogleAccessToken(accessToken);
       setSsoToken(token);
-      // 2) Lấy hồ sơ (role/status) từ BE CucQuy theo email (đã có token để verify)
       const data = await getUserByEmail(user.email);
       if (!data) {
         clearSsoToken();
@@ -58,6 +63,27 @@ const LoginPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const login = useGoogleLogin({
+    scope: 'openid email profile',
+    onSuccess: (res) => finishLogin(res.access_token),
+    onError: () => {
+      setLoading(false);
+      toast.error('Đăng nhập Google thất bại');
+    },
+  });
+
+  const startLogin = () => {
+    setLoading(true);
+    login();
+  };
+
+  const handleRemoveAccount = (uid: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    removeAccountFromHistory(uid);
+    setAccountsHistory(getAccountsHistory());
+    toast.success(t('login.accountRemoved'));
   };
 
   return (
@@ -92,20 +118,89 @@ const LoginPage: React.FC = () => {
           <Typography variant="muted">{t('login.welcome')}</Typography>
         </Box>
 
-        <Box layoutClassName="flex flex-col items-center gap-4">
-          {loading ? (
-            <Spinner size="md" textClassName="text-primary-500" />
-          ) : (
-            <GoogleLogin
-              onSuccess={handleCredential}
-              onError={() => { toast.error('Đăng nhập Google thất bại'); }}
-              text="signin_with"
-              shape="pill"
-            />
+        <Box layoutClassName="space-y-4">
+          {/* Danh sách tài khoản đã từng đăng nhập */}
+          {accountsHistory.length > 0 && (
+            <Box layoutClassName="space-y-2">
+              <Typography size="sm" layoutClassName="mb-2" textClassName="font-medium">
+                {t('login.recentAccounts')}
+              </Typography>
+              <Box layoutClassName="space-y-2 max-h-64 overflow-y-auto">
+                {accountsHistory
+                  .filter((acc) => acc.uid !== currentUser?.uid)
+                  .map((account) => (
+                    <Card
+                      key={account.uid}
+                      onClick={() => startLogin()}
+                      padding="none"
+                      layoutClassName="group flex cursor-pointer items-center gap-3 p-3"
+                      roundedClassName="rounded-lg"
+                      borderClassName="border-slate-200 dark:border-slate-600"
+                      backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
+                      hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700"
+                      stateClassName="transition-colors"
+                    >
+                      <AvatarImage
+                        src={account.photoURL || undefined}
+                        alt={account.displayName || 'User'}
+                        fallback={
+                          <Typography as="span" textClassName="text-sm font-bold text-primary-600 dark:text-primary-400">
+                            {account.displayName?.charAt(0).toUpperCase() || account.email?.charAt(0).toUpperCase() || 'A'}
+                          </Typography>
+                        }
+                      />
+                      <Box layoutClassName="flex-1 min-w-0">
+                        <Typography size="sm" variant="primary" layoutClassName="truncate" textClassName="font-medium">
+                          {account.displayName || 'User'}
+                        </Typography>
+                        <Typography size="xs" variant="muted" layoutClassName="truncate">
+                          {account.email}
+                        </Typography>
+                      </Box>
+                      <IconButton
+                        onClick={(e) => handleRemoveAccount(account.uid, e)}
+                        label={t('login.removeAccount')}
+                        size="sm"
+                        sizeClassName="h-7 w-7"
+                        roundedClassName="rounded-lg"
+                        textClassName="text-slate-400"
+                        stateClassName="opacity-0 transition-all group-hover:opacity-100"
+                        hoverClassName="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                        title={t('login.removeAccount')}
+                      >
+                        <X className="w-4 h-4" />
+                      </IconButton>
+                    </Card>
+                  ))}
+              </Box>
+            </Box>
           )}
-          <Typography size="xs" variant="muted" layoutClassName="text-center">
-            Đăng nhập bằng tài khoản Google đã được cấp quyền.
-          </Typography>
+
+          {/* Nút đăng nhập Google */}
+          <Button
+            onClick={() => startLogin()}
+            disabled={loading}
+            variant="secondary"
+            fullWidth
+            roundedClassName="rounded-xl"
+            sizeClassName="py-3"
+            shadowClassName="shadow-sm"
+            hoverClassName="hover:shadow-md"
+            leftIcon={loading ? undefined : <UserPlus className="w-5 h-5" />}
+          >
+            {loading ? (
+              <Spinner size="md" textClassName="text-slate-400" />
+            ) : (
+              <>
+                <Image
+                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                  alt="Google"
+                  layoutClassName="w-5 h-5"
+                />
+                {t('login.googleButton')}
+              </>
+            )}
+          </Button>
         </Box>
 
         <Box layoutClassName="text-center text-xs" textClassName="text-slate-400 dark:text-slate-500">
