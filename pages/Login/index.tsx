@@ -1,114 +1,64 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '@/config/firebase';
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
+import { ChefHat } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChefHat, UserPlus, LogIn, X } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { exchangeGoogleCredential } from '@/services/auth/googleSso';
+import { setSsoToken, clearSsoToken } from '@/services/auth/ssoToken';
+import { getUserByEmail } from '@/services/userService';
+import { UserStatus } from '@/types/user';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
-import Image from '@/components/ui/Image';
-import IconButton from '@/components/ui/IconButton';
-import Spinner from '@/components/ui/Spinner';
-import AvatarImage from '@/components/ui/AvatarImage';
 import Typography from '@/components/ui/Typography';
+import Spinner from '@/components/ui/Spinner';
 import ThemeToggle from '@/components/ThemeToggle';
-import { getAccountsHistory, removeAccountFromHistory } from '@/utils/user/userUtil';
 import toast from 'react-hot-toast';
 
 const LoginPage: React.FC = () => {
   const { t } = useLanguage();
-  const { currentUser } = useAuth();
+  const { currentUser, applyLogin } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [useCurrentAccount, setUseCurrentAccount] = useState(false);
-  const [accountsHistory, setAccountsHistory] = useState(getAccountsHistory());
 
-  // Tự động redirect về trang chủ nếu user đã đăng nhập và không muốn chọn tài khoản khác
   useEffect(() => {
-    if (currentUser && useCurrentAccount) {
-      navigate('/', { replace: true });
-    }
-  }, [currentUser, navigate, useCurrentAccount]);
+    if (currentUser) navigate('/', { replace: true });
+  }, [currentUser, navigate]);
 
-  // Reset loading khi currentUser thay đổi (có thể do bị logout vì status không phải active)
-  useEffect(() => {
-    if (!currentUser && loading) {
-      setLoading(false);
+  const handleCredential = async (res: CredentialResponse) => {
+    const credential = res.credential;
+    if (!credential) {
+      toast.error('Không lấy được thông tin Google');
+      return;
     }
-  }, [currentUser, loading]);
-
-  const handleGoogleLogin = async (promptAccountSelection: boolean = false) => {
     setLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
-      
-      // Nếu muốn chọn tài khoản khác, thêm prompt để hiển thị account picker
-      if (promptAccountSelection) {
-        provider.setCustomParameters({
-          prompt: 'select_account'
-        });
+      // 1) Đổi Google ID token → SSO JWT qua RiceService
+      const { token, user } = await exchangeGoogleCredential(credential);
+      setSsoToken(token);
+      // 2) Lấy hồ sơ (role/status) từ BE CucQuy theo email (đã có token để verify)
+      const data = await getUserByEmail(user.email);
+      if (!data) {
+        clearSsoToken();
+        toast.error('Tài khoản chưa được cấp quyền. Liên hệ quản trị viên.');
+        return;
       }
-      
-      await signInWithPopup(auth, provider);
-      toast.success('Login successful!');
-      setUseCurrentAccount(true);
-      // Redirect sẽ được xử lý bởi useEffect khi currentUser được cập nhật
-    } catch (error: any) {
-      console.error('Login error:', error);
-      if (error.code !== 'auth/popup-closed-by-user') {
-        toast.error('Failed to login. Please try again.');
+      if (data.status !== UserStatus.ACTIVE) {
+        clearSsoToken();
+        toast.error('Tài khoản chưa được phê duyệt. Vui lòng chờ quản trị viên.');
+        return;
       }
-    } finally {
-      // Đảm bảo luôn tắt loading dù có lỗi hay không
-      setLoading(false);
-    }
-  };
-
-  const handleUseCurrentAccount = () => {
-    if (currentUser) {
-      setUseCurrentAccount(true);
+      applyLogin(data);
+      toast.success('Đăng nhập thành công');
       navigate('/', { replace: true });
-    }
-  };
-
-  const handleSelectAccount = async (account: typeof accountsHistory[0]) => {
-    setLoading(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      // Set email để Google tự động chọn tài khoản này
-      if (account.email) {
-        provider.setCustomParameters({
-          login_hint: account.email
-        });
-      }
-      await signInWithPopup(auth, provider);
-      toast.success('Login successful!');
-      setUseCurrentAccount(true);
-    } catch (error: any) {
-      console.error('Login error:', error);
-      if (error.code !== 'auth/popup-closed-by-user') {
-        toast.error('Failed to login. Please try again.');
-      }
+    } catch {
+      clearSsoToken();
+      toast.error('Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
-      // Đảm bảo luôn tắt loading dù có lỗi hay không
       setLoading(false);
     }
   };
-
-  const handleRemoveAccount = (uid: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    removeAccountFromHistory(uid);
-    setAccountsHistory(getAccountsHistory());
-    toast.success(t('login.accountRemoved'));
-  };
-
-  // Cập nhật danh sách khi component mount
-  useEffect(() => {
-    setAccountsHistory(getAccountsHistory());
-  }, []);
 
   return (
     <Box
@@ -142,127 +92,20 @@ const LoginPage: React.FC = () => {
           <Typography variant="muted">{t('login.welcome')}</Typography>
         </Box>
 
-        <Box layoutClassName="space-y-4">
-          {/* Danh sách tài khoản đã từng đăng nhập */}
-          {accountsHistory.length > 0 && (
-            <Box layoutClassName="space-y-2">
-              <Typography size="sm" layoutClassName="mb-2" textClassName="font-medium">
-                {t('login.recentAccounts')}
-              </Typography>
-              <Box layoutClassName="space-y-2 max-h-64 overflow-y-auto">
-                {accountsHistory
-                  .filter(acc => acc.uid !== currentUser?.uid) // Loại bỏ tài khoản hiện tại
-                  .map((account) => (
-                    <Card
-                      key={account.uid}
-                      onClick={() => handleSelectAccount(account)}
-                      padding="none"
-                      layoutClassName="group flex cursor-pointer items-center gap-3 p-3"
-                      roundedClassName="rounded-lg"
-                      borderClassName="border-slate-200 dark:border-slate-600"
-                      backgroundClassName="bg-slate-50 dark:bg-slate-700/50"
-                      hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700"
-                      stateClassName="transition-colors"
-                    >
-                      <AvatarImage
-                        src={account.photoURL || undefined}
-                        alt={account.displayName || 'User'}
-                        fallback={
-                          <Typography as="span" textClassName="text-sm font-bold text-primary-600 dark:text-primary-400">
-                            {account.displayName?.charAt(0).toUpperCase() || account.email?.charAt(0).toUpperCase() || 'A'}
-                          </Typography>
-                        }
-                      />
-                      <Box layoutClassName="flex-1 min-w-0">
-                        <Typography size="sm" variant="primary" layoutClassName="truncate" textClassName="font-medium">
-                          {account.displayName || 'User'}
-                        </Typography>
-                        <Typography size="xs" variant="muted" layoutClassName="truncate">
-                          {account.email}
-                        </Typography>
-                      </Box>
-                      <IconButton
-                        onClick={(e) => handleRemoveAccount(account.uid, e)}
-                        label={t('login.removeAccount')}
-                        size="sm"
-                        sizeClassName="h-7 w-7"
-                        roundedClassName="rounded-lg"
-                        textClassName="text-slate-400"
-                        stateClassName="opacity-0 transition-all group-hover:opacity-100"
-                        hoverClassName="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                        title={t('login.removeAccount')}
-                      >
-                        <X className="w-4 h-4" />
-                      </IconButton>
-                    </Card>
-                  ))}
-              </Box>
-            </Box>
+        <Box layoutClassName="flex flex-col items-center gap-4">
+          {loading ? (
+            <Spinner size="md" textClassName="text-primary-500" />
+          ) : (
+            <GoogleLogin
+              onSuccess={handleCredential}
+              onError={() => { toast.error('Đăng nhập Google thất bại'); }}
+              text="signin_with"
+              shape="pill"
+            />
           )}
-
-          {/* Hiển thị tài khoản hiện tại nếu có */}
-          {currentUser && (
-            <Card roundedClassName="rounded-xl" backgroundClassName="bg-slate-50 dark:bg-slate-700/50">
-              <Typography size="sm" variant="muted" layoutClassName="mb-3">
-                {t('login.currentAccount')}
-              </Typography>
-              <Box layoutClassName="mb-3 flex items-center gap-3">
-                <AvatarImage
-                  src={currentUser.photoURL || undefined}
-                  alt={currentUser.displayName || 'User'}
-                  fallback={
-                    <Typography as="span" textClassName="text-sm font-bold text-primary-600 dark:text-primary-400">
-                      {currentUser.displayName?.charAt(0).toUpperCase() || currentUser.email?.charAt(0).toUpperCase() || 'A'}
-                    </Typography>
-                  }
-                />
-                <Box layoutClassName="flex-1 min-w-0">
-                  <Typography size="sm" variant="primary" layoutClassName="truncate" textClassName="font-medium">
-                    {currentUser.displayName || 'User'}
-                  </Typography>
-                  <Typography size="xs" variant="muted" layoutClassName="truncate">
-                    {currentUser.email}
-                  </Typography>
-                </Box>
-              </Box>
-              <Button
-                onClick={handleUseCurrentAccount}
-                disabled={loading}
-                fullWidth
-                backgroundClassName="bg-primary-600"
-                hoverClassName="hover:bg-primary-700"
-                leftIcon={<LogIn className="w-4 h-4" />}
-              >
-                {t('login.useCurrentAccount')}
-              </Button>
-            </Card>
-          )}
-
-          {/* Nút đăng nhập với tài khoản khác hoặc thêm tài khoản mới */}
-          <Button
-            onClick={() => handleGoogleLogin(true)}
-            disabled={loading}
-            variant="secondary"
-            fullWidth
-            roundedClassName="rounded-xl"
-            sizeClassName="py-3"
-            shadowClassName="shadow-sm"
-            hoverClassName="hover:shadow-md"
-          >
-            {loading ? (
-              <Spinner size="md" textClassName="text-slate-400" />
-            ) : (
-              <>
-                <UserPlus className="w-5 h-5" />
-                <Image
-                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                  alt="Google" 
-                  layoutClassName="w-5 h-5"
-                />
-              </>
-            )}
-            {currentUser ? t('login.switchAccount') : t('login.googleButton')}
-          </Button>
+          <Typography size="xs" variant="muted" layoutClassName="text-center">
+            Đăng nhập bằng tài khoản Google đã được cấp quyền.
+          </Typography>
         </Box>
 
         <Box layoutClassName="text-center text-xs" textClassName="text-slate-400 dark:text-slate-500">
