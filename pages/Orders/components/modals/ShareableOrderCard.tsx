@@ -1,9 +1,18 @@
 import React from 'react';
-import { Order, groupFlavors, sizeCountsLabel } from '@/types';
+import { Order, groupFlavors } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 
-const flavorText = (flavors?: string[]): string =>
-  groupFlavors(flavors).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
+/** Chi tiết vị: "2 Matcha, 3 Redverlet" (số lượng đứng trước). '' nếu không có. */
+const flavorsDetailText = (flavors?: string[]): string =>
+  groupFlavors(flavors).map((g) => `${g.qty} ${g.name}`).join(', ');
+
+/** Mỗi size 1 dòng: ["Combo Tình Bạn: SL 3", ...]; fallback size đơn; [] nếu không có. */
+const sizeLines = (it: { sizeCounts?: { name: string; qty: number }[]; size?: string; quantity: number }): string[] => {
+  const scs = (it.sizeCounts ?? []).filter((x) => (x?.qty || 0) > 0);
+  if (scs.length) return scs.map((sc) => `${sc.name}: SL ${sc.qty}`);
+  if (it.size) return [`${it.size}: SL ${it.quantity || 0}`];
+  return [];
+};
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
 import Heading from '@/components/ui/Heading';
@@ -92,7 +101,13 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
                 <Box layoutClassName="h-10 w-10 shrink-0 rounded-md" backgroundClassName="bg-slate-100" />
               )}
               <Box layoutClassName="min-w-0 flex-1">
-                <Typography as="p" size="sm" textClassName="text-slate-700">{it.name}{sizeCountsLabel(it.sizeCounts) ? ` · ${sizeCountsLabel(it.sizeCounts)}` : it.size ? ` · ${it.size}` : ''}{it.flavors && it.flavors.length ? ` · ${flavorText(it.flavors)}` : ''}</Typography>
+                <Typography as="p" size="sm" textClassName="text-slate-700">{it.name}</Typography>
+                {sizeLines(it).map((s, i) => (
+                  <Typography key={i} as="p" size="xs" textClassName="text-slate-500">- {s}</Typography>
+                ))}
+                {flavorsDetailText(it.flavors) ? (
+                  <Typography as="p" size="xs" textClassName="text-slate-500">Chi tiết ({flavorsDetailText(it.flavors)})</Typography>
+                ) : null}
                 <Typography as="p" size="xs" textClassName="text-slate-400">{formatVND(it.price)} × {it.quantity}</Typography>
               </Box>
               <Typography as="span" size="sm" layoutClassName="shrink-0 font-medium" textClassName="text-slate-700">{formatVND(it.price * it.quantity)}</Typography>
