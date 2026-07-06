@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Sparkles, UserCheck, Users } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useOrders } from '@/hooks/useOrders';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -64,9 +64,6 @@ const CustomersPage: React.FC = () => {
     [customers, customerStats]
   );
 
-  const pillTotal = t('customers.statsPillTotal').replace('{{n}}', String(customers.length));
-  const pillActive = t('customers.statsPillActive').replace('{{n}}', String(withOrderHistory));
-
   const handleCreate = () => {
     setEditingCustomer(undefined);
     setIsFormOpen(true);
@@ -112,72 +109,21 @@ const CustomersPage: React.FC = () => {
 
   return (
     <Box layoutClassName="relative flex h-full flex-col gap-6">
-      <Box
-        layoutClassName="relative overflow-hidden rounded-2xl border border-primary-200/70 p-6 sm:p-8 dark:border-primary-900/35"
-        backgroundClassName="bg-gradient-to-br from-primary-50/95 via-white to-primary-50/60 dark:from-slate-900 dark:via-slate-900 dark:to-primary-950/25"
-      >
-        <Box
-          layoutClassName="pointer-events-none absolute -right-8 -top-12 h-40 w-40 rounded-full blur-3xl"
-          backgroundClassName="bg-primary-300/25 dark:bg-primary-500/15"
-          aria-hidden
-        />
-        <Box
-          layoutClassName="pointer-events-none absolute -bottom-10 left-1/3 h-32 w-32 rounded-full blur-2xl"
-          backgroundClassName="bg-primary-200/30 dark:bg-primary-600/10"
-          aria-hidden
-        />
-
-        <Box layoutClassName="relative flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <Box layoutClassName="max-w-2xl space-y-3">
-            <Box layoutClassName="inline-flex items-center gap-2 rounded-full border border-primary-200/80 px-3 py-1 dark:border-primary-800/60">
-              <Sparkles className="h-3.5 w-3.5 text-primary-500 dark:text-primary-400" aria-hidden />
-              <Typography size="xs" layoutClassName="font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">
-                {t('customers.title')}
-              </Typography>
-            </Box>
-            <Typography as="h1" layoutClassName="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
-              {t('header.customersTitle')}
-            </Typography>
-            <Typography size="sm" variant="muted" layoutClassName="max-w-xl leading-relaxed">
-              {t('customers.pageSubtitle')}
-            </Typography>
-            <Box layoutClassName="flex flex-wrap gap-2 pt-1">
-              <Box
-                layoutClassName="inline-flex items-center gap-2 rounded-xl border border-white/80 px-3 py-2 shadow-sm dark:border-slate-700/80"
-                backgroundClassName="bg-white/90 dark:bg-slate-800/90"
-              >
-                <Users className="h-4 w-4 text-primary-500" aria-hidden />
-                <Typography size="sm" layoutClassName="font-medium text-slate-800 dark:text-slate-100">
-                  {pillTotal}
-                </Typography>
-              </Box>
-              <Box
-                layoutClassName="inline-flex items-center gap-2 rounded-xl border border-white/80 px-3 py-2 shadow-sm dark:border-slate-700/80"
-                backgroundClassName="bg-white/90 dark:bg-slate-800/90"
-              >
-                <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden />
-                <Typography size="sm" layoutClassName="font-medium text-slate-800 dark:text-slate-100">
-                  {pillActive}
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-
-          <Button
-            type="button"
-            onClick={handleCreate}
-            leftIcon={<Plus className="h-4 w-4" />}
-            backgroundClassName="bg-gradient-to-r from-primary-600 to-primary-700"
-            hoverClassName="hover:from-primary-700 hover:to-primary-800"
-            textClassName="text-sm font-semibold text-white"
-            roundedClassName="rounded-xl"
-            shadowClassName="shadow-md shadow-primary-200/60 dark:shadow-none"
-            layoutClassName="inline-flex w-full shrink-0 items-center justify-center gap-2 px-5 py-3 lg:w-auto lg:self-center"
-            stateClassName="transition-all"
-          >
-            {t('customers.add')}
-          </Button>
-        </Box>
+      <Box layoutClassName="flex items-center justify-end">
+        <Button
+          type="button"
+          onClick={handleCreate}
+          leftIcon={<Plus className="h-4 w-4" />}
+          backgroundClassName="bg-gradient-to-r from-primary-600 to-primary-700"
+          hoverClassName="hover:from-primary-700 hover:to-primary-800"
+          textClassName="text-sm font-semibold text-white"
+          roundedClassName="rounded-xl"
+          shadowClassName="shadow-md shadow-primary-200/60 dark:shadow-none"
+          layoutClassName="inline-flex items-center justify-center gap-2 px-5 py-3"
+          stateClassName="transition-all"
+        >
+          {t('customers.add')}
+        </Button>
       </Box>
 
       {loading ? (

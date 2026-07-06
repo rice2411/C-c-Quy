@@ -13,6 +13,9 @@ import type { ProductBadge } from '@/types/badge';
 import GallerySection from '@/pages/Storage/product/components/GallerySection';
 import CategoryPicker from '@/pages/Storage/product/components/CategoryPicker';
 import TagPicker from '@/pages/Storage/product/components/TagPicker';
+import FlavorVariantEditor from '@/pages/Storage/product/components/FlavorVariantEditor';
+import SizeEditor from '@/pages/Storage/product/components/SizeEditor';
+import type { ProductSize, ProductFlavorVariant } from '@/types';
 import ProductHistoryView from '@/pages/Storage/product/components/ProductHistoryView';
 import Field from '@/components/ui/Field';
 import Select from '@/components/ui/Select';
@@ -44,6 +47,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
   const [gallery, setGallery] = useState<string[]>([]);
   const [category, setCategory] = useState('');
   const [tags, setTags] = useState<string[]>([]);
+  const [flavorVariants, setFlavorVariants] = useState<ProductFlavorVariant[]>([]);
+  const [sizes, setSizes] = useState<ProductSize[]>([]);
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
 
@@ -76,6 +81,12 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
       setCategory(initialData.category);
       const allowed = new Set(productBadges.map((b) => b.name.toLowerCase()));
       setTags((initialData.tags || []).filter((tag) => allowed.has(tag.trim().toLowerCase())));
+      setFlavorVariants(
+        initialData.flavorVariants && initialData.flavorVariants.length
+          ? initialData.flavorVariants
+          : (initialData.flavors || []).map((n) => ({ name: n })),
+      );
+      setSizes(initialData.sizes || []);
       setDescription(initialData.description || '');
       setStatus(initialData.status);
     } else {
@@ -85,6 +96,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
       setGallery([]);
       setCategory('');
       setTags([]);
+      setFlavorVariants([]);
+      setSizes([]);
       setDescription('');
       setStatus('active');
     }
@@ -171,6 +184,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
         gallery,
         category: category || 'General',
         tags: tags.filter((tag) => badgeByName.has(tag)),
+        flavors: flavorVariants.map((v) => v.name),
+        flavorVariants,
+        sizes,
         description,
         status,
       });
@@ -347,6 +363,16 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
 
               {/* Tag picker */}
               <TagPicker tags={tags} productBadges={productBadges} onChange={setTags} />
+
+              {/* Vị — biến thể có ảnh + giá riêng */}
+              <FlavorVariantEditor
+                variants={flavorVariants}
+                onChange={setFlavorVariants}
+                galleryImages={[image, ...gallery].filter(Boolean)}
+              />
+
+              {/* Size (biến thể giá) */}
+              <SizeEditor sizes={sizes} onChange={setSizes} galleryImages={[image, ...gallery].filter(Boolean)} />
 
               {/* Status */}
               <Field label={t('inventory.status')}>

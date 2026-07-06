@@ -4,6 +4,8 @@ import {
   ShoppingCart,
   Boxes,
   FileText,
+  Truck,
+  Package,
   Users,
   Settings,
   Settings2,
@@ -18,7 +20,9 @@ import {
   Tag,
   Monitor,
   MessageSquare,
-  Award,
+  QrCode,
+  AlertTriangle,
+  HeartPulse,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { ScreenVisibilityMap } from "@/types";
@@ -63,9 +67,16 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/transactions",
-    labelKey: "nav.transactions",
-    icon: TrendingUp,
+    path: "/finance/overview",
+    labelKey: "nav.financeOverview",
+    icon: LayoutDashboard,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/finance/transactions",
+    labelKey: "nav.financeTransactions",
+    icon: Coins,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -112,9 +123,23 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/bill-import",
-    labelKey: "nav.billImport",
+    path: "/stock-receipts",
+    labelKey: "nav.stockReceipts",
     icon: FileText,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/suppliers",
+    labelKey: "nav.suppliers",
+    icon: Truck,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/materials",
+    labelKey: "nav.materials",
+    icon: Package,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -140,9 +165,30 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/admin/request-logs",
-    labelKey: "nav.requestLogs",
+    path: "/system/traffic",
+    labelKey: "nav.systemTraffic",
     icon: Activity,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/system/logs",
+    labelKey: "nav.systemLogs",
+    icon: FileText,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/system/errors",
+    labelKey: "nav.systemErrors",
+    icon: AlertTriangle,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/system/health",
+    labelKey: "nav.systemHealth",
+    icon: HeartPulse,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -168,16 +214,16 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/settings/badges",
-    labelKey: "nav.settingsBadges",
-    icon: Award,
+    path: "/settings/sepay",
+    labelKey: "nav.settingsSepay",
+    icon: QrCode,
     roles: [UserRole.SUPER_ADMIN],
   },
   {
     type: "page",
-    path: "/settings/categories",
-    labelKey: "nav.settingsCategories",
-    icon: Tag,
+    path: "/settings/product",
+    labelKey: "nav.settingsProduct",
+    icon: Package,
     roles: [UserRole.SUPER_ADMIN],
   },
 ];
@@ -275,6 +321,15 @@ export interface NavGroupConfig {
 
 export const navGroups: NavGroupConfig[] = [
   {
+    key: "finance",
+    labelKey: "nav.financeGroup",
+    icon: Wallet,
+    childPaths: [
+      "/finance/overview",
+      "/finance/transactions",
+    ],
+  },
+  {
     key: "commission",
     labelKey: "nav.commissionGroup",
     icon: Coins,
@@ -291,7 +346,9 @@ export const navGroups: NavGroupConfig[] = [
     icon: Boxes,
     childPaths: [
       "/storage",
-      "/bill-import",
+      "/stock-receipts",
+      "/suppliers",
+      "/materials",
     ],
   },
   {
@@ -299,7 +356,10 @@ export const navGroups: NavGroupConfig[] = [
     labelKey: "nav.systemGroup",
     icon: ShieldCheck,
     childPaths: [
-      "/admin/request-logs",
+      "/system/traffic",
+      "/system/logs",
+      "/system/errors",
+      "/system/health",
     ],
   },
   {
@@ -310,8 +370,8 @@ export const navGroups: NavGroupConfig[] = [
       "/settings/screens",
       "/settings/zalo",
       "/settings/order",
-      "/settings/badges",
-      "/settings/categories",
+      "/settings/sepay",
+      "/settings/product",
     ],
   },
 ];

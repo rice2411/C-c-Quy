@@ -12,6 +12,7 @@ import type {
   ImportedSupplierSummary,
   SavedStockReceiptDetail,
   SavedStockReceiptSummary,
+  StockReceiptSource,
   StockReceiptStructured,
   StockReceiptValidationSnapshot,
   SupplierContactInfo,
@@ -50,6 +51,8 @@ export async function saveStockReceiptDraft(input: {
   createdByUid?: string | null;
   targetSupplierId?: string | null;
   supplierContact?: SupplierContactInfo | null;
+  /** Mặc định 'ocr' (BE coi thiếu = 'ocr'). 'manual' → BE bỏ chống trùng DUPLICATE_BILL. */
+  source?: StockReceiptSource;
 }): Promise<string> {
   const { createdByUid: _ignore, ...payload } = input;
   const res = await apiClient.post<{ id: string }>(`${BASE}/draft`, payload);
@@ -121,4 +124,93 @@ export async function mergeSuppliers(rootId: string, duplicateIds: string[]): Pr
  */
 export async function mergeMaterials(rootId: string, duplicateIds: string[]): Promise<void> {
   await apiClient.post(`${BASE}/materials/merge`, { rootId, duplicateIds });
+}
+
+// ==================== MATERIAL MERGE SUGGESTIONS ====================
+
+/** 1 thành viên trong cặp gợi ý gộp NVL trùng (subset của ImportedMaterialSummary). */
+export interface MaterialMergeCandidate {
+  id: string;
+  name: string;
+  importCount: number;
+  totalQty: number;
+  canonicalUnit?: string | null;
+}
+
+/** 1 cặp NVL nghi trùng kèm độ giống (0–1) — BE trả về mảng các cặp này. */
+export interface MaterialMergeSuggestionPair {
+  /** Độ giống 0–1 giữa 2 NVL. */
+  similarity: number;
+  a: MaterialMergeCandidate;
+  b: MaterialMergeCandidate;
+}
+
+/** Type guard 1 candidate thô từ API (mọi field untrusted). */
+function toCandidate(raw: any): MaterialMergeCandidate {
+  const r = raw ?? {};
+  return {
+    id: typeof r.id === 'string' ? r.id : '',
+    name: typeof r.name === 'string' ? r.name : '',
+    importCount: typeof r.importCount === 'number' ? r.importCount : 0,
+    totalQty: typeof r.totalQty === 'number' ? r.totalQty : 0,
+    canonicalUnit: typeof r.canonicalUnit === 'string' ? r.canonicalUnit : null,
+  };
+}
+
+/**
+ * Gợi ý các cặp NVL nghi trùng để gộp → GET /stock-receipts/materials/merge-suggestions.
+ * `threshold` 0–1: ngưỡng độ giống tối thiểu (mặc định để BE quyết khi bỏ trống).
+ * Type-guard dữ liệu thô + lọc cặp thiếu id để client union-find không vỡ.
+ */
+export async function fetchMaterialMergeSuggestions(
+  threshold?: number,
+): Promise<MaterialMergeSuggestionPair[]> {
+  const res = await apiClient.get<unknown>(`${BASE}/materials/merge-suggestions`, {
+    params: typeof threshold === 'number' ? { threshold } : undefined,
+  });
+  const rows = Array.isArray(res.data) ? res.data : [];
+  return rows
+    .map((raw: any) => ({
+      similarity: typeof raw?.similarity === 'number' ? raw.similarity : 0,
+      a: toCandidate(raw?.a),
+      b: toCandidate(raw?.b),
+    }))
+    .filter((p) => p.a.id && p.b.id && p.a.id !== p.b.id);
+}
+
+/** Sửa tên / đơn vị chuẩn của 1 NVL → PATCH /stock-receipts/materials/:id. */
+export async function updateMaterial(
+  id: string,
+  patch: { name?: string; canonicalUnit?: string },
+): Promise<void> {
+  await apiClient.patch(`${BASE}/materials/${id}`, patch);
+}
+
+// ==================== ĐỐI SOÁT (tiền ra ↔ phiếu nhập) ====================
+
+/** 1 phiếu nhập + field đối soát — đối soát tiền ra ↔ phiếu nhập (tab Tiền ra). */
+export interface ReconcileReceiptItem {
+  receiptId: string;
+  supplierName?: string | null;
+  totalAmount?: number | null;
+  receiptDate?: string | null;
+  invoiceNumber?: string | null;
+  transactionId?: string | null;
+  reconciled: boolean;
+}
+
+/** Danh sách phiếu nhập cho đối soát — GET /stock-receipts/for-reconcile. */
+export async function fetchReceiptsForReconcile(): Promise<ReconcileReceiptItem[]> {
+  const res = await apiClient.get<ReconcileReceiptItem[]>(`${BASE}/for-reconcile`);
+  return res.data ?? [];
+}
+
+/** Gắn 1 giao dịch tiền ra cho 1 phiếu nhập — POST /stock-receipts/:id/reconcile. */
+export async function reconcileReceipt(receiptId: string, transactionId: string): Promise<void> {
+  await apiClient.post(`${BASE}/${receiptId}/reconcile`, { transactionId });
+}
+
+/** Gỡ đối soát phiếu nhập — POST /stock-receipts/:id/unreconcile. */
+export async function unreconcileReceipt(receiptId: string): Promise<void> {
+  await apiClient.post(`${BASE}/${receiptId}/unreconcile`);
 }

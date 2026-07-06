@@ -13,6 +13,7 @@ import type {
   ImportedSupplierSummary,
   SavedStockReceiptDetail,
   SavedStockReceiptSummary,
+  StockReceiptSource,
   StockReceiptStructured,
   StockReceiptValidationSnapshot,
   SupplierContactInfo,
@@ -22,15 +23,21 @@ import { qk } from '@/hooks/queryKeys';
 import {
   fetchImportedMaterials,
   fetchImportedSuppliers,
+  fetchMaterialMergeSuggestions,
   fetchMaterialPriceOptions,
   fetchStockReceiptDetail,
   fetchStockReceiptSummaries,
   mergeMaterials,
   mergeSuppliers,
   saveStockReceiptDraft,
+  updateMaterial,
   updateSupplier,
+  type MaterialMergeSuggestionPair,
   type MaterialPriceOption,
 } from '@/services/stockReceiptService';
+
+/** Ngưỡng độ giống mặc định cho gợi ý gộp NVL (đồng bộ với BE). */
+export const DEFAULT_MATERIAL_MERGE_THRESHOLD = 0.4;
 
 // ==================== QUERIES ====================
 
@@ -106,6 +113,37 @@ export const useMaterialPriceOptions = (enabled = true): UseMaterialPriceOptions
   };
 };
 
+export interface UseMaterialMergeSuggestionsResult {
+  suggestions: MaterialMergeSuggestionPair[];
+  loading: boolean;
+  error: Error | null;
+  refetch: () => Promise<void>;
+}
+
+/**
+ * Gợi ý các cặp NVL nghi trùng. `enabled` để chỉ fetch khi user mở panel gợi ý
+ * (tránh gọi API nặng ngay khi vào trang). `threshold` đổi → key đổi → query mới.
+ */
+export const useMaterialMergeSuggestions = (
+  enabled = true,
+  threshold = DEFAULT_MATERIAL_MERGE_THRESHOLD,
+): UseMaterialMergeSuggestionsResult => {
+  const { currentUser } = useAuth();
+  const query = useQuery({
+    queryKey: qk.stockReceipt.materialMergeSuggestions(threshold),
+    queryFn: () => fetchMaterialMergeSuggestions(threshold),
+    enabled: !!currentUser && enabled,
+  });
+  return {
+    suggestions: query.data ?? [],
+    loading: query.isLoading || query.isFetching,
+    error: query.error,
+    refetch: async () => {
+      await query.refetch();
+    },
+  };
+};
+
 export interface UseStockReceiptSummariesResult {
   receipts: SavedStockReceiptSummary[];
   loading: boolean;
@@ -163,6 +201,7 @@ export interface SaveStockReceiptDraftArgs {
   createdByUid?: string | null;
   targetSupplierId?: string | null;
   supplierContact?: SupplierContactInfo | null;
+  source?: StockReceiptSource;
 }
 
 export interface UpdateSupplierArgs {
@@ -175,15 +214,31 @@ export interface MergeArgs {
   duplicateIds: string[];
 }
 
+export interface UpdateMaterialArgs {
+  id: string;
+  patch: { name?: string; canonicalUnit?: string };
+}
+
 export interface UseStockReceiptMutationsResult {
   saveDraft: (args: SaveStockReceiptDraftArgs) => Promise<string>;
   updateSupplierInfo: (args: UpdateSupplierArgs) => Promise<void>;
+  updateMaterialInfo: (args: UpdateMaterialArgs) => Promise<void>;
   mergeSuppliersInto: (args: MergeArgs) => Promise<void>;
   mergeMaterialsInto: (args: MergeArgs) => Promise<void>;
 }
 
 export const useStockReceiptMutations = (): UseStockReceiptMutationsResult => {
   const queryClient = useQueryClient();
+
+  // Prefix ['stock-receipt','material-merge-suggestions'] → invalidate mọi threshold.
+  const MATERIAL_MERGE_SUGGESTIONS_PREFIX = [
+    'stock-receipt',
+    'material-merge-suggestions',
+  ] as const;
+
+  const invalidateMaterialMergeSuggestions = () => {
+    queryClient.invalidateQueries({ queryKey: MATERIAL_MERGE_SUGGESTIONS_PREFIX });
+  };
 
   const invalidateMasters = () => {
     queryClient.invalidateQueries({ queryKey: qk.stockReceipt.suppliers });
@@ -219,12 +274,23 @@ export const useStockReceiptMutations = (): UseStockReceiptMutationsResult => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: qk.stockReceipt.materials });
       queryClient.invalidateQueries({ queryKey: qk.stockReceipt.materialPriceOptions });
+      invalidateMaterialMergeSuggestions();
+    },
+  });
+
+  const updateMaterialMutation = useMutation({
+    mutationFn: ({ id, patch }: UpdateMaterialArgs) => updateMaterial(id, patch),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: qk.stockReceipt.materials });
+      queryClient.invalidateQueries({ queryKey: qk.stockReceipt.materialPriceOptions });
+      invalidateMaterialMergeSuggestions();
     },
   });
 
   return {
     saveDraft: (args) => saveDraftMutation.mutateAsync(args),
     updateSupplierInfo: (args) => updateSupplierMutation.mutateAsync(args),
+    updateMaterialInfo: (args) => updateMaterialMutation.mutateAsync(args),
     mergeSuppliersInto: (args) => mergeSuppliersMutation.mutateAsync(args),
     mergeMaterialsInto: (args) => mergeMaterialsMutation.mutateAsync(args),
   };

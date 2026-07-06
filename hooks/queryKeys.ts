@@ -17,6 +17,7 @@ export const qk = {
   orders: {
     all: ['orders'] as const,
     nextNumber: () => ['orders', 'next-number'] as const,
+    refunds: ['orders', 'refunds'] as const,
   },
   customers: {
     all: ['customers'] as const,
@@ -27,6 +28,9 @@ export const qk = {
   },
   categories: {
     all: ['categories'] as const,
+  },
+  flavors: {
+    all: ['flavors'] as const,
   },
   badges: {
     all: ['badges'] as const,
@@ -53,6 +57,9 @@ export const qk = {
   shippingConfig: {
     all: ['shipping-config'] as const,
   },
+  paymentAccounts: {
+    all: ['payment-accounts'] as const,
+  },
   screenConfig: {
     all: ['screen-config'] as const,
   },
@@ -67,11 +74,21 @@ export const qk = {
   requestLogs: {
     list: (query: unknown) => ['request-logs', 'list', query] as const,
     stats: (query: unknown) => ['request-logs', 'stats', query] as const,
+    timeseries: (query: unknown) => ['request-logs', 'timeseries', query] as const,
+    errorGroups: (query: unknown) => ['request-logs', 'error-groups', query] as const,
+    health: ['request-logs', 'health'] as const,
+  },
+  notifications: {
+    log: (query: unknown) => ['notifications', 'log', query] as const,
+    inbox: ['notifications', 'inbox'] as const,
+    unread: ['notifications', 'unread'] as const,
   },
   stockReceipt: {
     suppliers: ['stock-receipt', 'suppliers'] as const,
     materials: ['stock-receipt', 'materials'] as const,
     materialPriceOptions: ['stock-receipt', 'material-price-options'] as const,
+    materialMergeSuggestions: (threshold: number) =>
+      ['stock-receipt', 'material-merge-suggestions', threshold] as const,
     summaries: ['stock-receipt', 'summaries'] as const,
     detail: (id: string) => ['stock-receipt', 'detail', id] as const,
   },

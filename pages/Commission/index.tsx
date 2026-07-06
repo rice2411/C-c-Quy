@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Coins, TrendingUp, Users, CheckCircle2, Clock, Award, Search } from 'lucide-react';
+import { TrendingUp, Users, CheckCircle2, Clock, Award, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { OrderStatus } from '@/types/enums';
 import { CollaboratorCommissionSummary } from '@/services/commissionService';
@@ -12,7 +12,7 @@ import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import EmptyState from '@/components/ui/EmptyState';
 import FilterToolbar from '@/components/shared/FilterToolbar';
-import StatsBanner from '@/pages/BillImport/StatsBanner';
+import StatsBanner from '@/pages/StockReceipts/StatsBanner';
 import CollabRow from './components/CollabRow';
 
 type SortKey = 'commission' | 'name';
@@ -102,21 +102,6 @@ const CommissionPage: React.FC = () => {
 
   return (
     <Box layoutClassName="flex h-full flex-col space-y-4 sm:space-y-5">
-      {/* Header */}
-      <Box layoutClassName="flex items-center gap-3">
-        <Box layoutClassName="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
-          <Coins className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-        </Box>
-        <Box>
-          <Typography as="h1" layoutClassName="text-lg font-bold sm:text-xl" textClassName="text-slate-900 dark:text-white">
-            Hoa hồng CTV
-          </Typography>
-          <Typography as="p" size="xs" variant="muted">
-            Thống kê &amp; thanh toán hoa hồng cộng tác viên
-          </Typography>
-        </Box>
-      </Box>
-
       {/* Toolbar: tìm kiếm + sắp xếp + lọc + thống kê */}
       <Card padding="none" layoutClassName="p-3" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
         <FilterToolbar

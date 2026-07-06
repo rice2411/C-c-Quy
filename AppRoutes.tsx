@@ -1,37 +1,52 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleBasedRoute from "./components/RoleBasedRoute";
-import DashboardPage from "./pages/Dashboard/index";
-import OrdersPage from "./pages/Orders/index";
-import TransactionsPage from "./pages/Transactions/index";
-import PromotionsPage from "./pages/Promotions/index";
-import CommissionPage from "./pages/Commission/index";
-import CommissionSettingsPage from "./pages/Commission/SettingsPage";
-import CommissionGuidePage from "./pages/Commission/GuidePage";
-import MyCommissionPage from "./pages/MyCommission/index";
-import InventoryPage from "./pages/Storage/index";
-import ProductDetailPage from "./pages/Storage/product/ProductDetailPage";
-import BillImportPage from "./pages/BillImport/index";
-import CustomersPage from "./pages/Customers/index";
-import UsersPage from "./pages/Users/index";
-import RequestLogsPage from "./pages/Admin/RequestLogs/index";
-import NotificationsPage from "./pages/Notifications/index";
-import ScreenVisibilityTab from "./pages/Settings/ScreenVisibilityTab";
-import ZaloSettingsTab from "./pages/Settings/ZaloSettingsTab";
-import OrderSettingsTab from "./pages/Settings/OrderSettingsTab";
-import BadgesTab from "./pages/Settings/BadgesTab";
-import CategoriesTab from "./pages/Settings/CategoriesTab";
-import LoginPage from "./pages/Login/index";
-import SerpApiMapsTestPage from "./pages/Test/SerpApiMaps/index";
+import Spinner from "./components/ui/Spinner";
+// Lazy-load từng trang → mỗi trang là 1 chunk JS riêng, chỉ tải khi vào (giảm bundle đầu).
+const DashboardPage = lazy(() => import("./pages/Dashboard/index"));
+const OrdersPage = lazy(() => import("./pages/Orders/index"));
+const FinanceOverviewPage = lazy(() => import("./pages/Finance/Overview"));
+const FinanceTransactionsPage = lazy(() => import("./pages/Finance/Transactions"));
+const PromotionsPage = lazy(() => import("./pages/Promotions/index"));
+const CommissionPage = lazy(() => import("./pages/Commission/index"));
+const CommissionSettingsPage = lazy(() => import("./pages/Commission/SettingsPage"));
+const CommissionGuidePage = lazy(() => import("./pages/Commission/GuidePage"));
+const MyCommissionPage = lazy(() => import("./pages/MyCommission/index"));
+const InventoryPage = lazy(() => import("./pages/Storage/index"));
+const ProductDetailPage = lazy(() => import("./pages/Storage/product/ProductDetailPage"));
+const StockReceiptsPage = lazy(() => import("./pages/StockReceipts/index"));
+const SuppliersPage = lazy(() => import("./pages/Suppliers/index"));
+const MaterialsPage = lazy(() => import("./pages/Materials/index"));
+const CustomersPage = lazy(() => import("./pages/Customers/index"));
+const UsersPage = lazy(() => import("./pages/Users/index"));
+const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
+const SystemLogsPage = lazy(() => import("./pages/System/Requests/index"));
+const SystemErrorsPage = lazy(() => import("./pages/System/Errors/index"));
+const SystemHealthPage = lazy(() => import("./pages/System/Health/index"));
+const NotificationsPage = lazy(() => import("./pages/Notifications/index"));
+const ScreenVisibilityTab = lazy(() => import("./pages/Settings/ScreenVisibilityTab"));
+const ZaloSettingsTab = lazy(() => import("./pages/Settings/ZaloSettingsTab"));
+const OrderSettingsTab = lazy(() => import("./pages/Settings/OrderSettingsTab"));
+const SepaySettingsTab = lazy(() => import("./pages/Settings/SepaySettingsTab"));
+const ProductSettings = lazy(() => import("./pages/Settings/ProductSettings"));
+const LoginPage = lazy(() => import("./pages/Login/index"));
+const SerpApiMapsTestPage = lazy(() => import("./pages/Test/SerpApiMaps/index"));
 import { routes } from "./config/routes";
+
+const PageLoader: React.FC = () => (
+  <div className="flex h-full min-h-[40vh] items-center justify-center">
+    <Spinner size="lg" textClassName="text-primary-500" />
+  </div>
+);
 
 /**
  * Bảng route của app — tách khỏi App.tsx (App.tsx chỉ còn provider tree + HashRouter + Toaster).
  * Giữ nguyên 100% route + phân quyền RoleBasedRoute + redirect như trước (no-visual-change).
  */
 const AppRoutes: React.FC = () => (
+  <Suspense fallback={<PageLoader />}>
   <Routes>
     <Route path="/login" element={<LoginPage />} />
     <Route
@@ -58,14 +73,29 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
+      {/* Tài chính — 3 sub-screen riêng (nhóm menu "Tài chính") */}
       <Route
-        path="transactions"
+        path="finance/overview"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/transactions")?.roles}>
-            <TransactionsPage />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/overview")?.roles}>
+            <FinanceOverviewPage />
           </RoleBasedRoute>
         }
       />
+      <Route
+        path="finance/transactions"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/transactions")?.roles}>
+            <FinanceTransactionsPage />
+          </RoleBasedRoute>
+        }
+      />
+      {/* Back-compat redirect các path cũ */}
+      <Route path="finance" element={<Navigate to="/finance/overview" replace />} />
+      <Route path="revenue" element={<Navigate to="/finance/overview" replace />} />
+      <Route path="finance/cashflow" element={<Navigate to="/finance/transactions" replace />} />
+      <Route path="finance/reconciliation" element={<Navigate to="/finance/transactions" replace />} />
+      <Route path="transactions" element={<Navigate to="/finance/transactions" replace />} />
       <Route
         path="promotions"
         element={
@@ -123,13 +153,31 @@ const AppRoutes: React.FC = () => (
         }
       />
       <Route
-        path="bill-import"
+        path="stock-receipts"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/bill-import")?.roles}>
-            <BillImportPage />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/stock-receipts")?.roles}>
+            <StockReceiptsPage />
           </RoleBasedRoute>
         }
       />
+      <Route
+        path="suppliers"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/suppliers")?.roles}>
+            <SuppliersPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="materials"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/materials")?.roles}>
+            <MaterialsPage />
+          </RoleBasedRoute>
+        }
+      />
+      {/* Back-compat redirect path cũ */}
+      <Route path="bill-import" element={<Navigate to="/stock-receipts" replace />} />
       <Route
         path="customers"
         element={
@@ -147,10 +195,34 @@ const AppRoutes: React.FC = () => (
         }
       />
       <Route
-        path="admin/request-logs"
+        path="system/traffic"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/admin/request-logs")?.roles}>
-            <RequestLogsPage />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/system/traffic")?.roles}>
+            <SystemTrafficPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="system/logs"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/system/logs")?.roles}>
+            <SystemLogsPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="system/errors"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/system/errors")?.roles}>
+            <SystemErrorsPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="system/health"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/system/health")?.roles}>
+            <SystemHealthPage />
           </RoleBasedRoute>
         }
       />
@@ -188,25 +260,30 @@ const AppRoutes: React.FC = () => (
         }
       />
       <Route
-        path="settings/badges"
+        path="settings/sepay"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/badges")?.roles}>
-            <BadgesTab />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/sepay")?.roles}>
+            <SepaySettingsTab />
           </RoleBasedRoute>
         }
       />
       <Route
-        path="settings/categories"
+        path="settings/product"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/categories")?.roles}>
-            <CategoriesTab />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/product")?.roles}>
+            <ProductSettings />
           </RoleBasedRoute>
         }
       />
+      {/* Back-compat: các path cũ đã gộp vào "Cài đặt sản phẩm" */}
+      <Route path="settings/badges" element={<Navigate to="/settings/product" replace />} />
+      <Route path="settings/categories" element={<Navigate to="/settings/product" replace />} />
+      <Route path="settings/flavors" element={<Navigate to="/settings/product" replace />} />
       <Route path="test/serpapi-maps" element={<SerpApiMapsTestPage />} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
+  </Suspense>
 );
 
 export default AppRoutes;

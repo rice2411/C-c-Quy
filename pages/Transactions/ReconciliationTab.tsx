@@ -8,11 +8,19 @@ import {
   XCircle,
   RotateCcw,
   BarChart2,
+  Link2,
+  ArrowDownLeft,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { qk } from '@/hooks/queryKeys';
 import { useOrders } from '@/hooks/useOrders';
 import { useTransactions, useTransactionMutations } from '@/hooks/queries/useTransactionsQuery';
+import { fetchAllRefunds, reconcileRefund, unreconcileRefund, RefundListItem } from '@/services/orderService';
+import { markTransactionSettled } from '@/services/transactionService';
+import OutReconcilePanel from './components/OutReconcilePanel';
 import { PaymentStatus } from '@/types/enums';
 import { Transaction } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
@@ -20,6 +28,8 @@ import TransactionsDesktopTable from './components/desktop/TransactionsDesktopTa
 import TransactionsMobileList from './components/mobile/TransactionsMobileList';
 import TransactionDetailModal from './components/TransactionDetailModal';
 import TransactionMappingPanel from './components/TransactionMappingPanel';
+import ReconcileSyncModal from './components/ReconcileSyncModal';
+import { ReconcilePreviewResult } from '@/services/transactionService';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -29,7 +39,7 @@ import Typography from '@/components/ui/Typography';
 import Button from '@/components/ui/Button';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 
-type TabKey = 'all' | 'valid' | 'invalid' | 'external';
+type TabKey = 'all' | 'valid' | 'invalid' | 'external' | 'out';
 
 const InlineSpinner: React.FC<{ className?: string }> = ({ className }) => (
   <Box layoutClassName={`h-3.5 w-3.5 animate-spin rounded-full border-2 border-t-transparent ${className ?? 'border-slate-300'}`} />
@@ -95,8 +105,9 @@ const RevenueChart: React.FC<{ transactions: Transaction[]; fromDate: string; to
     const bucketDays = diffDays <= 31 ? 1 : diffDays <= 90 ? 7 : 30;
     const map: Record<string, number> = {};
     transactions.forEach(tr => {
-      const d = new Date(tr.transactionDate);
-      if (d < start || d > end) return;
+      // replace ' '→'T' để Safari/iOS parse được "YYYY-MM-DD HH:mm:ss".
+      const d = new Date((tr.transactionDate || '').replace(' ', 'T'));
+      if (Number.isNaN(d.getTime()) || d < start || d > end) return;
       const offset = Math.floor((d.getTime() - start.getTime()) / (bucketDays * 86_400_000));
       map[String(offset)] = (map[String(offset)] || 0) + tr.transferAmount;
     });
@@ -148,12 +159,76 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   const { t } = useLanguage();
   const { orders, modifyOrder } = useOrders();
   const { transactions, loading, isRefreshing, error, refetch } = useTransactions();
-  const { markExternal, linkOrder } = useTransactionMutations();
+  const { markExternal, linkOrder, reconcilePreview, reconcileApply } = useTransactionMutations();
+  const { currentUser } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Phiếu hoàn + phiếu nhập kho — để đối soát tiền ra ở tab "Tiền ra" / "Chưa khớp".
+  const { data: refunds = [] } = useQuery<RefundListItem[]>({
+    queryKey: qk.orders.refunds,
+    queryFn: fetchAllRefunds,
+    enabled: !!currentUser,
+  });
+  const refreshAfterReconcile = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: qk.orders.refunds }),
+      queryClient.invalidateQueries({ queryKey: qk.transactions.all }),
+      queryClient.invalidateQueries({ queryKey: qk.orders.all }),
+    ]);
+  };
+
+  const handleReconcileOut = async (orderId: string, refundId: string, transactionId: string) => {
+    try {
+      await reconcileRefund(orderId, refundId, transactionId);
+      toast.success(t('reconcile.reconciledSepay') || 'Đã đối soát phiếu hoàn');
+      await refreshAfterReconcile();
+    } catch (err: any) {
+      toast.error(err?.message || t('reconcile.errGeneric') || 'Đối soát thất bại');
+      throw err;
+    }
+  };
+
+  const handleUnreconcileOut = async (orderId: string, refundId: string) => {
+    try {
+      await unreconcileRefund(orderId, refundId);
+      toast.success(t('reconcile.unreconciled') || 'Đã gỡ đối soát');
+      await refreshAfterReconcile();
+    } catch (err: any) {
+      toast.error(err?.message || t('reconcile.errGeneric') || 'Gỡ đối soát thất bại');
+      throw err;
+    }
+  };
+
+  const handleMarkSettled = async (transactionId: string) => {
+    try {
+      await markTransactionSettled(transactionId, true);
+      toast.success('Đã đánh dấu kết toán (về TK chính)');
+      await refreshAfterReconcile();
+    } catch (err: any) {
+      toast.error(err?.message || 'Đánh dấu thất bại');
+      throw err;
+    }
+  };
+
+  const handleUnmarkSettled = async (transactionId: string) => {
+    try {
+      await markTransactionSettled(transactionId, false);
+      toast.success('Đã gỡ đánh dấu kết toán');
+      await refreshAfterReconcile();
+    } catch (err: any) {
+      toast.error(err?.message || 'Gỡ thất bại');
+      throw err;
+    }
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('all');
+  const [syncOpen, setSyncOpen] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncApplying, setSyncApplying] = useState(false);
+  const [syncPreview, setSyncPreview] = useState<ReconcilePreviewResult | null>(null);
 
   useEffect(() => {
     if (error) toast.error(t('transactions.loadError') || 'Không tải được giao dịch');
@@ -168,6 +243,38 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     }
   };
 
+  // Đối soát hàng loạt: quét preview (dry-run) → mở modal cho user duyệt.
+  const handleOpenSync = async () => {
+    setSyncOpen(true);
+    setSyncPreview(null);
+    setSyncLoading(true);
+    try {
+      setSyncPreview(await reconcilePreview());
+    } catch (err: any) {
+      toast.error(err?.message || t('transactions.sync.previewError') || 'Không quét được giao dịch');
+      setSyncOpen(false);
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
+  // User xác nhận → ghi map các cặp đã preview (BE atomic + idempotent).
+  const handleConfirmSync = async () => {
+    if (!syncPreview || syncPreview.matched.length === 0) return;
+    setSyncApplying(true);
+    try {
+      const { applied, skipped } = await reconcileApply(syncPreview.matched);
+      const doneLabel = t('transactions.sync.done') || 'Đã khớp';
+      const skipLabel = t('transactions.sync.skippedToast') || 'bỏ qua';
+      toast.success(`${doneLabel} ${applied}${skipped ? ` · ${skipLabel} ${skipped}` : ''}`);
+      setSyncOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message || t('transactions.sync.applyError') || 'Khớp thất bại');
+    } finally {
+      setSyncApplying(false);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     try {
       return new Date(dateStr).toLocaleDateString('vi-VN', {
@@ -178,16 +285,23 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     }
   };
 
-  const baseFiltered = useMemo(() => {
-    let filtered = transactions.filter(tr => tr.transferType === 'in');
+  // Lọc theo ngày + từ khoá (chưa phân loại tiền vào/ra) — dùng chung cho cả 2 chiều.
+  // So ngày dạng CHUỖI 'YYYY-MM-DD' (10 ký tự đầu của transaction_date "YYYY-MM-DD HH:mm:ss").
+  // KHÔNG dùng new Date() trên chuỗi có dấu cách: Safari/iOS trả Invalid Date → lọc rỗng,
+  // và tránh lệch múi giờ ở biên ngày (đây là lý do trước đây gần như chỉ thấy hôm nay).
+  const dateSearchFiltered = useMemo(() => {
+    let filtered = transactions;
     if (fromDate) {
-      const from = new Date(fromDate);
-      filtered = filtered.filter(tr => new Date(tr.transactionDate) >= from);
+      filtered = filtered.filter(tr => {
+        const day = (tr.transactionDate || '').slice(0, 10);
+        return day !== '' && day >= fromDate;
+      });
     }
     if (toDate) {
-      const to = new Date(toDate);
-      to.setHours(23, 59, 59, 999);
-      filtered = filtered.filter(tr => new Date(tr.transactionDate) <= to);
+      filtered = filtered.filter(tr => {
+        const day = (tr.transactionDate || '').slice(0, 10);
+        return day !== '' && day <= toDate;
+      });
     }
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
@@ -201,6 +315,22 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     return filtered;
   }, [transactions, searchTerm, fromDate, toDate]);
 
+  // Tiền VÀO = domain đối soát (khớp đơn). Tiền RA hiển thị ở tab riêng "Tiền ra".
+  const baseFiltered = useMemo(() => dateSearchFiltered.filter(tr => tr.transferType === 'in'), [dateSearchFiltered]);
+  const outTransactions = useMemo(() => dateSearchFiltered.filter(tr => tr.transferType === 'out'), [dateSearchFiltered]);
+  const outTotal = useMemo(() => outTransactions.reduce((s, tr) => s + tr.transferAmount, 0), [outTransactions]);
+
+  // GD tiền ra CHƯA xử lý: chưa gắn phiếu hoàn VÀ chưa đánh dấu kết toán (gộp vào "Chưa khớp").
+  const refundLinkedTxIds = useMemo(() => {
+    const s = new Set<string>();
+    refunds.forEach(r => { if (r.transactionId) s.add(r.transactionId); });
+    return s;
+  }, [refunds]);
+  const outUnmatched = useMemo(
+    () => outTransactions.filter(tr => !refundLinkedTxIds.has(tr.id) && !tr.settledOut),
+    [outTransactions, refundLinkedTxIds],
+  );
+
   const validTransactions = useMemo(() => baseFiltered.filter(tr => tr.orderNumber && tr.orderNumber.trim() !== ''), [baseFiltered]);
   const invalidTransactions = useMemo(() => baseFiltered.filter(tr => !tr.orderNumber || tr.orderNumber.trim() === ''), [baseFiltered]);
   const pendingInvalidCount = useMemo(() => invalidTransactions.filter(tr => !tr.isExternal).length, [invalidTransactions]);
@@ -210,7 +340,8 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     activeTab === 'valid' ? validTransactions :
     activeTab === 'invalid' ? invalidTransactions :
     activeTab === 'external' ? externalTransactions :
-    baseFiltered;
+    activeTab === 'out' ? outTransactions :
+    dateSearchFiltered; // 'Tất cả' = mọi giao dịch (cả tiền vào + tiền ra)
 
   const totalAmount = useMemo(() => validTransactions.reduce((s, tr) => s + tr.transferAmount, 0), [validTransactions]);
   const avgAmount = useMemo(() => validTransactions.length > 0 ? Math.round(totalAmount / validTransactions.length) : 0, [totalAmount, validTransactions.length]);
@@ -258,10 +389,11 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   };
 
   const subTabs: { key: TabKey; label: string; count: number; icon: React.ReactNode }[] = [
-    { key: 'all', label: 'Tất cả', count: baseFiltered.length, icon: <ArrowRightLeft className="h-3.5 w-3.5" /> },
+    { key: 'all', label: 'Tất cả', count: dateSearchFiltered.length, icon: <ArrowRightLeft className="h-3.5 w-3.5" /> },
     { key: 'valid', label: 'Hợp lệ', count: validTransactions.length, icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
-    { key: 'invalid', label: 'Chưa khớp', count: pendingInvalidCount, icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+    { key: 'invalid', label: 'Chưa khớp', count: pendingInvalidCount + outUnmatched.length, icon: <AlertTriangle className="h-3.5 w-3.5" /> },
     { key: 'external', label: 'Ngoài HT', count: externalTransactions.length, icon: <XCircle className="h-3.5 w-3.5" /> },
+    { key: 'out', label: 'Tiền ra', count: outTransactions.length, icon: <ArrowDownLeft className="h-3.5 w-3.5" /> },
   ];
 
   if (loading) {
@@ -329,6 +461,21 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
             searchPlaceholder={t('transactions.searchPlaceholder') || 'Tìm nội dung, mã đơn...'}
           />
         </Box>
+        <Button
+          type="button"
+          variant="primary"
+          onClick={handleOpenSync}
+          disabled={syncLoading || syncApplying}
+          layoutClassName="flex shrink-0 items-center gap-1.5"
+          roundedClassName="rounded-xl"
+          sizeClassName="px-3 py-2.5 text-sm"
+          stateClassName="transition-colors disabled:opacity-50"
+        >
+          <Link2 className={`h-4 w-4 ${syncLoading ? 'animate-spin' : ''}`} />
+          <Typography as="span" layoutClassName="hidden sm:inline">
+            {t('transactions.sync.button') || 'Đồng bộ với đơn'}
+          </Typography>
+        </Button>
         <IconButton
           type="button"
           label="Làm mới"
@@ -401,23 +548,60 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
           </Box>
         )
       ) : activeTab === 'invalid' ? (
-        invalidTransactions.length === 0 ? (
+        invalidTransactions.length === 0 && outUnmatched.length === 0 ? (
           <Box layoutClassName="flex flex-1 flex-col items-center justify-center gap-3 py-16" textClassName="text-slate-400 dark:text-slate-500">
             <Box layoutClassName="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/20">
               <CheckCircle2 className="h-8 w-8 text-emerald-500 opacity-80" />
             </Box>
-            <Typography size="sm" variant="muted">Tất cả giao dịch đã có mã đơn hàng</Typography>
+            <Typography size="sm" variant="muted">Tất cả giao dịch đã được đối soát</Typography>
           </Box>
         ) : (
-          <TransactionMappingPanel
-            transactions={invalidTransactions}
-            orders={orders}
-            onLink={handleLinkOrder}
-            onMarkExternal={handleMarkExternal}
-            onUnmarkExternal={handleUnmarkExternal}
-            formatDate={formatDate}
-          />
+          <Box layoutClassName="space-y-6">
+            {/* Tiền vào chưa khớp đơn */}
+            {invalidTransactions.length > 0 && (
+              <Box layoutClassName="space-y-2">
+                <Typography as="p" size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">
+                  Tiền vào — khớp đơn ({invalidTransactions.filter(tr => !tr.isExternal).length})
+                </Typography>
+                <TransactionMappingPanel
+                  transactions={invalidTransactions}
+                  orders={orders}
+                  onLink={handleLinkOrder}
+                  onMarkExternal={handleMarkExternal}
+                  onUnmarkExternal={handleUnmarkExternal}
+                  formatDate={formatDate}
+                />
+              </Box>
+            )}
+            {/* Tiền ra chưa khớp (hoàn tiền / nhập kho) */}
+            {outUnmatched.length > 0 && (
+              <Box layoutClassName="space-y-2">
+                <Typography as="p" size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">
+                  Tiền ra — hoàn tiền / kết toán ({outUnmatched.length})
+                </Typography>
+                <OutReconcilePanel
+                  transactions={outUnmatched}
+                  refunds={refunds}
+                  onReconcileRefund={handleReconcileOut}
+                  onUnreconcileRefund={handleUnreconcileOut}
+                  onMarkSettled={handleMarkSettled}
+                  onUnmarkSettled={handleUnmarkSettled}
+                  formatDate={formatDate}
+                />
+              </Box>
+            )}
+          </Box>
         )
+      ) : activeTab === 'out' ? (
+        <OutReconcilePanel
+          transactions={outTransactions}
+          refunds={refunds}
+          onReconcileRefund={handleReconcileOut}
+          onUnreconcileRefund={handleUnreconcileOut}
+          onMarkSettled={handleMarkSettled}
+          onUnmarkSettled={handleUnmarkSettled}
+          formatDate={formatDate}
+        />
       ) : displayedTransactions.length === 0 ? (
         <Box layoutClassName="flex flex-1 flex-col items-center justify-center gap-3 py-16" textClassName="text-slate-400 dark:text-slate-500">
           <Box layoutClassName="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
@@ -437,6 +621,15 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
         onClose={() => { setIsDetailModalOpen(false); setSelectedTransaction(null); }}
         transaction={selectedTransaction}
         formatDate={formatDate}
+      />
+
+      <ReconcileSyncModal
+        isOpen={syncOpen}
+        onClose={() => { if (!syncApplying) setSyncOpen(false); }}
+        preview={syncPreview}
+        loading={syncLoading}
+        applying={syncApplying}
+        onConfirm={handleConfirmSync}
       />
     </Box>
   );

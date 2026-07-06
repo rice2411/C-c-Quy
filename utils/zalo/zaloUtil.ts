@@ -1,11 +1,49 @@
 import { Order, OrderFieldChange } from "@/types";
-import { surchargeTagLabel } from "@/types/order";
 import { parseDateValue } from "../format/dateUtil";
 import { formatVND } from "../format/currencyUtil";
 import { formatItemsDiff } from "@/utils/order/itemsDiff";
-import { allocateSurcharge, getOrderTotal } from "../order/orderUtils";
+import { getOrderTotal } from "../order/orderUtils";
 
 const DIVIDER = '─────────────────────────';
+
+/** Nhãn size gộp, số lượng đứng TRƯỚC tên: "2 số, 3 mặt chã" (bỏ qty 0, bỏ "1"). */
+const sizeCountsInline = (sc?: { name: string; qty: number }[]): string =>
+  (sc ?? [])
+    .filter((x) => x.qty > 0)
+    .map((x) => (x.qty > 1 ? `${x.qty} ${x.name}` : x.name))
+    .join(', ');
+
+/**
+ * Nhãn 1 món cho noti Zalo: `Tên ×SL (chi tiết)` — số lượng đứng NGAY SAU tên (rõ
+ * "2 combo, mỗi combo …"), chi tiết = size/sizeCounts + vị gom chung trong 1 ngoặc,
+ * số lượng vị/size đứng trước tên (vd "Combo tình bạn ×2 (2 số, 3 mặt chã, 2 socola)").
+ * Ẩn "×1" thừa; không có chi tiết thì chỉ tên.
+ */
+const itemLabel = (it: any): string => {
+  const qty = it?.quantity || 0;
+  let s = it?.name ?? '';
+  if (qty > 1) s += ` ×${qty}`;
+  const detail: string[] = [];
+  const sc = sizeCountsInline(it?.sizeCounts);
+  if (sc) detail.push(sc);
+  else if (it?.size) detail.push(it.size);
+  if (Array.isArray(it?.flavors) && it.flavors.length) {
+    const m = new Map<string, number>();
+    it.flavors.forEach((f: string) => m.set(f, (m.get(f) || 0) + 1));
+    detail.push(...Array.from(m.entries()).map(([n, q]) => (q > 1 ? `${q} ${n}` : n)));
+  }
+  if (detail.length) s += ` (${detail.join(', ')})`;
+  return s;
+};
+
+/** Gộp danh sách món thành 1 dòng ngắn: "Bánh kem ×1, Cupcake ×6" (cắt bớt nếu quá dài). */
+const itemsInline = (items: any[] | undefined, max = 6): string => {
+  const list = items || [];
+  if (list.length === 0) return '(không có)';
+  const parts = list.slice(0, max).map((it) => `${it.name || '(?)'} ×${it.quantity || 0}`);
+  if (list.length > max) parts.push(`…+${list.length - max}`);
+  return parts.join(', ');
+};
 
 export const formatDate = (date: Date | null): string => {
   if (!date) return '(không có)';
@@ -18,13 +56,24 @@ export const formatDate = (date: Date | null): string => {
   });
 };
 
-const formatDateShort = (date: Date | null): string => {
-  if (!date) return '—';
-  return date.toLocaleString('vi-VN', {
-    day: '2-digit', month: '2-digit', year: '2-digit',
-    hour: '2-digit', minute: '2-digit',
-  });
-};
+// Format ngày tất định (tránh locale vi-VN đảo giờ/ngày khi bỏ year).
+const p2 = (n: number): string => String(n).padStart(2, '0');
+/** dd/MM/yy */
+const dmy = (d: Date): string => `${p2(d.getDate())}/${p2(d.getMonth() + 1)}/${String(d.getFullYear()).slice(-2)}`;
+/** dd/MM */
+const dm = (d: Date): string => `${p2(d.getDate())}/${p2(d.getMonth() + 1)}`;
+/** HH:mm */
+const hm = (d: Date): string => `${p2(d.getHours())}:${p2(d.getMinutes())}`;
+
+/** "dd/MM/yy HH:mm" — giữ shape cũ (nơi khác .split(' ')[0] lấy phần ngày). */
+const formatDateShort = (date: Date | null): string => (date ? `${dmy(date)} ${hm(date)}` : '—');
+
+/** Ngày + giờ gọn cho danh sách (không năm): "07/07 14:00". */
+const formatDayHM = (date: Date | null): string => (date ? `${dm(date)} ${hm(date)}` : '—');
+
+/** Dòng khách gọn: "Nguyễn A · 0901234567" (bỏ phần thiếu). */
+const customerLine = (name?: string, phone?: string): string =>
+  [name || '(không có)', phone || ''].filter(Boolean).join(' · ');
 
 const deliveryTypeLabel = (dt: string | undefined): string => {
   if (dt === 'PICKUP') return 'Khách qua lấy';
@@ -34,56 +83,40 @@ const deliveryTypeLabel = (dt: string | undefined): string => {
 
 // ============== NEW ORDER ==============
 export const formatOrderMessage = (order: any): string => {
-  const orderDate = parseDateValue(order.orderDate || order.date);
   const deliveryDate = order.deliveryDate ? parseDateValue(order.deliveryDate) : null;
   const totalItems = order.items?.reduce((s: number, it: any) => s + (it.quantity || 0), 0) || 0;
   const subtotal = (order.items || []).reduce((s: number, it: any) => s + ((it.price || 0) * (it.quantity || 0)), 0);
   const shipping = order.shippingCost || 0;
+  const surcharge = Number(order.surchargeAmount || 0);
   const total = getOrderTotal(order);
 
   const lines: string[] = [];
   if (order.isTest) lines.push('⚠️ ĐƠN HÀNG TEST');
   lines.push(`🟢 ĐƠN MỚI · ${order.orderNumber || order.id}`);
   lines.push(DIVIDER);
-  lines.push(`📅 Đặt:    ${formatDateShort(orderDate)}`);
-  if (deliveryDate) {
-    const dt = formatDateShort(deliveryDate);
-    const time = order.deliveryTime ? ` ${order.deliveryTime}` : '';
-    lines.push(`🚚 Giao:   ${dt}${time} · ${deliveryTypeLabel(order.deliveryType)}`);
-  } else {
-    lines.push(`🚚 Giao:   — · ${deliveryTypeLabel(order.deliveryType)}`);
-  }
-  lines.push(`👤 KH:     ${order.customer?.name || '(không có)'}`);
-  lines.push(`📞         ${order.customer?.phone || '(không có)'}`);
+  lines.push(`👤 ${customerLine(order.customer?.name, order.customer?.phone)}`);
+
+  const giao = deliveryDate
+    ? `${dmy(deliveryDate)}${order.deliveryTime ? ' ' + order.deliveryTime : ' ' + hm(deliveryDate)}`
+    : '—';
+  lines.push(`🚚 Giao: ${giao} · ${deliveryTypeLabel(order.deliveryType)}`);
   if (order.deliveryType !== 'PICKUP' && order.customer?.address) {
-    lines.push(`🏠         ${order.customer.address}`);
+    lines.push(`🏠 ${order.customer.address}`);
   }
-  lines.push('');
+
   lines.push(`📋 Sản phẩm (${totalItems}):`);
   if (order.items && order.items.length > 0) {
-    order.items.forEach((it: any) => {
-      lines.push(`   • ${it.name} × ${it.quantity || 0}`);
-    });
+    order.items.forEach((it: any) => lines.push(` • ${itemLabel(it)}`));
   } else {
-    lines.push('   (không có)');
+    lines.push(' (không có)');
   }
-  lines.push('');
-  lines.push(`💰 Hàng:    ${formatVND(subtotal)}`);
-  const surcharge = Number(order.surchargeAmount || 0);
-  if (surcharge > 0) {
-    lines.push(`✨ Phụ thu: ${formatVND(surcharge)} · ${surchargeTagLabel(order.surchargeTag)}`);
-    const shares = allocateSurcharge(surcharge, order.items || []);
-    (order.items || []).forEach((it: any, idx: number) => {
-      lines.push(`   • ${it.name} +${formatVND(shares[idx] || 0)}`);
-    });
-  }
-  lines.push(`🚚 Ship:    ${formatVND(shipping)}`);
-  lines.push('━━━━━━━━━━━━━━━━━━━━━━━━');
-  lines.push(`💵 TỔNG:    ${formatVND(total)}`);
-  if (order.note) {
-    lines.push('');
-    lines.push(`💬 Ghi chú: ${order.note}`);
-  }
+
+  const money = [`Hàng ${formatVND(subtotal)}`];
+  if (shipping > 0) money.push(`Ship ${formatVND(shipping)}`);
+  if (surcharge > 0) money.push(`Phụ thu ${formatVND(surcharge)}`);
+  lines.push(`💰 ${money.join(' · ')}`);
+  lines.push(`💵 TỔNG: ${formatVND(total)}`);
+  if (order.note) lines.push(`💬 ${order.note}`);
   return lines.join('\n');
 };
 
@@ -93,75 +126,34 @@ export interface OrderUpdateEditorInfo {
   uid?: string;
 }
 
-/** Block render items + totals của một snapshot order — dùng cho 2 cột cũ/mới */
-const renderOrderSnapshot = (order: any, title: string): string[] => {
-  const lines: string[] = [];
-  lines.push(`═══ ${title} ═══`);
-  const items = order.items || [];
-  const totalItems = items.reduce((s: number, it: any) => s + (it.quantity || 0), 0);
-  const subtotal = items.reduce((s: number, it: any) => s + ((it.price || 0) * (it.quantity || 0)), 0);
-  const shipping = order.shippingCost || 0;
-  const total = getOrderTotal(order);
-
-  if (items.length === 0) {
-    lines.push('📋 (không có sản phẩm)');
-  } else {
-    lines.push(`📋 SP (${totalItems}):`);
-    items.forEach((it: any) => {
-      lines.push(`   • ${it.name} × ${it.quantity || 0}`);
-    });
-  }
-  lines.push(`💰 Hàng:  ${formatVND(subtotal)}`);
-  const surcharge = Number(order.surchargeAmount || 0);
-  if (surcharge > 0) lines.push(`✨ Phụ thu: ${formatVND(surcharge)} · ${surchargeTagLabel(order.surchargeTag)}`);
-  if (shipping > 0) lines.push(`🚚 Ship:  ${formatVND(shipping)}`);
-  lines.push(`💵 Tổng:  ${formatVND(total)}`);
-  return lines;
-};
-
 export const formatOrderUpdateMessage = (
   order: any,
   changes: OrderFieldChange[],
   editor?: OrderUpdateEditorInfo,
   itemsDiff?: import('@/utils/order/itemsDiff').ItemChangeEntry[],
-  prevOrder?: any,
+  _prevOrder?: any,
 ): string => {
   const lines: string[] = [];
   if (order.isTest) lines.push('⚠️ ĐƠN HÀNG TEST');
   lines.push(`🟡 CẬP NHẬT · ${order.orderNumber || order.id}`);
   lines.push(DIVIDER);
-  lines.push(`👤 KH:     ${order.customer?.name || order.customerName || '(không có)'}`);
-  lines.push(`✏️ Sửa:    ${editor?.name || 'Unknown'}`);
-  lines.push(`🕒         ${formatDateShort(new Date())}`);
+  const cust = order.customer?.name || order.customerName || '(không có)';
+  lines.push(`👤 ${cust} · ✏️ ${editor?.name || 'Unknown'} · 🕒 ${formatDayHM(new Date())}`);
 
-  // Show full đơn cũ vs đơn mới (side-by-side) khi có prevOrder
-  if (prevOrder) {
-    lines.push('');
-    renderOrderSnapshot(prevOrder, 'ĐƠN CŨ').forEach((l) => lines.push(l));
-    lines.push('');
-    renderOrderSnapshot(order, 'ĐƠN MỚI').forEach((l) => lines.push(l));
-  }
-
-  // Summary các thay đổi
-  lines.push('');
   lines.push(`📝 Thay đổi (${changes.length}):`);
   changes.forEach((c) => {
     const label = c.label || c.field;
     if (c.field === 'items' && itemsDiff && itemsDiff.length > 0) {
-      lines.push(`   • ${label} (${itemsDiff.length} thay đổi):`);
-      formatItemsDiff(itemsDiff).forEach((d) => lines.push(`     ${d}`));
+      lines.push(` • ${label} (${itemsDiff.length}):`);
+      formatItemsDiff(itemsDiff).forEach((d) => lines.push(`   ${d}`));
       return;
     }
     const oldV = c.oldValue == null || c.oldValue === '' ? '—' : String(c.oldValue);
     const newV = c.newValue == null || c.newValue === '' ? '—' : String(c.newValue);
-    lines.push(`   • ${label}: ${oldV} → ${newV}`);
+    lines.push(` • ${label}: ${oldV} → ${newV}`);
   });
 
-  // Tổng mới (gọn) — chỉ show nếu KHÔNG có prevOrder snapshot (tránh duplicate)
-  if (!prevOrder) {
-    lines.push('');
-    lines.push(`💵 Tổng mới: ${formatVND(getOrderTotal(order))}`);
-  }
+  lines.push(`💵 Tổng mới: ${formatVND(getOrderTotal(order))}`);
   return lines.join('\n');
 };
 
@@ -176,14 +168,13 @@ export const formatOrderDeleteMessage = (
   lines.push(DIVIDER);
   const custName = order.customer?.name || order.customerName || '(không có)';
   const phone = order.customer?.phone || order.phone || '';
-  lines.push(`👤 KH:     ${custName}${phone ? ' · ' + phone : ''}`);
-  lines.push(`🗑️ Xoá:    ${editor?.name || 'Unknown'}`);
-  lines.push(`🕒         ${formatDateShort(new Date())}`);
+  lines.push(`👤 ${customerLine(custName, phone)}`);
+  lines.push(`🗑️ ${editor?.name || 'Unknown'} · 🕒 ${formatDayHM(new Date())}`);
   lines.push(`💵 Giá trị: ${formatVND(getOrderTotal(order))}`);
   return lines.join('\n');
 };
 
-// ============== BATCH REMINDERS (giữ nguyên) ==============
+// ============== BATCH REMINDERS ==============
 export const formatUnpaidOrdersMessage = (orders: Order[]): string => {
   // Defensive: loại đơn đã huỷ / trả lại — không tính là chưa TT
   const filtered = orders.filter((o) => {
@@ -193,16 +184,12 @@ export const formatUnpaidOrdersMessage = (orders: Order[]): string => {
   if (filtered.length === 0) return `✅ Không có đơn hàng chưa thanh toán.`;
   const totalUnpaid = filtered.reduce((s, o) => s + getOrderTotal(o), 0);
   const lines: string[] = [];
-  lines.push(`⚠️ ĐƠN CHƯA THANH TOÁN`);
+  lines.push(`⚠️ ĐƠN CHƯA THANH TOÁN · ${filtered.length} đơn · ${formatVND(totalUnpaid)}`);
   lines.push(DIVIDER);
-  lines.push(`📊 Tổng số:  ${filtered.length} đơn`);
-  lines.push(`💰 Tổng tiền: ${formatVND(totalUnpaid)}`);
-  lines.push('');
   filtered.forEach((o, i) => {
     const od = parseDateValue(o.orderDate || o.date);
-    lines.push(`${i + 1}. ${o.orderNumber || o.id} · ${formatVND(getOrderTotal(o))}`);
-    lines.push(`   👤 ${o.customer?.name || '(không có)'} · ${o.customer?.phone || ''}`);
-    lines.push(`   🕒 ${formatDateShort(od)}`);
+    lines.push(`${i + 1}. ${o.orderNumber || o.id} · ${formatVND(getOrderTotal(o))} · ${customerLine(o.customer?.name, o.customer?.phone)}`);
+    lines.push(`   🕒 Đặt ${formatDayHM(od)}`);
   });
   return lines.join('\n');
 };
@@ -211,46 +198,29 @@ export const formatPendingOrdersMessage = (orders: Order[]): string => {
   if (orders.length === 0) return `✅ Không có đơn hàng cần xử lý.`;
   const totalPending = orders.reduce((s, o) => s + getOrderTotal(o), 0);
   const lines: string[] = [];
-  lines.push(`⚠️ ĐƠN CẦN XỬ LÝ`);
+  lines.push(`⚠️ ĐƠN CẦN XỬ LÝ · ${orders.length} đơn · ${formatVND(totalPending)}`);
   lines.push(DIVIDER);
-  lines.push(`📊 Tổng số:  ${orders.length} đơn`);
-  lines.push(`💰 Tổng tiền: ${formatVND(totalPending)}`);
-  lines.push('');
   orders.forEach((o, i) => {
-    const od = parseDateValue(o.orderDate || o.date);
     const dd = o.deliveryDate ? parseDateValue(o.deliveryDate) : null;
-    const totalItems = o.items?.reduce((s, it) => s + (it.quantity || 0), 0) || 0;
-    lines.push(`${i + 1}. ${o.orderNumber || o.id} · ${formatVND(getOrderTotal(o))}`);
-    lines.push(`   👤 ${o.customer?.name || '(không có)'} · ${o.customer?.phone || ''}`);
-    lines.push(`   🕒 Đặt: ${formatDateShort(od)}`);
-    if (dd) lines.push(`   📅 Giao: ${formatDateShort(dd)}${o.deliveryTime ? ' ' + o.deliveryTime : ''}`);
-    lines.push(`   📦 ${totalItems} sp · ${o.status} · ${o.paymentStatus}`);
-    if (o.items && o.items.length > 0) {
-      o.items.forEach((it) => lines.push(`      • ${it.name} × ${it.quantity || 0}`));
-    }
+    lines.push(`${i + 1}. ${o.orderNumber || o.id} · ${formatVND(getOrderTotal(o))} · ${customerLine(o.customer?.name, o.customer?.phone)}`);
+    const giao = dd ? `📅 Giao ${dm(dd)}${o.deliveryTime ? ' ' + o.deliveryTime : ' ' + hm(dd)} · ` : '';
+    lines.push(`   ${giao}📦 ${itemsInline(o.items)}`);
   });
   return lines.join('\n');
 };
 
 export const formatDeliveryDueMessage = (orders: Order[], targetDate?: Date): string => {
-  const dateStr = targetDate ? formatDateShort(targetDate) : 'hôm nay';
+  const dateStr = targetDate ? formatDateShort(targetDate).split(' ')[0] : 'hôm nay';
   if (orders.length === 0) return `✅ Không có đơn hàng cần giao vào ${dateStr}.`;
   const lines: string[] = [];
-  lines.push(`🚚 ĐƠN CẦN GIAO · ${dateStr}`);
+  lines.push(`🚚 ĐƠN CẦN GIAO · ${dateStr} · ${orders.length} đơn`);
   lines.push(DIVIDER);
-  lines.push(`📊 Tổng số:  ${orders.length} đơn`);
-  lines.push('');
   orders.forEach((o, i) => {
     const dd = o.deliveryDate ? parseDateValue(o.deliveryDate) : null;
-    const totalItems = o.items?.reduce((s, it) => s + (it.quantity || 0), 0) || 0;
-    lines.push(`${i + 1}. ${o.orderNumber || o.id} · ${formatVND(getOrderTotal(o))}`);
-    lines.push(`   👤 ${o.customer?.name || '(không có)'} · ${o.customer?.phone || ''}`);
+    lines.push(`${i + 1}. ${o.orderNumber || o.id} · ${formatVND(getOrderTotal(o))} · ${customerLine(o.customer?.name, o.customer?.phone)}`);
     if (o.customer?.address) lines.push(`   🏠 ${o.customer.address}`);
-    if (dd) lines.push(`   📅 Giao: ${formatDateShort(dd)}${o.deliveryTime ? ' ' + o.deliveryTime : ''}`);
-    lines.push(`   📦 ${totalItems} sp`);
-    if (o.items && o.items.length > 0) {
-      o.items.forEach((it) => lines.push(`      • ${it.name} × ${it.quantity || 0}`));
-    }
+    const giao = dd ? `📅 ${dm(dd)}${o.deliveryTime ? ' ' + o.deliveryTime : ' ' + hm(dd)} · ` : '';
+    lines.push(`   ${giao}📦 ${itemsInline(o.items)}`);
   });
   return lines.join('\n');
 };
@@ -259,8 +229,8 @@ export const formatPaymentReceivedMessage = (orderNumber: string | null, transac
   const lines: string[] = [];
   lines.push(`💰 ĐÃ NHẬN THANH TOÁN${orderNumber ? ' · ' + orderNumber : ''}`);
   lines.push(DIVIDER);
-  lines.push(`💵 Số tiền: ${formatVND(transactionAmount)}`);
-  lines.push(`✅ Trạng thái: ĐÃ THANH TOÁN`);
+  lines.push(`💵 ${formatVND(transactionAmount)}`);
+  lines.push('✅ ĐÃ THANH TOÁN');
   return lines.join('\n');
 };
 
@@ -298,17 +268,14 @@ export const formatProductionTomorrowMessage = (orders: Order[], targetDate: Dat
 export const formatStuckPendingMessage = (orders: Order[], thresholdHours: number): string => {
   if (orders.length === 0) return `✅ Không có đơn PENDING nào quá ${thresholdHours} giờ.`;
   const lines: string[] = [];
-  lines.push(`⚠️ ĐƠN PENDING QUÁ ${thresholdHours}H`);
+  lines.push(`⚠️ ĐƠN PENDING QUÁ ${thresholdHours}H · ${orders.length} đơn`);
   lines.push(DIVIDER);
-  lines.push(`📊 ${orders.length} đơn chưa xác nhận`);
-  lines.push('');
   const now = Date.now();
   orders.forEach((o, i) => {
     const created = parseDateValue(o.orderDate || o.createdAt || (o as any).date);
     const ageH = created ? Math.floor((now - created.getTime()) / 3600000) : null;
-    lines.push(`${i + 1}. ${o.orderNumber || o.id} · ${formatVND(getOrderTotal(o))}`);
-    lines.push(`   👤 ${o.customer?.name || '(không có)'} · ${o.customer?.phone || ''}`);
-    if (created) lines.push(`   ⏰ Tạo: ${formatDateShort(created)}${ageH != null ? ` (${ageH}h trước)` : ''}`);
+    lines.push(`${i + 1}. ${o.orderNumber || o.id} · ${formatVND(getOrderTotal(o))} · ${customerLine(o.customer?.name, o.customer?.phone)}`);
+    if (created) lines.push(`   ⏰ Tạo ${formatDayHM(created)}${ageH != null ? ` (${ageH}h trước)` : ''}`);
   });
   return lines.join('\n');
 };
@@ -340,15 +307,12 @@ export const formatDailySummaryMessage = (stats: DailySummaryStats, date: Date):
   const lines: string[] = [];
   lines.push(`📊 TỔNG KẾT HÔM NAY · ${dateStr}`);
   lines.push(DIVIDER);
-  lines.push(`📦 Đơn:        ${orders.length}`);
-  lines.push(`💵 Doanh thu:  ${formatVND(revenue)}`);
+  lines.push(`📦 Đơn: ${orders.length}`);
+  lines.push(`💵 Doanh thu: ${formatVND(revenue)}`);
   if (stats.newCustomersCount !== undefined) {
-    lines.push(`👥 KH mới:     ${stats.newCustomersCount}`);
+    lines.push(`👥 KH mới: ${stats.newCustomersCount}`);
   }
-  lines.push('');
-  lines.push(`💳 Thanh toán:`);
-  lines.push(`   ✅ Đã TT:    ${paid} đơn`);
-  lines.push(`   ⏳ Chưa TT:  ${unpaid} đơn`);
+  lines.push(`💳 Đã TT: ${paid} · Chưa TT: ${unpaid}`);
   if (topItems.length > 0) {
     lines.push('');
     lines.push(`🏆 Top sản phẩm:`);
@@ -368,7 +332,7 @@ export const formatHealthCheckMessage = (now: Date): string => {
   const lines: string[] = [];
   lines.push(`✅ HEALTH CHECK · ${timeStr}`);
   lines.push(DIVIDER);
-    lines.push('Hệ thống đang hoạt động bình thường.');
+  lines.push('Hệ thống đang hoạt động bình thường.');
   lines.push('Zalo token: live ✓');
   return lines.join('\n');
 }

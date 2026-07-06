@@ -134,6 +134,65 @@ export const updateOrder = async (
   }
 };
 
+/* ───────────────── Đối soát phiếu hoàn ↔ giao dịch SePay (#186) ───────────────── */
+
+/**
+ * Gắn 1 giao dịch SePay tiền ra cho 1 phiếu hoàn.
+ * BE trả về Order ĐẦY ĐỦ (đã refresh refunds) → caller set lại state đơn.
+ * Lỗi (message=code): 404 REFUND_NOT_FOUND/TRANSACTION_NOT_FOUND,
+ * 409 TRANSACTION_ALREADY_LINKED, 400 TRANSACTION_NOT_OUTGOING.
+ */
+export const reconcileRefund = async (
+  orderId: string,
+  refundId: string,
+  transactionId: string,
+): Promise<Order> => {
+  const res = await apiClient.post(
+    `/orders/${orderId}/refunds/${refundId}/reconcile`,
+    { transactionId },
+  );
+  return res.data as Order;
+};
+
+/** 1 phiếu hoàn (mọi đơn) kèm ngữ cảnh đơn — đối soát từ phía GD tiền ra. */
+export interface RefundListItem {
+  refundId: string;
+  orderId: string;
+  orderNumber?: string | null;
+  amount: number;
+  reason?: string | null;
+  createdAt?: unknown; // revive Timestamp
+  transactionId?: string | null;
+  reconciled: boolean;
+  reconcileMethod?: 'sepay' | 'cash' | null;
+}
+
+/** Toàn bộ phiếu hoàn (mọi đơn) — GET /orders/refunds. Phục vụ đối soát tiền ra. */
+export const fetchAllRefunds = async (): Promise<RefundListItem[]> => {
+  const res = await apiClient.get('/orders/refunds');
+  return (res.data as RefundListItem[]) ?? [];
+};
+
+/** Đánh dấu phiếu hoàn đã trả bằng tiền mặt. BE trả Order đầy đủ. */
+export const markRefundCash = async (
+  orderId: string,
+  refundId: string,
+): Promise<Order> => {
+  const res = await apiClient.post(`/orders/${orderId}/refunds/${refundId}/cash`);
+  return res.data as Order;
+};
+
+/** Gỡ đối soát phiếu hoàn (về trạng thái chưa đối soát). BE trả Order đầy đủ. */
+export const unreconcileRefund = async (
+  orderId: string,
+  refundId: string,
+): Promise<Order> => {
+  const res = await apiClient.post(
+    `/orders/${orderId}/refunds/${refundId}/unreconcile`,
+  );
+  return res.data as Order;
+};
+
 /**
  * Xoa don hang. BE xoa Firestore (DELETE /orders/:id). SAU DO gui Zalo notify
  * (GIU NGUYEN tren FE). Loi Zalo duoc nuot.
