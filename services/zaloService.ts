@@ -63,7 +63,8 @@ const uploadOrderCardImage = async (order: any): Promise<string> => {
 export const sendNewOrderCardImage = async (order: any, groupIds: string[]) => {
   if (groupIds.length === 0) return;
   const url = await uploadOrderCardImage(order);
-  await postImageToGroups(groupIds, { caption: '', image_url: [url], message: '' });
+  const caption = `Đơn hàng mới - ${order?.orderNumber || order?.id}`;
+  await postImageToGroups(groupIds, { caption, image_url: [url], message: caption });
 };
 
 /**
