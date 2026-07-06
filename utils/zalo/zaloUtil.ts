@@ -6,43 +6,37 @@ import { getOrderTotal } from "../order/orderUtils";
 
 const DIVIDER = '─────────────────────────';
 
-/** Nhãn size gộp, số lượng đứng TRƯỚC tên: "2 số, 3 mặt chã" (bỏ qty 0, bỏ "1"). */
-const sizeCountsInline = (sc?: { name: string; qty: number }[]): string =>
-  (sc ?? [])
-    .filter((x) => x.qty > 0)
-    .map((x) => (x.qty > 1 ? `${x.qty} ${x.name}` : x.name))
-    .join(', ');
-
-/**
- * Nhãn 1 món cho noti Zalo: `Tên ×SL (chi tiết)` — số lượng đứng NGAY SAU tên (rõ
- * "2 combo, mỗi combo …"), chi tiết = size/sizeCounts + vị gom chung trong 1 ngoặc,
- * số lượng vị/size đứng trước tên (vd "Combo tình bạn ×2 (2 số, 3 mặt chã, 2 socola)").
- * Ẩn "×1" thừa; không có chi tiết thì chỉ tên.
- */
-const itemLabel = (it: any): string => {
-  const qty = it?.quantity || 0;
-  let s = it?.name ?? '';
-  if (qty > 1) s += ` ×${qty}`;
-  const detail: string[] = [];
-  const sc = sizeCountsInline(it?.sizeCounts);
-  if (sc) detail.push(sc);
-  else if (it?.size) detail.push(it.size);
-  if (Array.isArray(it?.flavors) && it.flavors.length) {
-    const m = new Map<string, number>();
-    it.flavors.forEach((f: string) => m.set(f, (m.get(f) || 0) + 1));
-    detail.push(...Array.from(m.entries()).map(([n, q]) => (q > 1 ? `${q} ${n}` : n)));
-  }
-  if (detail.length) s += ` (${detail.join(', ')})`;
-  return s;
+/** Gom vị (có lặp) → "4 socola, 3 matcha, 1 red" (số lượng đứng trước). '' nếu không có. */
+const flavorsDetail = (flavors?: string[]): string => {
+  if (!Array.isArray(flavors) || !flavors.length) return '';
+  const m = new Map<string, number>();
+  flavors.forEach((f) => m.set(f, (m.get(f) || 0) + 1));
+  return Array.from(m.entries()).map(([n, q]) => `${q} ${n}`).join(', ');
 };
 
-/** Gộp danh sách món thành 1 dòng ngắn: "Bánh kem ×1, Cupcake ×6" (cắt bớt nếu quá dài). */
-const itemsInline = (items: any[] | undefined, max = 6): string => {
-  const list = items || [];
-  if (list.length === 0) return '(không có)';
-  const parts = list.slice(0, max).map((it) => `${it.name || '(?)'} ×${it.quantity || 0}`);
-  if (list.length > max) parts.push(`…+${list.length - max}`);
-  return parts.join(', ');
+/**
+ * Các dòng hiển thị 1 món trong noti đơn (cấu trúc phân cấp):
+ *   • Tên sản phẩm
+ *   - Size A: SL n
+ *   - Size B: SL n
+ *   Chi tiết (4 socola, 3 matcha, 1 red)
+ * Món không có sizeCounts → gộp size/SL vào dòng tên. Không có vị → bỏ dòng Chi tiết.
+ */
+const itemLines = (it: any): string[] => {
+  const out: string[] = [];
+  const scs = (it?.sizeCounts ?? []).filter((x: any) => (x?.qty || 0) > 0);
+  const qty = it?.quantity || 0;
+  if (scs.length > 0) {
+    out.push(`• ${it?.name ?? ''}`);
+    scs.forEach((sc: any) => out.push(`- ${sc.name}: SL ${sc.qty}`));
+  } else if (it?.size) {
+    out.push(`• ${it?.name ?? ''} · ${it.size}${qty > 1 ? ` · SL ${qty}` : ''}`);
+  } else {
+    out.push(`• ${it?.name ?? ''}${qty > 1 ? ` · SL ${qty}` : ''}`);
+  }
+  const fl = flavorsDetail(it?.flavors);
+  if (fl) out.push(`Chi tiết (${fl})`);
+  return out;
 };
 
 export const formatDate = (date: Date | null): string => {
@@ -106,7 +100,7 @@ export const formatOrderMessage = (order: any): string => {
 
   lines.push(`📋 Sản phẩm (${totalItems}):`);
   if (order.items && order.items.length > 0) {
-    order.items.forEach((it: any) => lines.push(` • ${itemLabel(it)}`));
+    order.items.forEach((it: any) => itemLines(it).forEach((l) => lines.push(l)));
   } else {
     lines.push(' (không có)');
   }
@@ -203,8 +197,8 @@ export const formatPendingOrdersMessage = (orders: Order[]): string => {
   orders.forEach((o, i) => {
     const dd = o.deliveryDate ? parseDateValue(o.deliveryDate) : null;
     lines.push(`${i + 1}. ${o.orderNumber || o.id} · ${formatVND(getOrderTotal(o))} · ${customerLine(o.customer?.name, o.customer?.phone)}`);
-    const giao = dd ? `📅 Giao ${dm(dd)}${o.deliveryTime ? ' ' + o.deliveryTime : ' ' + hm(dd)} · ` : '';
-    lines.push(`   ${giao}📦 ${itemsInline(o.items)}`);
+    if (dd) lines.push(`   📅 Giao ${dm(dd)}${o.deliveryTime ? ' ' + o.deliveryTime : ' ' + hm(dd)}`);
+    (o.items || []).forEach((it) => itemLines(it).forEach((l) => lines.push(`   ${l}`)));
   });
   return lines.join('\n');
 };
@@ -219,8 +213,8 @@ export const formatDeliveryDueMessage = (orders: Order[], targetDate?: Date): st
     const dd = o.deliveryDate ? parseDateValue(o.deliveryDate) : null;
     lines.push(`${i + 1}. ${o.orderNumber || o.id} · ${formatVND(getOrderTotal(o))} · ${customerLine(o.customer?.name, o.customer?.phone)}`);
     if (o.customer?.address) lines.push(`   🏠 ${o.customer.address}`);
-    const giao = dd ? `📅 ${dm(dd)}${o.deliveryTime ? ' ' + o.deliveryTime : ' ' + hm(dd)} · ` : '';
-    lines.push(`   ${giao}📦 ${itemsInline(o.items)}`);
+    if (dd) lines.push(`   📅 Giao ${dm(dd)}${o.deliveryTime ? ' ' + o.deliveryTime : ' ' + hm(dd)}`);
+    (o.items || []).forEach((it) => itemLines(it).forEach((l) => lines.push(`   ${l}`)));
   });
   return lines.join('\n');
 };
