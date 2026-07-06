@@ -218,9 +218,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPhone('');
       setAddress('');
       setNote('');
-      setDeliveryDate('');
-      setDeliveryTime('');
-      setIsDeliveryTimeEnabled(false);
+      // Mặc định đơn mới: ngày giao = hôm nay, giờ giao = giờ hiện tại (bật sẵn).
+      {
+        const now = new Date();
+        const p2 = (n: number) => String(n).padStart(2, '0');
+        setDeliveryDate(`${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}`);
+        setDeliveryTime(`${p2(now.getHours())}:${p2(now.getMinutes())}`);
+        setIsDeliveryTimeEnabled(true);
+      }
       setShippingCost(0);
       setStatus(OrderStatus.PENDING);
       setPaymentStatus(PaymentStatus.UNPAID);
