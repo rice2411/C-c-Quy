@@ -3,40 +3,13 @@ import { UserRole } from "@/types/user";
 import { apiClient } from "@/services/api/client";
 import { resolveZaloGroupIdsForOrderEvent } from "./configurationService";
 import {
-  sendNewOrderCardImage,
   sendNewOrderZaloNotifications,
   sendOrderDeleteNotification,
-  sendOrderUpdateCardImage,
   sendOrderUpdateNotification,
 } from "./zaloService";
 
 /** Nem khi CTV co cap nhat don khong phai do ho tao (FE van can de so message). */
 export const ORDER_EDIT_DENIED = "ORDER_EDIT_DENIED";
-
-/**
- * Gui noti Zalo dang ANH the don, retry toi 4 lan (backoff) cho loi tam thoi
- * (mang / html-to-image miss anh lan dau). Can retry ma van loi (vd CORS anh SP —
- * deterministic) → fallback gui TEXT nhu cu de khong mat thong bao.
- */
-const notifyOrderWithImageRetry = async (
-  sendImage: () => Promise<void>,
-  fallbackText: () => Promise<void>,
-): Promise<void> => {
-  for (let i = 0; i < 4; i++) {
-    try {
-      await sendImage();
-      return;
-    } catch (err) {
-      console.error(`Zalo order-card image attempt ${i + 1} failed:`, err);
-      await new Promise((r) => setTimeout(r, 800 * (i + 1)));
-    }
-  }
-  try {
-    await fallbackText();
-  } catch (err) {
-    console.error("Zalo order-card fallback text failed (ignored):", err);
-  }
-};
 
 /**
  * Lay danh sach don hang. Phan ghi/doc Firestore da chuyen sang BE
@@ -89,10 +62,7 @@ export const addOrder = async (orderData: Order): Promise<void> => {
       "create",
       createdByUid,
     );
-    await notifyOrderWithImageRetry(
-      () => sendNewOrderCardImage(created, zaloGroupIds),
-      () => sendNewOrderZaloNotifications(created, zaloGroupIds),
-    );
+    await sendNewOrderZaloNotifications(created, zaloGroupIds);
   } catch (notifErr) {
     console.error("New order Zalo notify error (ignored):", notifErr);
   }
@@ -150,23 +120,13 @@ export const updateOrder = async (
         prevOrder?.items as any,
         updated?.items as any,
       );
-      await notifyOrderWithImageRetry(
-        () =>
-          sendOrderUpdateCardImage(
-            orderForMsg,
-            changes,
-            { name: editorName, uid: editor?.uid },
-            zaloGroupIds,
-          ),
-        () =>
-          sendOrderUpdateNotification(
-            orderForMsg,
-            changes,
-            { name: editorName, uid: editor?.uid },
-            zaloGroupIds,
-            itemsDiff,
-            prevOrder, // prevOrder de hien thi snapshot "DON CU" (fallback text)
-          ),
+      await sendOrderUpdateNotification(
+        orderForMsg,
+        changes,
+        { name: editorName, uid: editor?.uid },
+        zaloGroupIds,
+        itemsDiff,
+        prevOrder, // prevOrder de hien thi snapshot "DON CU"
       );
     } catch (notifErr) {
       console.error("Update Zalo notify error (ignored):", notifErr);
