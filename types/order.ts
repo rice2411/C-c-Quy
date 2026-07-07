@@ -32,6 +32,12 @@ export interface OrderDecoration {
   price: number; // đơn giá VND (có thể đã sửa tay)
 }
 
+/** 1 dòng phụ thu: nhãn (key tag động, optional) + số tiền riêng (VND). */
+export interface SurchargeLine {
+  tag?: string;
+  amount: number;
+}
+
 /**
  * Nhãn phụ thu cho đơn — nay là tag ĐỘNG quản lý trong Cài đặt đơn hàng.
  * Đơn chỉ lưu `key` (string). Định nghĩa + helper ở `@/types/surchargeTag`.
@@ -114,10 +120,12 @@ export interface Order {
   items: OrderItem[];
   /** Vật phẩm trang trí thêm (chọn từ materials) — cộng vào total. Đơn cũ (backward compat). */
   decorations?: OrderDecoration[];
-  /** Tổng phụ thu cả đơn (VND) — mô hình mới, tự chia theo SL sản phẩm. Cộng vào subtotal TRƯỚC giảm. */
+  /** TỔNG phụ thu cả đơn (VND) = sum(surcharges.amount). Cộng vào subtotal TRƯỚC giảm. */
   surchargeAmount?: number;
-  /** Nhãn phụ thu — `key` của tag động (vd 'decoration'). */
+  /** Nhãn phụ thu dòng đầu (legacy/tương thích cũ) — `key` của tag động. */
   surchargeTag?: string;
+  /** Phụ thu nhiều dòng: mỗi nhãn 1 số tiền riêng. Tổng = sum(amount) = surchargeAmount. */
+  surcharges?: SurchargeLine[];
   /** Tổng tiền hàng TRƯỚC giảm (items + decorations + surchargeAmount). */
   subtotal?: number;
   /** Tổng tiền đã giảm bởi khuyến mãi. */

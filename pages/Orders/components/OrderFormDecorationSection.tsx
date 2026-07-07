@@ -1,10 +1,9 @@
 import React, { useMemo } from 'react';
-import { Sparkles, Pencil } from 'lucide-react';
+import { Sparkles, Plus, Trash2 } from 'lucide-react';
 import type { SurchargeTag } from '@/types/surchargeTag';
-import { surchargeTagLabel } from '@/types/surchargeTag';
+import type { SurchargeLine } from '@/types/order';
 import { allocateSurcharge } from '@/utils/order/orderUtils';
 import { formatVND } from '@/utils/format/currencyUtil';
-import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
@@ -20,148 +19,156 @@ export interface SurchargeItem {
 }
 
 interface Props {
-  surchargeAmount: number;
-  /** `key` của tag đang chọn (đơn lưu string). */
-  surchargeTag?: string;
+  /** Phụ thu nhiều dòng: mỗi nhãn 1 số tiền riêng. */
+  surcharges: SurchargeLine[];
   /** Danh sách tag động (đã lọc active, sort sortOrder ở caller). */
   surchargeTags: SurchargeTag[];
   items: SurchargeItem[];
-  onAmountChange: (amount: number) => void;
-  onTagChange: (tag: string | undefined) => void;
+  onChange: (surcharges: SurchargeLine[]) => void;
 }
 
 const OrderFormDecorationSection: React.FC<Props> = ({
-  surchargeAmount,
-  surchargeTag,
+  surcharges,
   surchargeTags,
   items,
-  onAmountChange,
-  onTagChange,
+  onChange,
 }) => {
   const totalQty = useMemo(
     () => items.reduce((s, it) => s + Number(it.quantity || 0), 0),
     [items],
   );
 
-  // Chia phụ thu theo qty (preview) — khớp BE allocateSurcharge.
-  const shares = useMemo(
-    () => allocateSurcharge(surchargeAmount, items),
-    [surchargeAmount, items],
+  const totalSurcharge = useMemo(
+    () => surcharges.reduce((s, x) => s + (Number(x.amount) || 0), 0),
+    [surcharges],
   );
 
-  const perProduct = totalQty > 0 ? Math.round(surchargeAmount / totalQty) : 0;
-
-  // "Sửa tay": tổng phụ thu khác mức gợi ý của nhãn đang chọn.
-  const presetOfTag = surchargeTags.find((s) => s.key === surchargeTag)?.preset;
-  const isManual =
-    surchargeTag != null && presetOfTag != null && surchargeAmount !== presetOfTag;
+  // Chia TỔNG phụ thu theo qty (preview) — khớp BE allocateSurcharge.
+  const shares = useMemo(
+    () => allocateSurcharge(totalSurcharge, items),
+    [totalSurcharge, items],
+  );
+  const perProduct = totalQty > 0 ? Math.round(totalSurcharge / totalQty) : 0;
 
   const hasTags = surchargeTags.length > 0;
+  const hasSurcharge = totalSurcharge > 0;
 
-  // Bấm chip preset: điền cả nhãn + mức gợi ý.
-  const handlePreset = (tag: string, preset: number) => {
-    onTagChange(tag);
-    onAmountChange(preset);
-  };
-
-  const hasSurcharge = surchargeAmount > 0;
+  const addLine = (tag?: string, amount = 0) => onChange([...surcharges, { tag, amount }]);
+  const updateLine = (idx: number, patch: Partial<SurchargeLine>) =>
+    onChange(surcharges.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
+  const removeLine = (idx: number) => onChange(surcharges.filter((_, i) => i !== idx));
 
   return (
     <Box layoutClassName="space-y-3">
-      <Heading
-        level={3}
-        layoutClassName="flex items-center gap-2 uppercase tracking-wider"
-        textClassName="text-sm font-semibold"
-      >
-        <Sparkles className="h-4 w-4 text-primary-500" /> Phụ thu
-      </Heading>
-
-      <Box layoutClassName="flex flex-col gap-3 sm:flex-row">
-        <Box layoutClassName="min-w-0 sm:flex-[1.2]">
-          <Label htmlFor="order-form-surcharge-amount">
-            Tổng phụ thu (cả đơn)
-            {isManual ? (
-              <Badge
-                size="sm"
-                layoutClassName="ml-2 align-middle"
-                borderClassName="border-slate-200 dark:border-slate-600"
-                backgroundClassName="bg-slate-100 dark:bg-slate-700"
-                textClassName="text-slate-500 dark:text-slate-300"
-              >
-                <Pencil className="h-3 w-3" /> sửa tay
-              </Badge>
-            ) : null}
-          </Label>
-          <Input
-            id="order-form-surcharge-amount"
-            type="number"
-            min={0}
-            step={1000}
-            value={surchargeAmount}
-            onChange={(e) => onAmountChange(Math.max(0, Number(e.target.value) || 0))}
-            sizeClassName="py-2 text-right text-sm font-semibold"
-          />
-        </Box>
-        <Box layoutClassName="min-w-0 sm:flex-1">
-          <Label htmlFor="order-form-surcharge-tag">Nhãn</Label>
-          <Select
-            id="order-form-surcharge-tag"
-            fullWidth
-            disabled={!hasTags}
-            value={surchargeTag ?? ''}
-            onChange={(e) =>
-              onTagChange(e.target.value ? e.target.value : undefined)
-            }
-          >
-            <option value="">{hasTags ? '— Chọn nhãn —' : '— Chưa có nhãn —'}</option>
-            {surchargeTags.map((s) => (
-              <option key={s.key} value={s.key}>
-                {s.label}
-              </option>
-            ))}
-          </Select>
-        </Box>
+      <Box layoutClassName="flex items-center justify-between gap-2">
+        <Heading
+          level={3}
+          layoutClassName="flex items-center gap-2 uppercase tracking-wider"
+          textClassName="text-sm font-semibold"
+        >
+          <Sparkles className="h-4 w-4 text-primary-500" /> Phụ thu
+        </Heading>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => addLine(undefined, 0)}
+          sizeClassName="px-2 py-1"
+          roundedClassName="rounded-lg"
+          shadowClassName=""
+          borderClassName="border border-slate-200 dark:border-slate-600"
+          backgroundClassName="bg-white dark:bg-slate-800"
+          textClassName="text-xs font-medium text-slate-600 dark:text-slate-300"
+          hoverClassName="hover:border-primary-300 dark:hover:border-primary-700"
+        >
+          <Plus className="h-3.5 w-3.5" /> Thêm dòng
+        </Button>
       </Box>
 
-      <Box layoutClassName="flex flex-wrap gap-2">
-        {surchargeTags.map((s) => {
-          const active = surchargeTag === s.key;
-          return (
+      {/* Các dòng phụ thu: mỗi dòng 1 nhãn + 1 số tiền riêng */}
+      {surcharges.length > 0 ? (
+        <Box layoutClassName="space-y-2">
+          {surcharges.map((line, idx) => (
+            <Box key={idx} layoutClassName="flex items-end gap-2">
+              <Box layoutClassName="min-w-0 flex-1">
+                {idx === 0 ? <Label htmlFor={`surcharge-tag-${idx}`}>Nhãn</Label> : null}
+                <Select
+                  id={`surcharge-tag-${idx}`}
+                  fullWidth
+                  disabled={!hasTags}
+                  value={line.tag ?? ''}
+                  onChange={(e) => updateLine(idx, { tag: e.target.value || undefined })}
+                >
+                  <option value="">{hasTags ? '— Chọn nhãn —' : '— Chưa có nhãn —'}</option>
+                  {surchargeTags.map((s) => (
+                    <option key={s.key} value={s.key}>
+                      {s.label}
+                    </option>
+                  ))}
+                </Select>
+              </Box>
+              <Box layoutClassName="min-w-0 w-32">
+                {idx === 0 ? <Label htmlFor={`surcharge-amount-${idx}`}>Số tiền</Label> : null}
+                <Input
+                  id={`surcharge-amount-${idx}`}
+                  type="number"
+                  min={0}
+                  step={1000}
+                  value={line.amount}
+                  onChange={(e) => updateLine(idx, { amount: Math.max(0, Number(e.target.value) || 0) })}
+                  sizeClassName="py-2 text-right text-sm font-semibold"
+                />
+              </Box>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => removeLine(idx)}
+                sizeClassName="p-2"
+                roundedClassName="rounded-lg"
+                shadowClassName=""
+                borderClassName="border border-transparent"
+                backgroundClassName="bg-transparent"
+                textClassName="text-slate-400 hover:text-rose-500"
+                hoverClassName="hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                aria-label="Xoá dòng phụ thu"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </Box>
+          ))}
+        </Box>
+      ) : null}
+
+      {/* Chip preset: bấm để THÊM 1 dòng phụ thu với mức gợi ý */}
+      {hasTags ? (
+        <Box layoutClassName="flex flex-wrap gap-2">
+          {surchargeTags.map((s) => (
             <Button
               key={s.key}
               type="button"
               variant="ghost"
-              onClick={() => handlePreset(s.key, s.preset)}
+              onClick={() => addLine(s.key, s.preset)}
               sizeClassName="px-3 py-1"
               roundedClassName="rounded-full"
               shadowClassName=""
-              borderClassName={
-                active
-                  ? 'border border-primary-300 dark:border-primary-700'
-                  : 'border border-slate-200 dark:border-slate-600'
-              }
-              backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
-              textClassName={
-                active
-                  ? 'text-xs font-medium text-primary-700 dark:text-primary-300'
-                  : 'text-xs font-medium text-slate-600 dark:text-slate-300'
-              }
+              borderClassName="border border-slate-200 dark:border-slate-600"
+              backgroundClassName="bg-white dark:bg-slate-800"
+              textClassName="text-xs font-medium text-slate-600 dark:text-slate-300"
               hoverClassName="hover:border-primary-300 dark:hover:border-primary-700"
               stateClassName="transition-colors"
             >
-              {s.label}
+              <Plus className="h-3 w-3" /> {s.label}
               <Typography
                 as="span"
                 size="xs"
                 layoutClassName="ml-1"
-                textClassName={active ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500'}
+                textClassName="text-slate-400 dark:text-slate-500"
               >
                 · {s.preset > 0 ? formatVND(s.preset) : '0đ'}
               </Typography>
             </Button>
-          );
-        })}
-      </Box>
+          ))}
+        </Box>
+      ) : null}
 
       {hasSurcharge ? (
         <Box
@@ -170,28 +177,18 @@ const OrderFormDecorationSection: React.FC<Props> = ({
           backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
         >
           <Box layoutClassName="flex items-center justify-between gap-2">
-            <Box layoutClassName="flex items-center gap-2">
-              <Badge
-                size="sm"
-                borderClassName="border-primary-300 dark:border-primary-700"
-                backgroundClassName="bg-white dark:bg-slate-800"
-                textClassName="text-primary-700 dark:text-primary-300"
-              >
-                <Sparkles className="h-3 w-3" /> {surchargeTagLabel(surchargeTag, surchargeTags)}
-              </Badge>
-              <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-primary-700 dark:text-primary-300">
-                chia đều
-              </Typography>
-            </Box>
+            <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-primary-700 dark:text-primary-300">
+              Tổng phụ thu ({surcharges.filter((s) => Number(s.amount) > 0).length} khoản) · chia đều
+            </Typography>
             <Typography as="span" size="sm" layoutClassName="font-bold" textClassName="text-primary-700 dark:text-primary-300">
-              {formatVND(surchargeAmount)}
+              {formatVND(totalSurcharge)}
             </Typography>
           </Box>
 
           {totalQty > 0 ? (
             <>
               <Typography as="p" size="xs" textClassName="text-primary-600 dark:text-primary-400">
-                {formatVND(surchargeAmount)} ÷ {totalQty} sản phẩm ≈ {formatVND(perProduct)}/SP · làm tròn, dồn dư vào SP cuối
+                {formatVND(totalSurcharge)} ÷ {totalQty} sản phẩm ≈ {formatVND(perProduct)}/SP · làm tròn, dồn dư vào SP cuối
               </Typography>
               <Box
                 layoutClassName="space-y-1 pt-2"
@@ -222,7 +219,7 @@ const OrderFormDecorationSection: React.FC<Props> = ({
           backgroundClassName="bg-slate-50 dark:bg-slate-800/40"
         >
           <Typography as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">
-            Chọn nhãn để điền mức gợi ý, hoặc nhập tổng tay. Phụ thu sẽ tự chia đều cho các sản phẩm.
+            Bấm nhãn để thêm 1 khoản phụ thu, hoặc "Thêm dòng" để nhập tay. Nhiều khoản sẽ tự cộng tổng.
           </Typography>
         </Box>
       )}

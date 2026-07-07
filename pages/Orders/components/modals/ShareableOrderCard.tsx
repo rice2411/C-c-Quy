@@ -1,5 +1,6 @@
 import React from 'react';
 import { Order, groupFlavors } from '@/types';
+import { surchargeTagLabel } from '@/types/surchargeTag';
 import { formatVND } from '@/utils/format/currencyUtil';
 
 /** Chi tiết vị: "2 Matcha, 3 Redverlet" (số lượng đứng trước). '' nếu không có. */
@@ -47,6 +48,19 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
   ({ order, subtotal, finalTotal, shippingCost, surchargeLabel, deliveryLabel, paymentLabel, qrUrl, description, bankCode, accountNumber, accountHolder }, ref) => {
     const c = order.customer;
     const rowClass = 'flex items-center justify-between gap-3';
+    // Phụ thu nhiều dòng (fallback đơn cũ = 1 dòng từ surchargeAmount/tag).
+    const surchargeRows = (
+      order.surcharges && order.surcharges.length > 0
+        ? order.surcharges
+        : order.surchargeAmount
+          ? [{ tag: order.surchargeTag, amount: order.surchargeAmount }]
+          : []
+    )
+      .filter((s) => Number(s.amount) > 0)
+      .map((s) => ({
+        amount: Number(s.amount),
+        label: s.tag ? surchargeTagLabel(s.tag) : surchargeLabel || '',
+      }));
     const deliveryDateText = order.deliveryDate
       ? `${new Date(order.deliveryDate).toLocaleDateString('vi-VN')}${order.deliveryTime ? ` · ${order.deliveryTime}` : ''}`
       : '';
@@ -121,12 +135,14 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
             <Typography as="span" size="sm" textClassName="text-slate-500">Tạm tính</Typography>
             <Typography as="span" size="sm" textClassName="text-slate-700">{formatVND(subtotal)}</Typography>
           </Box>
-          {order.surchargeAmount && order.surchargeAmount > 0 ? (
-            <Box layoutClassName={rowClass}>
-              <Typography as="span" size="sm" textClassName="text-primary-600">Phụ thu{surchargeLabel ? ` · ${surchargeLabel}` : ''}</Typography>
-              <Typography as="span" size="sm" textClassName="text-primary-600">+{formatVND(order.surchargeAmount)}</Typography>
-            </Box>
-          ) : null}
+          {surchargeRows.length > 0
+            ? surchargeRows.map((s, i) => (
+                <Box key={i} layoutClassName={rowClass}>
+                  <Typography as="span" size="sm" textClassName="text-primary-600">Phụ thu{s.label ? ` · ${s.label}` : ''}</Typography>
+                  <Typography as="span" size="sm" textClassName="text-primary-600">+{formatVND(s.amount)}</Typography>
+                </Box>
+              ))
+            : null}
           {order.decorations && order.decorations.length > 0 ? (
             <Box layoutClassName={rowClass}>
               <Typography as="span" size="sm" textClassName="text-slate-500">Trang trí</Typography>
