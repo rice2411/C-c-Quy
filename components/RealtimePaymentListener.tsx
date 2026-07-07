@@ -10,6 +10,7 @@ import {
   type OrderPaidEvent,
 } from '@/services/socket';
 import { playNotificationSound, primeNotificationSound } from '@/utils/sound';
+import { getSsoToken } from '@/services/auth/ssoToken';
 import { UserRole } from '@/types/user';
 import { PaymentStatus } from '@/types/enums';
 import type { Order } from '@/types';
@@ -36,7 +37,7 @@ const RealtimePaymentListener: React.FC = () => {
       return;
     }
 
-    const socket = createAuthedSocket(() => currentUser.getIdToken());
+    const socket = createAuthedSocket(() => Promise.resolve(getSsoToken()));
 
     socket.on(SOCKET_EVENTS.ORDER_PAID, (e: OrderPaidEvent) => {
       const amount = (e?.amount || 0).toLocaleString('vi-VN');

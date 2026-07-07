@@ -70,25 +70,7 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     define: {
-      // VISION_API_KEY / GEMINI_API_KEY / ZALO_TOKEN / ZALO_SHOP_CODE / ZALO_URL
-      // đã chuyển sang BE (không inline vào bundle FE nữa — tránh lộ secret).
-      "process.env.FIREBASE_API_KEY": JSON.stringify(env.FIREBASE_API_KEY),
-      "process.env.FIREBASE_AUTH_DOMAIN": JSON.stringify(
-        env.FIREBASE_AUTH_DOMAIN
-      ),
-      "process.env.FIREBASE_PROJECT_ID": JSON.stringify(
-        env.FIREBASE_PROJECT_ID
-      ),
-      "process.env.FIREBASE_STORAGE_BUCKET": JSON.stringify(
-        env.FIREBASE_STORAGE_BUCKET
-      ),
-      "process.env.FIREBASE_MESSAGING_SENDER_ID": JSON.stringify(
-        env.FIREBASE_MESSAGING_SENDER_ID
-      ),
-      "process.env.FIREBASE_APP_ID": JSON.stringify(env.FIREBASE_APP_ID),
-      "process.env.FIREBASE_MEASUREMENT_ID": JSON.stringify(
-        env.FIREBASE_MEASUREMENT_ID
-      ),
+      // Secret (VISION/GEMINI/ZALO...) + Firebase đã gỡ khỏi FE — auth qua SSO RiceService.
     },
     resolve: {
       alias: {
@@ -103,7 +85,6 @@ export default defineConfig(({ mode }) => {
             react: ["react", "react-dom", "react-router-dom"],
             charts: ["recharts"],
             xlsx: ["xlsx-js-style"],
-            firebase: ["firebase/app", "firebase/auth", "firebase/storage"],
           },
         },
       },

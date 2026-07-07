@@ -5,9 +5,13 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
-# URL của BE — Vite inline lúc build. Ghi vào .env.production.local để loadEnv chắc chắn đọc được.
+# Env inline lúc build (Vite). Ghi vào .env.production.local để loadEnv chắc chắn đọc được.
 ARG VITE_API_URL=
+ARG VITE_GOOGLE_CLIENT_ID=
+ARG VITE_RICE_AUTH_URL=
 RUN if [ -n "$VITE_API_URL" ]; then echo "VITE_API_URL=$VITE_API_URL" >> .env.production.local; fi
+RUN if [ -n "$VITE_GOOGLE_CLIENT_ID" ]; then echo "VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID" >> .env.production.local; fi
+RUN if [ -n "$VITE_RICE_AUTH_URL" ]; then echo "VITE_RICE_AUTH_URL=$VITE_RICE_AUTH_URL" >> .env.production.local; fi
 RUN npm run build
 
 # ── Serve (nginx) ──
