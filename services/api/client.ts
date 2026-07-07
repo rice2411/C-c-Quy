@@ -1,10 +1,9 @@
 import axios from 'axios';
-import { auth } from '@/config/firebase';
+import { getSsoToken } from '@/services/auth/ssoToken';
 
 /**
- * HTTP client gọi BE NestJS. Base URL lấy từ env `VITE_API_URL`
- * (vd https://cucquy-bakery-server.up.railway.app/api). Mỗi request tự
- * gắn Firebase ID token vào header Authorization.
+ * HTTP client gọi BE NestJS. Base URL lấy từ env `VITE_API_URL`. Mỗi request tự
+ * gắn SSO JWT (RiceService phát sau khi đăng nhập Google) vào header Authorization.
  */
 export const API_BASE_URL: string = (import.meta as any).env?.VITE_API_URL || '';
 
@@ -16,18 +15,11 @@ export const apiClient = axios.create({
   timeout: 30000,
 });
 
-// Tự gắn ID token của user đang đăng nhập.
-// QUAN TRỌNG: lúc app mới mở, Firebase Auth chưa khôi phục xong → auth.currentUser
-// tạm null. Phải ĐỢI authStateReady() trước, nếu không request đầu tiên sẽ thiếu
-// token → BE trả 401 → trang trống tới khi refresh. Đây là fix cho lỗi "vào trang
-// bị empty, refresh mới có data".
-apiClient.interceptors.request.use(async (config) => {
-  if (!auth.currentUser && typeof (auth as any).authStateReady === 'function') {
-    await (auth as any).authStateReady();
-  }
-  const user = auth.currentUser;
-  if (user) {
-    const token = await user.getIdToken();
+// Gắn SSO JWT (lưu ở localStorage) vào mỗi request. Token bền qua reload nên
+// không còn cảnh "request đầu bị thiếu token" như thời Firebase authStateReady.
+apiClient.interceptors.request.use((config) => {
+  const token = getSsoToken();
+  if (token) {
     config.headers.set('Authorization', `Bearer ${token}`);
   }
   return config;
