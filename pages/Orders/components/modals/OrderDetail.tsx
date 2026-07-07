@@ -144,6 +144,15 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   
   const finalTotal = getOrderTotal(currentOrder);
 
+  // Phụ thu nhiều dòng (fallback đơn cũ = 1 dòng từ surchargeAmount/tag).
+  const surchargeRows = (
+    currentOrder.surcharges && currentOrder.surcharges.length > 0
+      ? currentOrder.surcharges
+      : currentOrder.surchargeAmount
+        ? [{ tag: currentOrder.surchargeTag, amount: currentOrder.surchargeAmount }]
+        : []
+  ).filter((s) => Number(s.amount) > 0);
+
   const description = `SEVQR ${currentOrder.orderNumber}`;
   // Không có TK active → qrUrl rỗng → section QR ẩn an toàn.
   const qrUrl = activeAccount ? generateQRCodeImage(currentOrder.orderNumber, finalTotal, activeAccount) : '';
@@ -823,16 +832,20 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                    {currentOrder.surchargeAmount && currentOrder.surchargeAmount > 0 ? (
                      <Box layoutClassName="mt-4 border-t border-slate-100 pt-4 dark:border-slate-700">
                        <Typography as="p" size="xs" layoutClassName="mb-2 font-semibold uppercase tracking-wide" textClassName="text-slate-400 dark:text-slate-500">{t('detail.surcharge')}</Typography>
-                       <Box layoutClassName="flex items-center justify-between gap-2">
-                         <Badge
-                           size="sm"
-                           borderClassName="border-primary-300 dark:border-primary-700"
-                           backgroundClassName="bg-white dark:bg-slate-800"
-                           textClassName="text-primary-700 dark:text-primary-300"
-                         >
-                           <Sparkles className="h-3 w-3" /> {surchargeTagLabel(currentOrder.surchargeTag, surchargeTags)}
-                         </Badge>
-                         <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">{formatVND(currentOrder.surchargeAmount)}</Typography>
+                       <Box layoutClassName="space-y-1.5">
+                         {surchargeRows.map((s, i) => (
+                           <Box key={i} layoutClassName="flex items-center justify-between gap-2">
+                             <Badge
+                               size="sm"
+                               borderClassName="border-primary-300 dark:border-primary-700"
+                               backgroundClassName="bg-white dark:bg-slate-800"
+                               textClassName="text-primary-700 dark:text-primary-300"
+                             >
+                               <Sparkles className="h-3 w-3" /> {surchargeTagLabel(s.tag, surchargeTags)}
+                             </Badge>
+                             <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">{formatVND(s.amount)}</Typography>
+                           </Box>
+                         ))}
                        </Box>
                        <Typography as="p" size="xs" layoutClassName="mt-1.5" textClassName="text-slate-400 dark:text-slate-500">
                          {t('detail.surchargeSplit')}: {allocateSurcharge(currentOrder.surchargeAmount, currentOrder.items).map((share, idx) => (
@@ -847,15 +860,15 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                        <Typography as="span" size="inherit">{t('detail.subtotal')}</Typography>
                        <Typography as="span" size="inherit">{formatVND(subtotal)}</Typography>
                      </Box>
-                     {currentOrder.surchargeAmount && currentOrder.surchargeAmount > 0 ? (
-                       <Box layoutClassName="flex items-center justify-between" textClassName="text-sm text-primary-600 dark:text-primary-400">
+                     {surchargeRows.map((s, i) => (
+                       <Box key={i} layoutClassName="flex items-center justify-between" textClassName="text-sm text-primary-600 dark:text-primary-400">
                          <Typography as="span" size="sm">
                            {t('detail.surcharge')}
-                           <Typography as="span" size="xs" layoutClassName="ml-1.5" textClassName="text-slate-400 dark:text-slate-500">· {surchargeTagLabel(currentOrder.surchargeTag, surchargeTags)}</Typography>
+                           <Typography as="span" size="xs" layoutClassName="ml-1.5" textClassName="text-slate-400 dark:text-slate-500">· {surchargeTagLabel(s.tag, surchargeTags)}</Typography>
                          </Typography>
-                         <Typography as="span" size="sm">+{formatVND(currentOrder.surchargeAmount)}</Typography>
+                         <Typography as="span" size="sm">+{formatVND(s.amount)}</Typography>
                        </Box>
-                     ) : null}
+                     ))}
                      <Box layoutClassName="flex justify-between items-center" textClassName="text-sm text-slate-500 dark:text-slate-400">
                        <Typography as="span" size="inherit">{t('detail.shipping')}</Typography>
                        <Typography as="span" size="inherit">{formatVND(shippingCost)}</Typography>
