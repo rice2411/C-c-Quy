@@ -171,20 +171,41 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
       if (document.fonts?.ready) await document.fonts.ready; // tránh nhảy font khi render
       const node = shareRef.current;
       if (!node) throw new Error('no node');
-      // Chờ TẤT CẢ ảnh (sản phẩm + QR) trong thẻ load xong trước khi chụp —
-      // mobile tải ảnh chậm hơn nên chụp sớm sẽ ra ảnh trống.
       const imgs = Array.from(node.querySelectorAll('img')) as HTMLImageElement[];
+      // Inline mọi ảnh thành dataURL TRƯỚC khi chụp — né taint canvas do CORS/cache:
+      // ảnh SP (RiceService) & QR (SePay) có CORS → fetch (cors, reload) được; ảnh nào
+      // KHÔNG có CORS (Firebase cũ) fetch fail → thay ảnh trong suốt để html-to-image
+      // không bị "tainted canvas" (toBlob sẽ throw). Sau inline: mọi src là data:/ảnh trong suốt.
+      const TRANSPARENT = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
       await Promise.all(
-        imgs.map((img) =>
-          img.complete && img.naturalWidth > 0
-            ? Promise.resolve()
-            : new Promise<void>((resolve) => {
-                img.addEventListener('load', () => resolve(), { once: true });
-                img.addEventListener('error', () => resolve(), { once: true });
-              }),
-        ),
+        imgs.map(async (img) => {
+          const src = img.src;
+          if (!src || src.startsWith('data:')) return;
+          try {
+            const res = await fetch(src, { mode: 'cors', cache: 'reload' });
+            if (!res.ok) throw new Error(String(res.status));
+            const blob = await res.blob();
+            img.src = await new Promise<string>((resolve, reject) => {
+              const fr = new FileReader();
+              fr.onload = () => resolve(fr.result as string);
+              fr.onerror = () => reject(new Error('read fail'));
+              fr.readAsDataURL(blob);
+            });
+          } catch {
+            img.removeAttribute('crossorigin');
+            img.src = TRANSPARENT; // không tải được → để trống, tránh taint
+          }
+          await new Promise<void>((resolve) => {
+            if (img.complete && img.naturalWidth > 0) resolve();
+            else {
+              img.addEventListener('load', () => resolve(), { once: true });
+              img.addEventListener('error', () => resolve(), { once: true });
+            }
+          });
+        }),
       );
-      const opts = { pixelRatio: 2, backgroundColor: '#ffffff', cacheBust: true } as const;
+      // Ảnh đã inline data: nên không cần cacheBust nữa.
+      const opts = { pixelRatio: 2, backgroundColor: '#ffffff' } as const;
       // html-to-image hay miss ảnh ở lần chụp đầu (nhất là mobile) → warm-up rồi chụp thật.
       await toBlob(node, opts);
       const blob = await toBlob(node, opts);
