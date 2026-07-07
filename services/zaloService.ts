@@ -2,8 +2,6 @@ import { apiClient } from "@/services/api/client";
 import { fetchPaymentAccounts } from "@/services/configurationService";
 import { Order, OrderFieldChange } from "@/types";
 import { generateQRCodeImage, getOrderTotal } from "@/utils/order/orderUtils";
-import { renderOrderCardBlob } from "@/utils/order/orderCardImage";
-import { uploadImage } from "@/services/imageService";
 import {
   DailySummaryStats,
   formatDailySummaryMessage,
@@ -45,44 +43,6 @@ export const sendZaloMessage = async (message: string) => {
     console.error("Loi gui Zalo:", error.response?.data || error.message);
     throw error;
   }
-};
-
-/** Render thẻ đơn (ShareableOrderCard) → ảnh PNG → upload Storage → trả URL công khai. */
-const uploadOrderCardImage = async (order: any): Promise<string> => {
-  const accounts = await fetchPaymentAccounts();
-  const blob = await renderOrderCardBlob(order, accounts);
-  const name = `${order?.orderNumber || order?.id}_${Date.now()}.png`;
-  const file = new File([blob], name, { type: 'image/png' });
-  return uploadImage(file, `order-cards/${name}`);
-};
-
-/**
- * ĐƠN MỚI: gửi thẳng ẢNH thẻ đơn (đã gồm info + sản phẩm + tổng + QR) — không text.
- * Throw nếu lỗi (chụp/upload/gửi) để caller retry / fallback text.
- */
-export const sendNewOrderCardImage = async (order: any, groupIds: string[]) => {
-  if (groupIds.length === 0) return;
-  const url = await uploadOrderCardImage(order);
-  const caption = `Đơn hàng mới - ${order?.orderNumber || order?.id}`;
-  await postImageToGroups(groupIds, { caption, image_url: [url], message: caption });
-};
-
-/**
- * SỬA ĐƠN: gửi ẢNH thẻ đơn (trạng thái mới) + 1 dòng caption liệt kê "đã sửa gì".
- * Throw nếu lỗi để caller retry / fallback text.
- */
-export const sendOrderUpdateCardImage = async (
-  order: any,
-  changes: OrderFieldChange[],
-  editor: OrderUpdateEditorInfo | undefined,
-  groupIds: string[],
-) => {
-  if (groupIds.length === 0 || changes.length === 0) return;
-  const url = await uploadOrderCardImage(order);
-  const editorName = editor?.name || 'Unknown';
-  const labels = changes.map((c) => c.label || c.field).filter(Boolean).join(', ');
-  const caption = `✏️ ${editorName} sửa · ${order?.orderNumber || order?.id} — Đã đổi: ${labels}`;
-  await postImageToGroups(groupIds, { caption, image_url: [url], message: caption });
 };
 
 export const sendNewOrderZaloNotifications = async (order: any, groupIds: string[]) => {
