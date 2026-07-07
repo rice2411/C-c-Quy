@@ -323,6 +323,15 @@ const Layout: React.FC = () => {
                       </span>
                     )}
                  </div>
+                 {/* Đăng xuất — mobile (desktop dùng nút trong sidebar) */}
+                 <button
+                    onClick={handleLogout}
+                    aria-label={t('nav.signOut')}
+                    title={t('nav.signOut')}
+                    className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 dark:hover:text-red-400 transition-colors active:scale-90"
+                 >
+                    <LogOut className="w-5 h-5" />
+                 </button>
              </div>
           </div>
         </header>
