@@ -16,7 +16,7 @@ import { getNextOrderNumber } from '@/services/orderService';
 import { fetchCommissionGroups } from '@/services/commissionGroupService';
 import { calcItemCommission } from '@/types/commissionGroup';
 import { getUserByUid } from '@/services/userService';
-import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product } from '@/types/index';
+import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product, SurchargeLine } from '@/types/index';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Box from '@/components/ui/Box';
@@ -100,8 +100,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const { products } = useProducts();
 
   // Phụ thu cả đơn (mô hình mới) — 1 tổng + 1 nhãn, tự chia theo SL sản phẩm.
-  const [surchargeAmount, setSurchargeAmount] = useState(0);
-  const [surchargeTag, setSurchargeTag] = useState<string | undefined>(undefined);
+  // Phụ thu nhiều dòng: mỗi nhãn 1 số tiền. Tổng = sum (dùng cho total + payload).
+  const [surcharges, setSurcharges] = useState<SurchargeLine[]>([]);
+  const surchargeAmount = surcharges.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+  const surchargeTag = surcharges[0]?.tag; // legacy (dòng đầu) cho preview khuyến mãi
 
   // Tag phụ thu động (Cài đặt đơn hàng) — chỉ hiện active, theo sortOrder.
   const { surchargeTags: allSurchargeTags } = useSurchargeTags();
@@ -181,8 +183,13 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setShippingCost(initialData.shippingCost || 0);
       setShipInfo(initialData.shipInfo ?? null);
       setIsTest(!!initialData.isTest);
-      setSurchargeAmount(initialData.surchargeAmount ?? 0);
-      setSurchargeTag(initialData.surchargeTag);
+      setSurcharges(
+        initialData.surcharges && initialData.surcharges.length > 0
+          ? initialData.surcharges
+          : initialData.surchargeAmount
+            ? [{ tag: initialData.surchargeTag, amount: initialData.surchargeAmount }]
+            : [],
+      );
       // Điền lại mã + chiến dịch đã áp để sửa đơn không mất khuyến mãi.
       setPromoCode(initialData.appliedPromotions?.find((p) => p.code)?.code ?? '');
       setSelectedPromoIds((initialData.appliedPromotions ?? []).map((p) => p.promotionId));
@@ -233,8 +240,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setDeliveryType(DeliveryType.SHIP);
       setItems([]);
       setIsTest(false);
-      setSurchargeAmount(0);
-      setSurchargeTag(undefined);
+      setSurcharges([]);
       setPromoCode('');
       setPromoPreview(null);
       setSelectedPromoIds([]);
@@ -550,7 +556,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         },
         items: finalItems,
         surchargeAmount: Number(surchargeAmount || 0),
-        ...(surchargeTag ? { surchargeTag } : {}),
+        // Nguồn chuẩn phụ thu nhiều dòng (BE tự cộng tổng + lấy tag dòng đầu). Bỏ dòng amount<=0.
+        surcharges: surcharges.filter((s) => Number(s.amount) > 0),
         shippingCost: Number(shippingCost),
         shipInfo: shipInfo ?? undefined,
         subtotal: subtotal,
@@ -850,12 +857,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
             <hr className="border-slate-100 dark:border-slate-700" />
 
             <OrderFormDecorationSection
-              surchargeAmount={surchargeAmount}
-              surchargeTag={surchargeTag}
+              surcharges={surcharges}
               surchargeTags={activeSurchargeTags}
               items={items.map((i) => ({ name: i.productName || 'Sản phẩm', quantity: Number(i.quantity) }))}
-              onAmountChange={setSurchargeAmount}
-              onTagChange={setSurchargeTag}
+              onChange={setSurcharges}
             />
 
             <hr className="border-slate-100 dark:border-slate-700" />
