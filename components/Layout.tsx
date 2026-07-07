@@ -24,14 +24,22 @@ const Layout: React.FC = () => {
 
   // PWA: phát hiện bản web mới → cho user bấm cập nhật (reload lấy asset + dữ liệu mới nhất).
   // Poll mỗi 60s để bắt bản deploy mới mà không cần reload thủ công.
+  const swReg = React.useRef<ServiceWorkerRegistration | null>(null);
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(_swUrl, r) {
-      if (r) setInterval(() => { void r.update(); }, 60_000);
+      if (r) { swReg.current = r; setInterval(() => { void r.update(); }, 60_000); }
     },
   });
+
+  // Nút cập nhật luôn hiện: có bản mới → áp bản mới + reload; không thì kiểm tra rồi tải lại.
+  const forceUpdate = async () => {
+    if (needRefresh) { updateServiceWorker(true); return; }
+    try { await swReg.current?.update(); } catch { /* bỏ qua */ }
+    window.location.reload();
+  };
 
   const pingDot =
     ping.level === 'good' ? 'bg-emerald-500' : ping.level === 'ok' ? 'bg-amber-500' : 'bg-red-500';
@@ -224,19 +232,20 @@ const Layout: React.FC = () => {
             </button>
           </div>
 
-          {/* Phiên bản web + nút cập nhật khi có bản mới */}
-          <div className="pt-3">
-            {needRefresh ? (
-              <button
-                onClick={() => updateServiceWorker(true)}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-primary-600 text-white hover:bg-primary-700 transition-colors animate-pulse"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                {t('nav.updateAvailable')}
-              </button>
-            ) : (
-              <p className="text-center text-[11px] font-mono text-slate-400 dark:text-slate-500">v{__BUILD_ID__}</p>
-            )}
+          {/* Phiên bản web + nút cập nhật (luôn hiện; nổi bật khi có bản mới) */}
+          <div className="pt-3 space-y-2">
+            <button
+              onClick={forceUpdate}
+              className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                needRefresh
+                  ? 'bg-primary-600 text-white hover:bg-primary-700 animate-pulse'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+              }`}
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              {needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
+            </button>
+            <p className="text-center text-[11px] font-mono text-slate-400 dark:text-slate-500">v{__BUILD_ID__}</p>
           </div>
         </nav>
       </aside>
@@ -257,7 +266,10 @@ const Layout: React.FC = () => {
             </button>
             <div className="md:hidden flex items-center gap-2">
               <img src="/icon-v4.svg" alt="Tiệm Bánh Cúc Quy" className="w-8 h-8 rounded-lg shadow-sm shadow-primary-300 dark:shadow-none" />
-              <span className="text-lg font-bold text-slate-800 dark:text-white">Tiệm Bánh <span className="text-primary-600 dark:text-primary-500">Cúc Quy</span></span>
+              <div className="flex flex-col leading-none">
+                <span className="text-base font-bold text-slate-800 dark:text-white">Tiệm Bánh <span className="text-primary-600 dark:text-primary-500">Cúc Quy</span></span>
+                <span className="mt-0.5 text-[9px] font-mono text-slate-400 dark:text-slate-500">v{__BUILD_ID__}</span>
+              </div>
             </div>
             <div className="hidden md:block">
               <h1 className="text-xl font-bold text-slate-800 dark:text-white">
@@ -351,17 +363,19 @@ const Layout: React.FC = () => {
                       </span>
                     )}
                  </div>
-                 {/* Cập nhật bản mới — mobile (desktop dùng nút ở cuối sidebar) */}
-                 {needRefresh && (
-                   <button
-                      onClick={() => updateServiceWorker(true)}
-                      aria-label={t('nav.updateAvailable')}
-                      title={t('nav.updateAvailable')}
-                      className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors animate-pulse active:scale-90"
-                   >
-                      <RefreshCw className="w-5 h-5" />
-                   </button>
-                 )}
+                 {/* Cập nhật — mobile luôn hiện (desktop dùng nút ở cuối sidebar); nổi bật khi có bản mới */}
+                 <button
+                    onClick={forceUpdate}
+                    aria-label={needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
+                    title={needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
+                    className={`md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors active:scale-90 ${
+                      needRefresh
+                        ? 'bg-primary-600 text-white hover:bg-primary-700 animate-pulse'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                    }`}
+                 >
+                    <RefreshCw className="w-5 h-5" />
+                 </button>
                  {/* Đăng xuất — mobile (desktop dùng nút trong sidebar) */}
                  <button
                     onClick={handleLogout}

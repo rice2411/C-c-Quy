@@ -53,6 +53,7 @@ export const translations = {
       settingsProduct: "Product settings",
       signOut: "Sign Out",
       updateAvailable: "New version · Update",
+      checkUpdate: "Reload latest",
       newOrder: "New Order",
       soon: "SOON",
       add: "More"
@@ -745,6 +746,7 @@ export const translations = {
       settingsProduct: "Cài đặt sản phẩm",
       signOut: "Đăng xuất",
       updateAvailable: "Có bản mới · Cập nhật",
+      checkUpdate: "Tải lại bản mới nhất",
       newOrder: "Tạo đơn",
       soon: "SẮP RA",
       add: "Thêm"
