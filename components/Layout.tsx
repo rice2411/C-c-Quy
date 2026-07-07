@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, ChevronDown, Menu, LayoutGrid } from 'lucide-react';
+import { LogOut, ChevronDown, Menu, LayoutGrid, RefreshCw } from 'lucide-react';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
@@ -20,6 +21,18 @@ const Layout: React.FC = () => {
   const location = useLocation();
   const { screenVisibility, isScreenEnabled } = useScreenConfig();
   const ping = useSystemPing();
+
+  // PWA: phát hiện bản web mới → cho user bấm cập nhật (reload lấy asset + dữ liệu mới nhất).
+  // Poll mỗi 60s để bắt bản deploy mới mà không cần reload thủ công.
+  const {
+    needRefresh: [needRefresh],
+    updateServiceWorker,
+  } = useRegisterSW({
+    onRegisteredSW(_swUrl, r) {
+      if (r) setInterval(() => { void r.update(); }, 60_000);
+    },
+  });
+
   const pingDot =
     ping.level === 'good' ? 'bg-emerald-500' : ping.level === 'ok' ? 'bg-amber-500' : 'bg-red-500';
   const pingText =
@@ -210,6 +223,21 @@ const Layout: React.FC = () => {
               {t('nav.signOut')}
             </button>
           </div>
+
+          {/* Phiên bản web + nút cập nhật khi có bản mới */}
+          <div className="pt-3">
+            {needRefresh ? (
+              <button
+                onClick={() => updateServiceWorker(true)}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold bg-primary-600 text-white hover:bg-primary-700 transition-colors animate-pulse"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                {t('nav.updateAvailable')}
+              </button>
+            ) : (
+              <p className="text-center text-[11px] font-mono text-slate-400 dark:text-slate-500">v{__BUILD_ID__}</p>
+            )}
+          </div>
         </nav>
       </aside>
 
@@ -323,6 +351,17 @@ const Layout: React.FC = () => {
                       </span>
                     )}
                  </div>
+                 {/* Cập nhật bản mới — mobile (desktop dùng nút ở cuối sidebar) */}
+                 {needRefresh && (
+                   <button
+                      onClick={() => updateServiceWorker(true)}
+                      aria-label={t('nav.updateAvailable')}
+                      title={t('nav.updateAvailable')}
+                      className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors animate-pulse active:scale-90"
+                   >
+                      <RefreshCw className="w-5 h-5" />
+                   </button>
+                 )}
                  {/* Đăng xuất — mobile (desktop dùng nút trong sidebar) */}
                  <button
                     onClick={handleLogout}
