@@ -1,4 +1,3 @@
-import { User } from 'firebase/auth';
 import { apiClient } from '@/services/api/client';
 import { UserData, UserRole, UserStatus } from '@/types/user';
 import type { ZaloGroupConfig } from '@/types';
@@ -41,7 +40,12 @@ export const getUserByUid = async (uid: string): Promise<UserData | null> => {
  * @param user - User object từ Firebase Auth
  * @returns UserData từ Firestore
  */
-export const saveUserToFirestore = async (user: User): Promise<UserData> => {
+export const saveUserToFirestore = async (user: {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+}): Promise<UserData> => {
   try {
     const res = await apiClient.post('/users/sync', {
       uid: user.uid,

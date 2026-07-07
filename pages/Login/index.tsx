@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '@/config/firebase';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { ChefHat, UserPlus, LogIn, X } from 'lucide-react';
+import { ChefHat, UserPlus, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
@@ -16,86 +15,68 @@ import AvatarImage from '@/components/ui/AvatarImage';
 import Typography from '@/components/ui/Typography';
 import ThemeToggle from '@/components/ThemeToggle';
 import { getAccountsHistory, removeAccountFromHistory } from '@/utils/user/userUtil';
+import { exchangeGoogleAccessToken } from '@/services/auth/googleSso';
+import { setSsoToken, clearSsoToken } from '@/services/auth/ssoToken';
+import { getUserByEmail } from '@/services/userService';
+import { UserStatus } from '@/types/user';
 import toast from 'react-hot-toast';
 
 const LoginPage: React.FC = () => {
   const { t } = useLanguage();
-  const { currentUser } = useAuth();
+  const { currentUser, applyLogin } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [useCurrentAccount, setUseCurrentAccount] = useState(false);
   const [accountsHistory, setAccountsHistory] = useState(getAccountsHistory());
 
-  // Tự động redirect về trang chủ nếu user đã đăng nhập và không muốn chọn tài khoản khác
+  // Đã đăng nhập → về trang chủ
   useEffect(() => {
-    if (currentUser && useCurrentAccount) {
-      navigate('/', { replace: true });
-    }
-  }, [currentUser, navigate, useCurrentAccount]);
+    if (currentUser) navigate('/', { replace: true });
+  }, [currentUser, navigate]);
 
-  // Reset loading khi currentUser thay đổi (có thể do bị logout vì status không phải active)
   useEffect(() => {
-    if (!currentUser && loading) {
-      setLoading(false);
-    }
-  }, [currentUser, loading]);
+    setAccountsHistory(getAccountsHistory());
+  }, []);
 
-  const handleGoogleLogin = async (promptAccountSelection: boolean = false) => {
+  // Đổi Google access token → SSO JWT (RiceService) → lấy hồ sơ (role/status) từ BE.
+  const finishLogin = async (accessToken: string) => {
     setLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
-      
-      // Nếu muốn chọn tài khoản khác, thêm prompt để hiển thị account picker
-      if (promptAccountSelection) {
-        provider.setCustomParameters({
-          prompt: 'select_account'
-        });
+      const { token, user } = await exchangeGoogleAccessToken(accessToken);
+      setSsoToken(token);
+      const data = await getUserByEmail(user.email);
+      if (!data) {
+        clearSsoToken();
+        toast.error('Tài khoản chưa được cấp quyền. Liên hệ quản trị viên.');
+        return;
       }
-      
-      await signInWithPopup(auth, provider);
-      toast.success('Login successful!');
-      setUseCurrentAccount(true);
-      // Redirect sẽ được xử lý bởi useEffect khi currentUser được cập nhật
-    } catch (error: any) {
-      console.error('Login error:', error);
-      if (error.code !== 'auth/popup-closed-by-user') {
-        toast.error('Failed to login. Please try again.');
+      if (data.status !== UserStatus.ACTIVE) {
+        clearSsoToken();
+        toast.error('Tài khoản chưa được phê duyệt. Vui lòng chờ quản trị viên.');
+        return;
       }
+      applyLogin(data);
+      toast.success('Đăng nhập thành công');
+      navigate('/', { replace: true });
+    } catch {
+      clearSsoToken();
+      toast.error('Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
-      // Đảm bảo luôn tắt loading dù có lỗi hay không
       setLoading(false);
     }
   };
 
-  const handleUseCurrentAccount = () => {
-    if (currentUser) {
-      setUseCurrentAccount(true);
-      navigate('/', { replace: true });
-    }
-  };
-
-  const handleSelectAccount = async (account: typeof accountsHistory[0]) => {
-    setLoading(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      // Set email để Google tự động chọn tài khoản này
-      if (account.email) {
-        provider.setCustomParameters({
-          login_hint: account.email
-        });
-      }
-      await signInWithPopup(auth, provider);
-      toast.success('Login successful!');
-      setUseCurrentAccount(true);
-    } catch (error: any) {
-      console.error('Login error:', error);
-      if (error.code !== 'auth/popup-closed-by-user') {
-        toast.error('Failed to login. Please try again.');
-      }
-    } finally {
-      // Đảm bảo luôn tắt loading dù có lỗi hay không
+  const login = useGoogleLogin({
+    scope: 'openid email profile',
+    onSuccess: (res) => finishLogin(res.access_token),
+    onError: () => {
       setLoading(false);
-    }
+      toast.error('Đăng nhập Google thất bại');
+    },
+  });
+
+  const startLogin = () => {
+    setLoading(true);
+    login();
   };
 
   const handleRemoveAccount = (uid: string, e: React.MouseEvent) => {
@@ -104,11 +85,6 @@ const LoginPage: React.FC = () => {
     setAccountsHistory(getAccountsHistory());
     toast.success(t('login.accountRemoved'));
   };
-
-  // Cập nhật danh sách khi component mount
-  useEffect(() => {
-    setAccountsHistory(getAccountsHistory());
-  }, []);
 
   return (
     <Box
@@ -151,11 +127,11 @@ const LoginPage: React.FC = () => {
               </Typography>
               <Box layoutClassName="space-y-2 max-h-64 overflow-y-auto">
                 {accountsHistory
-                  .filter(acc => acc.uid !== currentUser?.uid) // Loại bỏ tài khoản hiện tại
+                  .filter((acc) => acc.uid !== currentUser?.uid)
                   .map((account) => (
                     <Card
                       key={account.uid}
-                      onClick={() => handleSelectAccount(account)}
+                      onClick={() => startLogin()}
                       padding="none"
                       layoutClassName="group flex cursor-pointer items-center gap-3 p-3"
                       roundedClassName="rounded-lg"
@@ -200,47 +176,9 @@ const LoginPage: React.FC = () => {
             </Box>
           )}
 
-          {/* Hiển thị tài khoản hiện tại nếu có */}
-          {currentUser && (
-            <Card roundedClassName="rounded-xl" backgroundClassName="bg-slate-50 dark:bg-slate-700/50">
-              <Typography size="sm" variant="muted" layoutClassName="mb-3">
-                {t('login.currentAccount')}
-              </Typography>
-              <Box layoutClassName="mb-3 flex items-center gap-3">
-                <AvatarImage
-                  src={currentUser.photoURL || undefined}
-                  alt={currentUser.displayName || 'User'}
-                  fallback={
-                    <Typography as="span" textClassName="text-sm font-bold text-primary-600 dark:text-primary-400">
-                      {currentUser.displayName?.charAt(0).toUpperCase() || currentUser.email?.charAt(0).toUpperCase() || 'A'}
-                    </Typography>
-                  }
-                />
-                <Box layoutClassName="flex-1 min-w-0">
-                  <Typography size="sm" variant="primary" layoutClassName="truncate" textClassName="font-medium">
-                    {currentUser.displayName || 'User'}
-                  </Typography>
-                  <Typography size="xs" variant="muted" layoutClassName="truncate">
-                    {currentUser.email}
-                  </Typography>
-                </Box>
-              </Box>
-              <Button
-                onClick={handleUseCurrentAccount}
-                disabled={loading}
-                fullWidth
-                backgroundClassName="bg-primary-600"
-                hoverClassName="hover:bg-primary-700"
-                leftIcon={<LogIn className="w-4 h-4" />}
-              >
-                {t('login.useCurrentAccount')}
-              </Button>
-            </Card>
-          )}
-
-          {/* Nút đăng nhập với tài khoản khác hoặc thêm tài khoản mới */}
+          {/* Nút đăng nhập Google */}
           <Button
-            onClick={() => handleGoogleLogin(true)}
+            onClick={() => startLogin()}
             disabled={loading}
             variant="secondary"
             fullWidth
@@ -248,20 +186,20 @@ const LoginPage: React.FC = () => {
             sizeClassName="py-3"
             shadowClassName="shadow-sm"
             hoverClassName="hover:shadow-md"
+            leftIcon={loading ? undefined : <UserPlus className="w-5 h-5" />}
           >
             {loading ? (
               <Spinner size="md" textClassName="text-slate-400" />
             ) : (
               <>
-                <UserPlus className="w-5 h-5" />
                 <Image
-                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                  alt="Google" 
+                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                  alt="Google"
                   layoutClassName="w-5 h-5"
                 />
+                {t('login.googleButton')}
               </>
             )}
-            {currentUser ? t('login.switchAccount') : t('login.googleButton')}
           </Button>
         </Box>
 
