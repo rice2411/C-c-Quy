@@ -9,8 +9,10 @@ export default defineConfig(({ mode }) => {
     env.VITE_SITE_URL ||
     "https://admin.cucquy.site"
   ).replace(/\/$/, "");
-  // Nhãn phiên bản build (hiện ở cuối sidebar). Ưu tiên BUILD_ID truyền vào; mặc định = giờ build.
-  const buildId = process.env.BUILD_ID || new Date().toISOString().replace("T", " ").slice(0, 16);
+  // Nhãn phiên bản build (hiện ở cuối sidebar). Ưu tiên BUILD_ID truyền vào; mặc định = giờ build (GMT+7).
+  const buildId =
+    process.env.BUILD_ID ||
+    new Date(Date.now() + 7 * 3600 * 1000).toISOString().replace("T", " ").slice(0, 16) + " +07";
 
   return {
     server: {
