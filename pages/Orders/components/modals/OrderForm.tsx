@@ -35,7 +35,6 @@ import OrderFormItemsSection from '@/pages/Orders/components/OrderFormItemsSecti
 import OrderFormDecorationSection from '@/pages/Orders/components/OrderFormDecorationSection';
 import OrderFormStatusSection from '@/pages/Orders/components/OrderFormStatusSection';
 import { pushRecentProductId } from '@/utils/product/recentProducts';
-import ProductCustomizeModal, { type CustomizeConfig } from '@/pages/Orders/components/ProductCustomizeModal';
 
 interface OrderFormProps {
   isOpen: boolean;
@@ -96,8 +95,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   
   // New: Multiple Items State
   const [items, setItems] = useState<FormItem[]>([]);
-  // Modal tuỳ chỉnh món (Grab-style): chọn size/vị/SL cho 1 dòng.
-  const [customize, setCustomize] = useState<{ product: Product; itemId: string | null } | null>(null);
 
   // Products: lấy từ React Query (P2 useProducts) thay vì tự fetch.
   const { products } = useProducts();
@@ -308,49 +305,37 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
    * Ngược lại → tạo line item mới.
    */
   const handleAddItemWithProduct = (product: Product) => {
-    const hasVariants = (product.sizes?.length ?? 0) > 0 || (product.flavorVariants?.length ?? 0) > 0;
-    pushRecentProductId(product.id);
-    // SP biến thể (size/vị) → mở modal tuỳ chỉnh (Grab-style) chọn size/vị/SL rồi thêm 1 dòng.
-    if (hasVariants) { setCustomize({ product, itemId: null }); return; }
-    // SP thường → POS: đã có → +1, chưa có → thêm dòng.
     const newId = genItemId();
     let resolvedId = newId;
+    // Sản phẩm có biến thể (size/vị) → mỗi lần thêm là 1 DÒNG RIÊNG để cấu hình khác nhau
+    // (vd 2 Combo Gia Đình + 1 Lẻ). Sản phẩm thường → cộng dồn số lượng như cũ.
+    const hasVariants = (product.sizes?.length ?? 0) > 0 || (product.flavorVariants?.length ?? 0) > 0;
     setItems(prev => {
       const existingIdx = prev.findIndex(i => i.productId === product.id);
-      if (existingIdx >= 0) {
+      // SP thường (không biến thể) đã có trong đơn → cộng dồn số lượng (POS).
+      if (existingIdx >= 0 && !hasVariants) {
         resolvedId = prev[existingIdx].id;
-        return prev.map((item, idx) => (idx === existingIdx ? { ...item, quantity: (item.quantity || 0) + 1 } : item));
+        return prev.map((item, idx) =>
+          idx === existingIdx ? { ...item, quantity: (item.quantity || 0) + 1 } : item,
+        );
       }
-      return [...prev, { id: newId, productId: product.id, productName: product.name, quantity: 1, unitPrice: product.price, image: product.image }];
+      // SP biến thể (size/vị) → MỖI lần thêm là 1 DÒNG RIÊNG (vd mỗi combo chọn vị khác nhau).
+      // Sản phẩm có size → mặc định size đầu tiên số lượng 1 (dùng sizeCounts).
+      const firstSize = product.sizes?.[0];
+      return [...prev, {
+        id: newId,
+        productId: product.id,
+        productName: product.name,
+        quantity: 1,
+        unitPrice: firstSize ? firstSize.price : product.price,
+        image: (firstSize?.image) || product.image,
+        size: firstSize?.name,
+        sizeCounts: firstSize ? [{ name: firstSize.name, qty: 1 }] : undefined,
+      }];
     });
     flashHighlight(resolvedId);
-  };
-
-  // Mở modal sửa 1 dòng (chọn lại size/vị/SL).
-  const handleEditItem = (itemId: string) => {
-    const it = items.find((i) => i.id === itemId);
-    const product = it && products.find((p) => p.id === it.productId);
-    if (it && product) setCustomize({ product, itemId });
-  };
-
-  // Áp cấu hình từ modal → thêm dòng mới hoặc cập nhật dòng đang sửa.
-  const applyCustomize = (cfg: CustomizeConfig) => {
-    if (!customize) return;
-    const { product, itemId } = customize;
-    if (itemId) {
-      setItems((prev) => prev.map((i) => (i.id === itemId
-        ? { ...i, sizeCounts: cfg.sizeCounts, size: cfg.size, flavors: cfg.flavors, quantity: cfg.quantity, unitPrice: cfg.unitPrice, image: cfg.image ?? i.image }
-        : i)));
-      flashHighlight(itemId);
-    } else {
-      const id = genItemId();
-      setItems((prev) => [...prev, {
-        id, productId: product.id, productName: product.name,
-        quantity: cfg.quantity, unitPrice: cfg.unitPrice, image: cfg.image ?? product.image,
-        size: cfg.size, sizeCounts: cfg.sizeCounts, flavors: cfg.flavors,
-      }]);
-      flashHighlight(id);
-    }
+    // Lưu lên localStorage để hiện trong "Hay dùng" lần sau.
+    pushRecentProductId(product.id);
   };
 
   /**
@@ -881,7 +866,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               onDecrementProduct={handleDecrementProduct}
               onRemoveItem={handleRemoveItem}
               onUpdateItem={handleUpdateItem}
-              onEditItem={handleEditItem}
               shippingCost={shippingCost}
               setShippingCost={setShippingCost}
               total={total}
@@ -1024,17 +1008,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         lines={refundModal?.lines ?? []}
         onClose={() => setRefundModal(null)}
         onConfirm={handleRefundConfirm}
-      />
-
-      <ProductCustomizeModal
-        open={!!customize}
-        product={customize?.product ?? null}
-        initial={(() => {
-          const e = customize?.itemId ? items.find((i) => i.id === customize.itemId) : null;
-          return e ? { sizeCounts: e.sizeCounts, size: e.size, flavors: e.flavors, quantity: e.quantity, unitPrice: e.unitPrice, image: e.image } : null;
-        })()}
-        onClose={() => setCustomize(null)}
-        onConfirm={applyCustomize}
       />
     </>
   );

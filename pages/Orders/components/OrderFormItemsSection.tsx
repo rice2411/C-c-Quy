@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { DollarSign, Package, Pencil, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
+import { DollarSign, Minus, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Product, flavorVariantColor, groupFlavors, sizeCount } from '@/types';
+import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor, orderLineImage, sizeCountsCakes, sizeCountsPrice } from '@/types';
 import { FormItem } from '@/pages/Orders/components/modals/OrderForm';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -24,8 +24,6 @@ interface OrderItemsSectionProps {
   onDecrementProduct?: (productId: string) => void;
   onRemoveItem: (itemId: string) => void;
   onUpdateItem: (itemId: string, field: keyof FormItem, value: any) => void;
-  /** Mở modal tuỳ chỉnh (chọn size/vị kiểu Grab) cho 1 dòng. */
-  onEditItem?: (itemId: string) => void;
   shippingCost: number;
   setShippingCost: (val: number) => void;
   total: number;
@@ -40,7 +38,6 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
   onDecrementProduct,
   onRemoveItem,
   onUpdateItem,
-  onEditItem,
   shippingCost,
   setShippingCost,
   total,
@@ -197,11 +194,12 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
             const itemFlavors = itemProduct?.flavors ?? [];
             const itemSizes = itemProduct?.sizes ?? [];
             const isSized = itemSizes.length > 0;
-            const hasVariants = isSized || itemFlavors.length > 0;
+            // sizeCounts: nhiều size + số lượng/dòng (fallback từ size đơn cũ).
             const sc = item.sizeCounts ?? (item.size ? [{ name: item.size, qty: item.quantity || 1 }] : []);
-            const sizeSummary = isSized && sc[0]
-              ? `${sc[0].name}${itemProduct && (sizeCount(itemProduct, sc[0].name) ?? 1) > 1 ? ` (${sizeCount(itemProduct, sc[0].name)} cái)` : ''}${sc[0].qty > 1 ? ` ×${sc[0].qty}` : ''}`
-              : '';
+            // Tổng số cái (Σ qty×số cái mỗi size) = cap cho stepper vị.
+            const totalCakes = itemProduct ? sizeCountsCakes(itemProduct, sc) : 0;
+            const flavorCap = isSized ? totalCakes : Infinity;
+            const pickedTotal = (item.flavors ?? []).length;
             return (
               <Box
                 key={item.id}
@@ -234,32 +232,129 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                     <Typography size="sm" layoutClassName="truncate font-semibold">
                       {item.productName || `Item #${index + 1}`}
                     </Typography>
-                    {hasVariants ? (
+                    {isSized ? (
                       <Box layoutClassName="mt-1 flex flex-col gap-1">
-                        {sizeSummary ? (
-                          <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-300">{sizeSummary}</Typography>
-                        ) : null}
-                        {(item.flavors?.length ?? 0) > 0 ? (
-                          <Box layoutClassName="flex flex-wrap gap-1">
-                            {groupFlavors(item.flavors ?? []).map(({ name: fl, qty }) => {
-                              const cc = itemProduct ? flavorVariantColor(itemProduct, fl) : '#64748b';
-                              return (
-                                <Box key={fl} layoutClassName="inline-flex items-center gap-1 px-1.5 py-0.5" roundedClassName="rounded-full" borderClassName="border" backgroundClassName="bg-white dark:bg-slate-800" style={{ borderColor: cc + '80' }}>
-                                  <Box layoutClassName="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: cc }} />
-                                  <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-300">{fl}{qty > 1 ? ` ×${qty}` : ''}</Typography>
-                                </Box>
-                              );
-                            })}
-                          </Box>
-                        ) : null}
-                        {onEditItem ? (
-                          <Button type="button" onClick={() => onEditItem(item.id)} variant="ghost" disableVariantHover disableVariantTextColor
-                            layoutClassName="mt-0.5 inline-flex w-fit items-center gap-1 px-2 py-0.5" roundedClassName="rounded-lg" sizeClassName="text-xs"
-                            borderClassName="border border-slate-200 dark:border-slate-600" textClassName="font-medium text-primary-600 dark:text-primary-400"
-                            hoverClassName="hover:bg-primary-50 dark:hover:bg-primary-900/20">
-                            <Pencil className="h-3 w-3" /> Sửa loại / vị
-                          </Button>
-                        ) : null}
+                        <Typography as="span" size="xs" variant="muted">Loại (mỗi dòng 1 loại — thêm sản phẩm để có combo khác vị):</Typography>
+                        <Box layoutClassName="flex flex-wrap gap-1.5">
+                          {itemSizes.map((sz) => {
+                            const selName = sc[0]?.name;
+                            const active = selName === sz.name;
+                            const cnt = sz.count ?? 1;
+                            const pick = () => {
+                              const qty = sc[0]?.qty ?? 1;
+                              const nextSc = [{ name: sz.name, qty }];
+                              onUpdateItem(item.id, 'sizeCounts', nextSc);
+                              onUpdateItem(item.id, 'size', sz.name);
+                              onUpdateItem(item.id, 'quantity', 1);
+                              onUpdateItem(item.id, 'unitPrice', itemProduct ? sizeCountsPrice(itemProduct, nextSc) : 0);
+                              if (itemProduct) {
+                                const cakes = sizeCountsCakes(itemProduct, nextSc);
+                                if ((item.flavors?.length ?? 0) > cakes) onUpdateItem(item.id, 'flavors', (item.flavors ?? []).slice(0, cakes));
+                                const im = orderLineImage(itemProduct, { size: sz.name, flavors: item.flavors });
+                                if (im) onUpdateItem(item.id, 'image', im);
+                              }
+                            };
+                            return (
+                              <Button key={sz.name} type="button" onClick={pick} variant="ghost" disableVariantHover disableVariantTextColor
+                                layoutClassName="inline-flex items-center gap-1.5 px-2 py-1" roundedClassName="rounded-lg" sizeClassName="text-xs"
+                                borderClassName={active ? 'border border-primary-400 dark:border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
+                                backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
+                                textClassName={active ? 'font-semibold text-primary-700 dark:text-primary-300' : 'text-slate-600 dark:text-slate-300'}
+                                hoverClassName="hover:border-primary-300 dark:hover:border-primary-700">
+                                {sz.image ? (
+                                  <Box layoutClassName="h-5 w-5 shrink-0 overflow-hidden rounded-md">
+                                    <Image src={sz.image} alt="" layoutClassName="h-full w-full object-cover" />
+                                  </Box>
+                                ) : null}
+                                <Typography as="span" size="inherit" layoutClassName="font-inherit">{sz.name}{cnt > 1 ? ` (${cnt} cái)` : ''} · {formatVNDOrDash(sz.price)}</Typography>
+                              </Button>
+                            );
+                          })}
+                        </Box>
+                        {/* Số lượng của loại đang chọn (mặc định 1). Combo khác vị → bấm "Thêm sản phẩm". */}
+                        <Box layoutClassName="mt-0.5 flex items-center gap-2">
+                          <Typography as="span" size="xs" variant="muted">Số lượng:</Typography>
+                          {(() => {
+                            const cur = sc[0];
+                            const setLineQty = (n: number) => {
+                              if (!cur) return;
+                              const nq = Math.max(1, n);
+                              const nextSc = [{ name: cur.name, qty: nq }];
+                              onUpdateItem(item.id, 'sizeCounts', nextSc);
+                              onUpdateItem(item.id, 'unitPrice', itemProduct ? sizeCountsPrice(itemProduct, nextSc) : 0);
+                              if (itemProduct) {
+                                const cakes = sizeCountsCakes(itemProduct, nextSc);
+                                if ((item.flavors?.length ?? 0) > cakes) onUpdateItem(item.id, 'flavors', (item.flavors ?? []).slice(0, cakes));
+                              }
+                            };
+                            const q = cur?.qty ?? 1;
+                            return (
+                              <>
+                                <Button type="button" onClick={() => setLineQty(q - 1)} disabled={q <= 1} aria-label="Bớt" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1" roundedClassName="rounded-full" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500 dark:text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <Typography as="span" size="xs" layoutClassName="w-4 text-center font-semibold" textClassName="text-slate-800 dark:text-slate-100">{q}</Typography>
+                                <Button type="button" onClick={() => setLineQty(q + 1)} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1" roundedClassName="rounded-full" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500 dark:text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </>
+                            );
+                          })()}
+                        </Box>
+                      </Box>
+                    ) : null}
+                    {itemFlavors.length > 0 ? (
+                      <Box layoutClassName="mt-1 flex flex-col gap-1">
+                        <Typography as="span" size="xs" variant="muted">
+                          Vị{isSized ? ` (${pickedTotal}/${flavorCap})` : (pickedTotal ? ` (${pickedTotal})` : '')}:
+                        </Typography>
+                        <Box layoutClassName="flex flex-wrap gap-1.5">
+                          {itemFlavors.map((fl) => {
+                            const qty = (item.flavors ?? []).filter((x) => x === fl).length;
+                            const cc = itemProduct ? flavorVariantColor(itemProduct, fl) : '#64748b';
+                            const th = itemProduct ? flavorImage(itemProduct, fl) : undefined;
+                            const apply = (arr: string[]) => {
+                              onUpdateItem(item.id, 'flavors', arr);
+                              if (itemProduct) {
+                                if (isSized) {
+                                  // Có size: giá + SL theo sizeCounts (không đổi ở đây).
+                                } else if (productUsesFlavorPricing(itemProduct)) {
+                                  // Giá theo vị: SL = tổng số cái, đơn giá = giá mỗi cái (tổng / SL).
+                                  const total = arr.length;
+                                  const sum = flavorSumPrice(itemProduct, arr);
+                                  onUpdateItem(item.id, 'quantity', Math.max(1, total));
+                                  onUpdateItem(item.id, 'unitPrice', total ? Math.round(sum / total) : (itemProduct.price || 0));
+                                } else {
+                                  // Vị không đặt giá: SL = tổng số cái, đơn giá = giá gốc.
+                                  onUpdateItem(item.id, 'quantity', Math.max(1, arr.length));
+                                }
+                                const im = orderLineImage(itemProduct, { size: item.size, flavors: arr });
+                                if (im) onUpdateItem(item.id, 'image', im);
+                              }
+                            };
+                            const dec = () => { const a = [...(item.flavors ?? [])]; const i = a.indexOf(fl); if (i >= 0) { a.splice(i, 1); apply(a); } };
+                            const inc = () => { if (!isSized || pickedTotal < flavorCap) apply([...(item.flavors ?? []), fl]); };
+                            return (
+                              <Box key={fl} layoutClassName="inline-flex items-center gap-1 rounded-full py-0.5 pl-1 pr-1.5" borderClassName="border" backgroundClassName="bg-white dark:bg-slate-800" style={{ borderColor: qty ? cc : cc + '80' }}>
+                                {th ? (
+                                  <Box layoutClassName="h-5 w-5 shrink-0 overflow-hidden rounded-full" borderClassName="border border-white/60 dark:border-slate-700">
+                                    <Image src={th} alt="" layoutClassName="h-full w-full object-cover" />
+                                  </Box>
+                                ) : (
+                                  <Box layoutClassName="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: cc }} />
+                                )}
+                                <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{fl}</Typography>
+                                <Button type="button" onClick={dec} disabled={qty === 0} aria-label="Bớt" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-0.5" roundedClassName="rounded-full" borderClassName="border border-transparent" textClassName="text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <Typography as="span" size="xs" layoutClassName="w-3 text-center font-semibold" textClassName="text-slate-800 dark:text-slate-100">{qty}</Typography>
+                                <Button type="button" onClick={inc} disabled={isSized && pickedTotal >= flavorCap} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-0.5" roundedClassName="rounded-full" borderClassName="border border-transparent" textClassName="text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </Box>
+                            );
+                          })}
+                        </Box>
                       </Box>
                     ) : null}
                     <Box layoutClassName="mt-0.5 flex items-center gap-1 text-xs">
@@ -309,7 +404,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                   </Box>
 
                   <Box layoutClassName="flex items-center gap-2">
-                    {!hasVariants ? (
+                    {!isSized ? (
                     <Box layoutClassName="w-20">
                       <Input
                         id={`order-item-qty-${item.id}`}
