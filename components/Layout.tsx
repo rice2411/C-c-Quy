@@ -317,11 +317,11 @@ const Layout: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            
+          <div className="flex items-center gap-2 md:gap-4">
+
             <button
               onClick={toggleLanguage}
-              className="px-3 py-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
+              className="hidden sm:flex px-2 py-1.5 md:px-3 md:py-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors items-center gap-2 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
             >
               <img 
                 src={language === 'en' ? "https://flagcdn.com/w40/us.png" : "https://flagcdn.com/w40/vn.png"} 
@@ -337,7 +337,7 @@ const Layout: React.FC = () => {
 
             <NotificationBell />
 
-             <div className="flex items-center gap-2" title={`${ping.label}${ping.ms !== null ? ` · ${ping.ms} ms` : ''}`}>
+             <div className="hidden sm:flex items-center gap-2" title={`${ping.label}${ping.ms !== null ? ` · ${ping.ms} ms` : ''}`}>
                <span className={`w-2 h-2 rounded-full ${pingDot} animate-pulse`}></span>
                <span className={`text-xs font-semibold ${pingText}`}>
                  {ping.ms !== null ? `${ping.ms} ms` : '— ms'}
