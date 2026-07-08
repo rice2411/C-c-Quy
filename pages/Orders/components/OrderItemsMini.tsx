@@ -1,13 +1,13 @@
 /**
- * OrderItemsMini — danh sách item của đơn kiểu sàn TMĐT (Shopee/Lazada):
- * mỗi sản phẩm 1 hàng gồm [ảnh] [tên + phân loại xuống dòng phụ] [×SL].
- * Tên và phân loại (size / vị) tách dòng, KHÔNG dồn hết vào 1 dòng cụt.
- *
- * Combo tính giá theo vị + nhiều vị → tách mỗi vị 1 hàng (ảnh của vị đó).
+ * OrderItemsMini — danh sách item của đơn kiểu sàn TMĐT: mỗi LOẠI 1 hàng riêng, ảnh riêng,
+ * KHÔNG gộp. Quy tắc tách:
+ *  - Sản phẩm tính giá theo vị (flavor pricing) → mỗi VỊ 1 hàng (ảnh của vị).
+ *  - Sản phẩm có size → mỗi SIZE 1 hàng: combo (count>1) hiện ẢNH COMBO; lẻ hiện VỊ.
+ *  - Còn lại → 1 hàng (ảnh sản phẩm).
  */
 import React from 'react';
 import type { OrderItem } from '@/types';
-import { groupFlavors, sizeCountsLabel, productUsesFlavorPricing } from '@/types';
+import { groupFlavors, productUsesFlavorPricing, flavorImage, sizeImage, sizeCount } from '@/types';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
 import Box from '@/components/ui/Box';
 import Image from '@/components/ui/Image';
@@ -17,7 +17,7 @@ interface MiniRow {
   key: string;
   img?: string;
   name: string;
-  meta: string[]; // dòng phụ: size, vị...
+  meta: string[];
   qty: number;
 }
 
@@ -31,19 +31,41 @@ const OrderItemsMini: React.FC<{ items: OrderItem[] }> = ({ items }) => {
   const rows: MiniRow[] = items.flatMap((it) => {
     const product = products.find((p) => p.id === it.productId);
     const flavors = it.flavors ?? [];
-    // Combo tính giá theo vị → mỗi vị 1 hàng, ảnh riêng của vị.
+    const flavorLine = groupFlavors(flavors).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
+
+    // 1) Tính giá theo vị → mỗi vị 1 hàng (ảnh vị).
     if (product && productUsesFlavorPricing(product) && flavors.length > 0) {
-      return groupFlavors(flavors).map(({ name: fl, qty }) => {
-        const variant = product.flavorVariants?.find((v) => v.name === fl);
-        return { key: `${it.id}-${fl}`, img: variant?.image || it.image, name: it.name, meta: [`Vị: ${fl}`], qty };
+      return groupFlavors(flavors).map(({ name: fl, qty }) => ({
+        key: `${it.id}-f-${fl}`,
+        img: flavorImage(product, fl) || it.image,
+        name: it.name,
+        meta: [`Vị: ${fl}`],
+        qty,
+      }));
+    }
+
+    // 2) Có nhiều size → mỗi size 1 hàng.
+    const sizeList = it.sizeCounts && it.sizeCounts.length
+      ? it.sizeCounts
+      : it.size ? [{ name: it.size, qty: it.quantity || 1 }] : null;
+
+    if (sizeList) {
+      return sizeList.map(({ name: sizeName, qty }) => {
+        const cnt = product ? (sizeCount(product, sizeName) ?? 1) : 1;
+        const isCombo = cnt > 1;
+        const sizeLbl = isCombo ? `${sizeName} (${cnt} cái)` : sizeName;
+        const label = qty > 1 ? `${sizeLbl} ×${qty}` : sizeLbl;
+        const meta = [label];
+        // Lẻ → hiện vị; combo → chỉ ảnh combo (không liệt kê vị).
+        if (!isCombo && flavorLine) meta.push(`Vị: ${flavorLine}`);
+        const img = (product ? sizeImage(product, sizeName) : undefined) || it.image;
+        return { key: `${it.id}-s-${sizeName}`, img, name: it.name, meta, qty };
       });
     }
+
+    // 3) Mặc định 1 hàng.
     const meta: string[] = [];
-    const scLabel = sizeCountsLabel(it.sizeCounts);
-    if (scLabel) meta.push(scLabel);
-    else if (it.size) meta.push(it.size);
-    const ft = groupFlavors(flavors).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
-    if (ft) meta.push(`Vị: ${ft}`);
+    if (flavorLine) meta.push(`Vị: ${flavorLine}`);
     return [{ key: it.id, img: it.image, name: it.name || '', meta, qty: it.quantity || 0 }];
   });
 
