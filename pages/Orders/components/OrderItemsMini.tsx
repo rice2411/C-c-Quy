@@ -1,9 +1,9 @@
 /**
- * OrderItemsMini — danh sách mini từng item của đơn (thumbnail + tên + size/vị + ×SL).
- * Dùng trong order list (desktop/mobile) để thấy đầy đủ sản phẩm khách đặt.
+ * OrderItemsMini — danh sách item của đơn kiểu sàn TMĐT (Shopee/Lazada):
+ * mỗi sản phẩm 1 hàng gồm [ảnh] [tên + phân loại xuống dòng phụ] [×SL].
+ * Tên và phân loại (size / vị) tách dòng, KHÔNG dồn hết vào 1 dòng cụt.
  *
- * Sản phẩm tính giá theo vị + nhiều vị → TÁCH mỗi vị 1 dòng riêng (ảnh của vị đó),
- * không gộp hết vào 1 dòng — khớp cách hiển thị ở OrderDetail.
+ * Combo tính giá theo vị + nhiều vị → tách mỗi vị 1 hàng (ảnh của vị đó).
  */
 import React from 'react';
 import type { OrderItem } from '@/types';
@@ -16,7 +16,8 @@ import Typography from '@/components/ui/Typography';
 interface MiniRow {
   key: string;
   img?: string;
-  text: string;
+  name: string;
+  meta: string[]; // dòng phụ: size, vị...
   qty: number;
 }
 
@@ -30,36 +31,42 @@ const OrderItemsMini: React.FC<{ items: OrderItem[] }> = ({ items }) => {
   const rows: MiniRow[] = items.flatMap((it) => {
     const product = products.find((p) => p.id === it.productId);
     const flavors = it.flavors ?? [];
-    // Combo tính giá theo vị → mỗi vị 1 dòng, ảnh riêng của vị.
+    // Combo tính giá theo vị → mỗi vị 1 hàng, ảnh riêng của vị.
     if (product && productUsesFlavorPricing(product) && flavors.length > 0) {
       return groupFlavors(flavors).map(({ name: fl, qty }) => {
         const variant = product.flavorVariants?.find((v) => v.name === fl);
-        return { key: `${it.id}-${fl}`, img: variant?.image || it.image, text: `${it.name} · ${fl}`, qty };
+        return { key: `${it.id}-${fl}`, img: variant?.image || it.image, name: it.name, meta: [`Vị: ${fl}`], qty };
       });
     }
-    // Mặc định: 1 dòng (tên + size + vị gọn).
-    let s = it.name || '';
+    const meta: string[] = [];
     const scLabel = sizeCountsLabel(it.sizeCounts);
-    if (scLabel) s += ` · ${scLabel}`;
-    else if (it.size) s += ` · ${it.size}`;
+    if (scLabel) meta.push(scLabel);
+    else if (it.size) meta.push(it.size);
     const ft = groupFlavors(flavors).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
-    if (ft) s += ` (${ft})`;
-    return [{ key: it.id, img: it.image, text: s, qty: it.quantity || 0 }];
+    if (ft) meta.push(`Vị: ${ft}`);
+    return [{ key: it.id, img: it.image, name: it.name || '', meta, qty: it.quantity || 0 }];
   });
 
   return (
-    <Box layoutClassName="flex flex-col gap-1">
+    <Box layoutClassName="flex flex-col gap-2">
       {rows.map((r) => (
-        <Box key={r.key} layoutClassName="flex items-center gap-2">
+        <Box key={r.key} layoutClassName="flex items-start gap-2.5">
           <Box
-            layoutClassName="h-7 w-7 shrink-0 overflow-hidden"
+            layoutClassName="h-10 w-10 shrink-0 overflow-hidden"
             roundedClassName="rounded-md"
             borderClassName="border border-slate-200 dark:border-slate-700">
-            <Image src={r.img} alt={r.text} layoutClassName="h-full w-full bg-slate-100 object-cover dark:bg-slate-800" />
+            <Image src={r.img} alt={r.name} layoutClassName="h-full w-full bg-slate-100 object-cover dark:bg-slate-800" />
           </Box>
-          <Typography as="span" size="xs" layoutClassName="min-w-0 flex-1 truncate" textClassName="text-slate-600 dark:text-slate-300">
-            {r.text}
-          </Typography>
+          <Box layoutClassName="min-w-0 flex-1">
+            <Typography as="p" size="xs" layoutClassName="font-medium leading-snug" textClassName="text-slate-800 dark:text-slate-200">
+              {r.name}
+            </Typography>
+            {r.meta.map((m, i) => (
+              <Typography key={i} as="p" size="xs" layoutClassName="leading-snug" textClassName="text-slate-500 dark:text-slate-400">
+                {m}
+              </Typography>
+            ))}
+          </Box>
           <Typography as="span" size="xs" layoutClassName="shrink-0 font-medium" textClassName="text-slate-500 dark:text-slate-400">
             ×{r.qty}
           </Typography>
