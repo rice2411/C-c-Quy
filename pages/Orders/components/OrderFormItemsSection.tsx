@@ -234,44 +234,72 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                     </Typography>
                     {isSized ? (
                       <Box layoutClassName="mt-1 flex flex-col gap-1">
-                        <Typography as="span" size="xs" variant="muted">Loại (số lượng):</Typography>
-                        <Box layoutClassName="flex flex-col gap-1">
+                        <Typography as="span" size="xs" variant="muted">Loại (mỗi dòng 1 loại — thêm sản phẩm để có combo khác vị):</Typography>
+                        <Box layoutClassName="flex flex-wrap gap-1.5">
                           {itemSizes.map((sz) => {
-                            const q = sc.find((x) => x.name === sz.name)?.qty ?? 0;
-                            const setQty = (nextQty: number) => {
-                              const m = new Map<string, number>(sc.map((x) => [x.name, x.qty] as [string, number]));
-                              if (nextQty <= 0) m.delete(sz.name); else m.set(sz.name, nextQty);
-                              const nextSc = itemSizes.filter((z) => (m.get(z.name) ?? 0) > 0).map((z) => ({ name: z.name, qty: m.get(z.name) as number }));
+                            const selName = sc[0]?.name;
+                            const active = selName === sz.name;
+                            const cnt = sz.count ?? 1;
+                            const pick = () => {
+                              const qty = sc[0]?.qty ?? 1;
+                              const nextSc = [{ name: sz.name, qty }];
                               onUpdateItem(item.id, 'sizeCounts', nextSc);
-                              onUpdateItem(item.id, 'unitPrice', itemProduct ? sizeCountsPrice(itemProduct, nextSc) : 0);
+                              onUpdateItem(item.id, 'size', sz.name);
                               onUpdateItem(item.id, 'quantity', 1);
-                              const firstSel = nextSc.find((x) => x.qty > 0);
-                              onUpdateItem(item.id, 'size', firstSel?.name);
+                              onUpdateItem(item.id, 'unitPrice', itemProduct ? sizeCountsPrice(itemProduct, nextSc) : 0);
                               if (itemProduct) {
                                 const cakes = sizeCountsCakes(itemProduct, nextSc);
                                 if ((item.flavors?.length ?? 0) > cakes) onUpdateItem(item.id, 'flavors', (item.flavors ?? []).slice(0, cakes));
-                                const im = orderLineImage(itemProduct, { size: firstSel?.name, flavors: item.flavors });
+                                const im = orderLineImage(itemProduct, { size: sz.name, flavors: item.flavors });
                                 if (im) onUpdateItem(item.id, 'image', im);
                               }
                             };
                             return (
-                              <Box key={sz.name} layoutClassName="flex items-center gap-2 rounded-lg px-2 py-1" borderClassName="border border-slate-100 dark:border-slate-700" backgroundClassName={q > 0 ? 'bg-primary-50/60 dark:bg-primary-900/20' : 'bg-white dark:bg-slate-800'}>
+                              <Button key={sz.name} type="button" onClick={pick} variant="ghost" disableVariantHover disableVariantTextColor
+                                layoutClassName="inline-flex items-center gap-1.5 px-2 py-1" roundedClassName="rounded-lg" sizeClassName="text-xs"
+                                borderClassName={active ? 'border border-primary-400 dark:border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
+                                backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
+                                textClassName={active ? 'font-semibold text-primary-700 dark:text-primary-300' : 'text-slate-600 dark:text-slate-300'}
+                                hoverClassName="hover:border-primary-300 dark:hover:border-primary-700">
                                 {sz.image ? (
-                                  <Box layoutClassName="h-6 w-6 shrink-0 overflow-hidden rounded-md" borderClassName="border border-slate-200 dark:border-slate-600">
+                                  <Box layoutClassName="h-5 w-5 shrink-0 overflow-hidden rounded-md">
                                     <Image src={sz.image} alt="" layoutClassName="h-full w-full object-cover" />
                                   </Box>
                                 ) : null}
-                                <Typography as="span" size="xs" layoutClassName="min-w-0 flex-1 truncate font-medium" textClassName="text-slate-700 dark:text-slate-200">{sz.name} · {formatVNDOrDash(sz.price)}</Typography>
-                                <Button type="button" onClick={() => setQty(q - 1)} disabled={q === 0} aria-label="Bớt" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1" roundedClassName="rounded-full" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500 dark:text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <Typography as="span" size="inherit" layoutClassName="font-inherit">{sz.name}{cnt > 1 ? ` (${cnt} cái)` : ''} · {formatVNDOrDash(sz.price)}</Typography>
+                              </Button>
+                            );
+                          })}
+                        </Box>
+                        {/* Số lượng của loại đang chọn (mặc định 1). Combo khác vị → bấm "Thêm sản phẩm". */}
+                        <Box layoutClassName="mt-0.5 flex items-center gap-2">
+                          <Typography as="span" size="xs" variant="muted">Số lượng:</Typography>
+                          {(() => {
+                            const cur = sc[0];
+                            const setLineQty = (n: number) => {
+                              if (!cur) return;
+                              const nq = Math.max(1, n);
+                              const nextSc = [{ name: cur.name, qty: nq }];
+                              onUpdateItem(item.id, 'sizeCounts', nextSc);
+                              onUpdateItem(item.id, 'unitPrice', itemProduct ? sizeCountsPrice(itemProduct, nextSc) : 0);
+                              if (itemProduct) {
+                                const cakes = sizeCountsCakes(itemProduct, nextSc);
+                                if ((item.flavors?.length ?? 0) > cakes) onUpdateItem(item.id, 'flavors', (item.flavors ?? []).slice(0, cakes));
+                              }
+                            };
+                            const q = cur?.qty ?? 1;
+                            return (
+                              <>
+                                <Button type="button" onClick={() => setLineQty(q - 1)} disabled={q <= 1} aria-label="Bớt" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1" roundedClassName="rounded-full" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500 dark:text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
                                   <Minus className="h-3 w-3" />
                                 </Button>
                                 <Typography as="span" size="xs" layoutClassName="w-4 text-center font-semibold" textClassName="text-slate-800 dark:text-slate-100">{q}</Typography>
-                                <Button type="button" onClick={() => setQty(q + 1)} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1" roundedClassName="rounded-full" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500 dark:text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <Button type="button" onClick={() => setLineQty(q + 1)} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1" roundedClassName="rounded-full" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500 dark:text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
                                   <Plus className="h-3 w-3" />
                                 </Button>
-                              </Box>
+                              </>
                             );
-                          })}
+                          })()}
                         </Box>
                       </Box>
                     ) : null}

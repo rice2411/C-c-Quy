@@ -16,7 +16,7 @@ import { getNextOrderNumber } from '@/services/orderService';
 import { fetchCommissionGroups } from '@/services/commissionGroupService';
 import { calcItemCommission } from '@/types/commissionGroup';
 import { getUserByUid } from '@/services/userService';
-import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product, SurchargeLine } from '@/types/index';
+import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product, SurchargeLine, sizeCountsPrice, sizeCountsCakes, sizeImage } from '@/types/index';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Box from '@/components/ui/Box';
@@ -194,20 +194,39 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPromoCode(initialData.appliedPromotions?.find((p) => p.code)?.code ?? '');
       setSelectedPromoIds((initialData.appliedPromotions ?? []).map((p) => p.promotionId));
       if (initialData.items && initialData.items.length > 0) {
-        const loadedItems = initialData.items.map((item, index) => ({
-          id: `item-${Date.now()}-${index}`,
-          // BE Postgres: item.id = DB row id (vd "66"), item.productId = product id thật.
-          // Dùng || (không ??) để productId RỖNG ("") ở đơn data cũ vẫn fallback sang id,
-          // tránh throw "Please select a product" ở finalItems. BE #179 đã khớp refund theo name. (hotfix #179)
-          productId: item.productId || item.id,
-          productName: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price,
-          image: item.image,
-          flavors: item.flavors,
-          size: item.size,
-          sizeCounts: item.sizeCounts,
-        }));
+        const base = Date.now();
+        const loadedItems = initialData.items.flatMap((item, index) => {
+          // BE Postgres: item.id = DB row id, item.productId = product id thật.
+          // Dùng || (không ??) để productId RỖNG ("") ở đơn cũ vẫn fallback sang id. (hotfix #179)
+          const pid = item.productId || item.id;
+          const product = products.find((p) => p.id === pid);
+          const scs = item.sizeCounts && item.sizeCounts.length
+            ? item.sizeCounts
+            : item.size ? [{ name: item.size, qty: item.quantity || 1 }] : null;
+          // SP không có size → giữ nguyên 1 dòng.
+          if (!product || !(product.sizes?.length) || !scs) {
+            return [{
+              id: `item-${base}-${index}`,
+              productId: pid, productName: item.name, quantity: item.quantity,
+              unitPrice: item.price, image: item.image, flavors: item.flavors,
+              size: item.size, sizeCounts: item.sizeCounts,
+            }];
+          }
+          // Có size → TÁCH mỗi loại 1 dòng; chia vị phẳng theo cap từng dòng (best-effort).
+          const flat = [...(item.flavors ?? [])];
+          return scs.map((sc, si) => {
+            const oneSc = [{ name: sc.name, qty: sc.qty }];
+            const flavors = flat.splice(0, sizeCountsCakes(product, oneSc));
+            return {
+              id: `item-${base}-${index}-${si}`,
+              productId: pid, productName: item.name, quantity: 1,
+              unitPrice: sizeCountsPrice(product, oneSc),
+              image: sizeImage(product, sc.name) || item.image,
+              flavors: flavors.length ? flavors : undefined,
+              size: sc.name, sizeCounts: oneSc,
+            };
+          });
+        });
         setItems(loadedItems);
       } else if (products.length > 0) {
         setItems([{
