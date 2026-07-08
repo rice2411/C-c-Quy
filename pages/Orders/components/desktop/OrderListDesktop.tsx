@@ -175,7 +175,7 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                         <Package className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                         <span className="font-medium">{totalItems} món</span>
                       </Box>
-                      <OrderItemsMini items={order.items ?? []} />
+                      {(order.items?.length ?? 0) >= 2 ? <OrderItemsMini items={order.items ?? []} /> : null}
                     </Box>
 
                     <Box layoutClassName="mt-2 flex flex-wrap items-center gap-1.5">

@@ -149,7 +149,7 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                       <Package className="h-3 w-3 shrink-0" />
                       <span className="font-medium">{getItemCount(order)} món</span>
                     </Box>
-                    <OrderItemsMini items={order.items ?? []} />
+                    {(order.items?.length ?? 0) >= 2 ? <OrderItemsMini items={order.items ?? []} /> : null}
                   </Box>
                 </Box>
               </Box>
