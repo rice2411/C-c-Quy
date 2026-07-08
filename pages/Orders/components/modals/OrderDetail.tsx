@@ -35,7 +35,7 @@ import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { qk } from '@/hooks/queryKeys';
 import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber, fetchOutUnlinkedTransactions } from '@/services/transactionService';
-import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor, groupFlavors, sizeCountsLabel } from '@/types';
+import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor, groupFlavors, sizeCountsLabel, sizeImage, sizeCount } from '@/types';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
 import { UserRole } from '@/types/user';
 import { orderAddressFallbackKey, surchargeTagLabel, reconcileMethodLabel } from '@/types/order';
@@ -803,6 +803,42 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                </Box>
                              </Box>
                            );
+                         });
+                       }
+                       // Có sizeCounts.units → mỗi đơn vị (combo/lẻ) 1 dòng kèm VỊ RIÊNG.
+                       const scs = item.sizeCounts ?? [];
+                       if (product && scs.some((s) => s.units && s.units.length)) {
+                         return scs.flatMap((sc) => {
+                           const per = sizeCount(product, sc.name) ?? 1;
+                           const price = product.sizes?.find((z) => z.name === sc.name)?.price ?? 0;
+                           const img = sizeImage(product, sc.name) || item.image;
+                           return (sc.units ?? []).map((unit, u) => (
+                             <Box key={`${item.id}-${sc.name}-${u}`} layoutClassName="flex items-center gap-4 py-2">
+                               <Box layoutClassName="h-16 w-16 shrink-0 overflow-hidden" roundedClassName="rounded-lg" backgroundClassName="bg-slate-100 dark:bg-slate-700">
+                                 <Image src={img} alt={sc.name} layoutClassName="h-full w-full object-cover" />
+                               </Box>
+                               <Box layoutClassName="min-w-0 flex-1">
+                                 <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name} · {sc.name}{per > 1 ? ` (${per} cái)` : ''}{sc.qty > 1 ? ` #${u + 1}` : ''}</Heading>
+                                 {unit.length ? (
+                                   <Box layoutClassName="mt-1 flex flex-wrap gap-1">
+                                     {groupFlavors(unit).map(({ name: fl, qty }) => {
+                                       const color = flavorVariantColor(product, fl);
+                                       return (
+                                         <Box key={fl} layoutClassName="inline-flex items-center gap-1 px-2 py-0.5" roundedClassName="rounded-full" borderClassName="border" style={{ borderColor: color + '80', backgroundColor: color + '26' }}>
+                                           <Box layoutClassName="h-2 w-2 shrink-0" roundedClassName="rounded-full" style={{ backgroundColor: color }} />
+                                           <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{fl}{qty > 1 ? ` ×${qty}` : ''}</Typography>
+                                         </Box>
+                                       );
+                                     })}
+                                   </Box>
+                                 ) : null}
+                               </Box>
+                               <Box layoutClassName="text-right">
+                                 <Typography as="p" size="sm" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{formatVND(price)}</Typography>
+                                 <Typography as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">Qty: 1</Typography>
+                               </Box>
+                             </Box>
+                           ));
                          });
                        }
                        // Mặc định: 1 dòng (kèm size + vị dạng chip nếu có).

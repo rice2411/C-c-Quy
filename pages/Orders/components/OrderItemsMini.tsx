@@ -50,16 +50,25 @@ const OrderItemsMini: React.FC<{ items: OrderItem[] }> = ({ items }) => {
       : it.size ? [{ name: it.size, qty: it.quantity || 1 }] : null;
 
     if (sizeList) {
-      return sizeList.map(({ name: sizeName, qty }) => {
-        const cnt = product ? (sizeCount(product, sizeName) ?? 1) : 1;
+      return sizeList.flatMap((sc) => {
+        const cnt = product ? (sizeCount(product, sc.name) ?? 1) : 1;
         const isCombo = cnt > 1;
-        const sizeLbl = isCombo ? `${sizeName} (${cnt} cái)` : sizeName;
-        const label = qty > 1 ? `${sizeLbl} ×${qty}` : sizeLbl;
+        const sizeLbl = isCombo ? `${sc.name} (${cnt} cái)` : sc.name;
+        const img = (product ? sizeImage(product, sc.name) : undefined) || it.image;
+        // Có `units` → mỗi đơn vị (combo) 1 hàng kèm VỊ RIÊNG.
+        if (sc.units && sc.units.length) {
+          return sc.units.map((unit, u) => {
+            const fl = groupFlavors(unit).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
+            const meta = [`${sizeLbl}${sc.qty > 1 ? ` #${u + 1}` : ''}`];
+            if (fl) meta.push(`Vị: ${fl}`);
+            return { key: `${it.id}-s-${sc.name}-${u}`, img, name: it.name, meta, qty: 1 };
+          });
+        }
+        // Đơn cũ (không units): 1 hàng/loại; lẻ hiện vị phẳng, combo chỉ ảnh.
+        const label = sc.qty > 1 ? `${sizeLbl} ×${sc.qty}` : sizeLbl;
         const meta = [label];
-        // Lẻ → hiện vị; combo → chỉ ảnh combo (không liệt kê vị).
         if (!isCombo && flavorLine) meta.push(`Vị: ${flavorLine}`);
-        const img = (product ? sizeImage(product, sizeName) : undefined) || it.image;
-        return { key: `${it.id}-s-${sizeName}`, img, name: it.name, meta, qty };
+        return [{ key: `${it.id}-s-${sc.name}`, img, name: it.name, meta, qty: sc.qty }];
       });
     }
 
