@@ -293,14 +293,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
     const hasVariants = (product.sizes?.length ?? 0) > 0 || (product.flavorVariants?.length ?? 0) > 0;
     setItems(prev => {
       const existingIdx = prev.findIndex(i => i.productId === product.id);
-      if (existingIdx >= 0) {
+      // SP thường (không biến thể) đã có trong đơn → cộng dồn số lượng (POS).
+      if (existingIdx >= 0 && !hasVariants) {
         resolvedId = prev[existingIdx].id;
-        // SP biến thể (size/vị) → 1 dòng duy nhất, cấu hình size/vị bằng stepper trong dòng.
-        if (hasVariants) return prev;
         return prev.map((item, idx) =>
           idx === existingIdx ? { ...item, quantity: (item.quantity || 0) + 1 } : item,
         );
       }
+      // SP biến thể (size/vị) → MỖI lần thêm là 1 DÒNG RIÊNG (vd mỗi combo chọn vị khác nhau).
       // Sản phẩm có size → mặc định size đầu tiên số lượng 1 (dùng sizeCounts).
       const firstSize = product.sizes?.[0];
       return [...prev, {
