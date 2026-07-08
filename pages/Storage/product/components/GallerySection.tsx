@@ -19,7 +19,7 @@ interface GallerySectionProps {
 }
 
 const GallerySection: React.FC<GallerySectionProps> = ({
-  image, gallery, uploading, maxImages = 8, onChange, onSetPrimary, onUploadFiles,
+  image, gallery, uploading, maxImages = 20, onChange, onSetPrimary, onUploadFiles,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const totalImages = gallery.length + (image ? 1 : 0);
@@ -62,6 +62,20 @@ const GallerySection: React.FC<GallerySectionProps> = ({
       />
 
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+        {/* Ảnh chính — cũng nằm trong gallery (tile #1, đánh dấu). Thay ở nút "Upload ảnh chính". */}
+        {image && (
+          <div className="relative aspect-square overflow-hidden rounded-lg border-2 border-amber-400 dark:border-amber-500 bg-slate-50 dark:bg-slate-900">
+            <img
+              src={image}
+              alt="Ảnh chính"
+              className="h-full w-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/200x200?text=Err'; }}
+            />
+            <span className="absolute top-1 left-1 flex items-center gap-0.5 rounded-full bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold text-white">
+              <Star className="h-2.5 w-2.5 fill-current" /> Ảnh chính
+            </span>
+          </div>
+        )}
         {gallery.map((src, idx) => (
           <div
             key={`${src}-${idx}`}

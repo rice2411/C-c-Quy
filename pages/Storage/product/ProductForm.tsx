@@ -29,7 +29,7 @@ interface ProductFormProps {
   onCancel: () => void;
 }
 
-const MAX_GALLERY = 8;
+const MAX_GALLERY = 20;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
 const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel }) => {
