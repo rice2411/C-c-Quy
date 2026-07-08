@@ -60,7 +60,7 @@ export interface NormalizedItem {
  * Chuẩn hoá tên NVL.
  * - Tách quy cách (1L, 500g, …) ra `pack`.
  * - Phần còn lại bỏ ký tự đặc biệt, gộp khoảng trắng làm `base`.
- * - `fullKey` ghép cả hai để dùng làm normalizedName trong Firestore.
+ * - `fullKey` ghép cả hai để dùng làm normalizedName.
  */
 export function normalizeItem(raw: string): NormalizedItem {
   const cleaned = stripAccent(raw || '');

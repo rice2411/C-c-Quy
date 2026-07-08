@@ -1,7 +1,8 @@
 # CucQuyBakery — Quy ước cho Claude
 
-Stack: React 19 + TypeScript + Vite, Firebase Firestore, React Router (Hash),
-TailwindCSS, i18n (vi/en), PWA, deploy Vercel. Path alias `@/` → gốc repo.
+Stack: React 19 + TypeScript + Vite, dữ liệu qua REST API (BE NestJS + Postgres),
+auth SSO RiceService, React Router (Browser), TailwindCSS, i18n (vi/en), PWA,
+deploy image → GHCR → keel. Path alias `@/` → gốc repo.
 
 ## Rules
 <!-- Rule FE nằm ở product root (.claude/rules/fe/), không còn bản local trong frontend/.claude.
@@ -12,4 +13,4 @@ TailwindCSS, i18n (vi/en), PWA, deploy Vercel. Path alias `@/` → gốc repo.
 @../.claude/rules/fe/page-structure.md
 @../.claude/rules/fe/import-alias.md
 @../.claude/rules/fe/i18n.md
-@../.claude/rules/fe/firestore-safety.md
+@../.claude/rules/fe/data-safety.md

@@ -1,7 +1,7 @@
 import { apiClient } from '@/services/api/client';
 
 /**
- * Upload image qua BE NestJS (firebase-admin Storage).
+ * Upload image qua BE NestJS (RiceService Storage).
  * @param file - Image file to upload
  * @param path - Storage path (e.g., 'products/image.jpg')
  * @returns Public URL of the uploaded image

@@ -1,6 +1,6 @@
 /**
  * Badge service — gọi BE NestJS (envelope `.data` đã được apiClient bóc sẵn).
- * Config lưu ở `configurations/badges` (Firestore) phía BE.
+ * Config lưu ở `configurations/badges` phía BE.
  * `matchCustomerBadges` là logic thuần (không chạm dữ liệu) → giữ ở client.
  */
 

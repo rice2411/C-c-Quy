@@ -18,7 +18,7 @@ import {
  *   tự revive Timestamp + gửi Zalo notify ở tầng dưới.
  * - `enabled: !!currentUser` để tránh fetch trước khi auth ready (token chưa sẵn → 401).
  * - Sau mỗi mutation invalidate `qk.orders.all` (prefix match → xoá luôn key con
- *   như next-number). Caller (page) tự toast khi lỗi (rule firestore-safety).
+ *   như next-number). Caller (page) tự toast khi lỗi (rule data-safety).
  * - structuralSharing:false set global trong queryClient → RQ KHÔNG phá `.toDate()`
  *   của Timestamp object trong order. Field ngày dùng helper dateUtil ở tầng UI.
  * - GIỮ NGUYÊN signature cũ (orders/loading/refreshOrders/createNewOrder/

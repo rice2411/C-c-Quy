@@ -5,4 +5,4 @@ dist
 .DS_Store
 Dockerfile
 .dockerignore
-# Lưu ý: KHÔNG ignore .env.local — Vite cần đọc FIREBASE_* lúc build (đây là config client, vốn public).
+# Lưu ý: KHÔNG ignore .env.local — Vite cần đọc VITE_* lúc build (config client, vốn public).

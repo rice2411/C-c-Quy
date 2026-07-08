@@ -2,7 +2,7 @@
  * React Query hooks cho domain Products (epic #58 — migrate data-fetching).
  *
  * - queryFn/mutationFn GỌI THẲNG service hiện có (productService) — giữ nguyên
- *   fallback Firestore + revive Timestamp ở tầng dưới, KHÔNG viết lại HTTP.
+ *   fallback + revive Timestamp ở tầng dưới, KHÔNG viết lại HTTP.
  * - Mọi query `enabled: !!currentUser` để tránh chạy trước khi auth ready → 401.
  * - Sau mutation invalidate `qk.products.all` (prefix match → xoá luôn versions).
  * - KHÔNG nuốt lỗi: caller (component) bắt error / dùng `error` để toast.

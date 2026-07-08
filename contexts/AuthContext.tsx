@@ -7,7 +7,7 @@ import {
 import { clearSsoToken, getSsoToken } from '@/services/auth/ssoToken';
 import { UserData } from '@/types/user';
 
-/** User rút gọn gắn vào context (thay cho Firebase User cũ). */
+/** User rút gọn gắn vào context (thay cho user đăng nhập). */
 export interface CurrentUser {
   uid: string;
   email: string | null;

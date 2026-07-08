@@ -19,7 +19,7 @@ import { QueryClient } from '@tanstack/react-query';
  * Lưu ý thêm khi viết query ở các phase sau:
  * - Mọi query phụ thuộc auth phải `enabled: !!currentUser` (tránh chạy trước khi auth ready → 401).
  * - Gọi `queryClient.clear()` khi logout (tránh user B thấy cache user A).
- * - `queryFn` nên gọi service hiện có (giữ fallback Firestore qua isApiEnabled), không viết lại HTTP.
+ * - `queryFn` nên gọi service hiện có (giữ fallback qua isApiEnabled), không viết lại HTTP.
  * - Consumer guard `data ?? []` (query lần đầu lỗi → data undefined).
  */
 export const queryClient = new QueryClient({

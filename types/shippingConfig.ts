@@ -1,6 +1,6 @@
 /**
  * Shipping configuration types + defaults.
- * Runtime config lưu Firestore (`configurations/shipping-configuration`),
+ * Runtime config lưu ở BE (`configurations/shipping-configuration`),
  * truy cập qua `useShippingConfig()` ở components.
  * File này chỉ chứa types + default fallback (không có pure helpers — đã move vào context).
  */
@@ -33,7 +33,7 @@ export interface ShippingConfiguration {
   updatedBy?: string | null;
 }
 
-/** Fallback khi Firestore chưa có doc hoặc fetch fail. */
+/** Fallback khi chưa có cấu hình hoặc fetch fail. */
 export const DEFAULT_SHIPPING_CONFIG: ShippingConfiguration = {
   shopOrigin: {
     name: '30/10 Nguyễn Hữu Cảnh, An Cựu, Huế',

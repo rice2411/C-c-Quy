@@ -20,7 +20,7 @@ import type {
 
 const BASE = '/stock-receipts';
 
-/** Hàm thuần (không Firestore) — giữ nguyên tại FE. */
+/** Hàm thuần (không gọi API) — giữ nguyên tại FE. */
 export function computeAmountCheck(structured: StockReceiptStructured): {
   sumLines: number;
   totalAmount: number | null;

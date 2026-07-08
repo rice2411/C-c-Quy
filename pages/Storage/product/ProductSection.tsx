@@ -181,7 +181,7 @@ const ProductSection: React.FC<Props> = ({
         case 'popular': return (metrics[b.id]?.unitsSold ?? 0) - (metrics[a.id]?.unitsSold ?? 0);
         case 'recent':
         default: {
-          // createdAt có thể là string, Date, hoặc Firestore Timestamp (có .toDate()) →
+          // createdAt có thể là string, Date, hoặc Timestamp (có .toDate()) →
           // KHÔNG dùng .localeCompare (crash khi là object). So bằng timestamp số cho an toàn.
           const toTime = (v: any): number => {
             const d = v?.toDate ? v.toDate() : parseDateValue(v);

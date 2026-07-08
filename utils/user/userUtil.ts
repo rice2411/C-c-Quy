@@ -11,7 +11,7 @@ export interface StoredUser {
 
 /**
  * Lưu thông tin user vào localStorage
- * @param user - User object từ Firebase Auth hoặc null để xóa
+ * @param user - User object đăng nhập hoặc null để xóa
  */
 export const saveUserToLocalStorage = (user: UserData | null): void => {
   try {
@@ -139,7 +139,7 @@ export const getAccountsHistory = (): AccountHistory[] => {
 
 /**
  * Thêm hoặc cập nhật tài khoản vào lịch sử đăng nhập
- * @param user - User object từ Firebase Auth
+ * @param user - User object đăng nhập
  */
 export const addAccountToHistory = (user: UserData): void => {
   try {

@@ -9,7 +9,7 @@
  *   share cache (OrderForm + OrderFormCustomerSection + Customers page cùng 1 list).
  * - 3 useMutation (add/update/delete) → onSuccess invalidate `qk.customers.all`.
  * - queryFn/mutationFn GỌI THẲNG customerService, KHÔNG viết lại HTTP.
- * - KHÔNG nuốt lỗi: mutateAsync reject lên caller để component toast (rule firestore-safety).
+ * - KHÔNG nuốt lỗi: mutateAsync reject lên caller để component toast (rule data-safety).
  *
  * GIỮ NGUYÊN signature `UseCustomersResult` → consumer không phải đổi.
  */

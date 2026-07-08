@@ -15,7 +15,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     );
   }
 
-  // Kiểm tra localStorage nếu Firebase Auth chưa sync
+  // Kiểm tra localStorage nếu phiên chưa sync
   const userFromStorage = hasUserInLocalStorage();
   
   if (!currentUser && !userFromStorage) {

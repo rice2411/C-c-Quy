@@ -156,7 +156,7 @@ const LoginPage: React.FC = () => {
             ) : (
               <>
                 <Image
-                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                  src="https://developers.google.com/identity/images/g-logo.png"
                   alt="Google"
                   layoutClassName="w-5 h-5"
                 />

@@ -174,7 +174,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
       const imgs = Array.from(node.querySelectorAll('img')) as HTMLImageElement[];
       // Inline mọi ảnh thành dataURL TRƯỚC khi chụp — né taint canvas do CORS/cache:
       // ảnh SP (RiceService) & QR (SePay) có CORS → fetch (cors, reload) được; ảnh nào
-      // KHÔNG có CORS (Firebase cũ) fetch fail → thay ảnh trong suốt để html-to-image
+      // KHÔNG có CORS (link cũ) fetch fail → thay ảnh trong suốt để html-to-image
       // không bị "tainted canvas" (toBlob sẽ throw). Sau inline: mọi src là data:/ảnh trong suốt.
       const TRANSPARENT = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
       await Promise.all(

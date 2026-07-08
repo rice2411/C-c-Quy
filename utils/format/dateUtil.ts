@@ -10,7 +10,7 @@ export const formatDateOnly = (value: any) => {
 };
 
 /**
- * Ngày dạng `YYYY-MM-DD` an toàn cho MỌI kiểu (string ISO, Date, Firestore Timestamp object).
+ * Ngày dạng `YYYY-MM-DD` an toàn cho MỌI kiểu (string ISO, Date, Timestamp object).
  * Thay cho `value.slice(0, 10)` — vốn crash khi value là object (Timestamp). Trả `—` nếu không parse được.
  */
 export const formatDateISO = (value: any): string => {
@@ -71,7 +71,7 @@ export const parseDateValue = (value: any) => {
 };
 
 /**
- * Thời điểm nhập phiếu từ chuỗi ISO (map từ Firestore Timestamp.toDate()).
+ * Thời điểm nhập phiếu từ chuỗi ISO (map từ Timestamp.toDate()).
  */
 export function formatImportedAt(iso: string | undefined): string {
   if (!iso) return '—';

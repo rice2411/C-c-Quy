@@ -77,7 +77,7 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     define: {
-      // Secret (VISION/GEMINI/ZALO...) + Firebase đã gỡ khỏi FE — auth qua SSO RiceService.
+      // Secret (VISION/GEMINI/ZALO...) — auth qua SSO RiceService.
       __BUILD_ID__: JSON.stringify(buildId),
     },
     resolve: {
