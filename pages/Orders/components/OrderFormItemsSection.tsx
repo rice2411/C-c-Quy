@@ -1,8 +1,29 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { DollarSign, Minus, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor, orderLineImage, sizeCountsCakes, sizeCountsPrice } from '@/types';
+import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor, orderLineImage, sizeCount, sizeCountsPrice } from '@/types';
 import { FormItem } from '@/pages/Orders/components/modals/OrderForm';
+
+type SizeEntry = { name: string; qty: number; units?: string[][] };
+
+/** Ghi sizeCounts (kèm units = vị từng đơn vị) → tự tính lại flavors phẳng + đơn giá + ảnh. */
+const commitSizeCounts = (
+  itemId: string,
+  product: Product | undefined,
+  nextSc: SizeEntry[],
+  onUpdateItem: (itemId: string, field: keyof FormItem, value: any) => void,
+) => {
+  onUpdateItem(itemId, 'sizeCounts', nextSc);
+  const flat = nextSc.flatMap((s) => (s.units ?? []).flat());
+  onUpdateItem(itemId, 'flavors', flat);
+  onUpdateItem(itemId, 'quantity', 1);
+  if (product) {
+    onUpdateItem(itemId, 'unitPrice', sizeCountsPrice(product, nextSc));
+    onUpdateItem(itemId, 'size', nextSc[0]?.name);
+    const im = orderLineImage(product, { size: nextSc[0]?.name, flavors: flat });
+    if (im) onUpdateItem(itemId, 'image', im);
+  }
+};
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Field from '@/components/ui/Field';
@@ -194,12 +215,9 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
             const itemFlavors = itemProduct?.flavors ?? [];
             const itemSizes = itemProduct?.sizes ?? [];
             const isSized = itemSizes.length > 0;
-            // sizeCounts: nhiều size + số lượng/dòng (fallback từ size đơn cũ).
-            const sc = item.sizeCounts ?? (item.size ? [{ name: item.size, qty: item.quantity || 1 }] : []);
-            // Tổng số cái (Σ qty×số cái mỗi size) = cap cho stepper vị.
-            const totalCakes = itemProduct ? sizeCountsCakes(itemProduct, sc) : 0;
-            const flavorCap = isSized ? totalCakes : Infinity;
+            const scArr: SizeEntry[] = item.sizeCounts ?? (item.size ? [{ name: item.size, qty: item.quantity || 1 }] : []);
             const pickedTotal = (item.flavors ?? []).length;
+            const flavorCap = Infinity;
             return (
               <Box
                 key={item.id}
@@ -233,80 +251,98 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                       {item.productName || `Item #${index + 1}`}
                     </Typography>
                     {isSized ? (
-                      <Box layoutClassName="mt-1 flex flex-col gap-1">
-                        <Typography as="span" size="xs" variant="muted">Loại (mỗi dòng 1 loại — thêm sản phẩm để có combo khác vị):</Typography>
-                        <Box layoutClassName="flex flex-wrap gap-1.5">
+                      <Box layoutClassName="mt-1 flex flex-col gap-1.5">
+                        <Typography as="span" size="xs" variant="muted">Loại (số lượng — chọn nhiều loại, mỗi combo 1 rổ vị riêng):</Typography>
+                        <Box layoutClassName="flex flex-col gap-1">
                           {itemSizes.map((sz) => {
-                            const selName = sc[0]?.name;
-                            const active = selName === sz.name;
+                            const entry = scArr.find((x) => x.name === sz.name);
+                            const q = entry?.qty ?? 0;
                             const cnt = sz.count ?? 1;
-                            const pick = () => {
-                              const qty = sc[0]?.qty ?? 1;
-                              const nextSc = [{ name: sz.name, qty }];
-                              onUpdateItem(item.id, 'sizeCounts', nextSc);
-                              onUpdateItem(item.id, 'size', sz.name);
-                              onUpdateItem(item.id, 'quantity', 1);
-                              onUpdateItem(item.id, 'unitPrice', itemProduct ? sizeCountsPrice(itemProduct, nextSc) : 0);
-                              if (itemProduct) {
-                                const cakes = sizeCountsCakes(itemProduct, nextSc);
-                                if ((item.flavors?.length ?? 0) > cakes) onUpdateItem(item.id, 'flavors', (item.flavors ?? []).slice(0, cakes));
-                                const im = orderLineImage(itemProduct, { size: sz.name, flavors: item.flavors });
-                                if (im) onUpdateItem(item.id, 'image', im);
-                              }
+                            const setSizeQty = (nextQty: number) => {
+                              const nq = Math.max(0, nextQty);
+                              const cur = scArr.find((x) => x.name === sz.name);
+                              const units = (cur?.units ?? []).slice(0, nq);
+                              while (units.length < nq) units.push([]);
+                              const others = scArr.filter((x) => x.name !== sz.name);
+                              const merged = nq > 0 ? [...others, { name: sz.name, qty: nq, units }] : others;
+                              const ordered = itemSizes
+                                .map((z) => merged.find((n) => n.name === z.name))
+                                .filter((x): x is SizeEntry => !!x);
+                              commitSizeCounts(item.id, itemProduct, ordered, onUpdateItem);
                             };
                             return (
-                              <Button key={sz.name} type="button" onClick={pick} variant="ghost" disableVariantHover disableVariantTextColor
-                                layoutClassName="inline-flex items-center gap-1.5 px-2 py-1" roundedClassName="rounded-lg" sizeClassName="text-xs"
-                                borderClassName={active ? 'border border-primary-400 dark:border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
-                                backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
-                                textClassName={active ? 'font-semibold text-primary-700 dark:text-primary-300' : 'text-slate-600 dark:text-slate-300'}
-                                hoverClassName="hover:border-primary-300 dark:hover:border-primary-700">
+                              <Box key={sz.name} layoutClassName="flex items-center gap-2 rounded-lg px-2 py-1" borderClassName="border border-slate-100 dark:border-slate-700" backgroundClassName={q > 0 ? 'bg-primary-50/60 dark:bg-primary-900/20' : 'bg-white dark:bg-slate-800'}>
                                 {sz.image ? (
-                                  <Box layoutClassName="h-5 w-5 shrink-0 overflow-hidden rounded-md">
+                                  <Box layoutClassName="h-6 w-6 shrink-0 overflow-hidden rounded-md" borderClassName="border border-slate-200 dark:border-slate-600">
                                     <Image src={sz.image} alt="" layoutClassName="h-full w-full object-cover" />
                                   </Box>
                                 ) : null}
-                                <Typography as="span" size="inherit" layoutClassName="font-inherit">{sz.name}{cnt > 1 ? ` (${cnt} cái)` : ''} · {formatVNDOrDash(sz.price)}</Typography>
-                              </Button>
-                            );
-                          })}
-                        </Box>
-                        {/* Số lượng của loại đang chọn (mặc định 1). Combo khác vị → bấm "Thêm sản phẩm". */}
-                        <Box layoutClassName="mt-0.5 flex items-center gap-2">
-                          <Typography as="span" size="xs" variant="muted">Số lượng:</Typography>
-                          {(() => {
-                            const cur = sc[0];
-                            const setLineQty = (n: number) => {
-                              if (!cur) return;
-                              const nq = Math.max(1, n);
-                              const nextSc = [{ name: cur.name, qty: nq }];
-                              onUpdateItem(item.id, 'sizeCounts', nextSc);
-                              onUpdateItem(item.id, 'unitPrice', itemProduct ? sizeCountsPrice(itemProduct, nextSc) : 0);
-                              if (itemProduct) {
-                                const cakes = sizeCountsCakes(itemProduct, nextSc);
-                                if ((item.flavors?.length ?? 0) > cakes) onUpdateItem(item.id, 'flavors', (item.flavors ?? []).slice(0, cakes));
-                              }
-                            };
-                            const q = cur?.qty ?? 1;
-                            return (
-                              <>
-                                <Button type="button" onClick={() => setLineQty(q - 1)} disabled={q <= 1} aria-label="Bớt" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1" roundedClassName="rounded-full" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500 dark:text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <Typography as="span" size="xs" layoutClassName="min-w-0 flex-1 truncate font-medium" textClassName="text-slate-700 dark:text-slate-200">{sz.name}{cnt > 1 ? ` (${cnt} cái)` : ''} · {formatVNDOrDash(sz.price)}</Typography>
+                                <Button type="button" onClick={() => setSizeQty(q - 1)} disabled={q === 0} aria-label="Bớt" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1" roundedClassName="rounded-full" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500 dark:text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
                                   <Minus className="h-3 w-3" />
                                 </Button>
                                 <Typography as="span" size="xs" layoutClassName="w-4 text-center font-semibold" textClassName="text-slate-800 dark:text-slate-100">{q}</Typography>
-                                <Button type="button" onClick={() => setLineQty(q + 1)} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1" roundedClassName="rounded-full" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500 dark:text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                <Button type="button" onClick={() => setSizeQty(q + 1)} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1" roundedClassName="rounded-full" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500 dark:text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
                                   <Plus className="h-3 w-3" />
                                 </Button>
-                              </>
+                              </Box>
                             );
-                          })()}
+                          })}
                         </Box>
+                        {itemFlavors.length > 0 && scArr.some((s) => s.qty > 0) ? (
+                          <Box layoutClassName="flex flex-col gap-1.5">
+                            <Typography as="span" size="xs" variant="muted">Vị từng phần:</Typography>
+                            {scArr.flatMap((entry) => {
+                              const per = itemProduct ? (sizeCount(itemProduct, entry.name) ?? 1) : 1;
+                              return (entry.units ?? []).map((unitFlavors, u) => {
+                                const picked = unitFlavors.length;
+                                const setUnit = (arr: string[]) => {
+                                  const next = scArr.map((s) => (s.name === entry.name ? { ...s, units: (s.units ?? []).map((uu, i) => (i === u ? arr : uu)) } : s));
+                                  commitSizeCounts(item.id, itemProduct, next, onUpdateItem);
+                                };
+                                return (
+                                  <Box key={`${entry.name}-${u}`} layoutClassName="rounded-lg p-1.5" borderClassName="border border-slate-100 dark:border-slate-700" backgroundClassName="bg-white dark:bg-slate-800">
+                                    <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-600 dark:text-slate-300">{entry.name}{per > 1 ? ` (${per} cái)` : ''}{entry.qty > 1 ? ` #${u + 1}` : ''} · {picked}/{per}</Typography>
+                                    <Box layoutClassName="mt-1 flex flex-wrap gap-1">
+                                      {itemFlavors.map((fl) => {
+                                        const n = unitFlavors.filter((x) => x === fl).length;
+                                        const cc = itemProduct ? flavorVariantColor(itemProduct, fl) : '#64748b';
+                                        const th = itemProduct ? flavorImage(itemProduct, fl) : undefined;
+                                        const inc = () => { if (picked < per) setUnit([...unitFlavors, fl]); };
+                                        const dec = () => { const a = [...unitFlavors]; const i = a.indexOf(fl); if (i >= 0) { a.splice(i, 1); setUnit(a); } };
+                                        return (
+                                          <Box key={fl} layoutClassName="inline-flex items-center gap-1 rounded-full py-0.5 pl-1 pr-1.5" borderClassName="border" backgroundClassName="bg-slate-50 dark:bg-slate-700/40" style={{ borderColor: n ? cc : cc + '80' }}>
+                                            {th ? (
+                                              <Box layoutClassName="h-5 w-5 shrink-0 overflow-hidden rounded-full">
+                                                <Image src={th} alt="" layoutClassName="h-full w-full object-cover" />
+                                              </Box>
+                                            ) : (
+                                              <Box layoutClassName="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: cc }} />
+                                            )}
+                                            <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{fl}</Typography>
+                                            <Button type="button" onClick={dec} disabled={n === 0} aria-label="Bớt" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-0.5" roundedClassName="rounded-full" borderClassName="border border-transparent" textClassName="text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                              <Minus className="h-3 w-3" />
+                                            </Button>
+                                            <Typography as="span" size="xs" layoutClassName="w-3 text-center font-semibold" textClassName="text-slate-800 dark:text-slate-100">{n}</Typography>
+                                            <Button type="button" onClick={inc} disabled={picked >= per} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-0.5" roundedClassName="rounded-full" borderClassName="border border-transparent" textClassName="text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                              <Plus className="h-3 w-3" />
+                                            </Button>
+                                          </Box>
+                                        );
+                                      })}
+                                    </Box>
+                                  </Box>
+                                );
+                              });
+                            })}
+                          </Box>
+                        ) : null}
                       </Box>
                     ) : null}
-                    {itemFlavors.length > 0 ? (
+                    {!isSized && itemFlavors.length > 0 ? (
                       <Box layoutClassName="mt-1 flex flex-col gap-1">
                         <Typography as="span" size="xs" variant="muted">
-                          Vị{isSized ? ` (${pickedTotal}/${flavorCap})` : (pickedTotal ? ` (${pickedTotal})` : '')}:
+                          Vị{pickedTotal ? ` (${pickedTotal})` : ''}:
                         </Typography>
                         <Box layoutClassName="flex flex-wrap gap-1.5">
                           {itemFlavors.map((fl) => {

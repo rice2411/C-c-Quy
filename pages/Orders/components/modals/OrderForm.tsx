@@ -16,7 +16,7 @@ import { getNextOrderNumber } from '@/services/orderService';
 import { fetchCommissionGroups } from '@/services/commissionGroupService';
 import { calcItemCommission } from '@/types/commissionGroup';
 import { getUserByUid } from '@/services/userService';
-import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product, SurchargeLine, sizeCountsPrice, sizeCountsCakes, sizeImage } from '@/types/index';
+import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product, SurchargeLine, sizeCount } from '@/types/index';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Box from '@/components/ui/Box';
@@ -54,8 +54,8 @@ export interface FormItem {
   flavors?: string[];
   /** Size đã chọn (nếu sản phẩm có size) */
   size?: string;
-  /** Nhiều size + số lượng trong 1 dòng (vd 2 Gia Đình + 1 Lẻ) */
-  sizeCounts?: { name: string; qty: number }[];
+  /** Nhiều size + số lượng trong 1 dòng; `units` = vị riêng từng đơn vị (mỗi combo 1 rổ). */
+  sizeCounts?: { name: string; qty: number; units?: string[][] }[];
 }
 const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCancel }) => {
   const { t } = useLanguage();
@@ -195,37 +195,28 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setSelectedPromoIds((initialData.appliedPromotions ?? []).map((p) => p.promotionId));
       if (initialData.items && initialData.items.length > 0) {
         const base = Date.now();
-        const loadedItems = initialData.items.flatMap((item, index) => {
+        const loadedItems = initialData.items.map((item, index) => {
           // BE Postgres: item.id = DB row id, item.productId = product id thật.
           // Dùng || (không ??) để productId RỖNG ("") ở đơn cũ vẫn fallback sang id. (hotfix #179)
           const pid = item.productId || item.id;
           const product = products.find((p) => p.id === pid);
-          const scs = item.sizeCounts && item.sizeCounts.length
-            ? item.sizeCounts
-            : item.size ? [{ name: item.size, qty: item.quantity || 1 }] : null;
-          // SP không có size → giữ nguyên 1 dòng.
-          if (!product || !(product.sizes?.length) || !scs) {
-            return [{
-              id: `item-${base}-${index}`,
-              productId: pid, productName: item.name, quantity: item.quantity,
-              unitPrice: item.price, image: item.image, flavors: item.flavors,
-              size: item.size, sizeCounts: item.sizeCounts,
-            }];
+          let sizeCounts = item.sizeCounts;
+          // SP có size + sizeCounts CHƯA có `units` (đơn cũ) → suy ra units từ vị phẳng
+          // (chia tuần tự theo số cái mỗi đơn vị) để form hiện vị riêng từng combo.
+          if (product && product.sizes?.length && sizeCounts?.length && !sizeCounts.some((s) => s.units)) {
+            const flat = [...(item.flavors ?? [])];
+            sizeCounts = sizeCounts.map((sc) => {
+              const per = sizeCount(product, sc.name) ?? 1;
+              const units = Array.from({ length: sc.qty }, () => flat.splice(0, per));
+              return { name: sc.name, qty: sc.qty, units };
+            });
           }
-          // Có size → TÁCH mỗi loại 1 dòng; chia vị phẳng theo cap từng dòng (best-effort).
-          const flat = [...(item.flavors ?? [])];
-          return scs.map((sc, si) => {
-            const oneSc = [{ name: sc.name, qty: sc.qty }];
-            const flavors = flat.splice(0, sizeCountsCakes(product, oneSc));
-            return {
-              id: `item-${base}-${index}-${si}`,
-              productId: pid, productName: item.name, quantity: 1,
-              unitPrice: sizeCountsPrice(product, oneSc),
-              image: sizeImage(product, sc.name) || item.image,
-              flavors: flavors.length ? flavors : undefined,
-              size: sc.name, sizeCounts: oneSc,
-            };
-          });
+          return {
+            id: `item-${base}-${index}`,
+            productId: pid, productName: item.name, quantity: item.quantity,
+            unitPrice: item.price, image: item.image, flavors: item.flavors,
+            size: item.size, sizeCounts,
+          };
         });
         setItems(loadedItems);
       } else if (products.length > 0) {
@@ -312,15 +303,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
     const hasVariants = (product.sizes?.length ?? 0) > 0 || (product.flavorVariants?.length ?? 0) > 0;
     setItems(prev => {
       const existingIdx = prev.findIndex(i => i.productId === product.id);
-      // SP thường (không biến thể) đã có trong đơn → cộng dồn số lượng (POS).
-      if (existingIdx >= 0 && !hasVariants) {
+      // SP đã có trong đơn: thường → +1; biến thể → giữ 1 dòng (cấu hình loại/vị trong dòng đó).
+      if (existingIdx >= 0) {
         resolvedId = prev[existingIdx].id;
+        if (hasVariants) return prev;
         return prev.map((item, idx) =>
           idx === existingIdx ? { ...item, quantity: (item.quantity || 0) + 1 } : item,
         );
       }
-      // SP biến thể (size/vị) → MỖI lần thêm là 1 DÒNG RIÊNG (vd mỗi combo chọn vị khác nhau).
-      // Sản phẩm có size → mặc định size đầu tiên số lượng 1 (dùng sizeCounts).
+      // SP có size → mặc định size đầu tiên SL 1 + 1 rổ vị rỗng cho đơn vị đó.
       const firstSize = product.sizes?.[0];
       return [...prev, {
         id: newId,
@@ -330,7 +321,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         unitPrice: firstSize ? firstSize.price : product.price,
         image: (firstSize?.image) || product.image,
         size: firstSize?.name,
-        sizeCounts: firstSize ? [{ name: firstSize.name, qty: 1 }] : undefined,
+        sizeCounts: firstSize ? [{ name: firstSize.name, qty: 1, units: [[]] }] : undefined,
       }];
     });
     flashHighlight(resolvedId);
