@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { DollarSign, Minus, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
+import { ChevronDown, DollarSign, Minus, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor, orderLineImage, sizeCount, sizeCountsPrice } from '@/types';
+import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor, orderLineImage, sizeCount, sizeCountsPrice, groupFlavors } from '@/types';
 import { FormItem } from '@/pages/Orders/components/modals/OrderForm';
 
 type SizeEntry = { name: string; qty: number; units?: string[][] };
@@ -73,6 +73,8 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
   const [recentIds, setRecentIds] = useState<string[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Accordion "Vị từng phần": key đang mở = `${itemId}:${sizeName}:${unitIdx}` (chỉ 1 cái mở).
+  const [openUnit, setOpenUnit] = useState<string | null>(null);
 
   useEffect(() => {
     setRecentIds(getRecentProductIds());
@@ -296,14 +298,26 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                               const per = itemProduct ? (sizeCount(itemProduct, entry.name) ?? 1) : 1;
                               return (entry.units ?? []).map((unitFlavors, u) => {
                                 const picked = unitFlavors.length;
+                                const uKey = `${item.id}:${entry.name}:${u}`;
+                                const uOpen = openUnit === uKey;
+                                const uFull = picked >= per;
+                                const uSummary = groupFlavors(unitFlavors).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
                                 const setUnit = (arr: string[]) => {
                                   const next = scArr.map((s) => (s.name === entry.name ? { ...s, units: (s.units ?? []).map((uu, i) => (i === u ? arr : uu)) } : s));
                                   commitSizeCounts(item.id, itemProduct, next, onUpdateItem);
                                 };
                                 return (
-                                  <Box key={`${entry.name}-${u}`} layoutClassName="rounded-lg p-1.5" borderClassName="border border-slate-100 dark:border-slate-700" backgroundClassName="bg-white dark:bg-slate-800">
-                                    <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-600 dark:text-slate-300">{entry.name}{per > 1 ? ` (${per} cái)` : ''}{entry.qty > 1 ? ` #${u + 1}` : ''} · {picked}/{per}</Typography>
-                                    <Box layoutClassName="mt-1 flex flex-wrap gap-1">
+                                  <Box key={`${entry.name}-${u}`} layoutClassName="rounded-lg" borderClassName="border border-slate-100 dark:border-slate-700" backgroundClassName="bg-white dark:bg-slate-800">
+                                    <Button type="button" onClick={() => setOpenUnit(uOpen ? null : uKey)} variant="ghost" disableVariantHover disableVariantTextColor layoutClassName="flex w-full items-center gap-1.5 px-2 py-1.5 text-left" sizeClassName="p-0" borderClassName="border-transparent">
+                                      <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform ${uOpen ? 'rotate-180' : ''}`} />
+                                      <Typography as="span" size="xs" layoutClassName="min-w-0 flex-1 truncate" textClassName="text-slate-500 dark:text-slate-400">
+                                        <Typography as="span" size="inherit" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{entry.name}{per > 1 ? ` (${per} cái)` : ''}{entry.qty > 1 ? ` #${u + 1}` : ''}</Typography>
+                                        {uSummary ? ` — ${uSummary}` : ' — chưa chọn'}
+                                      </Typography>
+                                      <Typography as="span" size="xs" layoutClassName="shrink-0 font-semibold" textClassName={uFull ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}>{picked}/{per}{uFull ? ' ✓' : ''}</Typography>
+                                    </Button>
+                                    {uOpen ? (
+                                    <Box layoutClassName="flex flex-wrap gap-1 px-2 pb-2">
                                       {itemFlavors.map((fl) => {
                                         const n = unitFlavors.filter((x) => x === fl).length;
                                         const cc = itemProduct ? flavorVariantColor(itemProduct, fl) : '#64748b';
@@ -331,6 +345,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                         );
                                       })}
                                     </Box>
+                                    ) : null}
                                   </Box>
                                 );
                               });
