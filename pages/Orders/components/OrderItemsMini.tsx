@@ -51,7 +51,7 @@ const OrderItemsMini: React.FC<{ items: OrderItem[] }> = ({ items }) => {
       return sizeList.flatMap((sc) => {
         const cnt = product ? (sizeCount(product, sc.name) ?? 1) : 1;
         const isCombo = cnt > 1;
-        const sizeLbl = isCombo ? `${sc.name} (${cnt} cái)` : sc.name;
+        const sizeLbl = sc.name; // tên size đã kèm "(N cái)" — không append lại
         const img = (product ? sizeImage(product, sc.name) : undefined) || it.image;
         // Có `units` → mỗi đơn vị (combo) 1 hàng kèm VỊ RIÊNG.
         if (sc.units && sc.units.length) {

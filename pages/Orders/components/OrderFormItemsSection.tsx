@@ -279,7 +279,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                     <Image src={sz.image} alt="" layoutClassName="h-full w-full object-cover" />
                                   </Box>
                                 ) : null}
-                                <Typography as="span" size="xs" layoutClassName="min-w-0 flex-1 truncate font-medium" textClassName="text-slate-700 dark:text-slate-200">{sz.name}{cnt > 1 ? ` (${cnt} cái)` : ''} · {formatVNDOrDash(sz.price)}</Typography>
+                                <Typography as="span" size="xs" layoutClassName="min-w-0 flex-1 truncate font-medium" textClassName="text-slate-700 dark:text-slate-200">{sz.name} · {formatVNDOrDash(sz.price)}</Typography>
                                 <Button type="button" onClick={() => setSizeQty(q - 1)} disabled={q === 0} aria-label="Bớt" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1" roundedClassName="rounded-full" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500 dark:text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
                                   <Minus className="h-3 w-3" />
                                 </Button>
@@ -308,16 +308,18 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                 };
                                 return (
                                   <Box key={`${entry.name}-${u}`} layoutClassName="rounded-lg" borderClassName="border border-slate-100 dark:border-slate-700" backgroundClassName="bg-white dark:bg-slate-800">
-                                    <Button type="button" onClick={() => setOpenUnit(uOpen ? null : uKey)} variant="ghost" disableVariantHover disableVariantTextColor layoutClassName="flex w-full items-center gap-1.5 px-2 py-1.5 text-left" sizeClassName="p-0" borderClassName="border-transparent">
-                                      <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform ${uOpen ? 'rotate-180' : ''}`} />
-                                      <Typography as="span" size="xs" layoutClassName="min-w-0 flex-1 truncate" textClassName="text-slate-500 dark:text-slate-400">
-                                        <Typography as="span" size="inherit" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{entry.name}{per > 1 ? ` (${per} cái)` : ''}{entry.qty > 1 ? ` #${u + 1}` : ''}</Typography>
-                                        {uSummary ? ` — ${uSummary}` : ' — chưa chọn'}
-                                      </Typography>
-                                      <Typography as="span" size="xs" layoutClassName="shrink-0 font-semibold" textClassName={uFull ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}>{picked}/{per}{uFull ? ' ✓' : ''}</Typography>
+                                    <Button type="button" onClick={() => setOpenUnit(uOpen ? null : uKey)} variant="ghost" disableVariantHover disableVariantTextColor layoutClassName="flex w-full items-center gap-2 px-2.5 py-2 text-left" sizeClassName="p-0" roundedClassName="rounded-lg" borderClassName="border-transparent" hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                                      <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${uOpen ? 'rotate-180' : ''}`} />
+                                      <Box layoutClassName="min-w-0 flex-1">
+                                        <Typography as="p" size="xs" layoutClassName="truncate font-semibold leading-tight" textClassName="text-slate-800 dark:text-slate-100">{entry.name}{entry.qty > 1 ? ` #${u + 1}` : ''}</Typography>
+                                        <Typography as="p" size="xs" layoutClassName="mt-0.5 truncate leading-tight" textClassName={uSummary ? 'text-slate-500 dark:text-slate-400' : 'text-amber-600 dark:text-amber-400'}>{uSummary || 'Chưa chọn vị'}</Typography>
+                                      </Box>
+                                      <Box layoutClassName="shrink-0 px-2 py-0.5" roundedClassName="rounded-full" backgroundClassName={uFull ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-amber-100 dark:bg-amber-900/40'}>
+                                        <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName={uFull ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}>{uFull ? `${picked}/${per} ✓` : `${picked}/${per}`}</Typography>
+                                      </Box>
                                     </Button>
                                     {uOpen ? (
-                                    <Box layoutClassName="flex flex-wrap gap-1 px-2 pb-2">
+                                    <Box layoutClassName="flex flex-wrap gap-1 px-2.5 pt-2 pb-2.5" borderClassName="border-t border-slate-100 dark:border-slate-700">
                                       {itemFlavors.map((fl) => {
                                         const n = unitFlavors.filter((x) => x === fl).length;
                                         const cc = itemProduct ? flavorVariantColor(itemProduct, fl) : '#64748b';

@@ -818,7 +818,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                  <Image src={img} alt={sc.name} layoutClassName="h-full w-full object-cover" />
                                </Box>
                                <Box layoutClassName="min-w-0 flex-1">
-                                 <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name} · {sc.name}{per > 1 ? ` (${per} cái)` : ''}{sc.qty > 1 ? ` #${u + 1}` : ''}</Heading>
+                                 <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name} · {sc.name}{sc.qty > 1 ? ` #${u + 1}` : ''}</Heading>
                                  {unit.length ? (
                                    <Box layoutClassName="mt-1 flex flex-wrap gap-1">
                                      {groupFlavors(unit).map(({ name: fl, qty }) => {
