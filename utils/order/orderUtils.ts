@@ -62,12 +62,14 @@ export const getOrderTotal = (order: Order): number => {
   if (order.total && order.total > 0) {
     return Number(order.total);
   }
-  return calculateOrderTotal(
+  const gross = calculateOrderTotal(
     order.items || [],
     order.shippingCost || 0,
     order.decorations || [],
     order.surchargeAmount || 0,
   );
+  // Thiếu order.total → tự tính net = gộp − GIẢM GIÁ (nếu có), tránh doanh thu bị thổi phồng.
+  return Math.max(0, gross - Number(order.discountAmount || 0));
 };
 
 /**
