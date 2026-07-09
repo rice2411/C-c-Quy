@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import {
   Wallet, Coins, Boxes, TrendingUp, Banknote, PieChart as PieIcon, LineChart as LineIcon,
-  BadgeDollarSign,
+  BadgeDollarSign, TicketPercent,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -78,6 +78,7 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
       <StatsBanner
         items={[
           { icon: Banknote, label: 'Tổng thu', value: formatVND(report.totalRevenue), accent: '#16a34a' },
+          { icon: TicketPercent, label: 'Giảm giá (KM)', value: formatVND(report.totalDiscount), accent: '#e11d48' },
           { icon: BadgeDollarSign, label: 'Doanh thu thuần', value: formatVND(report.netRevenue), accent: '#0ea5e9' },
           { icon: Boxes, label: '− Nhập kho', value: formatVND(report.totalStockIn), accent: '#d97706' },
           { icon: Coins, label: '− Hoa hồng', value: formatVND(report.totalCommission), accent: '#4abab9' },
