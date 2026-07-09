@@ -15,17 +15,34 @@ const flavorsDetail = (flavors?: string[]): string => {
 };
 
 /**
- * Các dòng hiển thị 1 món trong noti đơn (cấu trúc phân cấp):
- *   • Tên sản phẩm
- *   - Size A: SL n
- *   - Size B: SL n
- *   Chi tiết (4 socola, 3 matcha, 1 red)
- * Món không có sizeCounts → gộp size/SL vào dòng tên. Không có vị → bỏ dòng Chi tiết.
+ * Các dòng hiển thị 1 món trong noti đơn (cấu trúc phân cấp).
+ * - Có `sizeCounts[].units` (vị riêng từng combo) → mỗi đơn vị 1 dòng kèm vị + dòng "Tổng vị":
+ *     • Cookies truyền thống
+ *     - Combo Tình Bạn (3 cái) #1: 2 socola, 1 matcha
+ *     - Combo Tình Bạn (3 cái) #2: 1 matcha, 2 cafe
+ *     Tổng vị: 3 matcha, 2 socola, 2 cafe
+ * - Đơn cũ (không units) → sizes + SL + "Chi tiết (gộp)" như trước.
  */
 const itemLines = (it: any): string[] => {
   const out: string[] = [];
   const scs = (it?.sizeCounts ?? []).filter((x: any) => (x?.qty || 0) > 0);
   const qty = it?.quantity || 0;
+  const hasUnits = scs.some((sc: any) => Array.isArray(sc?.units) && sc.units.length > 0);
+
+  if (scs.length > 0 && hasUnits) {
+    out.push(`• ${it?.name ?? ''}`);
+    scs.forEach((sc: any) => {
+      (sc.units ?? []).forEach((unit: string[], u: number) => {
+        const fl = flavorsDetail(unit);
+        const label = `${sc.name}${sc.qty > 1 ? ` #${u + 1}` : ''}`;
+        out.push(fl ? `- ${label}: ${fl}` : `- ${label}: (chưa chọn vị)`);
+      });
+    });
+    const total = flavorsDetail(it?.flavors);
+    if (total) out.push(`Tổng vị: ${total}`);
+    return out;
+  }
+
   if (scs.length > 0) {
     out.push(`• ${it?.name ?? ''}`);
     scs.forEach((sc: any) => out.push(`- ${sc.name}: SL ${sc.qty}`));
