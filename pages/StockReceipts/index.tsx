@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type {
@@ -206,6 +206,31 @@ const StockReceiptsPage: React.FC = () => {
     },
     [t],
   );
+
+  // Dán ảnh (Ctrl/⌘+V) khi form nhập phiếu đang mở: ảnh trong clipboard được đưa vào
+  // đúng luồng theo mode — OCR thì chạy pipeline, thủ công thì đính kèm để lưu trữ.
+  // Clipboard không có ảnh (vd dán text vào input) → bỏ qua, không chặn hành vi mặc định.
+  useEffect(() => {
+    if (!importModalOpen) return;
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const imageItem = Array.from(items).find(
+        (it) => it.kind === 'file' && it.type.startsWith('image/'),
+      );
+      const file = imageItem?.getAsFile();
+      if (!file) return;
+      e.preventDefault();
+      if (entryMode === 'manual') {
+        void handleManualImageSelected(file);
+        toast.success(t('billImport.pasteAttached'));
+      } else if (!busy) {
+        void runPipelineForFile(file);
+      }
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  }, [importModalOpen, entryMode, busy, handleManualImageSelected, runPipelineForFile, t]);
 
   const addDraftLine = useCallback(() => {
     setDraftStructured((prev) =>

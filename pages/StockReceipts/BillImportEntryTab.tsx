@@ -190,18 +190,23 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
               onManualImageSelected(file);
             }}
           />
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => manualImageInputRef.current?.click()}
-            leftIcon={<ImagePlus />}
-            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-            sizeClassName="px-3 py-1.5 text-xs"
-            layoutClassName="inline-flex w-fit items-center gap-1.5"
-            disableVariantTextColor
-          >
-            {previewUrl ? 'Đổi ảnh đính kèm' : 'Đính ảnh bill (tuỳ chọn, không OCR)'}
-          </Button>
+          <Box layoutClassName="space-y-1">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => manualImageInputRef.current?.click()}
+              leftIcon={<ImagePlus />}
+              iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+              sizeClassName="px-3 py-1.5 text-xs"
+              layoutClassName="inline-flex w-fit items-center gap-1.5"
+              disableVariantTextColor
+            >
+              {previewUrl ? 'Đổi ảnh đính kèm' : 'Đính ảnh bill (tuỳ chọn, không OCR)'}
+            </Button>
+            <Typography size="xs" variant="muted">
+              {t('billImport.pasteHint')}
+            </Typography>
+          </Box>
         </>
       ) : null}
 
