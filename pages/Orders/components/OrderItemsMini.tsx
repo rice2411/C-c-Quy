@@ -7,74 +7,18 @@
  */
 import React from 'react';
 import type { OrderItem } from '@/types';
-import { groupFlavors, productUsesFlavorPricing, flavorImage, sizeImage, sizeCount } from '@/types';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
+import { buildOrderItemRows } from '@/pages/Orders/orderItemRows';
 import Box from '@/components/ui/Box';
 import Image from '@/components/ui/Image';
 import Typography from '@/components/ui/Typography';
-
-interface MiniRow {
-  key: string;
-  img?: string;
-  name: string;
-  meta: string[];
-  qty: number;
-}
 
 const OrderItemsMini: React.FC<{ items: OrderItem[] }> = ({ items }) => {
   const { products } = useProducts();
 
   if (!items || items.length === 0) return null;
 
-  const rows: MiniRow[] = items.flatMap((it) => {
-    const product = products.find((p) => p.id === it.productId);
-    const flavors = it.flavors ?? [];
-    const flavorLine = groupFlavors(flavors).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
-
-    // 1) Tính giá theo vị → mỗi vị 1 hàng (ảnh vị).
-    if (product && productUsesFlavorPricing(product) && flavors.length > 0) {
-      return groupFlavors(flavors).map(({ name: fl, qty }) => ({
-        key: `${it.id}-f-${fl}`,
-        img: flavorImage(product, fl) || it.image,
-        name: it.name,
-        meta: [`Vị: ${fl}`],
-        qty,
-      }));
-    }
-
-    // 2) Có nhiều size → mỗi size 1 hàng.
-    const sizeList = it.sizeCounts && it.sizeCounts.length
-      ? it.sizeCounts
-      : it.size ? [{ name: it.size, qty: it.quantity || 1 }] : null;
-
-    if (sizeList) {
-      return sizeList.flatMap((sc) => {
-        const cnt = product ? (sizeCount(product, sc.name) ?? 1) : 1;
-        const isCombo = cnt > 1;
-        const sizeLbl = sc.name; // tên size đã kèm "(N cái)" — không append lại
-        const img = (product ? sizeImage(product, sc.name) : undefined) || it.image;
-        // Có `units` → mỗi đơn vị (combo) 1 hàng kèm VỊ RIÊNG.
-        if (sc.units && sc.units.length) {
-          return sc.units.map((unit, u) => {
-            const fl = groupFlavors(unit).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
-            const meta = [`${sizeLbl}${sc.qty > 1 ? ` #${u + 1}` : ''}`];
-            if (fl) meta.push(`Vị: ${fl}`);
-            return { key: `${it.id}-s-${sc.name}-${u}`, img, name: it.name, meta, qty: 1 };
-          });
-        }
-        // Đơn cũ (không units): 1 hàng/loại; lẻ hiện vị phẳng, combo chỉ ảnh.
-        const label = sc.qty > 1 ? `${sizeLbl} ×${sc.qty}` : sizeLbl;
-        const meta = [label];
-        if (!isCombo && flavorLine) meta.push(`Vị: ${flavorLine}`);
-        return [{ key: `${it.id}-s-${sc.name}`, img, name: it.name, meta, qty: sc.qty }];
-      });
-    }
-
-    // 3) Mặc định 1 hàng.
-    const meta: string[] = [];
-    if (flavorLine) meta.push(`Vị: ${flavorLine}`);
-    return [{ key: it.id, img: it.image, name: it.name || '', meta, qty: it.quantity || 0 }];
-  });
+  const rows = buildOrderItemRows(items, products);
 
   // Chỉ hiện khi có ≥2 dòng (nhiều sản phẩm HOẶC 1 sản phẩm nhiều combo/loại).
   // Đơn 1 dòng → ẩn (đã có ảnh bìa + "N món" đại diện).
