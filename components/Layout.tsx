@@ -254,31 +254,31 @@ const Layout: React.FC = () => {
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
         {/* Header */}
         <header className="h-16 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 md:px-8 z-10 sticky top-0 transition-colors duration-200">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <button
               type="button"
               onClick={() => setSidebarCollapsed((v) => !v)}
               aria-label={sidebarCollapsed ? 'Mở sidebar' : 'Thu gọn sidebar'}
               title={sidebarCollapsed ? 'Mở sidebar' : 'Thu gọn sidebar'}
-              className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors active:scale-90"
+              className="hidden md:inline-flex shrink-0 items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors active:scale-90"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div className="md:hidden flex items-center gap-2">
-              <img src="/icon-v4.svg" alt="Tiệm Bánh Cúc Quy" className="w-8 h-8 rounded-lg shadow-sm shadow-primary-300 dark:shadow-none" />
-              <div className="flex flex-col leading-none">
-                <span className="text-base font-bold text-slate-800 dark:text-white">Tiệm Bánh <span className="text-primary-600 dark:text-primary-500">Cúc Quy</span></span>
+            <div className="md:hidden flex min-w-0 items-center gap-2">
+              <img src="/icon-v4.svg" alt="Tiệm Bánh Cúc Quy" className="w-8 h-8 shrink-0 rounded-lg shadow-sm shadow-primary-300 dark:shadow-none" />
+              <div className="flex min-w-0 flex-col leading-none">
+                <span className="truncate text-base font-bold text-slate-800 dark:text-white">Tiệm Bánh <span className="text-primary-600 dark:text-primary-500">Cúc Quy</span></span>
                 <span className="mt-0.5 text-[9px] font-mono text-slate-400 dark:text-slate-500">v{__BUILD_ID__}</span>
               </div>
             </div>
-            <div className="hidden md:block">
-              <h1 className="text-xl font-bold text-slate-800 dark:text-white">
+            <div className="hidden md:block min-w-0">
+              <h1 className="truncate text-xl font-bold text-slate-800 dark:text-white">
                 {getPageTitle()}
               </h1>
             </div>
 
             {/* Quick menu → mega menu (truy cập nhanh) */}
-            <div className="hidden md:block relative" ref={megaRef}>
+            <div className="hidden md:block relative shrink-0" ref={megaRef}>
               <button
                 type="button"
                 onClick={() => setMegaOpen((v) => !v)}
@@ -317,7 +317,7 @@ const Layout: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex shrink-0 items-center gap-2 md:gap-4">
 
             <button
               onClick={toggleLanguage}
@@ -337,20 +337,20 @@ const Layout: React.FC = () => {
 
             <NotificationBell />
 
-             <div className="hidden sm:flex items-center gap-2" title={`${ping.label}${ping.ms !== null ? ` · ${ping.ms} ms` : ''}`}>
+             <div className="hidden lg:flex items-center gap-2" title={`${ping.label}${ping.ms !== null ? ` · ${ping.ms} ms` : ''}`}>
                <span className={`w-2 h-2 rounded-full ${pingDot} animate-pulse`}></span>
                <span className={`text-xs font-semibold ${pingText}`}>
                  {ping.ms !== null ? `${ping.ms} ms` : '— ms'}
                </span>
-               <span className="text-xs font-medium text-slate-400 dark:text-slate-500 hidden sm:inline-block">{ping.label}</span>
+               <span className="text-xs font-medium text-slate-400 dark:text-slate-500 hidden xl:inline-block">{ping.label}</span>
              </div>
-             
-             <div className="flex items-center gap-3 pl-2 border-l border-slate-200 dark:border-slate-700">
-                 <div className="text-right hidden sm:block">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white leading-none">
+
+             <div className="flex shrink-0 items-center gap-3 pl-2 border-l border-slate-200 dark:border-slate-700">
+                 <div className="text-right hidden lg:block max-w-[160px]">
+                    <p className="truncate text-sm font-medium text-slate-900 dark:text-white leading-none">
                       {currentUser?.displayName || 'Admin'}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="truncate text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       {currentUser?.email || 'admin@cucquy.com'}
                     </p>
                  </div>
