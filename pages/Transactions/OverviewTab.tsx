@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import {
   Wallet, Coins, Boxes, TrendingUp, Banknote, PieChart as PieIcon, LineChart as LineIcon,
-  BadgeDollarSign, TicketPercent,
+  BadgeDollarSign, TicketPercent, Building2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -47,6 +47,7 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
   const pieData = [
     { name: 'Nhập kho', value: report.costBreakdown.stockIn, color: '#d97706' },
     { name: 'Hoa hồng', value: report.costBreakdown.commission, color: '#4abab9' },
+    { name: 'Chi phí vận hành', value: report.costBreakdown.expenses, color: '#8b5cf6' },
   ].filter(d => d.value > 0);
 
   return (
@@ -69,7 +70,7 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
         </Box>
         <Box layoutClassName="mt-3 rounded-lg bg-white/60 p-2.5 dark:bg-slate-900/30">
           <Typography as="p" size="xs" layoutClassName="font-mono" textClassName="text-slate-600 dark:text-slate-300">
-            {formatVND(report.totalRevenue)} − {formatVND(report.totalStockIn)} (nhập kho) − {formatVND(report.totalCommission)} (hoa hồng) = {formatVND(report.profit)}
+            {formatVND(report.totalRevenue)} − {formatVND(report.totalStockIn)} (nhập kho) − {formatVND(report.totalCommission)} (hoa hồng) − {formatVND(report.totalExpenses)} (chi phí VH) = {formatVND(report.profit)}
           </Typography>
         </Box>
       </Card>
@@ -82,6 +83,7 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
           { icon: BadgeDollarSign, label: 'Doanh thu thuần', value: formatVND(report.netRevenue), accent: '#0ea5e9' },
           { icon: Boxes, label: '− Nhập kho', value: formatVND(report.totalStockIn), accent: '#d97706' },
           { icon: Coins, label: '− Hoa hồng', value: formatVND(report.totalCommission), accent: '#4abab9' },
+          { icon: Building2, label: '− Chi phí vận hành', value: formatVND(report.totalExpenses), accent: '#8b5cf6' },
           { icon: TrendingUp, label: '= Lợi nhuận', value: formatVND(report.profit), accent: profitPositive ? '#16a34a' : '#dc2626' },
         ]}
       />

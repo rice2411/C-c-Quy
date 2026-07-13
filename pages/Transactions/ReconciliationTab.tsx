@@ -19,7 +19,7 @@ import { qk } from '@/hooks/queryKeys';
 import { useOrders } from '@/hooks/useOrders';
 import { useTransactions, useTransactionMutations } from '@/hooks/queries/useTransactionsQuery';
 import { fetchAllRefunds, reconcileRefund, unreconcileRefund, RefundListItem } from '@/services/orderService';
-import { markTransactionSettled } from '@/services/transactionService';
+import { markTransactionSettled, setTransactionExpense } from '@/services/transactionService';
 import OutReconcilePanel from './components/OutReconcilePanel';
 import { PaymentStatus } from '@/types/enums';
 import { Transaction } from '@/types';
@@ -206,6 +206,17 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
       await refreshAfterReconcile();
     } catch (err: any) {
       toast.error(err?.message || 'Đánh dấu thất bại');
+      throw err;
+    }
+  };
+
+  const handleSetExpense = async (transactionId: string, category: string | null, excluded: boolean) => {
+    try {
+      await setTransactionExpense(transactionId, category, excluded);
+      toast.success(excluded ? 'Đã loại khỏi chi phí' : 'Đã phân loại chi phí');
+      await refreshAfterReconcile();
+    } catch (err: any) {
+      toast.error(err?.message || 'Phân loại thất bại');
       throw err;
     }
   };
@@ -586,6 +597,7 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
                   onUnreconcileRefund={handleUnreconcileOut}
                   onMarkSettled={handleMarkSettled}
                   onUnmarkSettled={handleUnmarkSettled}
+                  onSetExpense={handleSetExpense}
                   formatDate={formatDate}
                 />
               </Box>
@@ -600,6 +612,7 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
           onUnreconcileRefund={handleUnreconcileOut}
           onMarkSettled={handleMarkSettled}
           onUnmarkSettled={handleUnmarkSettled}
+          onSetExpense={handleSetExpense}
           formatDate={formatDate}
         />
       ) : displayedTransactions.length === 0 ? (
