@@ -23,9 +23,11 @@ interface OrderListProps {
   onSelectOrder: (order: Order) => void;
   onDeleteOrder: (id: string) => void;
   onUpdateOrder: (id: string, data: any) => Promise<void>;
+  /** Nút action đặt trong toolbar (tạo đơn / export / làm mới). */
+  actions?: React.ReactNode;
 }
 
-const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
+const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions }) => {
   const { t } = useLanguage();
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -476,6 +478,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder }) => {
       borderClassName="border-slate-100 dark:border-slate-700"
     >
       <OrderFiltersToolbar
+        actions={actions}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         onOpenAdvanced={() => setIsAdvancedOpen(true)}
