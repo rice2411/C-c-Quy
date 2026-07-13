@@ -98,13 +98,8 @@ const StockReceiptsPage: React.FC = () => {
 
   const receiptRows = receiptsQuery.receipts;
   const supplierRows = suppliersQuery.suppliers;
-  const receiptLoading = receiptsQuery.loading;
   const receiptDetail: SavedStockReceiptDetail | null = detailQuery.detail;
   const detailLoading = detailQuery.loading;
-
-  const loadReceipts = useCallback(async () => {
-    await receiptsQuery.refetch();
-  }, [receiptsQuery]);
 
   const resetOutput = useCallback(() => {
     setOcrText('');
@@ -413,8 +408,6 @@ const StockReceiptsPage: React.FC = () => {
       <BillImportReceiptListTab
         receiptSearch={receiptSearch}
         onReceiptSearchChange={setReceiptSearch}
-        receiptLoading={receiptLoading}
-        onRefresh={loadReceipts}
         filteredReceipts={filteredReceipts}
         onRowClick={openReceiptDetail}
         onStartImport={() => setSourceModalOpen(true)}

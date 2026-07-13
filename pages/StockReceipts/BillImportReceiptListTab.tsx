@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronsUpDown, FileText, Plus, ReceiptText, RotateCw, TrendingUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronsUpDown, FileText, Plus, ReceiptText, TrendingUp } from 'lucide-react';
 import type { SavedStockReceiptSummary } from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
 import Badge from '@/components/ui/Badge';
@@ -53,8 +53,6 @@ const sourceBadgeColor = (
 export interface BillImportReceiptListTabProps {
   receiptSearch: string;
   onReceiptSearchChange: (value: string) => void;
-  receiptLoading: boolean;
-  onRefresh: () => void;
   filteredReceipts: SavedStockReceiptSummary[];
   onRowClick: (receiptId: string) => void;
   /** Mở modal chọn nguồn nhập phiếu (dropzone / chụp / tải / thủ công). */
@@ -64,8 +62,6 @@ export interface BillImportReceiptListTabProps {
 const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
   receiptSearch,
   onReceiptSearchChange,
-  receiptLoading,
-  onRefresh,
   filteredReceipts,
   onRowClick,
   onStartImport,
@@ -163,18 +159,6 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
         onPeriodChange={(v) => setPeriod(v as DatePeriod)}
         actions={
           <>
-            <Button
-              type="button"
-              variant="secondary"
-              sizeClassName="px-3 py-1.5 text-xs"
-              onClick={() => void onRefresh()}
-              disabled={receiptLoading}
-              leftIcon={<RotateCw />}
-              iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-              layoutClassName="inline-flex items-center gap-1.5"
-            >
-              {receiptLoading ? 'Đang tải...' : 'Làm mới'}
-            </Button>
             {onStartImport ? (
               <Button
                 type="button"
