@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import DatePicker from '@/components/ui/DatePicker';
 import { ArrowDownWideNarrow, ArrowUpWideNarrow, Calendar, Filter, Package, RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { OrderStatus, PaymentStatus } from '@/types';
@@ -445,24 +446,20 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
 
               <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label={t('orders.fromDate') ?? 'Từ ngày'} htmlFor="order-filters-date-from">
-                  <Input
+                  <DatePicker
                     id="order-filters-date-from"
-                    type="date"
                     value={values.dateFrom}
-                    onChange={(e) => handleChange('dateFrom', e.target.value)}
-                    leftIcon={<Calendar />}
-                    leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+                    onChange={(v) => handleChange('dateFrom', v)}
+                    fullWidth
                   />
                 </Field>
 
                 <Field label={t('orders.toDate') ?? 'Đến ngày'} htmlFor="order-filters-date-to">
-                  <Input
+                  <DatePicker
                     id="order-filters-date-to"
-                    type="date"
                     value={values.dateTo}
-                    onChange={(e) => handleChange('dateTo', e.target.value)}
-                    leftIcon={<Calendar />}
-                    leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+                    onChange={(v) => handleChange('dateTo', v)}
+                    fullWidth
                   />
                 </Field>
               </Box>

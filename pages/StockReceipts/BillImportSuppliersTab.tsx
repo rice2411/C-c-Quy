@@ -22,7 +22,7 @@ import {
   supplierChannelLabel,
 } from '@/types/billReceipt';
 import { mergeSuppliers } from '@/services/stockReceiptService';
-import StatsBanner from '@/pages/StockReceipts/StatsBanner';
+import StatsBanner from '@/components/ui/StatsBanner';
 import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/StockReceipts/dateFilter';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import { useLanguage } from '@/contexts/LanguageContext';

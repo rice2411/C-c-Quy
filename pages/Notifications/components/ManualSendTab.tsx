@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import DatePicker from '@/components/ui/DatePicker';
 import {
   Activity,
   BarChart3,
@@ -493,13 +494,11 @@ const ManualSendTab: React.FC = () => {
         {selectedType === 'delivery' ? (
           <Box layoutClassName="mb-6">
             <Field label={t('notifications.selectDeliveryDate')} htmlFor="notification-delivery-date">
-              <Input
+              <DatePicker
                 id="notification-delivery-date"
-                type="date"
                 value={deliveryDate}
-                onChange={(e) => setDeliveryDate(e.target.value)}
-                leftIcon={<Calendar />}
-                leftIconClassName="[&_svg]:h-5 [&_svg]:w-5"
+                onChange={setDeliveryDate}
+                fullWidth
               />
             </Field>
             {deliveryDate && deliveryDueOrders.length > 0 ? (

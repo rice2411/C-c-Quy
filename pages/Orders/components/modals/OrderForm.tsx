@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import DatePicker from '@/components/ui/DatePicker';
 import { AlertCircle, Calendar, Clock, Hash, Megaphone, Save, Tag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -798,14 +799,11 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
             />
             <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2 min-w-0">
               <Field label="Ngày nhận hàng" htmlFor="order-form-delivery-date" required className="min-w-0 overflow-hidden">
-                <Input
+                <DatePicker
                   id="order-form-delivery-date"
-                  type="date"
-                  required
                   value={deliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                  leftIcon={<Calendar />}
-                  leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+                  onChange={setDeliveryDate}
+                  fullWidth
                 />
               </Field>
               <Field

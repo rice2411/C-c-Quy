@@ -3,7 +3,7 @@ import { Wallet } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
 import Tabs from '@/components/ui/Tabs';
-import PeriodFilter, { DatePreset, computePresetRange } from '@/pages/Transactions/PeriodFilter';
+import DateRangePicker, { DatePreset, computePresetRange } from '@/components/ui/DateRangePicker';
 import OverviewTab from '@/pages/Transactions/OverviewTab';
 import RevenueTab from '@/pages/Transactions/RevenueTab';
 import ReconciliationTab from '@/pages/Transactions/ReconciliationTab';
@@ -38,7 +38,7 @@ const FinancePage: React.FC = () => {
   return (
     <Box layoutClassName="flex h-full flex-col space-y-4 sm:space-y-5">
       {/* Lọc thời gian dùng chung */}
-      <PeriodFilter
+      <DateRangePicker
         fromDate={fromDate}
         toDate={toDate}
         preset={preset}

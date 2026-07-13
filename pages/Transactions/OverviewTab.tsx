@@ -15,7 +15,7 @@ import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
-import StatsBanner from '@/pages/StockReceipts/StatsBanner';
+import StatsBanner from '@/components/ui/StatsBanner';
 import BankStatsCard from '@/pages/Transactions/components/BankStatsCard';
 
 const pctText = (v: number) => `${(v * 100).toFixed(1)}%`;

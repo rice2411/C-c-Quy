@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button';
 import Typography from '@/components/ui/Typography';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import FilterToolbar, { type ToolbarOption } from '@/components/shared/FilterToolbar';
-import StatsBanner from '@/pages/StockReceipts/StatsBanner';
+import StatsBanner from '@/components/ui/StatsBanner';
 import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/StockReceipts/dateFilter';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { parseDateValue } from '@/utils/format/dateUtil';

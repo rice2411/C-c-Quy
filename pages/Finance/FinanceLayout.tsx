@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Box from '@/components/ui/Box';
-import PeriodFilter, { DatePreset, computePresetRange } from '@/pages/Transactions/PeriodFilter';
+import DateRangePicker, { DatePreset, computePresetRange } from '@/components/ui/DateRangePicker';
 
 // Khung dùng chung cho các sub-screen của "Tài chính": lọc kỳ + nội dung.
 // Tiêu đề trang do thanh header của Layout hiển thị (theo route), không lặp ở đây.
@@ -26,7 +26,7 @@ const FinanceLayout: React.FC<FinanceLayoutProps> = ({ children }) => {
 
   return (
     <Box layoutClassName="flex h-full flex-col space-y-4 sm:space-y-5">
-      <PeriodFilter
+      <DateRangePicker
         fromDate={fromDate}
         toDate={toDate}
         preset={preset}
