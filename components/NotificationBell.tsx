@@ -76,7 +76,7 @@ const NotificationBell: React.FC = () => {
 
       {open ? (
         <Box
-          layoutClassName="absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-xl"
+          layoutClassName="fixed left-2 right-2 top-[4.5rem] z-50 max-h-[80vh] overflow-hidden rounded-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:max-h-none sm:w-80"
           backgroundClassName="bg-white dark:bg-slate-800"
           borderClassName="border border-slate-200 dark:border-slate-700"
           shadowClassName="shadow-xl"
