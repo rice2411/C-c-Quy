@@ -1,8 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, DollarSign, Minus, Package, Plus, RotateCcw, Trash2, Truck } from 'lucide-react';
+import { ChevronDown, DollarSign, Minus, Package, Plus, RotateCcw, Shuffle, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor, orderLineImage, sizeCount, sizeCountsPrice, groupFlavors } from '@/types';
 import { FormItem } from '@/pages/Orders/components/modals/OrderForm';
+
+/** Mix vị: chọn ngẫu nhiên `count` vị từ `pool` (cho phép trùng) để điền đủ số lượng. */
+const randomFlavors = (count: number, pool: string[]): string[] => {
+  if (pool.length === 0 || count <= 0) return [];
+  return Array.from({ length: count }, () => pool[Math.floor(Math.random() * pool.length)]);
+};
 
 type SizeEntry = { name: string; qty: number; units?: string[][] };
 
@@ -293,7 +299,33 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                         </Box>
                         {itemFlavors.length > 0 && scArr.some((s) => s.qty > 0) ? (
                           <Box layoutClassName="flex flex-col gap-1.5">
-                            <Typography as="span" size="xs" variant="muted">Vị từng phần:</Typography>
+                            <Box layoutClassName="flex items-center justify-between gap-2">
+                              <Typography as="span" size="xs" variant="muted">Vị từng phần:</Typography>
+                              <Button
+                                type="button"
+                                onClick={() => {
+                                  const next = scArr.map((s) => {
+                                    const perS = itemProduct ? (sizeCount(itemProduct, s.name) ?? 1) : 1;
+                                    return { ...s, units: (s.units ?? []).map(() => randomFlavors(perS, itemFlavors)) };
+                                  });
+                                  commitSizeCounts(item.id, itemProduct, next, onUpdateItem);
+                                }}
+                                variant="ghost"
+                                disableVariantHover
+                                disableVariantTextColor
+                                leftIcon={<Shuffle />}
+                                iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                                sizeClassName="px-2 py-1 text-xs"
+                                roundedClassName="rounded-lg"
+                                borderClassName="border border-primary-200 dark:border-primary-700/50"
+                                backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+                                textClassName="font-medium text-primary-700 dark:text-primary-300"
+                                hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-900/30"
+                                layoutClassName="inline-flex items-center gap-1"
+                              >
+                                Mix tất cả
+                              </Button>
+                            </Box>
                             {scArr.flatMap((entry) => {
                               const per = itemProduct ? (sizeCount(itemProduct, entry.name) ?? 1) : 1;
                               return (entry.units ?? []).map((unitFlavors, u) => {
@@ -320,6 +352,25 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                     </Button>
                                     {uOpen ? (
                                     <Box layoutClassName="flex flex-wrap gap-1 px-2.5 pt-2 pb-2.5" borderClassName="border-t border-slate-100 dark:border-slate-700">
+                                      <Button
+                                        type="button"
+                                        onClick={() => setUnit(randomFlavors(per, itemFlavors))}
+                                        variant="ghost"
+                                        disableVariantHover
+                                        disableVariantTextColor
+                                        leftIcon={<Shuffle />}
+                                        iconClassName="inline-flex shrink-0 [&_svg]:h-3 [&_svg]:w-3"
+                                        sizeClassName="px-2 py-0.5 text-xs"
+                                        roundedClassName="rounded-full"
+                                        borderClassName="border border-primary-200 dark:border-primary-700/50"
+                                        backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+                                        textClassName="font-medium text-primary-700 dark:text-primary-300"
+                                        hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-900/30"
+                                        layoutClassName="inline-flex items-center gap-1"
+                                        title={`Điền ngẫu nhiên ${per} vị`}
+                                      >
+                                        Mix
+                                      </Button>
                                       {itemFlavors.map((fl) => {
                                         const n = unitFlavors.filter((x) => x === fl).length;
                                         const cc = itemProduct ? flavorVariantColor(itemProduct, fl) : '#64748b';
