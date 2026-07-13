@@ -68,8 +68,9 @@ export interface RevenueReport {
   netRevenue: number; // VND — doanh thu thuần = totalRevenue − totalRefunded
   totalDiscount: number; // VND — tổng giảm giá (KM) các đơn trong kỳ
   totalExpenses: number; // VND — chi phí vận hành (bank-out đã phân loại là chi phí) trong kỳ
+  totalDepreciation: number; // VND — khấu hao tài sản (CAPEX) rơi trong kỳ
   series: RevenuePoint[];
-  costBreakdown: { stockIn: number; commission: number; expenses: number };
+  costBreakdown: { stockIn: number; commission: number; expenses: number; depreciation: number };
 }
 
 /**
