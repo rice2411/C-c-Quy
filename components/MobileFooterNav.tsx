@@ -197,22 +197,26 @@ const MobileFooterNav: React.FC = () => {
           />
           <div
             ref={menuRef}
-            className={`md:hidden fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] bg-white dark:bg-slate-800 z-50 shadow-2xl flex flex-col transition-transform duration-300 ease-out ${
-              isClosing ? 'translate-x-full' : 'translate-x-0'
+            className={`md:hidden fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-2xl bg-white dark:bg-slate-800 shadow-2xl transition-transform duration-300 ease-out ${
+              isClosing ? 'translate-y-full' : 'translate-y-0'
             }`}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+            {/* Thanh kéo (grab handle) — cảm giác bottom-sheet mobile */}
+            <div className="flex shrink-0 justify-center pt-2.5 pb-1">
+              <div className="h-1.5 w-10 rounded-full bg-slate-300 dark:bg-slate-600" />
+            </div>
+            <div className="flex shrink-0 items-center justify-between px-5 pb-3 pt-1 border-b border-slate-200 dark:border-slate-700">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                 {t('nav.add')}
               </h2>
               <button
                 onClick={handleCloseMenu}
-                className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors active:scale-90"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto p-4 pb-8">
               {moreNodes.length > 0 ? (
                 <div className="space-y-1">
                   {moreNodes.map((node) => {
