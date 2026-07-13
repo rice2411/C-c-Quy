@@ -409,9 +409,45 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                     ) : null}
                     {!isSized && itemFlavors.length > 0 ? (
                       <Box layoutClassName="mt-1 flex flex-col gap-1">
-                        <Typography as="span" size="xs" variant="muted">
-                          Vị{pickedTotal ? ` (${pickedTotal})` : ''}:
-                        </Typography>
+                        <Box layoutClassName="flex items-center justify-between gap-2">
+                          <Typography as="span" size="xs" variant="muted">
+                            Vị{pickedTotal ? ` (${pickedTotal})` : ''}:
+                          </Typography>
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              const target = Math.max(1, Number(item.quantity) || 1);
+                              const arr = randomFlavors(target, itemFlavors);
+                              onUpdateItem(item.id, 'flavors', arr);
+                              if (itemProduct) {
+                                if (productUsesFlavorPricing(itemProduct)) {
+                                  const sum = flavorSumPrice(itemProduct, arr);
+                                  onUpdateItem(item.id, 'quantity', Math.max(1, arr.length));
+                                  onUpdateItem(item.id, 'unitPrice', arr.length ? Math.round(sum / arr.length) : (itemProduct.price || 0));
+                                } else {
+                                  onUpdateItem(item.id, 'quantity', Math.max(1, arr.length));
+                                }
+                                const im = orderLineImage(itemProduct, { size: item.size, flavors: arr });
+                                if (im) onUpdateItem(item.id, 'image', im);
+                              }
+                            }}
+                            variant="ghost"
+                            disableVariantHover
+                            disableVariantTextColor
+                            leftIcon={<Shuffle />}
+                            iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                            sizeClassName="px-2 py-1 text-xs"
+                            roundedClassName="rounded-lg"
+                            borderClassName="border border-primary-200 dark:border-primary-700/50"
+                            backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+                            textClassName="font-medium text-primary-700 dark:text-primary-300"
+                            hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-900/30"
+                            layoutClassName="inline-flex items-center gap-1"
+                            title="Điền ngẫu nhiên vị theo số lượng"
+                          >
+                            Mix
+                          </Button>
+                        </Box>
                         <Box layoutClassName="flex flex-wrap gap-1.5">
                           {itemFlavors.map((fl) => {
                             const qty = (item.flavors ?? []).filter((x) => x === fl).length;
