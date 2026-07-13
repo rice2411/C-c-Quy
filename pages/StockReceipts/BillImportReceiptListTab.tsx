@@ -1,5 +1,5 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, Camera, ChevronsUpDown, FileText, PencilLine, ReceiptText, RotateCw, TrendingUp, Upload } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { ArrowDown, ArrowUp, ChevronsUpDown, FileText, Plus, ReceiptText, RotateCw, TrendingUp } from 'lucide-react';
 import type { SavedStockReceiptSummary } from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
 import Badge from '@/components/ui/Badge';
@@ -57,9 +57,8 @@ export interface BillImportReceiptListTabProps {
   onRefresh: () => void;
   filteredReceipts: SavedStockReceiptSummary[];
   onRowClick: (receiptId: string) => void;
-  onFileSelected?: (file: File | undefined) => void;
-  /** Mở form nhập phiếu THỦ CÔNG (bill viết tay — không OCR). */
-  onStartManual?: () => void;
+  /** Mở modal chọn nguồn nhập phiếu (dropzone / chụp / tải / thủ công). */
+  onStartImport?: () => void;
 }
 
 const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
@@ -69,12 +68,9 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
   onRefresh,
   filteredReceipts,
   onRowClick,
-  onFileSelected,
-  onStartManual,
+  onStartImport,
 }) => {
   const { t } = useLanguage();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // (1) state
   const [sortKey, setSortKey] = useState<SortKey>('date');
@@ -124,15 +120,6 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
     return sortDir === 'asc' ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />;
   };
 
-  const openCamera = () => cameraInputRef.current?.click();
-  const openFilePicker = () => fileInputRef.current?.click();
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (file && onFileSelected) onFileSelected(file);
-  };
-
   const renderSourceBadge = (row: SavedStockReceiptSummary) => {
     const color = sourceBadgeColor(row.source);
     return (
@@ -150,26 +137,6 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
   // (4) render
   return (
     <Box layoutClassName="space-y-3">
-      {onFileSelected ? (
-        <>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={handleChange}
-          />
-          <input
-            ref={cameraInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            style={{ display: 'none' }}
-            onChange={handleChange}
-          />
-        </>
-      ) : null}
-
       <StatsBanner
         items={[
           {
@@ -208,59 +175,23 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
             >
               {receiptLoading ? 'Đang tải...' : 'Làm mới'}
             </Button>
-            {onFileSelected ? (
-              <>
-                {onStartManual ? (
-                  <Button
-                    type="button"
-                    onClick={() => onStartManual()}
-                    leftIcon={<PencilLine />}
-                    iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                    sizeClassName="px-3 py-2 text-xs"
-                    backgroundClassName="bg-white dark:bg-slate-800"
-                    borderClassName="border border-slate-200 dark:border-slate-600"
-                    textClassName="font-medium text-slate-700 dark:text-slate-200"
-                    roundedClassName="rounded-xl"
-                    layoutClassName="inline-flex items-center gap-1.5"
-                    disableVariantHover
-                    disableVariantTextColor
-                  >
-                    Nhập thủ công
-                  </Button>
-                ) : null}
-                <Button
-                  type="button"
-                  onClick={openFilePicker}
-                  leftIcon={<Upload />}
-                  iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                  sizeClassName="px-3 py-2 text-xs"
-                  backgroundClassName="bg-white dark:bg-slate-800"
-                  borderClassName="border border-slate-200 dark:border-slate-600"
-                  textClassName="font-medium text-slate-700 dark:text-slate-200"
-                  roundedClassName="rounded-xl"
-                  layoutClassName="inline-flex items-center gap-1.5"
-                  disableVariantHover
-                  disableVariantTextColor
-                >
-                  Tải ảnh lên
-                </Button>
-                <Button
-                  type="button"
-                  onClick={openCamera}
-                  leftIcon={<Camera />}
-                  iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-                  sizeClassName="px-4 py-2"
-                  backgroundClassName="bg-primary-600 hover:bg-primary-700"
-                  textClassName="font-medium text-white"
-                  roundedClassName="rounded-xl"
-                  borderClassName="border border-transparent"
-                  layoutClassName="inline-flex items-center gap-1.5"
-                  disableVariantHover
-                  disableVariantTextColor
-                >
-                  Chụp ảnh
-                </Button>
-              </>
+            {onStartImport ? (
+              <Button
+                type="button"
+                onClick={() => onStartImport()}
+                leftIcon={<Plus />}
+                iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                sizeClassName="px-4 py-2"
+                backgroundClassName="bg-primary-600 hover:bg-primary-700"
+                textClassName="font-medium text-white"
+                roundedClassName="rounded-xl"
+                borderClassName="border border-transparent"
+                layoutClassName="inline-flex items-center gap-1.5"
+                disableVariantHover
+                disableVariantTextColor
+              >
+                Nhập
+              </Button>
             ) : null}
           </>
         }
@@ -281,45 +212,19 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
           >
             <Box layoutClassName="flex flex-col items-center gap-3 p-6 text-center">
               <EmptyState icon={<FileText className="h-6 w-6" />} title="Chưa có bill nào." />
-              {onFileSelected ? (
-                <Box layoutClassName="flex flex-wrap items-center justify-center gap-2">
-                  <Button
-                    type="button"
-                    variant="primary"
-                    sizeClassName="px-3 py-1.5 text-xs"
-                    onClick={openCamera}
-                    leftIcon={<Camera />}
-                    iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                    layoutClassName="inline-flex items-center gap-1.5"
-                    disableVariantHover
-                  >
-                    Chụp ảnh
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    sizeClassName="px-3 py-1.5 text-xs"
-                    onClick={openFilePicker}
-                    leftIcon={<Upload />}
-                    iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                    layoutClassName="inline-flex items-center gap-1.5"
-                  >
-                    Tải ảnh lên
-                  </Button>
-                  {onStartManual ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      sizeClassName="px-3 py-1.5 text-xs"
-                      onClick={() => onStartManual()}
-                      leftIcon={<PencilLine />}
-                      iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                      layoutClassName="inline-flex items-center gap-1.5"
-                    >
-                      Nhập thủ công
-                    </Button>
-                  ) : null}
-                </Box>
+              {onStartImport ? (
+                <Button
+                  type="button"
+                  variant="primary"
+                  sizeClassName="px-4 py-2 text-xs"
+                  onClick={() => onStartImport()}
+                  leftIcon={<Plus />}
+                  iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                  layoutClassName="inline-flex items-center gap-1.5"
+                  disableVariantHover
+                >
+                  Nhập phiếu
+                </Button>
               ) : null}
             </Box>
           </Box>
