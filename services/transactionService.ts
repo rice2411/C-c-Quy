@@ -36,6 +36,27 @@ export const applyExpenseRules = async (): Promise<number> => {
   return typeof res.data?.classified === 'number' ? res.data.classified : 0;
 };
 
+/** Tổng hợp chi phí (OPEX) theo category trong kỳ. */
+export const fetchExpenseSummary = async (
+  fromISO: string,
+  toISO: string,
+): Promise<{ category: string; amount: number }[]> => {
+  const res = await apiClient.get<{ category: string; amount: number }[]>('/transactions/expense-summary', {
+    params: { from: fromISO, to: toISO },
+  });
+  return Array.isArray(res.data)
+    ? res.data.map((x) => ({ category: String(x.category), amount: typeof x.amount === 'number' ? x.amount : 0 }))
+    : [];
+};
+
+/** Bank-out trong kỳ (kèm phân loại) — màn Chi phí vận hành. */
+export const fetchExpenseOut = async (fromISO: string, toISO: string): Promise<Transaction[]> => {
+  const res = await apiClient.get<Transaction[]>('/transactions/expense-out', {
+    params: { from: fromISO, to: toISO },
+  });
+  return Array.isArray(res.data) ? res.data : [];
+};
+
 /** Đánh dấu giao dịch là không liên quan đến hệ thống (hoặc bỏ đánh dấu). */
 export const markTransactionExternal = async (
   transactionId: string,

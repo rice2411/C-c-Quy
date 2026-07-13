@@ -23,6 +23,7 @@ import {
   QrCode,
   AlertTriangle,
   HeartPulse,
+  Building2,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { ScreenVisibilityMap } from "@/types";
@@ -140,6 +141,13 @@ export const routes: RouteConfig[] = [
     path: "/materials",
     labelKey: "nav.materials",
     icon: Package,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/expenses",
+    labelKey: "nav.expenses",
+    icon: Building2,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -341,14 +349,22 @@ export const navGroups: NavGroupConfig[] = [
     ],
   },
   {
+    key: "cost",
+    labelKey: "nav.costGroup",
+    icon: Building2,
+    childPaths: [
+      "/expenses",
+      "/stock-receipts",
+      "/suppliers",
+      "/materials",
+    ],
+  },
+  {
     key: "inventory",
     labelKey: "nav.inventoryGroup",
     icon: Boxes,
     childPaths: [
       "/storage",
-      "/stock-receipts",
-      "/suppliers",
-      "/materials",
     ],
   },
   {

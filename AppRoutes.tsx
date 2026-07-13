@@ -19,6 +19,7 @@ const ProductDetailPage = lazy(() => import("./pages/Storage/product/ProductDeta
 const StockReceiptsPage = lazy(() => import("./pages/StockReceipts/index"));
 const SuppliersPage = lazy(() => import("./pages/Suppliers/index"));
 const MaterialsPage = lazy(() => import("./pages/Materials/index"));
+const ExpensesPage = lazy(() => import("./pages/Expenses/index"));
 const CustomersPage = lazy(() => import("./pages/Customers/index"));
 const UsersPage = lazy(() => import("./pages/Users/index"));
 const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
@@ -159,6 +160,14 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/stock-receipts")?.roles}>
             <StockReceiptsPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="expenses"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses")?.roles}>
+            <ExpensesPage />
           </RoleBasedRoute>
         }
       />

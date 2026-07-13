@@ -1,0 +1,351 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { Building2, Plus, Shuffle, Trash2, Wallet } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import Box from '@/components/ui/Box';
+import Typography from '@/components/ui/Typography';
+import Heading from '@/components/ui/Heading';
+import Button from '@/components/ui/Button';
+import Select from '@/components/ui/Select';
+import Input from '@/components/ui/Input';
+import Card from '@/components/ui/Card';
+import Tabs from '@/components/ui/Tabs';
+import Spinner from '@/components/ui/Spinner';
+import EmptyState from '@/components/ui/EmptyState';
+import StatsBanner from '@/components/ui/StatsBanner';
+import DateRangePicker, { DatePreset, computePresetRange } from '@/components/ui/DateRangePicker';
+import {
+  EXPENSE_CATEGORIES,
+  expenseCategoryLabel,
+  type ExpenseRule,
+  type Transaction,
+} from '@/types';
+import { formatVND } from '@/utils/format/currencyUtil';
+import { formatDateTime } from '@/utils/format/dateUtil';
+import {
+  fetchExpenseSummary,
+  fetchExpenseOut,
+  fetchExpenseRules,
+  saveExpenseRules,
+  applyExpenseRules,
+  setTransactionExpense,
+} from '@/services/transactionService';
+
+type TopTab = 'overview' | 'list' | 'rules';
+
+const CAT_COLORS = ['#8b5cf6', '#0ea5e9', '#16a34a', '#d97706', '#e11d48', '#4abab9', '#64748b', '#f59e0b'];
+
+const ExpensesPage: React.FC = () => {
+  const initial = computePresetRange('month');
+  const [fromDate, setFromDate] = useState(initial.from);
+  const [toDate, setToDate] = useState(initial.to);
+  const [preset, setPreset] = useState<DatePreset>('month');
+  const [tab, setTab] = useState<TopTab>('overview');
+
+  const [summary, setSummary] = useState<{ category: string; amount: number }[]>([]);
+  const [outList, setOutList] = useState<Transaction[]>([]);
+  const [rules, setRules] = useState<ExpenseRule[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const applyPreset = (p: DatePreset) => {
+    if (p !== 'custom') {
+      const r = computePresetRange(p);
+      setFromDate(r.from);
+      setToDate(r.to);
+    }
+    setPreset(p);
+  };
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [s, o, r] = await Promise.all([
+        fetchExpenseSummary(fromDate, toDate),
+        fetchExpenseOut(fromDate, toDate),
+        fetchExpenseRules(),
+      ]);
+      setSummary(s);
+      setOutList(o);
+      setRules(r);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Tải dữ liệu chi phí thất bại');
+    } finally {
+      setLoading(false);
+    }
+  }, [fromDate, toDate]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const totalOpex = useMemo(() => summary.reduce((s, x) => s + x.amount, 0), [summary]);
+  const pieData = summary.filter((x) => x.amount > 0);
+
+  // ── Danh sách: gán category / loại khỏi chi phí ──
+  const setExpense = async (tx: Transaction, category: string | null, excluded: boolean) => {
+    setBusy(true);
+    try {
+      await setTransactionExpense(tx.id, category, excluded);
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Phân loại thất bại');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // ── Quy tắc ──
+  const [ruleDraft, setRuleDraft] = useState<{ keyword: string; category: string }[]>([]);
+  useEffect(() => {
+    setRuleDraft(rules.map((r) => ({ keyword: r.keyword, category: String(r.category) })));
+  }, [rules]);
+
+  const saveRules = async () => {
+    setBusy(true);
+    try {
+      const clean = ruleDraft.filter((r) => r.keyword.trim() && r.category);
+      await saveExpenseRules(clean);
+      toast.success('Đã lưu quy tắc');
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Lưu quy tắc thất bại');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const runApplyRules = async () => {
+    setBusy(true);
+    try {
+      const n = await applyExpenseRules();
+      toast.success(`Đã tự phân loại ${n} giao dịch`);
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Áp dụng thất bại');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const tabItems = [
+    { id: 'overview', label: 'Tổng quan' },
+    { id: 'list', label: 'Danh sách' },
+    { id: 'rules', label: 'Quy tắc' },
+  ];
+
+  return (
+    <Box layoutClassName="flex h-full flex-col space-y-4">
+      <Box layoutClassName="flex flex-wrap items-center gap-2">
+        <Heading level={2} layoutClassName="flex items-center gap-2" textClassName="text-lg font-semibold">
+          <Building2 className="h-5 w-5 text-primary-500" />
+          Chi phí vận hành
+        </Heading>
+        <Box layoutClassName="ml-auto">
+          <DateRangePicker
+            fromDate={fromDate}
+            toDate={toDate}
+            preset={preset}
+            onApplyPreset={applyPreset}
+            onFromChange={(v) => { setFromDate(v); setPreset('custom'); }}
+            onToChange={(v) => { setToDate(v); setPreset('custom'); }}
+          />
+        </Box>
+      </Box>
+
+      <Tabs items={tabItems} value={tab} onChange={(v) => setTab(v as TopTab)} />
+
+      {loading ? (
+        <Box layoutClassName="flex min-h-[30vh] items-center justify-center">
+          <Spinner size="lg" textClassName="text-primary-500" />
+        </Box>
+      ) : (
+        <Box layoutClassName="flex-1 overflow-y-auto">
+          {tab === 'overview' && (
+            <Box layoutClassName="space-y-4">
+              <StatsBanner
+                items={[
+                  { icon: Wallet, label: 'Tổng chi phí kỳ', value: formatVND(totalOpex), accent: '#8b5cf6' },
+                  { icon: Building2, label: 'Số khoản', value: String(outList.length), accent: '#0ea5e9' },
+                ]}
+              />
+              <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+                <Typography size="sm" layoutClassName="font-semibold">Cơ cấu chi phí theo loại</Typography>
+                {pieData.length === 0 ? (
+                  <EmptyState icon={<Wallet className="h-6 w-6" />} title="Chưa có chi phí trong kỳ" />
+                ) : (
+                  <Box layoutClassName="flex flex-col items-center gap-4 sm:flex-row">
+                    <Box layoutClassName="h-52 w-full sm:w-1/2">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={pieData} dataKey="amount" nameKey="category" cx="50%" cy="50%" outerRadius={80}>
+                            {pieData.map((_, i) => (
+                              <Cell key={i} fill={CAT_COLORS[i % CAT_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(v: number) => formatVND(v)} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </Box>
+                    <Box layoutClassName="w-full space-y-1.5 sm:w-1/2">
+                      {pieData.map((x, i) => (
+                        <Box key={x.category} layoutClassName="flex items-center gap-2">
+                          <Box layoutClassName="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: CAT_COLORS[i % CAT_COLORS.length] }} />
+                          <Typography size="sm" layoutClassName="min-w-0 flex-1 truncate" textClassName="text-slate-600 dark:text-slate-300">
+                            {x.category === 'unclassified' ? 'Chưa phân loại' : expenseCategoryLabel(x.category)}
+                          </Typography>
+                          <Typography size="sm" layoutClassName="font-semibold tabular-nums">{formatVND(x.amount)}</Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+              </Card>
+            </Box>
+          )}
+
+          {tab === 'list' && (
+            <Box layoutClassName="space-y-2">
+              {outList.length === 0 ? (
+                <EmptyState icon={<Wallet className="h-6 w-6" />} title="Không có giao dịch tiền ra trong kỳ" />
+              ) : (
+                outList.map((tx) => {
+                  const isNeutral = tx.settledOut || tx.costExcluded;
+                  return (
+                    <Card key={tx.id} padding="sm" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="flex flex-wrap items-center gap-3">
+                      <Box layoutClassName="min-w-0 flex-1">
+                        <Typography size="sm" layoutClassName="font-semibold tabular-nums" textClassName="text-rose-700 dark:text-rose-300">
+                          −{formatVND(tx.transferAmount)}
+                        </Typography>
+                        <Typography size="xs" variant="muted" layoutClassName="truncate">
+                          {formatDateTime(tx.transactionDate)}{tx.content ? ` · ${tx.content}` : ''}
+                        </Typography>
+                      </Box>
+                      <Select
+                        value={tx.expenseCategory ?? ''}
+                        disabled={busy || !!tx.costExcluded || !!tx.settledOut}
+                        onChange={(e) => void setExpense(tx, e.target.value || null, false)}
+                      >
+                        <option value="">— Chưa phân loại —</option>
+                        {EXPENSE_CATEGORIES.map((c) => (
+                          <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                      </Select>
+                      <Button
+                        type="button"
+                        disabled={busy || !!tx.settledOut}
+                        onClick={() => void setExpense(tx, tx.costExcluded ? (tx.expenseCategory ?? null) : null, !tx.costExcluded)}
+                        variant="ghost"
+                        disableVariantHover
+                        disableVariantTextColor
+                        sizeClassName="px-2.5 py-1.5 text-xs"
+                        roundedClassName="rounded-lg"
+                        borderClassName="border border-slate-200 dark:border-slate-600"
+                        backgroundClassName={isNeutral ? 'bg-slate-100 dark:bg-slate-700' : 'bg-white dark:bg-slate-800'}
+                        textClassName="font-medium text-slate-600 dark:text-slate-300"
+                        layoutClassName="inline-flex items-center gap-1.5"
+                      >
+                        {tx.settledOut ? 'Đã kết toán' : tx.costExcluded ? 'Tính lại' : 'Không tính'}
+                      </Button>
+                    </Card>
+                  );
+                })
+              )}
+            </Box>
+          )}
+
+          {tab === 'rules' && (
+            <Box layoutClassName="space-y-3">
+              <Box layoutClassName="flex flex-wrap items-center gap-2">
+                <Typography size="xs" variant="muted" layoutClassName="min-w-0 flex-1">
+                  Nội dung chuyển khoản chứa "từ khoá" → tự gán loại. Bấm "Áp dụng" để phân loại các giao dịch chưa gán.
+                </Typography>
+                <Button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void runApplyRules()}
+                  leftIcon={<Shuffle />}
+                  iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                  sizeClassName="px-3 py-1.5 text-xs"
+                  backgroundClassName="bg-primary-600 hover:bg-primary-700"
+                  textClassName="font-medium text-white"
+                  roundedClassName="rounded-lg"
+                  borderClassName="border border-transparent"
+                  layoutClassName="inline-flex items-center gap-1.5"
+                  disableVariantHover
+                  disableVariantTextColor
+                >
+                  Áp dụng rule
+                </Button>
+              </Box>
+              <Box layoutClassName="space-y-2">
+                {ruleDraft.map((r, i) => (
+                  <Box key={i} layoutClassName="flex items-center gap-2">
+                    <Input
+                      value={r.keyword}
+                      placeholder="Từ khoá (vd TIEN NHA)"
+                      onChange={(e) => setRuleDraft((d) => d.map((x, j) => (j === i ? { ...x, keyword: e.target.value } : x)))}
+                      containerClassName="flex-1"
+                    />
+                    <Select
+                      value={r.category}
+                      onChange={(e) => setRuleDraft((d) => d.map((x, j) => (j === i ? { ...x, category: e.target.value } : x)))}
+                    >
+                      {EXPENSE_CATEGORIES.map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </Select>
+                    <Button
+                      type="button"
+                      onClick={() => setRuleDraft((d) => d.filter((_, j) => j !== i))}
+                      aria-label="Xoá"
+                      variant="ghost"
+                      disableVariantHover
+                      disableVariantTextColor
+                      sizeClassName="p-1.5"
+                      roundedClassName="rounded-lg"
+                      borderClassName="border border-transparent"
+                      textClassName="text-red-500"
+                      hoverClassName="hover:bg-red-50 dark:hover:bg-red-900/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </Box>
+                ))}
+              </Box>
+              <Box layoutClassName="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  onClick={() => setRuleDraft((d) => [...d, { keyword: '', category: 'other' }])}
+                  leftIcon={<Plus />}
+                  iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                  variant="secondary"
+                  sizeClassName="px-3 py-1.5 text-xs"
+                  roundedClassName="rounded-lg"
+                  layoutClassName="inline-flex items-center gap-1.5"
+                  disableVariantHover
+                >
+                  Thêm rule
+                </Button>
+                <Button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void saveRules()}
+                  variant="primary"
+                  sizeClassName="px-3 py-1.5 text-xs"
+                  roundedClassName="rounded-lg"
+                  layoutClassName="inline-flex items-center gap-1.5"
+                  disableVariantHover
+                >
+                  Lưu quy tắc
+                </Button>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+};
+
+export default ExpensesPage;
