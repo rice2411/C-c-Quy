@@ -321,14 +321,14 @@ const Layout: React.FC = () => {
 
             <button
               onClick={toggleLanguage}
-              className="hidden sm:flex px-2 py-1.5 md:px-3 md:py-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors items-center gap-2 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
+              className="flex shrink-0 px-2 py-1.5 md:px-3 md:py-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors items-center gap-2 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
             >
-              <img 
-                src={language === 'en' ? "https://flagcdn.com/w40/us.png" : "https://flagcdn.com/w40/vn.png"} 
+              <img
+                src={language === 'en' ? "https://flagcdn.com/w40/us.png" : "https://flagcdn.com/w40/vn.png"}
                 alt={language === 'en' ? "English" : "Vietnamese"}
                 className="w-5 h-auto rounded-sm shadow-sm object-cover"
               />
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              <span className="hidden sm:inline text-sm font-medium text-slate-600 dark:text-slate-300">
                 {language === 'en' ? 'EN' : 'VI'}
               </span>
             </button>
