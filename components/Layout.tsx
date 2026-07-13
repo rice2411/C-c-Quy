@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, ChevronDown, Menu, LayoutGrid, RefreshCw } from 'lucide-react';
+import { LogOut, ChevronDown, Menu, LayoutGrid, RefreshCw, MoreVertical } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -76,6 +76,24 @@ const Layout: React.FC = () => {
   }, [megaOpen]);
   // đóng mega menu khi chuyển trang
   React.useEffect(() => { setMegaOpen(false); }, [location.pathname]);
+
+  // Menu "⋯" cho mobile: gom các action phụ (ngôn ngữ/theme/cập nhật/đăng xuất) tránh quá tải navbar.
+  const [moreOpen, setMoreOpen] = React.useState(false);
+  const moreRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!moreOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMoreOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [moreOpen]);
+  React.useEffect(() => { setMoreOpen(false); }, [location.pathname]);
 
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'vi' : 'en');
@@ -321,7 +339,7 @@ const Layout: React.FC = () => {
 
             <button
               onClick={toggleLanguage}
-              className="flex shrink-0 px-2 py-1.5 md:px-3 md:py-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors items-center gap-2 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
+              className="hidden sm:flex shrink-0 px-2 py-1.5 md:px-3 md:py-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors items-center gap-2 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
             >
               <img
                 src={language === 'en' ? "https://flagcdn.com/w40/us.png" : "https://flagcdn.com/w40/vn.png"}
@@ -333,7 +351,9 @@ const Layout: React.FC = () => {
               </span>
             </button>
 
-            <ThemeToggle />
+            <div className="hidden sm:flex">
+              <ThemeToggle />
+            </div>
 
             <NotificationBell />
 
@@ -368,7 +388,7 @@ const Layout: React.FC = () => {
                     onClick={forceUpdate}
                     aria-label={needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
                     title={needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
-                    className={`md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors active:scale-90 ${
+                    className={`hidden sm:inline-flex md:hidden items-center justify-center w-9 h-9 rounded-lg transition-colors active:scale-90 ${
                       needRefresh
                         ? 'bg-primary-600 text-white hover:bg-primary-700 animate-pulse'
                         : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -376,15 +396,69 @@ const Layout: React.FC = () => {
                  >
                     <RefreshCw className="w-5 h-5" />
                  </button>
-                 {/* Đăng xuất — mobile (desktop dùng nút trong sidebar) */}
+                 {/* Đăng xuất — chỉ dải sm→md (desktop dùng nút trong sidebar; mobile <sm dùng menu ⋯) */}
                  <button
                     onClick={handleLogout}
                     aria-label={t('nav.signOut')}
                     title={t('nav.signOut')}
-                    className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 dark:hover:text-red-400 transition-colors active:scale-90"
+                    className="hidden sm:inline-flex md:hidden items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 dark:hover:text-red-400 transition-colors active:scale-90"
                  >
                     <LogOut className="w-5 h-5" />
                  </button>
+
+                 {/* Menu "⋯" — chỉ mobile <sm: gom ngôn ngữ / theme / cập nhật / đăng xuất */}
+                 <div className="relative sm:hidden" ref={moreRef}>
+                    <button
+                       type="button"
+                       onClick={() => setMoreOpen((v) => !v)}
+                       aria-haspopup="true"
+                       aria-expanded={moreOpen}
+                       aria-label="Thêm"
+                       className={`inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors active:scale-90 ${
+                         needRefresh
+                           ? 'text-primary-600 dark:text-primary-400'
+                           : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                       }`}
+                    >
+                       <MoreVertical className="w-5 h-5" />
+                    </button>
+                    {moreOpen ? (
+                       <div className="absolute right-0 top-full mt-2 w-52 origin-top-right rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl z-40 p-1.5">
+                          <button
+                             type="button"
+                             onClick={() => { toggleLanguage(); setMoreOpen(false); }}
+                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                          >
+                             <img
+                                src={language === 'en' ? 'https://flagcdn.com/w40/us.png' : 'https://flagcdn.com/w40/vn.png'}
+                                alt=""
+                                className="w-5 h-auto rounded-sm shadow-sm object-cover"
+                             />
+                             {language === 'en' ? 'English' : 'Tiếng Việt'}
+                          </button>
+                          <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                             <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Giao diện</span>
+                             <ThemeToggle />
+                          </div>
+                          <button
+                             type="button"
+                             onClick={() => { void forceUpdate(); setMoreOpen(false); }}
+                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                          >
+                             <RefreshCw className={`w-4 h-4 ${needRefresh ? 'text-primary-600 dark:text-primary-400' : ''}`} />
+                             {needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
+                          </button>
+                          <button
+                             type="button"
+                             onClick={() => { handleLogout(); setMoreOpen(false); }}
+                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                          >
+                             <LogOut className="w-4 h-4" />
+                             {t('nav.signOut')}
+                          </button>
+                       </div>
+                    ) : null}
+                 </div>
              </div>
           </div>
         </header>
