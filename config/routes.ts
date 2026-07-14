@@ -368,11 +368,12 @@ export const navGroups: NavGroupConfig[] = [
     ],
   },
   {
-    key: "inventory",
-    labelKey: "nav.inventoryGroup",
+    key: "product",
+    labelKey: "nav.productGroup",
     icon: Boxes,
     childPaths: [
       "/storage",
+      "/settings/product",
     ],
   },
   {
@@ -395,7 +396,6 @@ export const navGroups: NavGroupConfig[] = [
       "/settings/zalo",
       "/settings/order",
       "/settings/sepay",
-      "/settings/product",
     ],
   },
 ];
