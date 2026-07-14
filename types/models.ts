@@ -4,6 +4,7 @@ export * from './order';
 export * from './product';
 export * from './transaction';
 export * from './asset';
+export * from './manualExpense';
 export * from './stat';
 export * from './user';
 export * from './configuration';
