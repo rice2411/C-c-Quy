@@ -132,72 +132,72 @@ const OrdersPage: React.FC = () => {
     setIsExportModalOpen(true);
   };
 
+  const ordersActions = (
+    <>
+      <Button
+        type="button"
+        onClick={handleRefresh}
+        disabled={isRefreshing}
+        variant="secondary"
+        disableVariantHover
+        disableVariantTextColor
+        backgroundClassName="bg-white dark:bg-slate-800"
+        borderClassName="border border-slate-200 dark:border-slate-600"
+        textClassName="font-medium text-slate-700 dark:text-slate-200"
+        roundedClassName="rounded-xl"
+        sizeClassName="px-3 py-2 text-xs"
+        layoutClassName="inline-flex items-center gap-1.5"
+        stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        leftIcon={<RefreshCw />}
+        iconClassName={`inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5${isRefreshing ? ' [&_svg]:animate-spin' : ''}`}
+      >
+        <Typography as="span" size="xs" layoutClassName="hidden sm:inline">
+          {t('orders.refresh')}
+        </Typography>
+      </Button>
+      <Button
+        type="button"
+        onClick={handleOpenExportModal}
+        variant="secondary"
+        disableVariantHover
+        disableVariantTextColor
+        backgroundClassName="bg-white dark:bg-slate-800"
+        borderClassName="border border-slate-200 dark:border-slate-600"
+        textClassName="font-medium text-slate-700 dark:text-slate-200"
+        roundedClassName="rounded-xl"
+        sizeClassName="px-3 py-2 text-xs"
+        layoutClassName="inline-flex items-center gap-1.5"
+        stateClassName="transition-colors"
+        leftIcon={<Download />}
+        iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+      >
+        {t('orders.exportCsv')}
+      </Button>
+      <Button
+        type="button"
+        onClick={handleCreateNewOrder}
+        leftIcon={<Plus />}
+        iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+        backgroundClassName="bg-primary-600"
+        hoverClassName="hover:bg-primary-700"
+        textClassName="font-medium text-white"
+        roundedClassName="rounded-xl"
+        shadowClassName="shadow-sm shadow-primary-200 dark:shadow-none"
+        sizeClassName="px-4 py-2 text-xs"
+        layoutClassName="inline-flex items-center gap-1.5"
+        stateClassName="transition-colors"
+        variant="primary"
+        disableVariantHover
+        disableVariantTextColor
+      >
+        {t('nav.newOrder')}
+      </Button>
+    </>
+  );
+
   return (
     <Box layoutClassName="relative h-full">
       <OrdersStats orders={orders} />
-
-      <Box layoutClassName="mb-4 flex flex-col items-center justify-end gap-3 sm:flex-row">
-        <Box layoutClassName="flex w-full gap-2 sm:w-auto">
-          <Button
-            type="button"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            variant="secondary"
-            disableVariantHover
-            disableVariantTextColor
-            backgroundClassName="bg-slate-100 dark:bg-slate-700"
-            hoverClassName="hover:bg-slate-200 dark:hover:bg-slate-600"
-            textClassName="text-sm font-medium text-slate-700 dark:text-slate-200"
-            roundedClassName="rounded-lg"
-            sizeClassName="px-3 py-2"
-            layoutClassName="flex-1 gap-2 sm:flex-none"
-            stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            leftIcon={<RefreshCw />}
-            iconClassName={`inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4${isRefreshing ? ' [&_svg]:animate-spin' : ''}`}
-          >
-            <Typography as="span" size="sm" layoutClassName="hidden sm:inline">
-              {t('orders.refresh')}
-            </Typography>
-          </Button>
-          <Button
-            type="button"
-            onClick={handleOpenExportModal}
-            variant="secondary"
-            disableVariantHover
-            disableVariantTextColor
-            backgroundClassName="bg-slate-100 dark:bg-slate-700"
-            hoverClassName="hover:bg-slate-200 dark:hover:bg-slate-600"
-            textClassName="text-sm font-medium text-slate-700 dark:text-slate-200"
-            roundedClassName="rounded-lg"
-            sizeClassName="px-3 py-2"
-            layoutClassName="flex-1 gap-2 sm:flex-none"
-            stateClassName="transition-colors"
-            leftIcon={<Download />}
-            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-          >
-            {t('orders.exportCsv')}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleCreateNewOrder}
-            leftIcon={<Plus />}
-            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-            backgroundClassName="bg-primary-600"
-            hoverClassName="hover:bg-primary-700"
-            textClassName="text-sm font-medium text-white"
-            roundedClassName="rounded-lg"
-            shadowClassName="shadow-sm shadow-primary-200 dark:shadow-none"
-            sizeClassName="px-3 py-2"
-            layoutClassName="flex-1 gap-2 sm:flex-none"
-            stateClassName="transition-colors"
-            variant="primary"
-            disableVariantHover
-            disableVariantTextColor
-          >
-            {t('nav.newOrder')}
-          </Button>
-        </Box>
-      </Box>
 
       {orders.length === 0 ? (
         <Box
@@ -228,6 +228,7 @@ const OrdersPage: React.FC = () => {
           onSelectOrder={handleOrderSelect}
           onDeleteOrder={handleDeleteClick}
           onUpdateOrder={modifyOrder}
+          actions={ordersActions}
         />
       )}
 

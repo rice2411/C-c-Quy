@@ -13,9 +13,10 @@ export interface OrderItem {
   flavors?: string[];
   /** Size đã chọn (nếu sản phẩm có size) */
   size?: string;
-  /** Nhiều size + số lượng trong 1 dòng (vd 2 Gia Đình + 1 Lẻ) */
-  sizeCounts?: { name: string; qty: number }[];
-  /** HH của cả dòng (qty × đơn giá HH), tính lúc hiển thị — KHÔNG lưu Firestore */
+  /** Nhiều size + số lượng trong 1 dòng (vd 2 Gia Đình + 1 Lẻ).
+   *  `units`: vị RIÊNG của từng đơn vị (mỗi combo 1 rổ vị); units.length = qty. `flavors` là gộp phẳng. */
+  sizeCounts?: { name: string; qty: number; units?: string[][] }[];
+  /** HH của cả dòng (qty × đơn giá HH), tính lúc hiển thị — KHÔNG lưu DB */
   commissionAmount?: number;
   /** Tên nhóm hoa hồng sản phẩm rơi vào (tính lúc hiển thị) */
   commissionGroupName?: string;

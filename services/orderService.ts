@@ -12,7 +12,7 @@ import {
 export const ORDER_EDIT_DENIED = "ORDER_EDIT_DENIED";
 
 /**
- * Lay danh sach don hang. Phan ghi/doc Firestore da chuyen sang BE
+ * Lay danh sach don hang. Phan ghi/doc da chuyen sang BE
  * (GET /orders) — BE da enrich createdBy = ten hien thi va sort theo orderNumber.
  */
 export const fetchOrders = async (): Promise<Order[]> => {
@@ -39,7 +39,7 @@ export const getNextOrderNumber = async (): Promise<string> => {
 };
 
 /**
- * Tao don. BE ghi Firestore (sinh orderNumber neu thieu) va tra ve order da tao.
+ * Tao don. BE ghi DB (sinh orderNumber neu thieu) va tra ve order da tao.
  * SAU KHI BE thanh cong → gui thong bao Zalo (goi API ngoai, GIU NGUYEN tren FE).
  * Loi Zalo duoc nuot de khong lam fail viec tao don.
  */
@@ -194,7 +194,7 @@ export const unreconcileRefund = async (
 };
 
 /**
- * Xoa don hang. BE xoa Firestore (DELETE /orders/:id). SAU DO gui Zalo notify
+ * Xoa don hang. BE xoa DB (DELETE /orders/:id). SAU DO gui Zalo notify
  * (GIU NGUYEN tren FE). Loi Zalo duoc nuot.
  */
 export const deleteOrder = async (

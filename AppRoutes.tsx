@@ -7,8 +7,9 @@ import Spinner from "./components/ui/Spinner";
 // Lazy-load từng trang → mỗi trang là 1 chunk JS riêng, chỉ tải khi vào (giảm bundle đầu).
 const DashboardPage = lazy(() => import("./pages/Dashboard/index"));
 const OrdersPage = lazy(() => import("./pages/Orders/index"));
-const FinanceOverviewPage = lazy(() => import("./pages/Finance/Overview"));
-const FinanceTransactionsPage = lazy(() => import("./pages/Finance/Transactions"));
+const TxOverviewPage = lazy(() => import("./pages/Transactions/OverviewPage"));
+const TxHistoryPage = lazy(() => import("./pages/Transactions/HistoryPage"));
+const TxReconciliationPage = lazy(() => import("./pages/Transactions/ReconciliationPage"));
 const PromotionsPage = lazy(() => import("./pages/Promotions/index"));
 const CommissionPage = lazy(() => import("./pages/Commission/index"));
 const CommissionSettingsPage = lazy(() => import("./pages/Commission/SettingsPage"));
@@ -19,6 +20,7 @@ const ProductDetailPage = lazy(() => import("./pages/Storage/product/ProductDeta
 const StockReceiptsPage = lazy(() => import("./pages/StockReceipts/index"));
 const SuppliersPage = lazy(() => import("./pages/Suppliers/index"));
 const MaterialsPage = lazy(() => import("./pages/Materials/index"));
+const ExpensesPage = lazy(() => import("./pages/Expenses/index"));
 const CustomersPage = lazy(() => import("./pages/Customers/index"));
 const UsersPage = lazy(() => import("./pages/Users/index"));
 const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
@@ -32,6 +34,7 @@ const OrderSettingsTab = lazy(() => import("./pages/Settings/OrderSettingsTab"))
 const SepaySettingsTab = lazy(() => import("./pages/Settings/SepaySettingsTab"));
 const ProductSettings = lazy(() => import("./pages/Settings/ProductSettings"));
 const LoginPage = lazy(() => import("./pages/Login/index"));
+const AuthCallbackPage = lazy(() => import("./pages/AuthCallback/index"));
 const SerpApiMapsTestPage = lazy(() => import("./pages/Test/SerpApiMaps/index"));
 import { routes } from "./config/routes";
 
@@ -49,6 +52,7 @@ const AppRoutes: React.FC = () => (
   <Suspense fallback={<PageLoader />}>
   <Routes>
     <Route path="/login" element={<LoginPage />} />
+    <Route path="/auth/callback" element={<AuthCallbackPage />} />
     <Route
       path="/"
       element={
@@ -78,24 +82,32 @@ const AppRoutes: React.FC = () => (
         path="finance/overview"
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/overview")?.roles}>
-            <FinanceOverviewPage />
+            <TxOverviewPage />
           </RoleBasedRoute>
         }
       />
       <Route
-        path="finance/transactions"
+        path="finance/history"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/transactions")?.roles}>
-            <FinanceTransactionsPage />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/history")?.roles}>
+            <TxHistoryPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="finance/reconciliation"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/reconciliation")?.roles}>
+            <TxReconciliationPage />
           </RoleBasedRoute>
         }
       />
       {/* Back-compat redirect các path cũ */}
       <Route path="finance" element={<Navigate to="/finance/overview" replace />} />
+      <Route path="finance/transactions" element={<Navigate to="/finance/history" replace />} />
       <Route path="revenue" element={<Navigate to="/finance/overview" replace />} />
-      <Route path="finance/cashflow" element={<Navigate to="/finance/transactions" replace />} />
-      <Route path="finance/reconciliation" element={<Navigate to="/finance/transactions" replace />} />
-      <Route path="transactions" element={<Navigate to="/finance/transactions" replace />} />
+      <Route path="finance/cashflow" element={<Navigate to="/finance/history" replace />} />
+      <Route path="transactions" element={<Navigate to="/finance/history" replace />} />
       <Route
         path="promotions"
         element={
@@ -157,6 +169,14 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/stock-receipts")?.roles}>
             <StockReceiptsPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="expenses"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses")?.roles}>
+            <ExpensesPage />
           </RoleBasedRoute>
         }
       />

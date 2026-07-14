@@ -10,7 +10,7 @@ import {
   Undo2,
   Banknote,
 } from 'lucide-react';
-import { Transaction } from '@/types/transaction';
+import { Transaction, EXPENSE_CATEGORIES, expenseCategoryLabel } from '@/types/transaction';
 import { RefundListItem } from '@/services/orderService';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { formatDateTime } from '@/utils/format/dateUtil';
@@ -18,6 +18,7 @@ import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
 import Button from '@/components/ui/Button';
+import Select from '@/components/ui/Select';
 
 const InlineSpinner: React.FC<{ className?: string }> = ({ className }) => (
   <Box layoutClassName={`h-3.5 w-3.5 animate-spin rounded-full border-2 border-t-transparent ${className ?? 'border-slate-300'}`} />
@@ -30,6 +31,7 @@ interface OutReconcilePanelProps {
   onUnreconcileRefund: (orderId: string, refundId: string) => Promise<void>;
   onMarkSettled: (transactionId: string) => Promise<void>;     // đánh dấu "đã kết toán"
   onUnmarkSettled: (transactionId: string) => Promise<void>;
+  onSetExpense: (transactionId: string, category: string | null, excluded: boolean) => Promise<void>;
   formatDate: (dateStr: string) => string;
 }
 
@@ -41,12 +43,13 @@ interface OutRowProps {
   onUnreconcileRefund: (orderId: string, refundId: string) => Promise<void>;
   onMarkSettled: () => Promise<void>;
   onUnmarkSettled: () => Promise<void>;
+  onSetExpense: (category: string | null, excluded: boolean) => Promise<void>;
   formatDate: (dateStr: string) => string;
 }
 
 const OutRow: React.FC<OutRowProps> = ({
   transaction: tr, linkedRefund, pendingRefunds,
-  onReconcileRefund, onUnreconcileRefund, onMarkSettled, onUnmarkSettled, formatDate,
+  onReconcileRefund, onUnreconcileRefund, onMarkSettled, onUnmarkSettled, onSetExpense, formatDate,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -162,6 +165,37 @@ const OutRow: React.FC<OutRowProps> = ({
 
       {expanded && !isLinked && (
         <Box layoutClassName="border-t border-slate-100 dark:border-slate-700">
+          {/* Phân loại chi phí (auto theo nội dung CK; đây là gán/sửa tay backup) */}
+          <Box layoutClassName="flex flex-wrap items-center gap-2 px-4 py-3">
+            <Typography size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">Chi phí:</Typography>
+            <Select
+              value={tr.expenseCategory ?? ''}
+              disabled={!!busyId || !!tr.costExcluded}
+              onChange={(e) => void handleBusy('exp', () => onSetExpense(e.target.value || null, false))}
+            >
+              <option value="">— Chưa phân loại —</option>
+              {EXPENSE_CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </Select>
+            <Button
+              type="button"
+              disabled={!!busyId}
+              onClick={() => void handleBusy('exp', () => onSetExpense(tr.costExcluded ? (tr.expenseCategory ?? null) : null, !tr.costExcluded))}
+              variant="ghost"
+              disableVariantHover
+              disableVariantTextColor
+              layoutClassName="inline-flex items-center gap-1.5"
+              roundedClassName="rounded-lg"
+              borderClassName="border border-slate-200 dark:border-slate-600"
+              backgroundClassName={tr.costExcluded ? 'bg-slate-100 dark:bg-slate-700' : 'bg-white dark:bg-slate-800'}
+              sizeClassName="px-2.5 py-1.5 text-xs"
+              textClassName="font-medium text-slate-600 dark:text-slate-300"
+              stateClassName="transition-colors disabled:opacity-50">
+              {busyId === 'exp' ? <InlineSpinner /> : null}
+              {tr.costExcluded ? 'Tính lại vào chi phí' : 'Không tính chi phí'}
+            </Button>
+          </Box>
           {/* Hành động 1 chạm: đánh dấu đã kết toán */}
           <Box layoutClassName="flex items-center justify-between gap-3 px-4 py-3">
             <Box layoutClassName="flex min-w-0 items-center gap-2">
@@ -258,7 +292,7 @@ const OutRow: React.FC<OutRowProps> = ({
 
 const OutReconcilePanel: React.FC<OutReconcilePanelProps> = ({
   transactions, refunds,
-  onReconcileRefund, onUnreconcileRefund, onMarkSettled, onUnmarkSettled, formatDate,
+  onReconcileRefund, onUnreconcileRefund, onMarkSettled, onUnmarkSettled, onSetExpense, formatDate,
 }) => {
   const pendingRefunds = useMemo(
     () => refunds.filter(r => !r.reconciled && !r.transactionId),
@@ -291,6 +325,7 @@ const OutReconcilePanel: React.FC<OutReconcilePanelProps> = ({
       onUnreconcileRefund={onUnreconcileRefund}
       onMarkSettled={() => onMarkSettled(tr.id)}
       onUnmarkSettled={() => onUnmarkSettled(tr.id)}
+      onSetExpense={(cat, exc) => onSetExpense(tr.id, cat, exc)}
       formatDate={formatDate}
     />
   );

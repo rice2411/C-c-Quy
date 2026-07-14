@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import DatePicker from '@/components/ui/DatePicker';
 import { RotateCcw, X } from 'lucide-react';
 import { Promotion } from '@/types/promotion';
 import BaseModal from '@/components/BaseModal';
@@ -60,10 +61,10 @@ const ReopenModal: React.FC<ReopenModalProps> = ({ target, loading, onClose, onC
         </Typography>
         <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Bắt đầu đợt mới">
-            <Input type="date" value={startAt} onChange={(e) => setStartAt(e.target.value)} fullWidth />
+            <DatePicker value={startAt} onChange={setStartAt} fullWidth />
           </Field>
           <Field label="Kết thúc" hint="Bỏ trống = không giới hạn">
-            <Input type="date" value={endAt} onChange={(e) => setEndAt(e.target.value)} fullWidth />
+            <DatePicker value={endAt} onChange={setEndAt} fullWidth />
           </Field>
         </Box>
       </Box>

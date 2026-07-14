@@ -10,11 +10,11 @@ export interface OrderSuggestion {
   score: number;
 }
 
-/** Chuyển Firestore Timestamp hoặc ISO string thành Date */
+/** Chuyển Timestamp {_seconds} hoặc ISO string thành Date */
 const toDate = (val: any): Date | null => {
   if (!val) return null;
   if (val instanceof Date) return val;
-  // Firestore Timestamp có .toDate()
+  // Timestamp có .toDate()
   if (typeof val === 'object' && typeof val.toDate === 'function') return val.toDate();
   // ISO string hoặc timestamp number
   const d = new Date(val);

@@ -35,7 +35,7 @@ import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { qk } from '@/hooks/queryKeys';
 import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber, fetchOutUnlinkedTransactions } from '@/services/transactionService';
-import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor, groupFlavors, sizeCountsLabel } from '@/types';
+import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor, groupFlavors, sizeCountsLabel, sizeImage, sizeCount } from '@/types';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
 import { UserRole } from '@/types/user';
 import { orderAddressFallbackKey, surchargeTagLabel, reconcileMethodLabel } from '@/types/order';
@@ -174,7 +174,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
       const imgs = Array.from(node.querySelectorAll('img')) as HTMLImageElement[];
       // Inline mọi ảnh thành dataURL TRƯỚC khi chụp — né taint canvas do CORS/cache:
       // ảnh SP (RiceService) & QR (SePay) có CORS → fetch (cors, reload) được; ảnh nào
-      // KHÔNG có CORS (Firebase cũ) fetch fail → thay ảnh trong suốt để html-to-image
+      // KHÔNG có CORS (link cũ) fetch fail → thay ảnh trong suốt để html-to-image
       // không bị "tainted canvas" (toBlob sẽ throw). Sau inline: mọi src là data:/ảnh trong suốt.
       const TRANSPARENT = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
       await Promise.all(
@@ -472,7 +472,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   );
 
   const footer = (
-    <Box layoutClassName="flex justify-end gap-3">
+    <Box layoutClassName="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end sm:gap-3">
       <Button
         type="button"
         onClick={handleShareOrder}
@@ -485,7 +485,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-900/30"
         textClassName="text-sm font-medium text-primary-700 dark:text-primary-300"
         roundedClassName="rounded-lg"
-        layoutClassName="mr-auto px-4 py-2"
+        layoutClassName="w-full justify-center px-4 py-2 sm:mr-auto sm:w-auto"
         stateClassName="transition-colors disabled:opacity-50"
         leftIcon={<Share2 className="h-4 w-4" />}
         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
@@ -503,7 +503,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
         textClassName="text-sm font-medium text-slate-700 dark:text-slate-300"
         roundedClassName="rounded-lg"
-        layoutClassName="px-4 py-2"
+        layoutClassName="w-full justify-center px-4 py-2 sm:w-auto"
         stateClassName="transition-colors"
       >
         {t('detail.close')}
@@ -517,7 +517,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           textClassName="text-sm font-medium text-white"
           roundedClassName="rounded-lg"
           shadowClassName="shadow-sm shadow-primary-200 dark:shadow-none"
-          layoutClassName="px-4 py-2"
+          layoutClassName="w-full justify-center px-4 py-2 sm:w-auto"
           stateClassName="transition-colors"
           variant="primary"
           disableVariantHover
@@ -538,7 +538,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           hoverClassName="hover:bg-red-100 dark:hover:bg-red-900/30"
           textClassName="text-sm font-medium text-red-700 dark:text-red-300"
           roundedClassName="rounded-lg"
-          layoutClassName="px-4 py-2"
+          layoutClassName="w-full justify-center px-4 py-2 sm:w-auto"
           stateClassName="transition-colors"
           leftIcon={<Trash2 className="h-4 w-4" />}
           iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
@@ -803,6 +803,42 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                </Box>
                              </Box>
                            );
+                         });
+                       }
+                       // Có sizeCounts.units → mỗi đơn vị (combo/lẻ) 1 dòng kèm VỊ RIÊNG.
+                       const scs = item.sizeCounts ?? [];
+                       if (product && scs.some((s) => s.units && s.units.length)) {
+                         return scs.flatMap((sc) => {
+                           const per = sizeCount(product, sc.name) ?? 1;
+                           const price = product.sizes?.find((z) => z.name === sc.name)?.price ?? 0;
+                           const img = sizeImage(product, sc.name) || item.image;
+                           return (sc.units ?? []).map((unit, u) => (
+                             <Box key={`${item.id}-${sc.name}-${u}`} layoutClassName="flex items-center gap-4 py-2">
+                               <Box layoutClassName="h-16 w-16 shrink-0 overflow-hidden" roundedClassName="rounded-lg" backgroundClassName="bg-slate-100 dark:bg-slate-700">
+                                 <Image src={img} alt={sc.name} layoutClassName="h-full w-full object-cover" />
+                               </Box>
+                               <Box layoutClassName="min-w-0 flex-1">
+                                 <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name} · {sc.name}{sc.qty > 1 ? ` #${u + 1}` : ''}</Heading>
+                                 {unit.length ? (
+                                   <Box layoutClassName="mt-1 flex flex-wrap gap-1">
+                                     {groupFlavors(unit).map(({ name: fl, qty }) => {
+                                       const color = flavorVariantColor(product, fl);
+                                       return (
+                                         <Box key={fl} layoutClassName="inline-flex items-center gap-1 px-2 py-0.5" roundedClassName="rounded-full" borderClassName="border" style={{ borderColor: color + '80', backgroundColor: color + '26' }}>
+                                           <Box layoutClassName="h-2 w-2 shrink-0" roundedClassName="rounded-full" style={{ backgroundColor: color }} />
+                                           <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{fl}{qty > 1 ? ` ×${qty}` : ''}</Typography>
+                                         </Box>
+                                       );
+                                     })}
+                                   </Box>
+                                 ) : null}
+                               </Box>
+                               <Box layoutClassName="text-right">
+                                 <Typography as="p" size="sm" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{formatVND(price)}</Typography>
+                                 <Typography as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">Qty: 1</Typography>
+                               </Box>
+                             </Box>
+                           ));
                          });
                        }
                        // Mặc định: 1 dòng (kèm size + vị dạng chip nếu có).

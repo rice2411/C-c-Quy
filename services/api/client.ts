@@ -7,7 +7,7 @@ import { getSsoToken } from '@/services/auth/ssoToken';
  */
 export const API_BASE_URL: string = (import.meta as any).env?.VITE_API_URL || '';
 
-/** BE đã cấu hình chưa (FE có thể fallback Firestore trực tiếp nếu chưa). */
+/** BE đã cấu hình chưa (FE có thể fallback nếu chưa). */
 export const isApiEnabled = (): boolean => Boolean(API_BASE_URL);
 
 export const apiClient = axios.create({
@@ -16,7 +16,7 @@ export const apiClient = axios.create({
 });
 
 // Gắn SSO JWT (lưu ở localStorage) vào mỗi request. Token bền qua reload nên
-// không còn cảnh "request đầu bị thiếu token" như thời Firebase authStateReady.
+// không còn cảnh "request đầu bị thiếu token" như thời auth cũ (authStateReady).
 apiClient.interceptors.request.use((config) => {
   const token = getSsoToken();
   if (token) {
@@ -26,7 +26,7 @@ apiClient.interceptors.request.use((config) => {
 });
 
 /**
- * BE (firebase-admin) serialize Firestore Timestamp thành { _seconds, _nanoseconds }
+ * BE cũ serialize Timestamp thành { _seconds, _nanoseconds }
  * (mất method .toDate()). Component FE cũ vẫn gọi `x.createdAt.toDate()` → revive
  * lại các object đó thành "Timestamp-like" có .toDate()/.toMillis() để tương thích.
  */
@@ -54,7 +54,7 @@ const tsLikeFromMs = (ms: number) => {
 
 const reviveTimestamps = (input: any): any => {
   // Postgres trả timestamp dạng ISO string → hồi sinh thành Timestamp-like (có .toDate())
-  // để tương thích code FE cũ (giống hệt khi BE còn trả {_seconds} từ Firestore).
+  // để tương thích code FE cũ (giống hệt khi BE còn trả {_seconds}).
   if (typeof input === 'string') {
     if (PG_ISO_TS.test(input)) {
       const ms = Date.parse(input);

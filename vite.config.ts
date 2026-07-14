@@ -9,6 +9,10 @@ export default defineConfig(({ mode }) => {
     env.VITE_SITE_URL ||
     "https://admin.cucquy.site"
   ).replace(/\/$/, "");
+  // Nhãn phiên bản build (hiện ở cuối sidebar). Ưu tiên BUILD_ID truyền vào; mặc định = giờ build (GMT+7).
+  const buildId =
+    process.env.BUILD_ID ||
+    new Date(Date.now() + 7 * 3600 * 1000).toISOString().replace("T", " ").slice(0, 16) + " +07";
 
   return {
     server: {
@@ -24,7 +28,10 @@ export default defineConfig(({ mode }) => {
         },
       },
       VitePWA({
-        registerType: "autoUpdate",
+        // 'prompt' + hook useRegisterSW: có bản mới → hiện nút bấm (không tự reload ngầm).
+        registerType: "prompt",
+        // Chỉ hook đăng ký SW (tránh double-register với script inject sẵn).
+        injectRegister: null,
         includeAssets: [
           "icon-v4.svg",
           "icon-v4.png",
@@ -70,7 +77,8 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     define: {
-      // Secret (VISION/GEMINI/ZALO...) + Firebase đã gỡ khỏi FE — auth qua SSO RiceService.
+      // Secret (VISION/GEMINI/ZALO...) — auth qua SSO RiceService.
+      __BUILD_ID__: JSON.stringify(buildId),
     },
     resolve: {
       alias: {

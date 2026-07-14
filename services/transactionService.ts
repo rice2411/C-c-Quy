@@ -1,10 +1,60 @@
 import { apiClient } from '@/services/api/client';
-import { Transaction } from '@/types';
+import { Transaction, ExpenseRule } from '@/types';
 
 /** Danh sách giao dịch (BE sắp theo ngày giảm dần). */
 export const fetchTransactions = async (): Promise<Transaction[]> => {
   const res = await apiClient.get<Transaction[]>('/transactions');
   return res.data;
+};
+
+/** Set tay phân loại chi phí cho 1 giao dịch (category + cờ loại khỏi chi phí). */
+export const setTransactionExpense = async (
+  transactionId: string,
+  category: string | null,
+  excluded: boolean,
+): Promise<void> => {
+  await apiClient.patch(`/transactions/${transactionId}/expense`, { category, excluded });
+};
+
+/** Danh sách rule phân loại chi phí (nội dung CK → category). */
+export const fetchExpenseRules = async (): Promise<ExpenseRule[]> => {
+  const res = await apiClient.get<ExpenseRule[]>('/transactions/expense-rules');
+  return Array.isArray(res.data) ? res.data : [];
+};
+
+/** Thay toàn bộ rule; trả list mới. */
+export const saveExpenseRules = async (
+  items: { keyword: string; category: string }[],
+): Promise<ExpenseRule[]> => {
+  const res = await apiClient.put<ExpenseRule[]>('/transactions/expense-rules', { items });
+  return Array.isArray(res.data) ? res.data : [];
+};
+
+/** Auto phân loại bank-out theo rule; trả số bản ghi đã gán. */
+export const applyExpenseRules = async (): Promise<number> => {
+  const res = await apiClient.post<{ classified: number }>('/transactions/expense/apply-rules');
+  return typeof res.data?.classified === 'number' ? res.data.classified : 0;
+};
+
+/** Tổng hợp chi phí (OPEX) theo category trong kỳ. */
+export const fetchExpenseSummary = async (
+  fromISO: string,
+  toISO: string,
+): Promise<{ category: string; amount: number }[]> => {
+  const res = await apiClient.get<{ category: string; amount: number }[]>('/transactions/expense-summary', {
+    params: { from: fromISO, to: toISO },
+  });
+  return Array.isArray(res.data)
+    ? res.data.map((x) => ({ category: String(x.category), amount: typeof x.amount === 'number' ? x.amount : 0 }))
+    : [];
+};
+
+/** Bank-out trong kỳ (kèm phân loại) — màn Chi phí vận hành. */
+export const fetchExpenseOut = async (fromISO: string, toISO: string): Promise<Transaction[]> => {
+  const res = await apiClient.get<Transaction[]>('/transactions/expense-out', {
+    params: { from: fromISO, to: toISO },
+  });
+  return Array.isArray(res.data) ? res.data : [];
 };
 
 /** Đánh dấu giao dịch là không liên quan đến hệ thống (hoặc bỏ đánh dấu). */

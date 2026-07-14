@@ -1,6 +1,7 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, ChevronDown, Menu, LayoutGrid } from 'lucide-react';
+import { LogOut, ChevronDown, Menu, LayoutGrid, RefreshCw, MoreVertical } from 'lucide-react';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
@@ -20,6 +21,26 @@ const Layout: React.FC = () => {
   const location = useLocation();
   const { screenVisibility, isScreenEnabled } = useScreenConfig();
   const ping = useSystemPing();
+
+  // PWA: phát hiện bản web mới → cho user bấm cập nhật (reload lấy asset + dữ liệu mới nhất).
+  // Poll mỗi 60s để bắt bản deploy mới mà không cần reload thủ công.
+  const swReg = React.useRef<ServiceWorkerRegistration | null>(null);
+  const {
+    needRefresh: [needRefresh],
+    updateServiceWorker,
+  } = useRegisterSW({
+    onRegisteredSW(_swUrl, r) {
+      if (r) { swReg.current = r; setInterval(() => { void r.update(); }, 60_000); }
+    },
+  });
+
+  // Nút cập nhật luôn hiện: có bản mới → áp bản mới + reload; không thì kiểm tra rồi tải lại.
+  const forceUpdate = async () => {
+    if (needRefresh) { updateServiceWorker(true); return; }
+    try { await swReg.current?.update(); } catch { /* bỏ qua */ }
+    window.location.reload();
+  };
+
   const pingDot =
     ping.level === 'good' ? 'bg-emerald-500' : ping.level === 'ok' ? 'bg-amber-500' : 'bg-red-500';
   const pingText =
@@ -55,6 +76,24 @@ const Layout: React.FC = () => {
   }, [megaOpen]);
   // đóng mega menu khi chuyển trang
   React.useEffect(() => { setMegaOpen(false); }, [location.pathname]);
+
+  // Menu "⋯" cho mobile: gom các action phụ (ngôn ngữ/theme/cập nhật/đăng xuất) tránh quá tải navbar.
+  const [moreOpen, setMoreOpen] = React.useState(false);
+  const moreRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!moreOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setMoreOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMoreOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [moreOpen]);
+  React.useEffect(() => { setMoreOpen(false); }, [location.pathname]);
 
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'vi' : 'en');
@@ -210,6 +249,22 @@ const Layout: React.FC = () => {
               {t('nav.signOut')}
             </button>
           </div>
+
+          {/* Phiên bản web + nút cập nhật (luôn hiện; nổi bật khi có bản mới) */}
+          <div className="pt-3 space-y-2">
+            <button
+              onClick={forceUpdate}
+              className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                needRefresh
+                  ? 'bg-primary-600 text-white hover:bg-primary-700 animate-pulse'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+              }`}
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              {needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
+            </button>
+            <p className="text-center text-[11px] font-mono text-slate-400 dark:text-slate-500">v{__BUILD_ID__}</p>
+          </div>
         </nav>
       </aside>
 
@@ -217,28 +272,31 @@ const Layout: React.FC = () => {
       <div className="flex-1 flex flex-col h-full relative overflow-hidden">
         {/* Header */}
         <header className="h-16 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-4 md:px-8 z-10 sticky top-0 transition-colors duration-200">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <button
               type="button"
               onClick={() => setSidebarCollapsed((v) => !v)}
               aria-label={sidebarCollapsed ? 'Mở sidebar' : 'Thu gọn sidebar'}
               title={sidebarCollapsed ? 'Mở sidebar' : 'Thu gọn sidebar'}
-              className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors active:scale-90"
+              className="hidden md:inline-flex shrink-0 items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors active:scale-90"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div className="md:hidden flex items-center gap-2">
-              <img src="/icon-v4.svg" alt="Tiệm Bánh Cúc Quy" className="w-8 h-8 rounded-lg shadow-sm shadow-primary-300 dark:shadow-none" />
-              <span className="text-lg font-bold text-slate-800 dark:text-white">Tiệm Bánh <span className="text-primary-600 dark:text-primary-500">Cúc Quy</span></span>
+            <div className="md:hidden flex min-w-0 items-center gap-2">
+              <img src="/icon-v4.svg" alt="Tiệm Bánh Cúc Quy" className="w-8 h-8 shrink-0 rounded-lg shadow-sm shadow-primary-300 dark:shadow-none" />
+              <div className="flex min-w-0 flex-col leading-none">
+                <span className="truncate text-base font-bold text-slate-800 dark:text-white">Tiệm Bánh <span className="text-primary-600 dark:text-primary-500">Cúc Quy</span></span>
+                <span className="mt-0.5 text-[9px] font-mono text-slate-400 dark:text-slate-500">v{__BUILD_ID__}</span>
+              </div>
             </div>
-            <div className="hidden md:block">
-              <h1 className="text-xl font-bold text-slate-800 dark:text-white">
+            <div className="hidden md:block min-w-0">
+              <h1 className="truncate text-xl font-bold text-slate-800 dark:text-white">
                 {getPageTitle()}
               </h1>
             </div>
 
             {/* Quick menu → mega menu (truy cập nhanh) */}
-            <div className="hidden md:block relative" ref={megaRef}>
+            <div className="hidden md:block relative shrink-0" ref={megaRef}>
               <button
                 type="button"
                 onClick={() => setMegaOpen((v) => !v)}
@@ -277,40 +335,42 @@ const Layout: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            
+          <div className="flex shrink-0 items-center gap-2 md:gap-4">
+
             <button
               onClick={toggleLanguage}
-              className="px-3 py-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
+              className="hidden sm:flex shrink-0 px-2 py-1.5 md:px-3 md:py-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors items-center gap-2 border border-transparent hover:border-slate-200 dark:hover:border-slate-600"
             >
-              <img 
-                src={language === 'en' ? "https://flagcdn.com/w40/us.png" : "https://flagcdn.com/w40/vn.png"} 
+              <img
+                src={language === 'en' ? "https://flagcdn.com/w40/us.png" : "https://flagcdn.com/w40/vn.png"}
                 alt={language === 'en' ? "English" : "Vietnamese"}
                 className="w-5 h-auto rounded-sm shadow-sm object-cover"
               />
-              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              <span className="hidden sm:inline text-sm font-medium text-slate-600 dark:text-slate-300">
                 {language === 'en' ? 'EN' : 'VI'}
               </span>
             </button>
 
-            <ThemeToggle />
+            <div className="hidden sm:flex">
+              <ThemeToggle />
+            </div>
 
             <NotificationBell />
 
-             <div className="flex items-center gap-2" title={`${ping.label}${ping.ms !== null ? ` · ${ping.ms} ms` : ''}`}>
+             <div className="hidden lg:flex items-center gap-2" title={`${ping.label}${ping.ms !== null ? ` · ${ping.ms} ms` : ''}`}>
                <span className={`w-2 h-2 rounded-full ${pingDot} animate-pulse`}></span>
                <span className={`text-xs font-semibold ${pingText}`}>
                  {ping.ms !== null ? `${ping.ms} ms` : '— ms'}
                </span>
-               <span className="text-xs font-medium text-slate-400 dark:text-slate-500 hidden sm:inline-block">{ping.label}</span>
+               <span className="text-xs font-medium text-slate-400 dark:text-slate-500 hidden xl:inline-block">{ping.label}</span>
              </div>
-             
-             <div className="flex items-center gap-3 pl-2 border-l border-slate-200 dark:border-slate-700">
-                 <div className="text-right hidden sm:block">
-                    <p className="text-sm font-medium text-slate-900 dark:text-white leading-none">
+
+             <div className="flex shrink-0 items-center gap-3 pl-2 border-l border-slate-200 dark:border-slate-700">
+                 <div className="text-right hidden lg:block max-w-[160px]">
+                    <p className="truncate text-sm font-medium text-slate-900 dark:text-white leading-none">
                       {currentUser?.displayName || 'Admin'}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    <p className="truncate text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       {currentUser?.email || 'admin@cucquy.com'}
                     </p>
                  </div>
@@ -322,6 +382,82 @@ const Layout: React.FC = () => {
                         {currentUser?.displayName?.charAt(0).toUpperCase() || 'A'}
                       </span>
                     )}
+                 </div>
+                 {/* Cập nhật — mobile luôn hiện (desktop dùng nút ở cuối sidebar); nổi bật khi có bản mới */}
+                 <button
+                    onClick={forceUpdate}
+                    aria-label={needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
+                    title={needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
+                    className={`hidden sm:inline-flex md:hidden items-center justify-center w-9 h-9 rounded-lg transition-colors active:scale-90 ${
+                      needRefresh
+                        ? 'bg-primary-600 text-white hover:bg-primary-700 animate-pulse'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                    }`}
+                 >
+                    <RefreshCw className="w-5 h-5" />
+                 </button>
+                 {/* Đăng xuất — chỉ dải sm→md (desktop dùng nút trong sidebar; mobile <sm dùng menu ⋯) */}
+                 <button
+                    onClick={handleLogout}
+                    aria-label={t('nav.signOut')}
+                    title={t('nav.signOut')}
+                    className="hidden sm:inline-flex md:hidden items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 dark:hover:text-red-400 transition-colors active:scale-90"
+                 >
+                    <LogOut className="w-5 h-5" />
+                 </button>
+
+                 {/* Menu "⋯" — chỉ mobile <sm: gom ngôn ngữ / theme / cập nhật / đăng xuất */}
+                 <div className="relative sm:hidden" ref={moreRef}>
+                    <button
+                       type="button"
+                       onClick={() => setMoreOpen((v) => !v)}
+                       aria-haspopup="true"
+                       aria-expanded={moreOpen}
+                       aria-label="Thêm"
+                       className={`inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors active:scale-90 ${
+                         needRefresh
+                           ? 'text-primary-600 dark:text-primary-400'
+                           : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                       }`}
+                    >
+                       <MoreVertical className="w-5 h-5" />
+                    </button>
+                    {moreOpen ? (
+                       <div className="absolute right-0 top-full mt-2 w-52 origin-top-right rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl z-40 p-1.5">
+                          <button
+                             type="button"
+                             onClick={() => { toggleLanguage(); setMoreOpen(false); }}
+                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                          >
+                             <img
+                                src={language === 'en' ? 'https://flagcdn.com/w40/us.png' : 'https://flagcdn.com/w40/vn.png'}
+                                alt=""
+                                className="w-5 h-auto rounded-sm shadow-sm object-cover"
+                             />
+                             {language === 'en' ? 'English' : 'Tiếng Việt'}
+                          </button>
+                          <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                             <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Giao diện</span>
+                             <ThemeToggle />
+                          </div>
+                          <button
+                             type="button"
+                             onClick={() => { void forceUpdate(); setMoreOpen(false); }}
+                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                          >
+                             <RefreshCw className={`w-4 h-4 ${needRefresh ? 'text-primary-600 dark:text-primary-400' : ''}`} />
+                             {needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
+                          </button>
+                          <button
+                             type="button"
+                             onClick={() => { handleLogout(); setMoreOpen(false); }}
+                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+                          >
+                             <LogOut className="w-4 h-4" />
+                             {t('nav.signOut')}
+                          </button>
+                       </div>
+                    ) : null}
                  </div>
              </div>
           </div>

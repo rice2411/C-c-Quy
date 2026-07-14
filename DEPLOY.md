@@ -45,7 +45,7 @@ ls        # thấy Dockerfile, nginx.conf, vite.config.ts, src...
 
 ---
 
-## 3. Đưa `.env.production` lên (build cần FIREBASE_* + VITE_API_URL)
+## 3. Đưa `.env.production` lên (build cần VITE_API_URL)
 
 `.env.production` bị gitignore (không có trong repo) → **scp từ MÁY LOCAL** (chú ý dấu `:` sau IP, không dán dấu `#`):
 ```bash
@@ -54,13 +54,6 @@ scp /duong/dan/local/frontend/.env.production root@45.117.179.222:/root/cucquy/f
 Nội dung `.env.production` (chỉ config client — KHÔNG có secret tích hợp):
 ```env
 VITE_API_URL=https://api.cucquy.site/api
-FIREBASE_API_KEY=...
-FIREBASE_AUTH_DOMAIN=...
-FIREBASE_PROJECT_ID=...
-FIREBASE_STORAGE_BUCKET=...
-FIREBASE_MESSAGING_SENDER_ID=...
-FIREBASE_APP_ID=...
-FIREBASE_MEASUREMENT_ID=...
 ```
 Kiểm tra trên VPS:
 ```bash
@@ -82,7 +75,7 @@ Test nội bộ:
 curl -s http://127.0.0.1:8080 | grep -o "<title>[^<]*</title>"
 ```
 
-> Vite inline `VITE_API_URL` + `FIREBASE_*` vào bundle **lúc build**. Đổi env → phải build lại image.
+> Vite inline `VITE_API_URL` vào bundle **lúc build**. Đổi env → phải build lại image.
 
 ---
 
@@ -117,17 +110,11 @@ curl -sI https://web.cucquy.site | head -1      # HTTP/2 200
 
 ---
 
-## 6. Bắt buộc — CORS + Firebase
+## 6. Bắt buộc — CORS
 
-**a) BE cho phép origin FE** (sửa trên VPS, ở thư mục backend):
-```bash
-nano /root/cucquy/backend/.env
-#   ALLOWED_ORIGINS=https://web.cucquy.site,https://cucquy.site
-cd /root/cucquy/backend
-docker compose -f docker-compose.prod.yml up -d --force-recreate    # recreate để nạp .env mới (restart KHÔNG đủ)
-```
+**BE cho phép origin FE**: đặt `ALLOWED_ORIGINS` (gồm `https://admin.cucquy.site`) trong secret `cucquy-backend-env` rồi rollout lại BE.
 
-**b) Firebase Authorized domains** → Firebase Console → Authentication → Settings → Authorized domains → thêm `web.cucquy.site` (nếu thiếu, Google login báo `auth/unauthorized-domain`).
+> Auth Google đi qua SSO RiceService (redirect). Cấu hình Google client_id/secret + `allowed_origins` nằm ở RiceService, KHÔNG ở app này.
 
 ---
 
@@ -157,7 +144,6 @@ docker image prune -f
 
 **CORS: `No 'Access-Control-Allow-Origin' header`** → `ALLOWED_ORIGINS` ở BE thiếu `https://web.cucquy.site`, HOẶC đã sửa `.env` nhưng chỉ `restart` (không nạp env mới). Phải `docker compose ... up -d --force-recreate` ở backend.
 
-**Login báo `auth/unauthorized-domain`** → chưa thêm `web.cucquy.site` vào Firebase Authorized domains.
 
 **App trắng / gọi API sai chỗ** → image build thiếu `VITE_API_URL` hoặc `.env.production` chưa lên VPS lúc build. Kiểm bundle: `curl -s https://web.cucquy.site/assets/index-*.js | grep -o api.cucquy.site/api`.
 
@@ -166,6 +152,6 @@ docker image prune -f
 ---
 
 ## Ghi chú
-- `.env.production` chỉ ở VPS, không commit (gitignored). Là config client (Firebase web config vốn public) — KHÔNG chứa secret tích hợp (Gemini/Vision/SerpApi/Zalo/SePay đã ở BE).
+- `.env.production` chỉ ở VPS, không commit (gitignored). Chỉ chứa config client (VITE_API_URL) — KHÔNG chứa secret tích hợp (Gemini/Vision/SerpApi/Zalo/SePay đã ở BE).
 - Container bind `127.0.0.1:8080` → ra ngoài qua nginx HTTPS, không phơi port trần.
 - SSL Let's Encrypt miễn phí, tự gia hạn (`certbot renew --dry-run` để kiểm).

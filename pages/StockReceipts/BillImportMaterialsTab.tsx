@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { GitMerge, Package, ShoppingBag, TrendingUp, X } from 'lucide-react';
 import type { ImportedMaterialSummary } from '@/types/billReceipt';
 import { mergeMaterials } from '@/services/stockReceiptService';
-import StatsBanner from '@/pages/StockReceipts/StatsBanner';
+import StatsBanner from '@/components/ui/StatsBanner';
 import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/StockReceipts/dateFilter';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import { useLanguage } from '@/contexts/LanguageContext';

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGoogleLogin } from '@react-oauth/google';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ChefHat, UserPlus, X } from 'lucide-react';
@@ -15,15 +14,15 @@ import AvatarImage from '@/components/ui/AvatarImage';
 import Typography from '@/components/ui/Typography';
 import ThemeToggle from '@/components/ThemeToggle';
 import { getAccountsHistory, removeAccountFromHistory } from '@/utils/user/userUtil';
-import { exchangeGoogleAccessToken } from '@/services/auth/googleSso';
-import { setSsoToken, clearSsoToken } from '@/services/auth/ssoToken';
-import { getUserByEmail } from '@/services/userService';
-import { UserStatus } from '@/types/user';
 import toast from 'react-hot-toast';
+
+// BE broker khởi tạo luồng đăng nhập Google (server-side qua RiceService).
+// FE KHÔNG cần Google client_id — chỉ điều hướng sang endpoint start của BE.
+const API_BASE: string = ((import.meta as any).env?.VITE_API_URL || 'https://api.cucquy.site/api').replace(/\/+$/, '');
 
 const LoginPage: React.FC = () => {
   const { t } = useLanguage();
-  const { currentUser, applyLogin } = useAuth();
+  const { currentUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [accountsHistory, setAccountsHistory] = useState(getAccountsHistory());
@@ -37,46 +36,10 @@ const LoginPage: React.FC = () => {
     setAccountsHistory(getAccountsHistory());
   }, []);
 
-  // Đổi Google access token → SSO JWT (RiceService) → lấy hồ sơ (role/status) từ BE.
-  const finishLogin = async (accessToken: string) => {
-    setLoading(true);
-    try {
-      const { token, user } = await exchangeGoogleAccessToken(accessToken);
-      setSsoToken(token);
-      const data = await getUserByEmail(user.email);
-      if (!data) {
-        clearSsoToken();
-        toast.error('Tài khoản chưa được cấp quyền. Liên hệ quản trị viên.');
-        return;
-      }
-      if (data.status !== UserStatus.ACTIVE) {
-        clearSsoToken();
-        toast.error('Tài khoản chưa được phê duyệt. Vui lòng chờ quản trị viên.');
-        return;
-      }
-      applyLogin(data);
-      toast.success('Đăng nhập thành công');
-      navigate('/', { replace: true });
-    } catch {
-      clearSsoToken();
-      toast.error('Đăng nhập thất bại. Vui lòng thử lại.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const login = useGoogleLogin({
-    scope: 'openid email profile',
-    onSuccess: (res) => finishLogin(res.access_token),
-    onError: () => {
-      setLoading(false);
-      toast.error('Đăng nhập Google thất bại');
-    },
-  });
-
+  // Điều hướng cả trang sang BE → BE 302 sang Google → callback về /auth/callback?token=.
   const startLogin = () => {
     setLoading(true);
-    login();
+    window.location.href = `${API_BASE}/auth/google/start`;
   };
 
   const handleRemoveAccount = (uid: string, e: React.MouseEvent) => {
@@ -193,7 +156,7 @@ const LoginPage: React.FC = () => {
             ) : (
               <>
                 <Image
-                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                  src="https://developers.google.com/identity/images/g-logo.png"
                   alt="Google"
                   layoutClassName="w-5 h-5"
                 />

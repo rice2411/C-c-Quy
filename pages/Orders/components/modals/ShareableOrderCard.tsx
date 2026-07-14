@@ -1,19 +1,9 @@
 import React from 'react';
-import { Order, groupFlavors } from '@/types';
+import { Order } from '@/types';
 import { surchargeTagLabel } from '@/types/surchargeTag';
 import { formatVND } from '@/utils/format/currencyUtil';
-
-/** Chi tiết vị: "2 Matcha, 3 Redverlet" (số lượng đứng trước). '' nếu không có. */
-const flavorsDetailText = (flavors?: string[]): string =>
-  groupFlavors(flavors).map((g) => `${g.qty} ${g.name}`).join(', ');
-
-/** Mỗi size 1 dòng: ["Combo Tình Bạn: SL 3", ...]; fallback size đơn; [] nếu không có. */
-const sizeLines = (it: { sizeCounts?: { name: string; qty: number }[]; size?: string; quantity: number }): string[] => {
-  const scs = (it.sizeCounts ?? []).filter((x) => (x?.qty || 0) > 0);
-  if (scs.length) return scs.map((sc) => `${sc.name}: SL ${sc.qty}`);
-  if (it.size) return [`${it.size}: SL ${it.quantity || 0}`];
-  return [];
-};
+import { useProducts } from '@/hooks/queries/useProductsQuery';
+import { buildOrderItemRows } from '@/pages/Orders/orderItemRows';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
 import Heading from '@/components/ui/Heading';
@@ -47,6 +37,8 @@ export interface ShareableOrderCardProps {
 const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardProps>(
   ({ order, subtotal, finalTotal, shippingCost, surchargeLabel, deliveryLabel, paymentLabel, qrUrl, description, bankCode, accountNumber, accountHolder }, ref) => {
     const c = order.customer;
+    const { products } = useProducts();
+    const itemRows = buildOrderItemRows(order.items, products);
     const rowClass = 'flex items-center justify-between gap-3';
     // Phụ thu nhiều dòng (fallback đơn cũ = 1 dòng từ surchargeAmount/tag).
     const surchargeRows = (
@@ -97,15 +89,15 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
           {deliveryDateText ? infoRow('Ngày giao', deliveryDateText) : null}
         </Box>
 
-        {/* Sản phẩm (text, không thumbnail) */}
-        <Box layoutClassName="space-y-1.5 border-t border-slate-200 pt-3">
+        {/* Sản phẩm — mỗi vị/phần 1 dòng (giống order list) */}
+        <Box layoutClassName="space-y-2 border-t border-slate-200 pt-3">
           <Typography as="p" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-400">Sản phẩm</Typography>
-          {order.items.map((it, idx) => (
-            <Box key={idx} layoutClassName="flex items-center gap-2.5">
-              {it.image ? (
+          {itemRows.map((r) => (
+            <Box key={r.key} layoutClassName="flex items-start gap-2.5">
+              {r.img ? (
                 <Image
-                  src={it.image}
-                  alt={it.name}
+                  src={r.img}
+                  alt={r.name}
                   crossOrigin="anonymous"
                   disableFade
                   loading="eager"
@@ -115,16 +107,12 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
                 <Box layoutClassName="h-10 w-10 shrink-0 rounded-md" backgroundClassName="bg-slate-100" />
               )}
               <Box layoutClassName="min-w-0 flex-1">
-                <Typography as="p" size="sm" textClassName="text-slate-700">{it.name}</Typography>
-                {sizeLines(it).map((s, i) => (
-                  <Typography key={i} as="p" size="xs" textClassName="text-slate-500">- {s}</Typography>
+                <Typography as="p" size="sm" layoutClassName="font-medium leading-snug" textClassName="text-slate-700">{r.name}</Typography>
+                {r.meta.map((m, i) => (
+                  <Typography key={i} as="p" size="xs" layoutClassName="leading-snug" textClassName="text-slate-500">{m}</Typography>
                 ))}
-                {flavorsDetailText(it.flavors) ? (
-                  <Typography as="p" size="xs" textClassName="text-slate-500">Chi tiết ({flavorsDetailText(it.flavors)})</Typography>
-                ) : null}
-                <Typography as="p" size="xs" textClassName="text-slate-400">{formatVND(it.price)} × {it.quantity}</Typography>
               </Box>
-              <Typography as="span" size="sm" layoutClassName="shrink-0 font-medium" textClassName="text-slate-700">{formatVND(it.price * it.quantity)}</Typography>
+              <Typography as="span" size="sm" layoutClassName="shrink-0 font-medium" textClassName="text-slate-700">×{r.qty}</Typography>
             </Box>
           ))}
         </Box>

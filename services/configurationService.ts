@@ -1,5 +1,5 @@
 /**
- * Configuration service — các config CHẠM Firestore đã chuyển sang BE NestJS
+ * Configuration service — các config đã chuyển sang BE NestJS
  * (document trong collection 'configurations'):
  *  - screen-visibility      ↔ GET/PUT '/configurations/screen'
  *  - zalo-configuration     ↔ GET/PUT '/configurations/zalo-groups'
@@ -49,7 +49,7 @@ export const fetchZaloGroupsConfiguration = async (): Promise<ZaloGroupsConfigur
 };
 
 const getMainGroupId = async (cfg?: ZaloGroupsConfiguration): Promise<string> => {
-  // Group chính lấy từ config (Firestore). Nếu trống → để rỗng; khi gửi với
+  // Group chính lấy từ config (BE). Nếu trống → để rỗng; khi gửi với
   // groupIds rỗng, BE tự dùng ZALO_MAIN_GROUP_ID của BE.
   return (cfg?.mainGroupId ?? '').trim();
 };

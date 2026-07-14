@@ -3,7 +3,7 @@ import { UserData, UserRole, UserStatus } from '@/types/user';
 import type { ZaloGroupConfig } from '@/types';
 
 /**
- * Kiểm tra xem user với email đã tồn tại trong Firestore chưa (qua BE)
+ * Kiểm tra xem user với email đã tồn tại chưa (qua BE)
  * @param email - Email của user cần kiểm tra
  * @returns UserData nếu tồn tại, null nếu không
  */
@@ -19,7 +19,7 @@ export const getUserByEmail = async (email: string | null): Promise<UserData | n
 };
 
 /**
- * Kiểm tra xem user với UID đã tồn tại trong Firestore chưa (qua BE)
+ * Kiểm tra xem user với UID đã tồn tại chưa (qua BE)
  * @param uid - UID của user cần kiểm tra
  * @returns UserData nếu tồn tại, null nếu không
  */
@@ -35,12 +35,12 @@ export const getUserByUid = async (uid: string): Promise<UserData | null> => {
 };
 
 /**
- * Lưu hoặc cập nhật thông tin user (qua BE). Gọi ngay sau khi đăng nhập Firebase Auth.
+ * Lưu hoặc cập nhật thông tin user (qua BE). Gọi ngay sau khi đăng nhập.
  * BE lấy uid/email/displayName từ token và merge với body truyền lên.
- * @param user - User object từ Firebase Auth
- * @returns UserData từ Firestore
+ * @param user - User object đăng nhập
+ * @returns UserData
  */
-export const saveUserToFirestore = async (user: {
+export const saveUser = async (user: {
   uid: string;
   email: string | null;
   displayName: string | null;
@@ -55,7 +55,7 @@ export const saveUserToFirestore = async (user: {
     });
     return res.data as UserData;
   } catch (error) {
-    console.error('Error saving user to Firestore:', error);
+    console.error('Error saving user:', error);
     throw error;
   }
 };

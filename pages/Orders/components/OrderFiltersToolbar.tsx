@@ -31,12 +31,14 @@ interface OrderFiltersToolbarProps {
   sortKey?: OrderSortKey;
   onSortChange?: (k: OrderSortKey) => void;
   onClearAll?: () => void;
+  /** Nút action tuỳ biến (tạo đơn / export / làm mới) — đặt trong toolbar như Product. */
+  actions?: React.ReactNode;
 }
 
 const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
   searchTerm, onSearchChange, onOpenAdvanced, activeFiltersCount = 0,
   quickPills, onTogglePending, onToggleUnpaid, onToggleToday, onToggleOverdue,
-  sortKey, onSortChange, onClearAll,
+  sortKey, onSortChange, onClearAll, actions,
 }) => {
   const { t } = useLanguage();
   const SORT_OPTIONS: ToolbarOption[] = [
@@ -77,6 +79,7 @@ const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
         advancedFiltersCount={activeFiltersCount}
         pills={pills}
         onClearAll={onClearAll}
+        actions={actions}
       />
     </Box>
   );

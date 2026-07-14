@@ -1,6 +1,6 @@
 /**
  * Category service — CRUD cây danh mục sản phẩm qua BE NestJS.
- * BE lưu trong document `configurations/categories` (Firestore).
+ * BE lưu trong document `configurations/categories` phía BE.
  */
 
 import { apiClient } from '@/services/api/client';

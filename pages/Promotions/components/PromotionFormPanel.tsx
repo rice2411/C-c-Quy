@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import DatePicker from '@/components/ui/DatePicker';
 import { Save, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -298,10 +299,10 @@ const PromotionFormPanel: React.FC<PromotionFormPanelProps> = ({
         <Section title="Thời gian & trạng thái">
           <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Bắt đầu">
-              <Input type="date" value={form.startAt} onChange={(e) => setForm((f) => ({ ...f, startAt: e.target.value }))} fullWidth />
+              <DatePicker value={form.startAt} onChange={(v) => setForm((f) => ({ ...f, startAt: v }))} fullWidth />
             </Field>
             <Field label="Kết thúc">
-              <Input type="date" value={form.endAt} onChange={(e) => setForm((f) => ({ ...f, endAt: e.target.value }))} fullWidth />
+              <DatePicker value={form.endAt} onChange={(v) => setForm((f) => ({ ...f, endAt: v }))} fullWidth />
             </Field>
           </Box>
           <Box layoutClassName="flex items-center gap-2">

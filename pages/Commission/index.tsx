@@ -12,7 +12,7 @@ import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import EmptyState from '@/components/ui/EmptyState';
 import FilterToolbar from '@/components/shared/FilterToolbar';
-import StatsBanner from '@/pages/StockReceipts/StatsBanner';
+import StatsBanner from '@/components/ui/StatsBanner';
 import CollabRow from './components/CollabRow';
 
 type SortKey = 'commission' | 'name';
@@ -38,7 +38,11 @@ const CommissionPage: React.FC = () => {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('commission');
   const [onlyPending, setOnlyPending] = useState(false);
-  const [period, setPeriod] = useState('all');
+  // Mặc định lọc theo THÁNG HIỆN TẠI (không phải "tất cả").
+  const [period, setPeriod] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
 
   React.useEffect(() => {
     if (error) toast.error(error.message || 'Không thể tải dữ liệu hoa hồng');
@@ -51,12 +55,13 @@ const CommissionPage: React.FC = () => {
       const m = monthKeyOf(o.deliveryDate);
       if (m) set.add(m);
     }));
+    set.add(period); // luôn có tháng đang chọn (kể cả tháng hiện tại chưa có đơn)
     const months = Array.from(set).sort().reverse().map(m => {
       const [y, mo] = m.split('-');
       return { value: m, label: `Tháng ${Number(mo)}/${y}` };
     });
     return [{ value: 'all', label: 'Tất cả tháng' }, ...months];
-  }, [summaries]);
+  }, [summaries, period]);
 
   // Lọc theo tháng & tính lại tổng cho từng CTV (giữ logic bỏ qua đơn huỷ/hoàn)
   const monthFiltered = useMemo(() => {

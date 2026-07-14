@@ -3,7 +3,7 @@
 ![Vite](https://img.shields.io/badge/Vite-6.x-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 ![React](https://img.shields.io/badge/React-19.x-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%7C%20Auth%20%7C%20Storage-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
+![API](https://img.shields.io/badge/API-NestJS%20%2B%20Postgres-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)
 ![SePay Webhook](https://img.shields.io/badge/Payment-SePay%20Webhook-ff6b35?style=for-the-badge)
 ![PWA](https://img.shields.io/badge/PWA-Enabled-5A0FC8?style=for-the-badge)
 
@@ -13,9 +13,9 @@
 
 Stack chính:
 - `React 19` + `TypeScript` + `Vite`
-- `Firebase` (Firestore, Auth, Storage)
+- Dữ liệu qua REST API (BE NestJS + Postgres); auth SSO RiceService
 - `Tailwind CSS` + hệ thống common UI tại `components/ui`
-- API route serverless tại `api/` (triển khai trên Vercel)
+- Deploy: build image → GHCR → keel (admin.cucquy.site)
 
 ## 2) Cấu trúc dự án
 
@@ -33,8 +33,8 @@ CucQuyBakery/
 ├─ components/
 │  ├─ ui/                    # Common UI (Button, Input, Card, Badge, Table...)
 │  └─ ...
-├─ services/                 # Logic gọi Firebase/API, business services
-├─ config/                   # Cấu hình runtime (Firebase...)
+├─ services/                 # Logic gọi BE REST API, business services
+├─ config/                   # Cấu hình runtime (queryClient, routes...)
 ├─ contexts/                 # React contexts
 ├─ types/                    # Type models
 ├─ utils/                    # Helpers tiện ích
@@ -56,20 +56,9 @@ CucQuyBakery/
    ```
 2. Tạo file `.env.local` ở root dự án:
    ```env
-   GEMINI_API_KEY=
-
-   FIREBASE_API_KEY=
-   FIREBASE_AUTH_DOMAIN=
-   FIREBASE_PROJECT_ID=
-   FIREBASE_STORAGE_BUCKET=
-   FIREBASE_MESSAGING_SENDER_ID=
-   FIREBASE_APP_ID=
-   FIREBASE_MEASUREMENT_ID=
-
-   ZALO_SHOP_CODE=
-   ZALO_TOKEN=
-   ZALO_URL=
+   VITE_API_URL=http://localhost:3000/api
    ```
+   > Secret tích hợp (Gemini/Vision/SerpApi/Zalo/SePay) đã chuyển hết về BE — FE chỉ cần `VITE_API_URL`.
 3. Chạy local:
    ```bash
    npm run dev
@@ -87,7 +76,7 @@ File xử lý: `api/sepay/webhook.ts`
 ### Luồng xử lý hiện tại
 1. Nhận webhook payload từ SePay.
 2. Validate payload cơ bản (`id` bắt buộc).
-3. Khởi tạo Firebase bằng env runtime.
+3. Đọc `VITE_API_URL` từ env runtime (Vite inline lúc build).
 4. Lưu bản ghi giao dịch vào collection `transactions`.
 5. Trích xuất `orderNumber` từ `description` theo pattern `ORDxxxx` -> format thành `ORD-xxxx`.
 6. Tìm đơn hàng trong collection `orders` theo `orderNumber`.
@@ -116,7 +105,7 @@ File xử lý: `api/sepay/webhook.ts`
 
 ## 7) Gợi ý kiểm tra nhanh sau setup
 
-- Đăng nhập được, đọc/ghi dữ liệu Firebase ổn định.
+- Đăng nhập được (SSO), đọc/ghi dữ liệu qua BE ổn định.
 - Tạo đơn hàng có `orderNumber` đúng format.
 - Gửi test webhook SePay và xác nhận:
   - có transaction mới trong `transactions`

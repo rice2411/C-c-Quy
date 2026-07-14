@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TrendingUp } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
-import PeriodFilter, { DatePreset, computePresetRange } from './PeriodFilter';
+import DateRangePicker, { DatePreset, computePresetRange } from '@/components/ui/DateRangePicker';
 import ReconciliationTab from './ReconciliationTab';
 
 const fmtRange = (d: string) => (d ? d.split('-').reverse().join('/') : '');
@@ -25,7 +25,7 @@ const TransactionsPage: React.FC = () => {
   return (
     <Box layoutClassName="flex h-full flex-col space-y-4 sm:space-y-5">
       {/* Lọc thời gian dùng chung */}
-      <PeriodFilter
+      <DateRangePicker
         fromDate={fromDate}
         toDate={toDate}
         preset={preset}

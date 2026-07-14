@@ -24,6 +24,7 @@ import {
   fetchImportedMaterials,
   fetchImportedSuppliers,
   fetchMaterialMergeSuggestions,
+  fetchMaterialMergeSuggestionsAi,
   fetchMaterialPriceOptions,
   fetchStockReceiptDetail,
   fetchStockReceiptSummaries,
@@ -32,6 +33,7 @@ import {
   saveStockReceiptDraft,
   updateMaterial,
   updateSupplier,
+  type MaterialMergeAiGroup,
   type MaterialMergeSuggestionPair,
   type MaterialPriceOption,
 } from '@/services/stockReceiptService';
@@ -141,6 +143,33 @@ export const useMaterialMergeSuggestions = (
     refetch: async () => {
       await query.refetch();
     },
+  };
+};
+
+export interface UseMaterialMergeSuggestionsAiResult {
+  groups: MaterialMergeAiGroup[];
+  loading: boolean;
+  error: Error | null;
+  /** Chạy AI phân tích (gọi Claude). On-demand — chỉ khi user bấm. */
+  run: () => Promise<void>;
+  /** Đã chạy ít nhất 1 lần (để phân biệt "chưa chạy" vs "chạy xong không có nhóm"). */
+  hasRun: boolean;
+}
+
+/**
+ * Gợi ý gộp NVL bằng AI (Claude). Dùng mutation vì gọi tốn kém + on-demand
+ * (chỉ khi user bấm nút), không auto-fetch như gợi ý theo tên.
+ */
+export const useMaterialMergeSuggestionsAi = (): UseMaterialMergeSuggestionsAiResult => {
+  const mutation = useMutation({ mutationFn: fetchMaterialMergeSuggestionsAi });
+  return {
+    groups: mutation.data ?? [],
+    loading: mutation.isPending,
+    error: (mutation.error as Error) ?? null,
+    run: async () => {
+      await mutation.mutateAsync();
+    },
+    hasRun: mutation.isSuccess || mutation.isError,
   };
 };
 

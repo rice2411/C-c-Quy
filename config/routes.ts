@@ -23,6 +23,7 @@ import {
   QrCode,
   AlertTriangle,
   HeartPulse,
+  Building2,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { ScreenVisibilityMap } from "@/types";
@@ -68,15 +69,22 @@ export const routes: RouteConfig[] = [
   {
     type: "page",
     path: "/finance/overview",
-    labelKey: "nav.financeOverview",
+    labelKey: "nav.txOverview",
     icon: LayoutDashboard,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
     type: "page",
-    path: "/finance/transactions",
-    labelKey: "nav.financeTransactions",
+    path: "/finance/history",
+    labelKey: "nav.txHistory",
     icon: Coins,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/finance/reconciliation",
+    labelKey: "nav.txReconciliation",
+    icon: Wallet,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -140,6 +148,13 @@ export const routes: RouteConfig[] = [
     path: "/materials",
     labelKey: "nav.materials",
     icon: Package,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/expenses",
+    labelKey: "nav.expenses",
+    icon: Building2,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -321,12 +336,13 @@ export interface NavGroupConfig {
 
 export const navGroups: NavGroupConfig[] = [
   {
-    key: "finance",
-    labelKey: "nav.financeGroup",
+    key: "transactions",
+    labelKey: "nav.transactionsHub",
     icon: Wallet,
     childPaths: [
       "/finance/overview",
-      "/finance/transactions",
+      "/finance/history",
+      "/finance/reconciliation",
     ],
   },
   {
@@ -341,14 +357,22 @@ export const navGroups: NavGroupConfig[] = [
     ],
   },
   {
+    key: "cost",
+    labelKey: "nav.costGroup",
+    icon: Building2,
+    childPaths: [
+      "/expenses",
+      "/stock-receipts",
+      "/suppliers",
+      "/materials",
+    ],
+  },
+  {
     key: "inventory",
     labelKey: "nav.inventoryGroup",
     icon: Boxes,
     childPaths: [
       "/storage",
-      "/stock-receipts",
-      "/suppliers",
-      "/materials",
     ],
   },
   {

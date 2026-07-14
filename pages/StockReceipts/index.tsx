@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type {
@@ -22,6 +22,7 @@ import BillImportEntryTab from '@/pages/StockReceipts/BillImportEntryTab';
 import BillImportReceiptListTab from '@/pages/StockReceipts/BillImportReceiptListTab';
 import ReceiptDetailModal from '@/pages/StockReceipts/ReceiptDetailModal';
 import BillImportModal from '@/pages/StockReceipts/BillImportModal';
+import BillImportSourceModal from '@/pages/StockReceipts/BillImportSourceModal';
 import type { UiProgressStage } from '@/pages/StockReceipts/constants';
 import { fileToBase64NoPrefix } from '@/utils/io/fileUtil';
 import { formatImportedAt } from '@/utils/format/dateUtil';
@@ -79,6 +80,7 @@ const StockReceiptsPage: React.FC = () => {
   const [validation, setValidation] = useState<BillValidationResult | null>(null);
   const [progressStage, setProgressStage] = useState<UiProgressStage | null>(null);
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [sourceModalOpen, setSourceModalOpen] = useState(false);
   const [entryMode, setEntryMode] = useState<'ocr' | 'manual'>('ocr');
   const [detailReceiptId, setDetailReceiptId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -96,13 +98,8 @@ const StockReceiptsPage: React.FC = () => {
 
   const receiptRows = receiptsQuery.receipts;
   const supplierRows = suppliersQuery.suppliers;
-  const receiptLoading = receiptsQuery.loading;
   const receiptDetail: SavedStockReceiptDetail | null = detailQuery.detail;
   const detailLoading = detailQuery.loading;
-
-  const loadReceipts = useCallback(async () => {
-    await receiptsQuery.refetch();
-  }, [receiptsQuery]);
 
   const resetOutput = useCallback(() => {
     setOcrText('');
@@ -206,6 +203,46 @@ const StockReceiptsPage: React.FC = () => {
     },
     [t],
   );
+
+  // Dán ảnh (Ctrl/⌘+V) khi form nhập phiếu đang mở: ảnh trong clipboard được đưa vào
+  // đúng luồng theo mode — OCR thì chạy pipeline, thủ công thì đính kèm để lưu trữ.
+  // Clipboard không có ảnh (vd dán text vào input) → bỏ qua, không chặn hành vi mặc định.
+  useEffect(() => {
+    if (!importModalOpen) return;
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const imageItem = Array.from(items).find(
+        (it) => it.kind === 'file' && it.type.startsWith('image/'),
+      );
+      const file = imageItem?.getAsFile();
+      if (!file) return;
+      e.preventDefault();
+      if (entryMode === 'manual') {
+        void handleManualImageSelected(file);
+        toast.success(t('billImport.pasteAttached'));
+      } else if (!busy) {
+        void runPipelineForFile(file);
+      }
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  }, [importModalOpen, entryMode, busy, handleManualImageSelected, runPipelineForFile, t]);
+
+  // Chọn ảnh từ modal nguồn (dropzone / dán / tải / chụp) → đóng chooser, chạy OCR.
+  const handleSourceImage = useCallback(
+    (file: File) => {
+      setSourceModalOpen(false);
+      handleFileSelected(file);
+    },
+    [handleFileSelected],
+  );
+
+  // Nhập thủ công từ modal nguồn → đóng chooser, mở form trống.
+  const handleSourceManual = useCallback(() => {
+    setSourceModalOpen(false);
+    handleStartManual();
+  }, [handleStartManual]);
 
   const addDraftLine = useCallback(() => {
     setDraftStructured((prev) =>
@@ -371,12 +408,16 @@ const StockReceiptsPage: React.FC = () => {
       <BillImportReceiptListTab
         receiptSearch={receiptSearch}
         onReceiptSearchChange={setReceiptSearch}
-        receiptLoading={receiptLoading}
-        onRefresh={loadReceipts}
         filteredReceipts={filteredReceipts}
         onRowClick={openReceiptDetail}
-        onFileSelected={handleFileSelected}
-        onStartManual={handleStartManual}
+        onStartImport={() => setSourceModalOpen(true)}
+      />
+
+      <BillImportSourceModal
+        open={sourceModalOpen}
+        onClose={() => setSourceModalOpen(false)}
+        onImageSelected={handleSourceImage}
+        onStartManual={handleSourceManual}
       />
 
       <BillImportModal
