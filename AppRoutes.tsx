@@ -7,8 +7,7 @@ import Spinner from "./components/ui/Spinner";
 // Lazy-load từng trang → mỗi trang là 1 chunk JS riêng, chỉ tải khi vào (giảm bundle đầu).
 const DashboardPage = lazy(() => import("./pages/Dashboard/index"));
 const OrdersPage = lazy(() => import("./pages/Orders/index"));
-const FinanceOverviewPage = lazy(() => import("./pages/Finance/Overview"));
-const FinanceTransactionsPage = lazy(() => import("./pages/Finance/Transactions"));
+const TransactionsHubPage = lazy(() => import("./pages/Revenue/index"));
 const PromotionsPage = lazy(() => import("./pages/Promotions/index"));
 const CommissionPage = lazy(() => import("./pages/Commission/index"));
 const CommissionSettingsPage = lazy(() => import("./pages/Commission/SettingsPage"));
@@ -81,24 +80,17 @@ const AppRoutes: React.FC = () => (
         path="finance/overview"
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/overview")?.roles}>
-            <FinanceOverviewPage />
+            <TransactionsHubPage />
           </RoleBasedRoute>
         }
       />
-      <Route
-        path="finance/transactions"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/transactions")?.roles}>
-            <FinanceTransactionsPage />
-          </RoleBasedRoute>
-        }
-      />
-      {/* Back-compat redirect các path cũ */}
+      {/* Back-compat redirect các path cũ → hub Giao dịch 3 tab */}
       <Route path="finance" element={<Navigate to="/finance/overview" replace />} />
+      <Route path="finance/transactions" element={<Navigate to="/finance/overview" replace />} />
       <Route path="revenue" element={<Navigate to="/finance/overview" replace />} />
-      <Route path="finance/cashflow" element={<Navigate to="/finance/transactions" replace />} />
-      <Route path="finance/reconciliation" element={<Navigate to="/finance/transactions" replace />} />
-      <Route path="transactions" element={<Navigate to="/finance/transactions" replace />} />
+      <Route path="finance/cashflow" element={<Navigate to="/finance/overview" replace />} />
+      <Route path="finance/reconciliation" element={<Navigate to="/finance/overview" replace />} />
+      <Route path="transactions" element={<Navigate to="/finance/overview" replace />} />
       <Route
         path="promotions"
         element={

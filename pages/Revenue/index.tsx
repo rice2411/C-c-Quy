@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
-import { Wallet } from 'lucide-react';
+import { ArrowRightLeft } from 'lucide-react';
 import Box from '@/components/ui/Box';
-import Typography from '@/components/ui/Typography';
+import Heading from '@/components/ui/Heading';
 import Tabs from '@/components/ui/Tabs';
 import DateRangePicker, { DatePreset, computePresetRange } from '@/components/ui/DateRangePicker';
 import OverviewTab from '@/pages/Transactions/OverviewTab';
-import RevenueTab from '@/pages/Transactions/RevenueTab';
+import TransactionsSummary from '@/pages/Transactions/TransactionsSummary';
 import ReconciliationTab from '@/pages/Transactions/ReconciliationTab';
 
-type TopTab = 'overview' | 'revenue' | 'transactions';
+type TopTab = 'overview' | 'history' | 'reconciliation';
 
-const fmtRange = (d: string) => (d ? d.split('-').reverse().join('/') : '');
-
-// Màn "Tài chính" — gom Tổng quan + Doanh thu + Giao dịch (đối soát/kết toán) vào 1 màn.
-const FinancePage: React.FC = () => {
+// Màn "Giao dịch" — tab mẹ gồm 3 tab con: Tổng quan · Lịch sử · Đối soát.
+const TransactionsHubPage: React.FC = () => {
   const initial = computePresetRange('month');
   const [fromDate, setFromDate] = useState(initial.from);
   const [toDate, setToDate] = useState(initial.to);
@@ -31,33 +29,38 @@ const FinancePage: React.FC = () => {
 
   const tabItems = [
     { id: 'overview', label: 'Tổng quan' },
-    { id: 'revenue', label: 'Doanh thu' },
-    { id: 'transactions', label: 'Giao dịch' },
+    { id: 'history', label: 'Lịch sử' },
+    { id: 'reconciliation', label: 'Đối soát' },
   ];
 
   return (
     <Box layoutClassName="flex h-full flex-col space-y-4 sm:space-y-5">
-      {/* Lọc thời gian dùng chung */}
-      <DateRangePicker
-        fromDate={fromDate}
-        toDate={toDate}
-        preset={preset}
-        onApplyPreset={applyPreset}
-        onFromChange={(v) => { setFromDate(v); setPreset('custom'); }}
-        onToChange={(v) => { setToDate(v); setPreset('custom'); }}
-      />
+      <Box layoutClassName="flex flex-wrap items-center gap-2">
+        <Heading level={2} layoutClassName="flex items-center gap-2" textClassName="text-lg font-semibold">
+          <ArrowRightLeft className="h-5 w-5 text-primary-500" />
+          Giao dịch
+        </Heading>
+        <Box layoutClassName="ml-auto">
+          <DateRangePicker
+            fromDate={fromDate}
+            toDate={toDate}
+            preset={preset}
+            onApplyPreset={applyPreset}
+            onFromChange={(v) => { setFromDate(v); setPreset('custom'); }}
+            onToChange={(v) => { setToDate(v); setPreset('custom'); }}
+          />
+        </Box>
+      </Box>
 
-      {/* Tabs */}
       <Tabs items={tabItems} value={tab} onChange={(v) => setTab(v as TopTab)} />
 
-      {/* Nội dung tab */}
       <Box layoutClassName="flex-1 overflow-y-auto">
         {tab === 'overview' && <OverviewTab fromDate={fromDate} toDate={toDate} />}
-        {tab === 'revenue' && <RevenueTab fromDate={fromDate} toDate={toDate} />}
-        {tab === 'transactions' && <ReconciliationTab fromDate={fromDate} toDate={toDate} />}
+        {tab === 'history' && <TransactionsSummary fromDate={fromDate} toDate={toDate} />}
+        {tab === 'reconciliation' && <ReconciliationTab fromDate={fromDate} toDate={toDate} />}
       </Box>
     </Box>
   );
 };
 
-export default FinancePage;
+export default TransactionsHubPage;
