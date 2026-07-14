@@ -1,10 +1,11 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { Check, GitMerge, Sparkles } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { GitMerge, ListFilter, Sparkles, WandSparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   DEFAULT_MATERIAL_MERGE_THRESHOLD,
   useMaterialMergeSuggestions,
+  useMaterialMergeSuggestionsAi,
   useStockReceiptMutations,
 } from '@/hooks/queries/useStockReceiptQuery';
 import type { MaterialMergeCandidate } from '@/services/stockReceiptService';
@@ -32,14 +33,23 @@ interface GroupMember extends MaterialMergeCandidate {
   topSimilarity: number;
 }
 
-/** 1 nhóm NVL nghi trùng (connected component theo id). */
+/** 1 nhóm NVL nghi trùng (connected component theo id, hoặc nhóm do AI gợi ý). */
 interface SuggestionGroup {
   /** Khoá ổn định = các id thành viên sort & nối — để giữ state khi refetch. */
   key: string;
   members: GroupMember[];
-  /** Similarity lớn nhất trong nhóm (để hiển thị độ giống tổng quát). */
+  /** Similarity lớn nhất trong nhóm (heuristic) hoặc confidence (AI) — 0–1. */
   topSimilarity: number;
+  /** (AI) Tên chuẩn AI đề xuất — dùng làm default name khi có. */
+  aiSuggestedName?: string;
+  /** (AI) Đơn vị chuẩn AI đề xuất. */
+  aiSuggestedUnit?: string | null;
+  /** (AI) Lý do AI cho là cùng sản phẩm. */
+  aiReason?: string;
 }
+
+/** Nguồn gợi ý: theo tên (heuristic) hoặc AI (Claude). */
+type SuggestMode = 'name' | 'ai';
 
 /** Lựa chọn người dùng cho 1 nhóm. */
 interface GroupChoice {
@@ -52,21 +62,35 @@ interface GroupChoice {
 
 const MergeSuggestionsPanel: React.FC<MergeSuggestionsPanelProps> = ({ open, onMerged, embedded }) => {
   const { t } = useLanguage();
-  const { suggestions, loading } = useMaterialMergeSuggestions(
-    open,
+  const [mode, setMode] = useState<SuggestMode>('name');
+  // Heuristic (theo tên): auto-fetch khi mở + đang ở mode 'name'.
+  const { suggestions, loading: heuristicLoading } = useMaterialMergeSuggestions(
+    open && mode === 'name',
     DEFAULT_MATERIAL_MERGE_THRESHOLD,
   );
+  // AI (Claude): on-demand — chỉ chạy khi user bấm sang tab AI.
+  const ai = useMaterialMergeSuggestionsAi();
   const { mergeMaterialsInto, updateMaterialInfo } = useStockReceiptMutations();
 
   // Overrides do user chỉnh (theo group key) — undefined = dùng default tính từ nhóm.
   const [choices, setChoices] = useState<Record<string, GroupChoice>>({});
   const [submittingKey, setSubmittingKey] = useState<string | null>(null);
 
+  // Lần đầu chuyển sang tab AI (chưa chạy) → tự chạy phân tích.
+  const runAi = ai.run;
+  const aiHasRun = ai.hasRun;
+  const aiLoading = ai.loading;
+  useEffect(() => {
+    if (mode === 'ai' && !aiHasRun && !aiLoading) {
+      void runAi();
+    }
+  }, [mode, aiHasRun, aiLoading, runAi]);
+
   /**
    * Gom các cặp thành NHÓM bằng union-find (connected components theo id).
    * Cặp chung material → cùng 1 nhóm. Đồng thời gom info candidate + similarity.
    */
-  const groups = useMemo<SuggestionGroup[]>(() => {
+  const heuristicGroups = useMemo<SuggestionGroup[]>(() => {
     const parent = new Map<string, string>();
     const find = (x: string): string => {
       let root = x;
@@ -133,14 +157,41 @@ const MergeSuggestionsPanel: React.FC<MergeSuggestionsPanelProps> = ({ open, onM
     return result;
   }, [suggestions]);
 
+  // Nhóm do AI trả về (đã gom sẵn + members sort theo importCount ở BE) → map sang
+  // SuggestionGroup để tái dùng UI + handleMerge. confidence dùng làm topSimilarity.
+  const aiGroups = useMemo<SuggestionGroup[]>(() => {
+    return ai.groups
+      .map((g) => {
+        const members: GroupMember[] = g.members.map((m) => ({
+          ...m,
+          topSimilarity: g.confidence,
+        }));
+        const key = `ai:${members.map((m) => m.id).slice().sort().join('|')}`;
+        return {
+          key,
+          members,
+          topSimilarity: g.confidence,
+          aiSuggestedName: g.suggestedName,
+          aiSuggestedUnit: g.suggestedUnit,
+          aiReason: g.reason,
+        };
+      })
+      .filter((g) => g.members.length >= 2)
+      .sort((a, b) => b.topSimilarity - a.topSimilarity);
+  }, [ai.groups]);
+
+  const displayGroups = mode === 'ai' ? aiGroups : heuristicGroups;
+  const loading = mode === 'ai' ? ai.loading : heuristicLoading;
+
   // Default choice cho 1 nhóm: root = importCount lớn nhất (members[0]), tick hết trừ root.
+  // Với nhóm AI: dùng tên/đơn vị AI đề xuất làm default (fallback về root).
   const defaultChoice = useCallback((group: SuggestionGroup): GroupChoice => {
     const root = group.members[0];
     return {
       rootId: root.id,
       duplicateIds: new Set(group.members.filter((m) => m.id !== root.id).map((m) => m.id)),
-      name: root.name,
-      unit: root.canonicalUnit ?? '',
+      name: (group.aiSuggestedName ?? '').trim() || root.name,
+      unit: (group.aiSuggestedUnit ?? '').trim() || (root.canonicalUnit ?? ''),
     };
   }, []);
 
@@ -282,22 +333,87 @@ const MergeSuggestionsPanel: React.FC<MergeSuggestionsPanelProps> = ({ open, onM
         </Box>
       )}
 
+      {/* Chọn nguồn gợi ý: theo tên (heuristic, nhanh) hoặc AI (Claude, thông minh hơn). */}
+      <Box layoutClassName="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          onClick={() => setMode('name')}
+          leftIcon={<ListFilter className="h-3.5 w-3.5" />}
+          iconClassName="inline-flex shrink-0"
+          sizeClassName="px-3 py-1.5 text-xs"
+          roundedClassName="rounded-lg"
+          layoutClassName="inline-flex items-center gap-1.5"
+          backgroundClassName={mode === 'name' ? 'bg-primary-600' : 'bg-white dark:bg-slate-800'}
+          textClassName={mode === 'name' ? 'font-semibold text-white' : 'font-medium text-slate-600 dark:text-slate-300'}
+          borderClassName={mode === 'name' ? 'border border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
+          disableVariantHover
+          disableVariantTextColor
+        >
+          {t('billImport.materialsMerge.modeName')}
+        </Button>
+        <Button
+          type="button"
+          onClick={() => setMode('ai')}
+          leftIcon={<WandSparkles className="h-3.5 w-3.5" />}
+          iconClassName="inline-flex shrink-0"
+          sizeClassName="px-3 py-1.5 text-xs"
+          roundedClassName="rounded-lg"
+          layoutClassName="inline-flex items-center gap-1.5"
+          backgroundClassName={mode === 'ai' ? 'bg-primary-600' : 'bg-white dark:bg-slate-800'}
+          textClassName={mode === 'ai' ? 'font-semibold text-white' : 'font-medium text-slate-600 dark:text-slate-300'}
+          borderClassName={mode === 'ai' ? 'border border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
+          disableVariantHover
+          disableVariantTextColor
+        >
+          {t('billImport.materialsMerge.modeAi')}
+        </Button>
+        {mode === 'ai' && ai.hasRun && !ai.loading ? (
+          <Button
+            type="button"
+            onClick={() => void ai.run()}
+            sizeClassName="px-2.5 py-1.5 text-xs"
+            roundedClassName="rounded-lg"
+            backgroundClassName="bg-transparent"
+            textClassName="font-medium text-primary-600 dark:text-primary-300"
+            borderClassName="border border-transparent"
+            layoutClassName="inline-flex items-center"
+            disableVariantHover
+            disableVariantTextColor
+          >
+            {t('billImport.materialsMerge.aiRerun')}
+          </Button>
+        ) : null}
+      </Box>
+      {mode === 'ai' ? (
+        <Typography size="xs" variant="muted">
+          {t('billImport.materialsMerge.aiHint')}
+        </Typography>
+      ) : null}
+
       {loading ? (
         <Box layoutClassName="flex items-center justify-center gap-2 py-8">
           <Spinner size="md" textClassName="text-primary-500" />
           <Typography size="sm" variant="muted">
-            {t('billImport.materialsMerge.loading')}
+            {mode === 'ai'
+              ? t('billImport.materialsMerge.aiRunning')
+              : t('billImport.materialsMerge.loading')}
           </Typography>
         </Box>
-      ) : groups.length === 0 ? (
+      ) : mode === 'ai' && ai.error ? (
+        <EmptyState
+          icon={<WandSparkles className="h-6 w-6" />}
+          title={t('billImport.materialsMerge.aiError')}
+          description={ai.error.message}
+        />
+      ) : displayGroups.length === 0 ? (
         <EmptyState
           icon={<GitMerge className="h-6 w-6" />}
-          title={t('billImport.materialsMerge.empty')}
-          description={t('billImport.materialsMerge.emptyHint')}
+          title={mode === 'ai' ? t('billImport.materialsMerge.aiEmpty') : t('billImport.materialsMerge.empty')}
+          description={mode === 'ai' ? t('billImport.materialsMerge.aiEmptyHint') : t('billImport.materialsMerge.emptyHint')}
         />
       ) : (
         <Box layoutClassName="space-y-4">
-          {groups.map((group, idx) => {
+          {displayGroups.map((group, idx) => {
             const choice = getChoice(group);
             const submitting = submittingKey === group.key;
             const selectedCount = group.members.filter(
@@ -335,12 +451,25 @@ const MergeSuggestionsPanel: React.FC<MergeSuggestionsPanelProps> = ({ open, onM
                     backgroundClassName="bg-primary-50 dark:bg-primary-950/40"
                     textClassName="text-primary-700 dark:text-primary-300"
                   >
-                    {t('billImport.materialsMerge.similarity').replace(
-                      '{{pct}}',
-                      String(Math.round(group.topSimilarity * 100)),
-                    )}
+                    {(group.aiReason
+                      ? t('billImport.materialsMerge.aiConfidence')
+                      : t('billImport.materialsMerge.similarity')
+                    ).replace('{{pct}}', String(Math.round(group.topSimilarity * 100)))}
                   </Typography>
                 </Box>
+
+                {/* Lý do AI (chỉ nhóm AI) */}
+                {group.aiReason ? (
+                  <Box
+                    layoutClassName="flex items-start gap-1.5 rounded-lg px-2.5 py-1.5"
+                    backgroundClassName="bg-primary-50/60 dark:bg-primary-950/20"
+                  >
+                    <WandSparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary-500" />
+                    <Typography size="xs" textClassName="text-primary-700 dark:text-primary-300">
+                      {group.aiReason}
+                    </Typography>
+                  </Box>
+                ) : null}
 
                 {/* Thành viên */}
                 <Box layoutClassName="space-y-2">

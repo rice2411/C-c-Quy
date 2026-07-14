@@ -178,6 +178,39 @@ export async function fetchMaterialMergeSuggestions(
     .filter((p) => p.a.id && p.b.id && p.a.id !== p.b.id);
 }
 
+/** 1 nhóm NVL do AI (Claude) gợi ý gộp — cùng sản phẩm. */
+export interface MaterialMergeAiGroup {
+  members: MaterialMergeCandidate[];
+  /** Tên chuẩn AI đề xuất. */
+  suggestedName: string;
+  /** Đơn vị chuẩn AI đề xuất (null nếu không chắc). */
+  suggestedUnit: string | null;
+  /** Độ tin cậy 0–1. */
+  confidence: number;
+  /** Lý do ngắn (tiếng Việt). */
+  reason: string;
+}
+
+/**
+ * Gợi ý gộp NVL bằng AI (Claude) → GET /stock-receipts/materials/merge-suggestions/ai.
+ * BE gom nhóm cùng sản phẩm (chịu OCR sai/thiếu dấu). Type-guard thô + lọc nhóm <2.
+ */
+export async function fetchMaterialMergeSuggestionsAi(): Promise<MaterialMergeAiGroup[]> {
+  const res = await apiClient.get<unknown>(`${BASE}/materials/merge-suggestions/ai`);
+  const rows = Array.isArray(res.data) ? res.data : [];
+  return rows
+    .map((raw: any) => ({
+      members: Array.isArray(raw?.members)
+        ? raw.members.map(toCandidate).filter((m: MaterialMergeCandidate) => m.id)
+        : [],
+      suggestedName: typeof raw?.suggestedName === 'string' ? raw.suggestedName : '',
+      suggestedUnit: typeof raw?.suggestedUnit === 'string' ? raw.suggestedUnit : null,
+      confidence: typeof raw?.confidence === 'number' ? raw.confidence : 0,
+      reason: typeof raw?.reason === 'string' ? raw.reason : '',
+    }))
+    .filter((g) => g.members.length >= 2);
+}
+
 /** Sửa tên / đơn vị chuẩn của 1 NVL → PATCH /stock-receipts/materials/:id. */
 export async function updateMaterial(
   id: string,
