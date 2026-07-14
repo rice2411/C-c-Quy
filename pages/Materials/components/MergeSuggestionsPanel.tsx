@@ -206,6 +206,25 @@ const MergeSuggestionsPanel: React.FC<MergeSuggestionsPanelProps> = ({ open, onM
       const unit = choice.unit.trim();
       const root = group.members.find((m) => m.id === choice.rootId);
 
+      // Cảnh báo lệch đơn vị: nếu các NVL chọn gộp có >1 đơn vị khác nhau → xác nhận
+      // (gộp cộng số lượng BẤT KỂ đơn vị nên tổng có thể sai).
+      const selectedIds = new Set<string>([choice.rootId, ...duplicateIds]);
+      const units = Array.from(
+        new Set(
+          group.members
+            .filter((m) => selectedIds.has(m.id))
+            .map((m) => (m.canonicalUnit ?? '').trim())
+            .filter(Boolean),
+        ),
+      );
+      if (units.length > 1) {
+        const ok = window.confirm(
+          `Các NVL chọn gộp có ĐƠN VỊ KHÁC NHAU (${units.join(', ')}).\n` +
+            'Gộp sẽ cộng số lượng bất kể đơn vị → tổng có thể sai. Vẫn gộp?',
+        );
+        if (!ok) return;
+      }
+
       setSubmittingKey(group.key);
       try {
         await mergeMaterialsInto({ rootId: choice.rootId, duplicateIds });
