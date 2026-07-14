@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Boxes, Building2, Pencil, Plus, Shuffle, Trash2, Wallet } from 'lucide-react';
+import { Boxes, Building2, Coins, Pencil, Plus, Shuffle, Trash2, Wallet } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
@@ -22,6 +22,7 @@ import {
   type ExpenseRule,
   type Transaction,
   type Asset,
+  type ManualExpense,
 } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { formatDateTime } from '@/utils/format/dateUtil';
@@ -34,11 +35,19 @@ import {
   setTransactionExpense,
 } from '@/services/transactionService';
 import { fetchAssets, upsertAsset, deleteAsset } from '@/services/assetService';
+import {
+  fetchManualExpenses,
+  upsertManualExpense,
+  deleteManualExpense,
+} from '@/services/manualExpenseService';
 
-type TopTab = 'overview' | 'list' | 'rules' | 'assets';
+type TopTab = 'overview' | 'list' | 'manual' | 'rules' | 'assets';
 
 type AssetForm = { id?: string; name: string; cost: string; usefulMonths: string; startDate: string; category: string };
 const EMPTY_ASSET: AssetForm = { name: '', cost: '', usefulMonths: '12', startDate: '', category: 'equipment' };
+
+type ManualForm = { id?: string; date: string; amount: string; category: string; spreadMonths: string; note: string };
+const EMPTY_MANUAL: ManualForm = { date: '', amount: '', category: 'rent', spreadMonths: '1', note: '' };
 
 const CAT_COLORS = ['#8b5cf6', '#0ea5e9', '#16a34a', '#d97706', '#e11d48', '#4abab9', '#64748b', '#f59e0b'];
 
@@ -54,6 +63,8 @@ const ExpensesPage: React.FC = () => {
   const [rules, setRules] = useState<ExpenseRule[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
   const [assetForm, setAssetForm] = useState<AssetForm>(EMPTY_ASSET);
+  const [manualList, setManualList] = useState<ManualExpense[]>([]);
+  const [manualForm, setManualForm] = useState<ManualForm>(EMPTY_MANUAL);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -69,16 +80,18 @@ const ExpensesPage: React.FC = () => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [s, o, r, a] = await Promise.all([
+      const [s, o, r, a, m] = await Promise.all([
         fetchExpenseSummary(fromDate, toDate),
         fetchExpenseOut(fromDate, toDate),
         fetchExpenseRules(),
         fetchAssets(),
+        fetchManualExpenses(),
       ]);
       setSummary(s);
       setOutList(o);
       setRules(r);
       setAssets(a);
+      setManualList(m);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Tải dữ liệu chi phí thất bại');
     } finally {
@@ -185,9 +198,56 @@ const ExpensesPage: React.FC = () => {
     startDate: a.startDate, category: String(a.category ?? 'equipment'),
   });
 
+  // ── Chi phí thủ công (không qua bank) ──
+  const saveManual = async () => {
+    const amount = Number(manualForm.amount);
+    const spreadMonths = Math.max(1, Math.floor(Number(manualForm.spreadMonths) || 1));
+    if (!manualForm.date || !amount) {
+      toast.error('Nhập ngày và số tiền');
+      return;
+    }
+    setBusy(true);
+    try {
+      await upsertManualExpense({
+        id: manualForm.id,
+        date: manualForm.date,
+        amount,
+        category: manualForm.category || 'other',
+        spreadMonths,
+        note: manualForm.note.trim() || null,
+      });
+      toast.success(manualForm.id ? 'Đã cập nhật khoản chi' : 'Đã thêm khoản chi');
+      setManualForm(EMPTY_MANUAL);
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Lưu chi phí thất bại');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeManual = async (id: string) => {
+    setBusy(true);
+    try {
+      await deleteManualExpense(id);
+      toast.success('Đã xoá khoản chi');
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Xoá thất bại');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const editManual = (m: ManualExpense) => setManualForm({
+    id: m.id, date: m.date, amount: String(m.amount), category: String(m.category ?? 'other'),
+    spreadMonths: String(m.spreadMonths ?? 1), note: m.note ?? '',
+  });
+
   const tabItems = [
     { id: 'overview', label: 'Tổng quan' },
     { id: 'list', label: 'Danh sách' },
+    { id: 'manual', label: 'Thủ công' },
     { id: 'rules', label: 'Quy tắc' },
     { id: 'assets', label: 'Tài sản' },
   ];
@@ -308,6 +368,63 @@ const ExpensesPage: React.FC = () => {
                     </Card>
                   );
                 })
+              )}
+            </Box>
+          )}
+
+          {tab === 'manual' && (
+            <Box layoutClassName="space-y-4">
+              <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+                <Typography size="sm" layoutClassName="font-semibold">
+                  {manualForm.id ? 'Sửa khoản chi' : 'Thêm chi phí thủ công (tiền mặt / đã trả trước)'}
+                </Typography>
+                <Typography size="xs" variant="muted">
+                  Dùng cho khoản KHÔNG qua ngân hàng. "Phân bổ" &gt; 1 tháng → chia đều mỗi tháng (vd trả trước tiền thuê 6 tháng).
+                </Typography>
+                <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <DatePicker value={manualForm.date} onChange={(v) => setManualForm((f) => ({ ...f, date: v }))} fullWidth placeholder="Ngày chi (hoặc bắt đầu phân bổ)" />
+                  <Select value={manualForm.category} onChange={(e) => setManualForm((f) => ({ ...f, category: e.target.value }))}>
+                    {EXPENSE_CATEGORIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+                  </Select>
+                  <Input type="number" min={0} value={manualForm.amount} placeholder="Số tiền (VND)" onChange={(e) => setManualForm((f) => ({ ...f, amount: e.target.value }))} fullWidth />
+                  <Input type="number" min={1} value={manualForm.spreadMonths} placeholder="Phân bổ (số tháng, 1 = ghi 1 lần)" onChange={(e) => setManualForm((f) => ({ ...f, spreadMonths: e.target.value }))} fullWidth />
+                  <Input value={manualForm.note} placeholder="Ghi chú (tuỳ chọn)" onChange={(e) => setManualForm((f) => ({ ...f, note: e.target.value }))} fullWidth containerClassName="sm:col-span-2" />
+                </Box>
+                <Box layoutClassName="flex flex-wrap gap-2">
+                  <Button type="button" disabled={busy} onClick={() => void saveManual()} variant="primary" sizeClassName="px-3 py-1.5 text-xs" roundedClassName="rounded-lg" layoutClassName="inline-flex items-center gap-1.5" disableVariantHover>
+                    {manualForm.id ? 'Cập nhật' : 'Thêm'}
+                  </Button>
+                  {manualForm.id ? (
+                    <Button type="button" onClick={() => setManualForm(EMPTY_MANUAL)} variant="secondary" sizeClassName="px-3 py-1.5 text-xs" roundedClassName="rounded-lg" disableVariantHover>Huỷ</Button>
+                  ) : null}
+                </Box>
+              </Card>
+
+              {manualList.length === 0 ? (
+                <EmptyState icon={<Coins className="h-6 w-6" />} title="Chưa có chi phí thủ công" />
+              ) : (
+                <Box layoutClassName="space-y-2">
+                  {manualList.map((m) => (
+                    <Card key={m.id} padding="sm" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="flex flex-wrap items-center gap-3">
+                      <Box layoutClassName="min-w-0 flex-1">
+                        <Typography size="sm" layoutClassName="truncate font-semibold">
+                          {expenseCategoryLabel(m.category)} · {formatVND(m.amount)}
+                        </Typography>
+                        <Typography size="xs" variant="muted" layoutClassName="truncate">
+                          {m.date.split('-').reverse().join('/')}
+                          {m.spreadMonths > 1 ? ` · phân bổ ${formatVND(Math.round(m.amount / m.spreadMonths))}/tháng × ${m.spreadMonths}` : ''}
+                          {m.note ? ` · ${m.note}` : ''}
+                        </Typography>
+                      </Box>
+                      <Button type="button" onClick={() => editManual(m)} aria-label="Sửa" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1.5" roundedClassName="rounded-lg" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button type="button" disabled={busy} onClick={() => void removeManual(m.id)} aria-label="Xoá" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1.5" roundedClassName="rounded-lg" borderClassName="border border-transparent" textClassName="text-red-500" hoverClassName="hover:bg-red-50 dark:hover:bg-red-900/10">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </Card>
+                  ))}
+                </Box>
               )}
             </Box>
           )}
