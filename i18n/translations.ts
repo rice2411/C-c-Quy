@@ -10,7 +10,7 @@ export const translations = {
     nav: {
       dashboard: "Dashboard",
       orders: "Orders",
-      inventory: "Products",
+      inventory: "Product list",
       billImport: "Stock-in",
       stockReceipts: "Stock-in receipts",
       suppliers: "Suppliers",
@@ -44,6 +44,7 @@ export const translations = {
       myCommission: "My Commission",
       commissionGuide: "Guide",
       inventoryGroup: "Inventory",
+      productGroup: "Products",
       costGroup: "Costs",
       expenses: "Operating costs",
       notifications: "Notifications",
@@ -725,7 +726,7 @@ export const translations = {
     nav: {
       dashboard: "Tổng quan",
       orders: "Đơn hàng",
-      inventory: "Sản phẩm",
+      inventory: "Danh sách sản phẩm",
       billImport: "Nhập kho",
       stockReceipts: "Phiếu nhập",
       suppliers: "Nhà cung cấp",
@@ -759,6 +760,7 @@ export const translations = {
       myCommission: "Hoa hồng của tôi",
       commissionGuide: "Hướng dẫn",
       inventoryGroup: "Kho hàng",
+      productGroup: "Sản phẩm",
       costGroup: "Chi phí",
       expenses: "Chi phí vận hành",
       notifications: "Thông báo",
