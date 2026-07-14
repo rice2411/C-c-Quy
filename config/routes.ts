@@ -69,7 +69,21 @@ export const routes: RouteConfig[] = [
   {
     type: "page",
     path: "/finance/overview",
-    labelKey: "nav.transactionsHub",
+    labelKey: "nav.txOverview",
+    icon: LayoutDashboard,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/finance/history",
+    labelKey: "nav.txHistory",
+    icon: Coins,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/finance/reconciliation",
+    labelKey: "nav.txReconciliation",
     icon: Wallet,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
@@ -321,6 +335,16 @@ export interface NavGroupConfig {
 }
 
 export const navGroups: NavGroupConfig[] = [
+  {
+    key: "transactions",
+    labelKey: "nav.transactionsHub",
+    icon: Wallet,
+    childPaths: [
+      "/finance/overview",
+      "/finance/history",
+      "/finance/reconciliation",
+    ],
+  },
   {
     key: "commission",
     labelKey: "nav.commissionGroup",
