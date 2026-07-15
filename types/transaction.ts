@@ -23,6 +23,10 @@ export interface Transaction {
   expenseCategory?: string | null;
   /** Loại khỏi chi phí (nội bộ / trả NCC đã tính COGS...) — không trừ lợi nhuận. */
   costExcluded?: boolean;
+  /** Nhận tiền khớp ≥2 đơn cùng số tiền → webhook không auto-PAID, cần đối soát tay. */
+  needsReview?: boolean;
+  /** Ghi chú lý do cần đối soát (vd "2 đơn cùng số tiền — cần đối soát thủ công"). */
+  reviewNote?: string | null;
 }
 
 /** Category chi phí vận hành (union — theo types-convention). */
