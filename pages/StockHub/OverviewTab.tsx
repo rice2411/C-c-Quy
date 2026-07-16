@@ -68,11 +68,6 @@ const OverviewTab: React.FC = () => {
     [receiptsInPeriod],
   );
 
-  const unreconciled = useMemo(
-    () => receiptsInPeriod.filter((r) => !r.reconciled).length,
-    [receiptsInPeriod],
-  );
-
   const topSuppliers = useMemo(() => {
     const map = new Map<string, number>();
     receiptsInPeriod.forEach((r) => {
@@ -90,7 +85,7 @@ const OverviewTab: React.FC = () => {
   const maxAmount = topSuppliers[0]?.amount ?? 0;
 
   return (
-    <Box layoutClassName="space-y-4">
+    <Box layoutClassName="space-y-4" sizeClassName="max-w-5xl">
       <Box layoutClassName="flex flex-wrap items-center gap-2">
         <Box layoutClassName="ml-auto">
           <DateRangePicker
@@ -118,14 +113,6 @@ const OverviewTab: React.FC = () => {
               { icon: Package, label: 'Nguyên vật liệu', value: String(materialsQuery.materials.length), accent: '#d97706' },
             ]}
           />
-
-          {unreconciled > 0 ? (
-            <Card padding="sm" borderClassName="border-amber-200 dark:border-amber-800" backgroundClassName="bg-amber-50 dark:bg-amber-900/10">
-              <Typography size="sm" textClassName="text-amber-700 dark:text-amber-300">
-                ⚠️ {unreconciled} phiếu trong kỳ chưa đối soát
-              </Typography>
-            </Card>
-          ) : null}
 
           <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
             <Typography size="sm" layoutClassName="font-semibold">Top nhà cung cấp theo chi tiêu (trong kỳ)</Typography>
