@@ -17,9 +17,7 @@ const CommissionGuidePage = lazy(() => import("./pages/Commission/GuidePage"));
 const MyCommissionPage = lazy(() => import("./pages/MyCommission/index"));
 const InventoryPage = lazy(() => import("./pages/Storage/index"));
 const ProductDetailPage = lazy(() => import("./pages/Storage/product/ProductDetailPage"));
-const StockReceiptsPage = lazy(() => import("./pages/StockReceipts/index"));
-const SuppliersPage = lazy(() => import("./pages/Suppliers/index"));
-const MaterialsPage = lazy(() => import("./pages/Materials/index"));
+const StockHubPage = lazy(() => import("./pages/StockHub/index"));
 const ExpensesPage = lazy(() => import("./pages/Expenses/index"));
 const CustomersPage = lazy(() => import("./pages/Customers/index"));
 const UsersPage = lazy(() => import("./pages/Users/index"));
@@ -168,7 +166,7 @@ const AppRoutes: React.FC = () => (
         path="stock-receipts"
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/stock-receipts")?.roles}>
-            <StockReceiptsPage />
+            <StockHubPage />
           </RoleBasedRoute>
         }
       />
@@ -180,22 +178,9 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      <Route
-        path="suppliers"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/suppliers")?.roles}>
-            <SuppliersPage />
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="materials"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/materials")?.roles}>
-            <MaterialsPage />
-          </RoleBasedRoute>
-        }
-      />
+      {/* NCC + NVL giờ là tab trong Nhập kho — giữ link cũ redirect sang tab tương ứng. */}
+      <Route path="suppliers" element={<Navigate to="/stock-receipts?tab=suppliers" replace />} />
+      <Route path="materials" element={<Navigate to="/stock-receipts?tab=materials" replace />} />
       {/* Back-compat redirect path cũ */}
       <Route path="bill-import" element={<Navigate to="/stock-receipts" replace />} />
       <Route
