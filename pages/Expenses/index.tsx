@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Boxes, Building2, Coins, Pencil, Trash2, Wallet } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
 import Heading from '@/components/ui/Heading';
@@ -15,6 +14,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import StatsBanner from '@/components/ui/StatsBanner';
 import DateRangePicker, { DatePreset, computePresetRange } from '@/components/ui/DateRangePicker';
 import DatePicker from '@/components/ui/DatePicker';
+import { DonutChart, ChartLegend, colorAt } from '@/components/ui/stats';
 import {
   EXPENSE_CATEGORIES,
   expenseCategoryLabel,
@@ -37,8 +37,6 @@ const EMPTY_ASSET: AssetForm = { name: '', cost: '', usefulMonths: '12', startDa
 
 type ManualForm = { id?: string; date: string; amount: string; category: string; spreadMonths: string; note: string };
 const EMPTY_MANUAL: ManualForm = { date: '', amount: '', category: 'rent', spreadMonths: '1', note: '' };
-
-const CAT_COLORS = ['#8b5cf6', '#0ea5e9', '#16a34a', '#d97706', '#e11d48', '#4abab9', '#64748b', '#f59e0b'];
 
 const ExpensesPage: React.FC = () => {
   const initial = computePresetRange('month');
@@ -104,7 +102,8 @@ const ExpensesPage: React.FC = () => {
     return Array.from(map.entries())
       .map(([category, amount]) => ({ category, amount }))
       .filter((x) => x.amount > 0)
-      .sort((a, b) => b.amount - a.amount);
+      .sort((a, b) => b.amount - a.amount)
+      .map((x, i) => ({ key: x.category, label: expenseCategoryLabel(x.category), value: x.amount, color: colorAt(i) }));
   }, [manualInPeriod]);
 
   // ── Tài sản (khấu hao) ──
@@ -246,28 +245,18 @@ const ExpensesPage: React.FC = () => {
                   <EmptyState icon={<Wallet className="h-6 w-6" />} title="Chưa có chi phí trong kỳ" />
                 ) : (
                   <Box layoutClassName="flex flex-col items-center gap-4 sm:flex-row">
-                    <Box layoutClassName="h-52 w-full sm:w-1/2">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={pieData} dataKey="amount" nameKey="category" cx="50%" cy="50%" outerRadius={80}>
-                            {pieData.map((_, i) => (
-                              <Cell key={i} fill={CAT_COLORS[i % CAT_COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(v: number) => formatVND(v)} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </Box>
-                    <Box layoutClassName="w-full space-y-1.5 sm:w-1/2">
-                      {pieData.map((x, i) => (
-                        <Box key={x.category} layoutClassName="flex items-center gap-2">
-                          <Box layoutClassName="h-3 w-3 shrink-0 rounded-sm" style={{ backgroundColor: CAT_COLORS[i % CAT_COLORS.length] }} />
-                          <Typography size="sm" layoutClassName="min-w-0 flex-1 truncate" textClassName="text-slate-600 dark:text-slate-300">
-                            {expenseCategoryLabel(x.category)}
-                          </Typography>
-                          <Typography size="sm" layoutClassName="font-semibold tabular-nums">{formatVND(x.amount)}</Typography>
-                        </Box>
-                      ))}
+                    <DonutChart
+                      data={pieData}
+                      formatValue={formatVND}
+                      innerRadius={0}
+                      outerRadius={80}
+                      containerClassName="h-52 w-full sm:w-1/2"
+                    />
+                    <Box layoutClassName="w-full sm:w-1/2">
+                      <ChartLegend
+                        marker="square"
+                        items={pieData.map((x) => ({ label: x.label, color: x.color, value: formatVND(x.value) }))}
+                      />
                     </Box>
                   </Box>
                 )}

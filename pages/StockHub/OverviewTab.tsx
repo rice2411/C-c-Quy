@@ -6,6 +6,7 @@ import Card from '@/components/ui/Card';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
 import StatsBanner from '@/components/ui/StatsBanner';
+import { RankedBarList } from '@/components/ui/stats';
 import DateRangePicker, { DatePreset, computePresetRange } from '@/components/ui/DateRangePicker';
 import {
   useStockReceiptSummaries,
@@ -87,8 +88,6 @@ const OverviewTab: React.FC = () => {
       .slice(0, 8);
   }, [receiptsInPeriod]);
 
-  const maxAmount = topSuppliers[0]?.amount ?? 0;
-
   return (
     <Box layoutClassName="space-y-4">
       <Box layoutClassName="flex flex-wrap items-center gap-2">
@@ -132,24 +131,9 @@ const OverviewTab: React.FC = () => {
             {topSuppliers.length === 0 ? (
               <EmptyState icon={<Truck className="h-6 w-6" />} title="Chưa có phiếu nhập trong kỳ" />
             ) : (
-              <Box layoutClassName="space-y-2.5">
-                {topSuppliers.map((s) => {
-                  const pct = maxAmount > 0 ? Math.round((s.amount / maxAmount) * 100) : 0;
-                  return (
-                    <Box key={s.name} layoutClassName="space-y-1">
-                      <Box layoutClassName="flex items-center gap-2">
-                        <Typography size="sm" layoutClassName="min-w-0 flex-1 truncate" textClassName="text-slate-600 dark:text-slate-300">
-                          {s.name}
-                        </Typography>
-                        <Typography size="sm" layoutClassName="font-semibold tabular-nums">{formatVND(s.amount)}</Typography>
-                      </Box>
-                      <Box layoutClassName="h-2 w-full overflow-hidden" roundedClassName="rounded-full" backgroundClassName="bg-slate-100 dark:bg-slate-700">
-                        <Box layoutClassName="h-full" roundedClassName="rounded-full" backgroundClassName="bg-primary-500" style={{ width: `${pct}%` }} />
-                      </Box>
-                    </Box>
-                  );
-                })}
-              </Box>
+              <RankedBarList
+                items={topSuppliers.map((s) => ({ label: s.name, value: formatVND(s.amount), amount: s.amount }))}
+              />
             )}
           </Card>
         </Box>
