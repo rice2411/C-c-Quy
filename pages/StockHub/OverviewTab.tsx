@@ -4,10 +4,8 @@ import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
 import Card from '@/components/ui/Card';
 import Spinner from '@/components/ui/Spinner';
-import EmptyState from '@/components/ui/EmptyState';
 import StatsBanner from '@/components/ui/StatsBanner';
 import { TrendChart, DonutChart, ChartLegend, colorAt } from '@/components/ui/stats';
-import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import DateRangePicker, { DatePreset, computePresetRange } from '@/components/ui/DateRangePicker';
 import {
   useStockReceiptSummaries,
@@ -75,23 +73,6 @@ const OverviewTab: React.FC = () => {
     () => receiptsInPeriod.filter((r) => !r.reconciled).length,
     [receiptsInPeriod],
   );
-
-  const topSuppliers = useMemo(() => {
-    const map = new Map<string, { amount: number; count: number }>();
-    receiptsInPeriod.forEach((r) => {
-      const name = (r.supplierNameRaw ?? '').trim() || 'Không rõ NCC';
-      const amt = typeof r.totalAmount === 'number' ? r.totalAmount : 0;
-      const prev = map.get(name) ?? { amount: 0, count: 0 };
-      prev.amount += amt;
-      prev.count += 1;
-      map.set(name, prev);
-    });
-    return Array.from(map.entries())
-      .map(([name, v]) => ({ name, amount: v.amount, count: v.count }))
-      .filter((x) => x.amount > 0)
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 8);
-  }, [receiptsInPeriod]);
 
   // Cơ cấu chi theo NCC (top 6 + gộp "Khác") cho donut.
   const supplierPie = useMemo(() => {
@@ -198,34 +179,6 @@ const OverviewTab: React.FC = () => {
               </Card>
             ) : null}
           </Box>
-
-          <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
-            <Typography size="sm" layoutClassName="font-semibold">Top nhà cung cấp theo chi tiêu (trong kỳ)</Typography>
-            {topSuppliers.length === 0 ? (
-              <EmptyState icon={<Truck className="h-6 w-6" />} title="Chưa có phiếu nhập trong kỳ" />
-            ) : (
-              <Box layoutClassName="overflow-x-auto">
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeaderCell layoutClassName="p-2 text-left">Nhà cung cấp</TableHeaderCell>
-                      <TableHeaderCell layoutClassName="p-2 text-right">Số phiếu</TableHeaderCell>
-                      <TableHeaderCell layoutClassName="p-2 text-right">Tổng chi</TableHeaderCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {topSuppliers.map((s) => (
-                      <TableRow key={s.name} borderClassName="border-b border-slate-100 dark:border-slate-700/60">
-                        <TableCell layoutClassName="p-2" textClassName="text-sm text-slate-700 dark:text-slate-200">{s.name}</TableCell>
-                        <TableCell layoutClassName="p-2 text-right" textClassName="text-sm tabular-nums text-slate-500 dark:text-slate-400">{s.count}</TableCell>
-                        <TableCell layoutClassName="p-2 text-right" textClassName="text-sm font-semibold tabular-nums text-slate-900 dark:text-white">{formatVND(s.amount)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Box>
-            )}
-          </Card>
         </Box>
       )}
     </Box>
