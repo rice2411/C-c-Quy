@@ -4,14 +4,15 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import Box from '@/components/ui/Box';
 import Tabs from '@/components/ui/Tabs';
 import Spinner from '@/components/ui/Spinner';
+import OverviewTab from '@/pages/StockHub/OverviewTab';
 
 // Lazy để mỗi tab là 1 chunk riêng — không kéo OCR pipeline (Phiếu nhập) vào tab NCC/NVL.
 const StockReceiptsPage = lazy(() => import('@/pages/StockReceipts/index'));
 const SuppliersPage = lazy(() => import('@/pages/Suppliers/index'));
 const MaterialsPage = lazy(() => import('@/pages/Materials/index'));
 
-type StockTab = 'receipts' | 'suppliers' | 'materials';
-const VALID_TABS: StockTab[] = ['receipts', 'suppliers', 'materials'];
+type StockTab = 'overview' | 'receipts' | 'suppliers' | 'materials';
+const VALID_TABS: StockTab[] = ['overview', 'receipts', 'suppliers', 'materials'];
 
 /**
  * Nhập kho — gộp 3 phần cùng luồng nhập hàng thành 1 trang 3 tab:
@@ -22,7 +23,7 @@ const StockHubPage: React.FC = () => {
   const { t } = useLanguage();
   const [params, setParams] = useSearchParams();
   const raw = params.get('tab');
-  const tab: StockTab = VALID_TABS.includes(raw as StockTab) ? (raw as StockTab) : 'receipts';
+  const tab: StockTab = VALID_TABS.includes(raw as StockTab) ? (raw as StockTab) : 'overview';
 
   const setTab = (v: string) => {
     const next = new URLSearchParams(params);
@@ -31,6 +32,7 @@ const StockHubPage: React.FC = () => {
   };
 
   const tabItems = [
+    { id: 'overview', label: t('nav.stockOverview') },
     { id: 'receipts', label: t('nav.stockReceipts') },
     { id: 'suppliers', label: t('nav.suppliers') },
     { id: 'materials', label: t('nav.materials') },
@@ -47,6 +49,7 @@ const StockHubPage: React.FC = () => {
             </Box>
           }
         >
+          {tab === 'overview' && <OverviewTab />}
           {tab === 'receipts' && <StockReceiptsPage />}
           {tab === 'suppliers' && <SuppliersPage />}
           {tab === 'materials' && <MaterialsPage />}
