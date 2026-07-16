@@ -85,7 +85,7 @@ const OverviewTab: React.FC = () => {
   const maxAmount = topSuppliers[0]?.amount ?? 0;
 
   return (
-    <Box layoutClassName="space-y-4" sizeClassName="max-w-5xl">
+    <Box layoutClassName="max-w-5xl space-y-4">
       <Box layoutClassName="flex flex-wrap items-center gap-2">
         <Box layoutClassName="ml-auto">
           <DateRangePicker
