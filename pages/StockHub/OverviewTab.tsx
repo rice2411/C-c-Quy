@@ -6,7 +6,7 @@ import Card from '@/components/ui/Card';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
 import StatsBanner from '@/components/ui/StatsBanner';
-import { RankedBarList } from '@/components/ui/stats';
+import { RankedBarList, TrendChart } from '@/components/ui/stats';
 import DateRangePicker, { DatePreset, computePresetRange } from '@/components/ui/DateRangePicker';
 import {
   useStockReceiptSummaries,
@@ -88,6 +88,21 @@ const OverviewTab: React.FC = () => {
       .slice(0, 8);
   }, [receiptsInPeriod]);
 
+  // Xu hướng: tiền nhập gộp theo ngày (trong kỳ).
+  const trendData = useMemo(() => {
+    const map = new Map<string, number>();
+    receiptsInPeriod.forEach((r) => {
+      const ms = toMs(r.createdAt ?? r.receiptDate);
+      if (Number.isNaN(ms)) return;
+      const d = new Date(ms);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      map.set(key, (map.get(key) || 0) + (typeof r.totalAmount === 'number' ? r.totalAmount : 0));
+    });
+    return Array.from(map.entries())
+      .sort(([a], [b]) => (a < b ? -1 : 1))
+      .map(([k, v]) => ({ label: k.slice(5).split('-').reverse().join('/'), amount: v }));
+  }, [receiptsInPeriod]);
+
   return (
     <Box layoutClassName="space-y-4">
       <Box layoutClassName="flex flex-wrap items-center gap-2">
@@ -123,6 +138,20 @@ const OverviewTab: React.FC = () => {
               <Typography size="sm" textClassName="text-amber-700 dark:text-amber-300">
                 ⚠️ {unreconciled} phiếu trong kỳ chưa đối soát
               </Typography>
+            </Card>
+          ) : null}
+
+          {trendData.length > 1 ? (
+            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+              <Typography size="sm" layoutClassName="font-semibold">Tiền nhập theo ngày (trong kỳ)</Typography>
+              <TrendChart
+                data={trendData}
+                xKey="label"
+                series={[{ key: 'amount', label: 'Tiền nhập', color: '#0ea5e9' }]}
+                type="area"
+                formatValue={formatVND}
+                heightClassName="h-48"
+              />
             </Card>
           ) : null}
 

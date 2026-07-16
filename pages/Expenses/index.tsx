@@ -14,7 +14,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import StatsBanner from '@/components/ui/StatsBanner';
 import DateRangePicker, { DatePreset, computePresetRange } from '@/components/ui/DateRangePicker';
 import DatePicker from '@/components/ui/DatePicker';
-import { DonutChart, ChartLegend, colorAt } from '@/components/ui/stats';
+import { DonutChart, ChartLegend, TrendChart, colorAt } from '@/components/ui/stats';
 import {
   EXPENSE_CATEGORIES,
   expenseCategoryLabel,
@@ -104,6 +104,17 @@ const ExpensesPage: React.FC = () => {
       .filter((x) => x.amount > 0)
       .sort((a, b) => b.amount - a.amount)
       .map((x, i) => ({ key: x.category, label: expenseCategoryLabel(x.category), value: x.amount, color: colorAt(i) }));
+  }, [manualInPeriod]);
+
+  // Xu hướng: chi phí thủ công gộp theo ngày (trong kỳ).
+  const trendData = useMemo(() => {
+    const map = new Map<string, number>();
+    manualInPeriod.forEach((m) => {
+      map.set(m.date, (map.get(m.date) || 0) + (m.amount || 0));
+    });
+    return Array.from(map.entries())
+      .sort(([a], [b]) => (a < b ? -1 : 1))
+      .map(([k, v]) => ({ label: k.slice(5).split('-').reverse().join('/'), amount: v }));
   }, [manualInPeriod]);
 
   // ── Tài sản (khấu hao) ──
@@ -239,6 +250,19 @@ const ExpensesPage: React.FC = () => {
                   { icon: Building2, label: 'Số khoản', value: String(manualInPeriod.length), accent: '#0ea5e9' },
                 ]}
               />
+              {trendData.length > 1 ? (
+                <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+                  <Typography size="sm" layoutClassName="font-semibold">Chi phí theo ngày (trong kỳ)</Typography>
+                  <TrendChart
+                    data={trendData}
+                    xKey="label"
+                    series={[{ key: 'amount', label: 'Chi phí', color: '#8b5cf6' }]}
+                    type="area"
+                    formatValue={formatVND}
+                    heightClassName="h-48"
+                  />
+                </Card>
+              ) : null}
               <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
                 <Typography size="sm" layoutClassName="font-semibold">Cơ cấu chi phí theo loại</Typography>
                 {pieData.length === 0 ? (
