@@ -15,6 +15,21 @@ import {
 import { formatVND } from '@/utils/format/currencyUtil';
 
 /**
+ * apiClient revive chuỗi ISO thành object Timestamp-like ({ toMillis, toDate })
+ * để tương thích code cũ → createdAt KHÔNG còn là string. Đọc mốc ms an toàn cho
+ * cả 3 dạng: Timestamp-like, Date, chuỗi (date-only receiptDate vẫn là string).
+ */
+const toMs = (val: unknown): number => {
+  if (!val) return NaN;
+  if (typeof val === 'object') {
+    const o = val as { toMillis?: () => number; toDate?: () => Date };
+    if (typeof o.toMillis === 'function') return o.toMillis();
+    if (typeof o.toDate === 'function') return o.toDate().getTime();
+  }
+  return new Date(val as string).getTime();
+};
+
+/**
  * Tổng quan Nhập hàng — tính client-side từ dữ liệu sẵn có (không cần BE mới):
  * tổng tiền nhập + số phiếu (theo kỳ), số NCC/NVL (tổng danh mục), top NCC theo chi tiêu.
  */
@@ -43,8 +58,7 @@ const OverviewTab: React.FC = () => {
     const fromTs = new Date(`${fromDate.slice(0, 10)}T00:00:00`).getTime();
     const toTs = new Date(`${toDate.slice(0, 10)}T23:59:59.999`).getTime();
     return receiptsQuery.receipts.filter((r) => {
-      const raw = r.createdAt || r.receiptDate || '';
-      const ts = new Date(raw).getTime();
+      const ts = toMs(r.createdAt ?? r.receiptDate);
       return !Number.isNaN(ts) && ts >= fromTs && ts <= toTs;
     });
   }, [receiptsQuery.receipts, fromDate, toDate]);
