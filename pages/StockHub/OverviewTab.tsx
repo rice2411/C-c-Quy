@@ -6,7 +6,7 @@ import Card from '@/components/ui/Card';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
 import StatsBanner from '@/components/ui/StatsBanner';
-import { TrendChart } from '@/components/ui/stats';
+import { TrendChart, DonutChart, ChartLegend, colorAt } from '@/components/ui/stats';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import DateRangePicker, { DatePreset, computePresetRange } from '@/components/ui/DateRangePicker';
 import {
@@ -15,6 +15,7 @@ import {
   useImportedMaterials,
 } from '@/hooks/queries/useStockReceiptQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
+import { percentOf } from '@/utils/format/numberUtil';
 
 /**
  * apiClient revive chuỗi ISO thành object Timestamp-like ({ toMillis, toDate })
@@ -92,6 +93,25 @@ const OverviewTab: React.FC = () => {
       .slice(0, 8);
   }, [receiptsInPeriod]);
 
+  // Cơ cấu chi theo NCC (top 6 + gộp "Khác") cho donut.
+  const supplierPie = useMemo(() => {
+    const map = new Map<string, number>();
+    receiptsInPeriod.forEach((r) => {
+      const name = (r.supplierNameRaw ?? '').trim() || 'Không rõ NCC';
+      const amt = typeof r.totalAmount === 'number' ? r.totalAmount : 0;
+      map.set(name, (map.get(name) || 0) + amt);
+    });
+    const sorted = Array.from(map.entries())
+      .map(([name, amount]) => ({ name, amount }))
+      .filter((x) => x.amount > 0)
+      .sort((a, b) => b.amount - a.amount);
+    const TOP = 6;
+    const items = sorted.slice(0, TOP).map((x, i) => ({ key: x.name, label: x.name, value: x.amount, color: colorAt(i) }));
+    const restSum = sorted.slice(TOP).reduce((s, x) => s + x.amount, 0);
+    if (restSum > 0) items.push({ key: '__other', label: 'Khác', value: restSum, color: colorAt(TOP) });
+    return items;
+  }, [receiptsInPeriod]);
+
   // Xu hướng: tiền nhập gộp theo ngày (trong kỳ).
   const trendData = useMemo(() => {
     const map = new Map<string, number>();
@@ -145,19 +165,39 @@ const OverviewTab: React.FC = () => {
             </Card>
           ) : null}
 
-          {trendData.length > 1 ? (
-            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
-              <Typography size="sm" layoutClassName="font-semibold">Tiền nhập theo ngày (trong kỳ)</Typography>
-              <TrendChart
-                data={trendData}
-                xKey="label"
-                series={[{ key: 'amount', label: 'Tiền nhập', color: '#0ea5e9' }]}
-                type="area"
-                formatValue={formatVND}
-                heightClassName="h-48"
-              />
-            </Card>
-          ) : null}
+          <Box layoutClassName="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            {trendData.length > 1 ? (
+              <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3 lg:col-span-2">
+                <Typography size="sm" layoutClassName="font-semibold">Tiền nhập theo ngày (trong kỳ)</Typography>
+                <TrendChart
+                  data={trendData}
+                  xKey="label"
+                  series={[{ key: 'amount', label: 'Tiền nhập', color: '#0ea5e9' }]}
+                  type="area"
+                  formatValue={formatVND}
+                  heightClassName="h-48"
+                />
+              </Card>
+            ) : null}
+            {supplierPie.length > 0 ? (
+              <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+                <Typography size="sm" layoutClassName="font-semibold">Cơ cấu chi theo NCC</Typography>
+                <Box layoutClassName="flex flex-col items-center gap-3">
+                  <DonutChart data={supplierPie} formatValue={formatVND} containerClassName="h-44 w-44" />
+                  <Box layoutClassName="w-full">
+                    <ChartLegend
+                      items={supplierPie.map((d) => ({
+                        label: d.label,
+                        color: d.color,
+                        value: formatVND(d.value),
+                        percent: percentOf(d.value, totalSpend),
+                      }))}
+                    />
+                  </Box>
+                </Box>
+              </Card>
+            ) : null}
+          </Box>
 
           <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
             <Typography size="sm" layoutClassName="font-semibold">Top nhà cung cấp theo chi tiêu (trong kỳ)</Typography>
