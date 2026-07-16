@@ -68,6 +68,11 @@ const OverviewTab: React.FC = () => {
     [receiptsInPeriod],
   );
 
+  const unreconciled = useMemo(
+    () => receiptsInPeriod.filter((r) => !r.reconciled).length,
+    [receiptsInPeriod],
+  );
+
   const topSuppliers = useMemo(() => {
     const map = new Map<string, number>();
     receiptsInPeriod.forEach((r) => {
@@ -85,7 +90,7 @@ const OverviewTab: React.FC = () => {
   const maxAmount = topSuppliers[0]?.amount ?? 0;
 
   return (
-    <Box layoutClassName="max-w-5xl space-y-4">
+    <Box layoutClassName="space-y-4">
       <Box layoutClassName="flex flex-wrap items-center gap-2">
         <Box layoutClassName="ml-auto">
           <DateRangePicker
@@ -114,25 +119,33 @@ const OverviewTab: React.FC = () => {
             ]}
           />
 
+          {unreconciled > 0 ? (
+            <Card padding="sm" borderClassName="border-amber-200 dark:border-amber-800" backgroundClassName="bg-amber-50 dark:bg-amber-900/10">
+              <Typography size="sm" textClassName="text-amber-700 dark:text-amber-300">
+                ⚠️ {unreconciled} phiếu trong kỳ chưa đối soát
+              </Typography>
+            </Card>
+          ) : null}
+
           <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
             <Typography size="sm" layoutClassName="font-semibold">Top nhà cung cấp theo chi tiêu (trong kỳ)</Typography>
             {topSuppliers.length === 0 ? (
               <EmptyState icon={<Truck className="h-6 w-6" />} title="Chưa có phiếu nhập trong kỳ" />
             ) : (
-              <Box layoutClassName="space-y-2">
+              <Box layoutClassName="space-y-2.5">
                 {topSuppliers.map((s) => {
                   const pct = maxAmount > 0 ? Math.round((s.amount / maxAmount) * 100) : 0;
                   return (
-                    <Box key={s.name} layoutClassName="flex items-center gap-3">
-                      <Typography size="sm" layoutClassName="w-36 shrink-0 truncate sm:w-48" textClassName="text-slate-600 dark:text-slate-300">
-                        {s.name}
-                      </Typography>
-                      <Box layoutClassName="h-2.5 min-w-0 flex-1 overflow-hidden" roundedClassName="rounded-full" backgroundClassName="bg-slate-100 dark:bg-slate-700">
+                    <Box key={s.name} layoutClassName="space-y-1">
+                      <Box layoutClassName="flex items-center gap-2">
+                        <Typography size="sm" layoutClassName="min-w-0 flex-1 truncate" textClassName="text-slate-600 dark:text-slate-300">
+                          {s.name}
+                        </Typography>
+                        <Typography size="sm" layoutClassName="font-semibold tabular-nums">{formatVND(s.amount)}</Typography>
+                      </Box>
+                      <Box layoutClassName="h-2 w-full overflow-hidden" roundedClassName="rounded-full" backgroundClassName="bg-slate-100 dark:bg-slate-700">
                         <Box layoutClassName="h-full" roundedClassName="rounded-full" backgroundClassName="bg-primary-500" style={{ width: `${pct}%` }} />
                       </Box>
-                      <Typography size="sm" layoutClassName="w-28 shrink-0 text-right tabular-nums" textClassName="font-semibold">
-                        {formatVND(s.amount)}
-                      </Typography>
                     </Box>
                   );
                 })}
