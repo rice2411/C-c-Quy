@@ -201,7 +201,7 @@ const ExpensesPage: React.FC = () => {
 
   const tabItems = [
     { id: 'overview', label: 'Tổng quan' },
-    { id: 'manual', label: 'Thủ công' },
+    { id: 'manual', label: 'Chi phí vận hành' },
     { id: 'assets', label: 'Tài sản' },
   ];
 
