@@ -1,10 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, TrendingDown, DollarSign, Package, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { TrendingUp, DollarSign, Package, AlertCircle, CheckCircle2 } from 'lucide-react';
 import Box from '@/components/ui/Box';
-import Card from '@/components/ui/Card';
-import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
+import { MetricCard, MetricDelta } from '@/components/ui/stats';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatVND } from '@/utils/format/currencyUtil';
 interface DashboardMetricsProps {
@@ -41,148 +40,70 @@ const DashboardMetrics: React.FC<DashboardMetricsProps> = ({
   const { t } = useLanguage();
 
 
-  // Helper to generate trend text and bottom note
-  const getTrendInfo = (change: number) => {
-    const isPositive = change >= 0;
-    const Icon = isPositive ? TrendingUp : TrendingDown;
-    const colorClass = isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400';
-    
-    // Trend Text logic
-    let trendText = '';
-    if (isCurrentPeriod) {
-       trendText = timeRange === 'week' ? t('dashboard.fromLastWeek') : `vs prev ${timeRange}`;
-    } else {
-       trendText = `vs ${prevRangeLabel}`;
-    }
-
-    // Bottom Note logic
-    // If current: show detail comparison "Current vs Prev" to clarify "from last week"
-    // If past: show "Selected Week" as requested by user ("show the note iss selected week")
-    const bottomNote = isCurrentPeriod 
-      ? `${currentRangeLabel} vs ${prevRangeLabel}`
-      : currentRangeLabel;
-
-    return { Icon, colorClass, trendText, bottomNote, isPositive };
+  // Helper: dòng chú thích xu hướng + note dưới value
+  const getTrendInfo = () => {
+    const trendText = isCurrentPeriod
+      ? (timeRange === 'week' ? t('dashboard.fromLastWeek') : `vs prev ${timeRange}`)
+      : `vs ${prevRangeLabel}`;
+    const bottomNote = isCurrentPeriod ? `${currentRangeLabel} vs ${prevRangeLabel}` : currentRangeLabel;
+    return { trendText, bottomNote };
   };
 
-  const revenueInfo = getTrendInfo(metrics.revenueChange);
-  const completedInfo = getTrendInfo(metrics.completedChange);
+  const revenueInfo = getTrendInfo();
+  const completedInfo = getTrendInfo();
   const navigate = useNavigate();
+
+  const noteClass = 'text-[10px] font-medium tracking-wide text-slate-400 dark:text-slate-500';
+  const trendFooter = (change: number, info: { trendText: string; bottomNote: string }) => (
+    <>
+      <MetricDelta change={change} text={info.trendText} />
+      <Typography size="xs" layoutClassName="mt-1" textClassName={noteClass}>{info.bottomNote}</Typography>
+    </>
+  );
 
   return (
     <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {/* Total Revenue */}
-      <Card
+      <MetricCard
+        label={t('dashboard.totalRevenue')}
+        value={formatVND(metrics.revenue)}
+        icon={DollarSign}
+        iconWrapClassName="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
+        padding="lg"
         onClick={() => goToOrders(navigate, 'paid')}
-        layoutClassName="flex flex-col justify-between p-6 cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
-        stateClassName="transition-all"
-      >
-        <Box layoutClassName="flex items-start justify-between">
-          <Box>
-            <Typography size="sm" variant="muted" textClassName="font-medium">{t('dashboard.totalRevenue')}</Typography>
-            <Heading level={3} layoutClassName="mt-1" textClassName="text-2xl font-bold">{formatVND(metrics.revenue)}</Heading>
-          </Box>
-          <Box
-            layoutClassName="p-2"
-            roundedClassName="rounded-lg"
-            backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20"
-            textClassName="text-emerald-600 dark:text-emerald-400"
-          >
-            <DollarSign size={20} />
-          </Box>
-        </Box>
-        <Box layoutClassName={`mt-4 flex items-center text-sm ${revenueInfo.colorClass}`}>
-          <revenueInfo.Icon size={16} className="mr-1" />
-          <Typography as="span" textClassName={revenueInfo.colorClass}>
-            {revenueInfo.isPositive ? '+' : ''}{metrics.revenueChange.toFixed(1)}% {revenueInfo.trendText}
-          </Typography>
-        </Box>
-        <Typography size="xs" layoutClassName="mt-1" textClassName="text-[10px] font-medium tracking-wide text-slate-400 dark:text-slate-500">
-          {revenueInfo.bottomNote}
-        </Typography>
-      </Card>
-
-      {/* Total Orders */}
-      <Card
+        footer={trendFooter(metrics.revenueChange, revenueInfo)}
+      />
+      <MetricCard
+        label={t('dashboard.totalOrders')}
+        value={totalOrders}
+        icon={Package}
+        iconWrapClassName="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+        padding="lg"
         onClick={() => goToOrders(navigate)}
-        layoutClassName="flex flex-col justify-between p-6 cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
-        stateClassName="transition-all"
-      >
-        <Box layoutClassName="flex items-start justify-between">
-          <Box>
-            <Typography size="sm" variant="muted" textClassName="font-medium">{t('dashboard.totalOrders')}</Typography>
-            <Heading level={3} layoutClassName="mt-1" textClassName="text-2xl font-bold">{totalOrders}</Heading>
+        footer={(
+          <Box layoutClassName="flex items-center gap-1" textClassName="text-blue-600 dark:text-blue-400">
+            <TrendingUp size={16} />
+            <Typography as="span" size="sm" textClassName="text-blue-600 dark:text-blue-400">+{newOrdersToday} {t('dashboard.newToday')}</Typography>
           </Box>
-          <Box
-            layoutClassName="p-2"
-            roundedClassName="rounded-lg"
-            backgroundClassName="bg-blue-50 dark:bg-blue-900/20"
-            textClassName="text-blue-600 dark:text-blue-400"
-          >
-            <Package size={20} />
-          </Box>
-        </Box>
-         <Box layoutClassName="mt-4 flex items-center text-sm text-blue-600 dark:text-blue-400">
-          <TrendingUp size={16} className="mr-1" />
-          <Typography as="span" textClassName="text-blue-600 dark:text-blue-400">+{newOrdersToday} {t('dashboard.newToday')}</Typography>
-        </Box>
-      </Card>
-
-      {/* Pending Orders */}
-      <Card
+        )}
+      />
+      <MetricCard
+        label={t('dashboard.pending')}
+        value={pendingOrders}
+        icon={AlertCircle}
+        iconWrapClassName="bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400"
+        padding="lg"
         onClick={() => goToOrders(navigate, 'pending')}
-        layoutClassName="flex flex-col justify-between p-6 cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
-        stateClassName="transition-all"
-      >
-        <Box layoutClassName="flex items-start justify-between">
-          <Box>
-            <Typography size="sm" variant="muted" textClassName="font-medium">{t('dashboard.pending')}</Typography>
-            <Heading level={3} layoutClassName="mt-1" textClassName="text-2xl font-bold">{pendingOrders}</Heading>
-          </Box>
-          <Box
-            layoutClassName="p-2"
-            roundedClassName="rounded-lg"
-            backgroundClassName="bg-yellow-50 dark:bg-yellow-900/20"
-            textClassName="text-yellow-600 dark:text-yellow-400"
-          >
-            <AlertCircle size={20} />
-          </Box>
-        </Box>
-         <Box layoutClassName="mt-4 flex items-center text-sm text-slate-500 dark:text-slate-400">
-          <Typography as="span" variant="muted">{t('dashboard.requiresAttention')}</Typography>
-        </Box>
-      </Card>
-
-      {/* Đơn hoàn tất (PAID + DELIVERED) trong kỳ */}
-      <Card
+        footer={<Typography as="span" size="sm" variant="muted">{t('dashboard.requiresAttention')}</Typography>}
+      />
+      <MetricCard
+        label="Đơn hoàn tất"
+        value={metrics.completedCount}
+        icon={CheckCircle2}
+        iconWrapClassName="bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-400"
+        padding="lg"
         onClick={() => goToOrders(navigate, 'delivered')}
-        layoutClassName="flex flex-col justify-between p-6 cursor-pointer hover:-translate-y-0.5 hover:shadow-md"
-        stateClassName="transition-all"
-      >
-        <Box layoutClassName="flex items-start justify-between">
-          <Box>
-            <Typography size="sm" variant="muted" textClassName="font-medium">Đơn hoàn tất</Typography>
-            <Heading level={3} layoutClassName="mt-1" textClassName="text-2xl font-bold">{metrics.completedCount}</Heading>
-          </Box>
-          <Box
-            layoutClassName="p-2"
-            roundedClassName="rounded-lg"
-            backgroundClassName="bg-violet-50 dark:bg-violet-900/20"
-            textClassName="text-violet-600 dark:text-violet-400"
-          >
-            <CheckCircle2 size={20} />
-          </Box>
-        </Box>
-        <Box layoutClassName={`mt-4 flex items-center text-sm ${completedInfo.colorClass}`}>
-          <completedInfo.Icon size={16} className="mr-1" />
-          <Typography as="span" textClassName={completedInfo.colorClass}>
-            {completedInfo.isPositive ? '+' : ''}{metrics.completedChange.toFixed(1)}% {completedInfo.trendText}
-          </Typography>
-        </Box>
-        <Typography size="xs" layoutClassName="mt-1" textClassName="text-[10px] font-medium tracking-wide text-slate-400 dark:text-slate-500">
-          {completedInfo.bottomNote}
-        </Typography>
-      </Card>
+        footer={trendFooter(metrics.completedChange, completedInfo)}
+      />
     </Box>
   );
 };

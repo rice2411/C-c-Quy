@@ -6,6 +6,7 @@ import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
+import { RankedList } from '@/components/ui/stats';
 import { useCommissionSummaries } from '@/hooks/queries/useCommissionQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { parseDateValue } from '@/utils/format/dateUtil';
@@ -55,18 +56,16 @@ const DashboardTopCollaborators: React.FC<Props> = ({ startDate, endDate, limit 
       ) : top.length === 0 ? (
         <EmptyState icon={<Award className="h-6 w-6" />} title="Chưa có CTV bán trong kỳ." layoutClassName="flex-1" />
       ) : (
-        <Box layoutClassName="divide-y divide-slate-50 dark:divide-slate-700/50">
-          {top.map((c, i) => (
-            <Box key={c.name + i} layoutClassName="flex items-center gap-3 px-5 py-3">
-              <Box layoutClassName={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-slate-800 ${RANK[i] ?? 'bg-slate-200'}`}>{i + 1}</Box>
-              <Box layoutClassName="min-w-0 flex-1">
-                <Typography as="p" size="sm" layoutClassName="truncate font-medium" textClassName="text-slate-800 dark:text-slate-100">{c.name}</Typography>
-                <Typography as="p" size="xs" variant="muted">{c.orderCount} đơn · doanh số {formatVND(c.sales)}</Typography>
-              </Box>
-              <Typography as="span" size="sm" layoutClassName="shrink-0 font-semibold" textClassName="text-emerald-600 dark:text-emerald-400">{formatVND(c.commission)}</Typography>
-            </Box>
-          ))}
-        </Box>
+        <RankedList
+          variant="divided"
+          items={top.map((c, i) => ({
+            key: c.name + i,
+            rankClassName: `${RANK[i] ?? 'bg-slate-200'} text-slate-800`,
+            primary: <Typography as="p" size="sm" layoutClassName="truncate font-medium" textClassName="text-slate-800 dark:text-slate-100">{c.name}</Typography>,
+            secondary: <Typography as="p" size="xs" variant="muted">{c.orderCount} đơn · doanh số {formatVND(c.sales)}</Typography>,
+            trailing: <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-emerald-600 dark:text-emerald-400">{formatVND(c.commission)}</Typography>,
+          }))}
+        />
       )}
     </Card>
   );

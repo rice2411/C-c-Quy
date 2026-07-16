@@ -10,6 +10,7 @@ import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import EmptyState from '@/components/ui/EmptyState';
 import Typography from '@/components/ui/Typography';
+import { MetricCard } from '@/components/ui/stats';
 import FilterPill from '@/components/shared/FilterPill';
 import { CommissionBadge } from '../Commission/components/commissionUi';
 
@@ -25,14 +26,7 @@ const monthKeyOf = (dateStr?: string): string | null => {
 const SummaryCard: React.FC<{ label: string; value: string; valueClassName?: string }> = ({
   label, value, valueClassName,
 }) => (
-  <Card padding="md" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
-    <Typography size="xs" variant="muted" layoutClassName="mb-1 font-medium uppercase tracking-wide">
-      {label}
-    </Typography>
-    <Typography as="p" layoutClassName="text-lg font-bold" textClassName={valueClassName ?? 'text-slate-900 dark:text-white'}>
-      {value}
-    </Typography>
-  </Card>
+  <MetricCard label={label} value={value} valueClassName={valueClassName} valueSize="lg" labelUppercase />
 );
 
 const MyCommissionPage: React.FC = () => {

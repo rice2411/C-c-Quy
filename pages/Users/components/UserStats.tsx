@@ -1,9 +1,7 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Box from '@/components/ui/Box';
-import Card from '@/components/ui/Card';
-import Heading from '@/components/ui/Heading';
-import Typography from '@/components/ui/Typography';
+import { MetricCard } from '@/components/ui/stats';
 
 interface UserStatsProps {
   total: number;
@@ -24,23 +22,7 @@ const UserStats: React.FC<UserStatsProps> = ({ total, pending, active, inactive 
   return (
     <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-4">
       {stats.map((item) => (
-        <Card
-          key={item.label}
-          layoutClassName="p-4"
-          backgroundClassName="bg-white dark:bg-slate-800"
-          borderClassName="border-slate-100 dark:border-slate-700"
-        >
-          <Typography size="sm" layoutClassName="font-medium" textClassName="text-slate-500 dark:text-slate-400">
-            {item.label}
-          </Typography>
-          <Heading
-            level={3}
-            layoutClassName="mt-1 text-2xl"
-            textClassName={item.valueClassName}
-          >
-            {item.value}
-          </Heading>
-        </Card>
+        <MetricCard key={item.label} label={item.label} value={item.value} valueClassName={item.valueClassName} padding="sm" />
       ))}
     </Box>
   );

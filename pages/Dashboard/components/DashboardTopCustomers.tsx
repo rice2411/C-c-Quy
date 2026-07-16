@@ -5,6 +5,7 @@ import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
+import { RankedList } from '@/components/ui/stats';
 import { Order, OrderStatus, PaymentStatus } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { getOrderRevenueDate, getOrderTotal } from '@/utils/order/orderUtils';
@@ -78,56 +79,27 @@ const DashboardTopCustomers: React.FC<DashboardTopCustomersProps> = ({
         {topCustomers.length === 0 ? (
           <EmptyState icon={<Users className="h-6 w-6" />} title="Chưa có dữ liệu trong khoảng này" />
         ) : (
-          <Box layoutClassName="space-y-1.5">
-            {topCustomers.map((c, idx) => (
-              <Box
-                key={c.phone + idx}
-                layoutClassName="flex items-center gap-3 rounded-lg border border-slate-100 px-3 py-2 dark:border-slate-700"
-              >
-                <Box
-                  layoutClassName="inline-flex h-7 w-7 shrink-0 items-center justify-center text-xs font-bold"
-                  roundedClassName="rounded-full"
-                  backgroundClassName="bg-violet-100 dark:bg-violet-900/40"
-                  textClassName="text-violet-700 dark:text-violet-200"
-                >
-                  {idx + 1}
+          <RankedList
+            variant="bordered"
+            items={topCustomers.map((c, idx) => ({
+              key: c.phone + idx,
+              rankClassName: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-200',
+              primary: (
+                <Box layoutClassName="flex items-center gap-1.5">
+                  <UserIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  <Typography as="span" size="sm" layoutClassName="truncate font-semibold text-slate-900 dark:text-white" title={c.name}>{c.name}</Typography>
                 </Box>
-                <Box layoutClassName="flex min-w-0 flex-1 flex-col">
-                  <Box layoutClassName="flex items-center gap-1.5">
-                    <UserIcon className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                    <Typography
-                      as="span"
-                      size="sm"
-                      layoutClassName="truncate font-semibold text-slate-900 dark:text-white"
-                      title={c.name}
-                    >
-                      {c.name}
-                    </Typography>
-                  </Box>
-                  {c.phone ? (
-                    <Box layoutClassName="flex items-center gap-1.5">
-                      <Phone className="h-3 w-3 shrink-0 text-slate-400" />
-                      <Typography as="span" size="xs" variant="muted" layoutClassName="font-mono">
-                        {c.phone}
-                      </Typography>
-                    </Box>
-                  ) : null}
+              ),
+              secondary: c.phone ? (
+                <Box layoutClassName="flex items-center gap-1.5">
+                  <Phone className="h-3 w-3 shrink-0 text-slate-400" />
+                  <Typography as="span" size="xs" variant="muted" layoutClassName="font-mono">{c.phone}</Typography>
                 </Box>
-                <Box layoutClassName="flex shrink-0 flex-col items-end text-right">
-                  <Typography
-                    as="span"
-                    size="sm"
-                    textClassName="font-bold text-violet-600 dark:text-violet-400"
-                  >
-                    {formatVND(c.totalSpent)}
-                  </Typography>
-                  <Typography as="span" size="xs" variant="muted">
-                    {c.orderCount} đơn
-                  </Typography>
-                </Box>
-              </Box>
-            ))}
-          </Box>
+              ) : undefined,
+              trailing: <Typography as="span" size="sm" textClassName="font-bold text-violet-600 dark:text-violet-400">{formatVND(c.totalSpent)}</Typography>,
+              trailingSub: <Typography as="span" size="xs" variant="muted">{c.orderCount} đơn</Typography>,
+            }))}
+          />
         )}
       </Box>
     </Card>
