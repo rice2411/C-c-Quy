@@ -1,8 +1,4 @@
 import React from 'react';
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell,
-} from 'recharts';
 import { TrendingUp, Wallet, Percent, PieChart as PieIcon } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
@@ -10,7 +6,7 @@ import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
-import DonutTooltip from '@/pages/Dashboard/components/DonutTooltip';
+import { TrendChart, DonutChart, ChartLegend } from '@/components/ui/stats';
 import { useRevenueReport } from '@/hooks/queries/useTransactionsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 
@@ -67,58 +63,45 @@ const DashboardProfit: React.FC<Props> = ({ fromISO, toISO, isDarkMode }) => {
             {/* Biểu đồ doanh thu + lợi nhuận */}
             <Box layoutClassName="lg:col-span-2">
               <Typography as="p" size="xs" variant="muted" layoutClassName="mb-2">Doanh thu vs Lợi nhuận theo thời gian</Typography>
-              <Box layoutClassName="h-56 w-full">
-                {report.series.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={report.series} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="cRev" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#4abab9" stopOpacity={0.15} /><stop offset="95%" stopColor="#4abab9" stopOpacity={0} /></linearGradient>
-                        <linearGradient id="cProfit" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.18} /><stop offset="95%" stopColor="#10b981" stopOpacity={0} /></linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#334155' : '#f1f5f9'} />
-                      <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: isDarkMode ? '#94a3b8' : '#64748b', fontSize: 11 }} dy={8} minTickGap={24} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: isDarkMode ? '#94a3b8' : '#64748b', fontSize: 11 }} tickFormatter={(v) => new Intl.NumberFormat('vi-VN', { notation: 'compact' }).format(v)} />
-                      <Tooltip
-                        formatter={(value: number, name: string) => [formatVND(value), name === 'revenue' ? 'Doanh thu' : 'Lợi nhuận']}
-                        contentStyle={{ backgroundColor: isDarkMode ? '#1e293b' : '#fff', borderRadius: 8, border: isDarkMode ? '1px solid #334155' : '1px solid #e2e8f0', color: isDarkMode ? '#f8fafc' : '#0f172a' }}
-                      />
-                      <Area type="monotone" dataKey="revenue" stroke="#4abab9" strokeWidth={2} fill="url(#cRev)" />
-                      <Area type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2} fill="url(#cProfit)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : (
+              {report.series.length > 0 ? (
+                <TrendChart
+                  data={report.series}
+                  xKey="label"
+                  series={[
+                    { key: 'revenue', label: 'Doanh thu', color: '#4abab9' },
+                    { key: 'profit', label: 'Lợi nhuận', color: '#10b981' },
+                  ]}
+                  type="area"
+                  isDarkMode={isDarkMode}
+                  formatValue={formatVND}
+                  heightClassName="h-56"
+                />
+              ) : (
+                <Box layoutClassName="h-56 w-full">
                   <EmptyState icon={<TrendingUp className="h-6 w-6" />} title="Không có dữ liệu kỳ này" layoutClassName="!min-h-0" />
-                )}
-              </Box>
+                </Box>
+              )}
             </Box>
 
             {/* Donut cơ cấu chi phí */}
             <Box>
               <Box layoutClassName="mb-2 flex items-center gap-1.5"><PieIcon className="h-3.5 w-3.5 text-slate-400" /><Typography as="span" size="xs" variant="muted">Cơ cấu chi phí ({formatVND(report.totalCosts)})</Typography></Box>
-              <Box layoutClassName="h-44 w-full">
-                {costData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={costData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={40} outerRadius={64} paddingAngle={2}>
-                        {costData.map((d) => <Cell key={d.name} fill={d.color} />)}
-                      </Pie>
-                      <Tooltip content={<DonutTooltip isDarkMode={isDarkMode} formatValue={formatVND} />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
+              {costData.length > 0 ? (
+                <DonutChart
+                  data={costData.map((d) => ({ label: d.name, value: d.value, color: d.color }))}
+                  formatValue={formatVND}
+                  isDarkMode={isDarkMode}
+                  innerRadius={40}
+                  outerRadius={64}
+                  containerClassName="h-44 w-full"
+                />
+              ) : (
+                <Box layoutClassName="h-44 w-full">
                   <EmptyState icon={<Wallet className="h-6 w-6" />} title="Chưa có chi phí" layoutClassName="!min-h-0" />
-                )}
-              </Box>
-              <Box layoutClassName="mt-1 space-y-0.5">
-                {costData.map((d) => (
-                  <Box key={d.name} layoutClassName="flex items-center justify-between">
-                    <Box layoutClassName="flex items-center gap-1.5">
-                      <Box layoutClassName="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                      <Typography as="span" size="xs" variant="muted">{d.name}</Typography>
-                    </Box>
-                    <Typography as="span" size="xs" textClassName="text-slate-700 dark:text-slate-300">{formatVND(d.value)}</Typography>
-                  </Box>
-                ))}
+                </Box>
+              )}
+              <Box layoutClassName="mt-1">
+                <ChartLegend items={costData.map((d) => ({ label: d.name, color: d.color, value: formatVND(d.value) }))} />
               </Box>
             </Box>
           </Box>

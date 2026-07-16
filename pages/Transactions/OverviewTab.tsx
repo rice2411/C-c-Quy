@@ -4,21 +4,17 @@ import {
   BadgeDollarSign, TicketPercent, Building2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import {
-  ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
-  PieChart, Pie, Cell,
-} from 'recharts';
 import { useRevenueReport, useTransactions } from '@/hooks/queries/useTransactionsQuery';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatVND } from '@/utils/format/currencyUtil';
+import { formatPercent } from '@/utils/format/numberUtil';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
 import StatsBanner from '@/components/ui/StatsBanner';
+import { TrendChart, DonutChart, ChartLegend } from '@/components/ui/stats';
 import BankStatsCard from '@/pages/Transactions/components/BankStatsCard';
-
-const pctText = (v: number) => `${(v * 100).toFixed(1)}%`;
 
 const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, toDate }) => {
   const { t } = useLanguage();
@@ -62,7 +58,7 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
               {formatVND(report.profit)}
             </Typography>
             <Typography as="p" size="xs" variant="muted" layoutClassName="mt-1">
-              Biên lợi nhuận {pctText(report.margin)} · {report.orderCount} đơn · Tổng thu {formatVND(report.totalRevenue)}
+              Biên lợi nhuận {formatPercent(report.margin)} · {report.orderCount} đơn · Tổng thu {formatVND(report.totalRevenue)}
             </Typography>
           </Box>
           <Box layoutClassName="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30">
@@ -101,18 +97,17 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
             <LineIcon className="h-4 w-4 text-primary-500" />
             <Typography size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">Doanh thu &amp; Lợi nhuận theo thời gian</Typography>
           </Box>
-          <Box layoutClassName="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={report.series} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} width={48} tickFormatter={(v) => `${Math.round(Number(v) / 1000)}k`} />
-                <Tooltip formatter={(value: number | string, name) => [formatVND(Number(value)), name === 'revenue' ? 'Doanh thu' : 'Lợi nhuận']} labelStyle={{ fontSize: 12 }} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Line type="monotone" dataKey="revenue" stroke="#16a34a" strokeWidth={2} dot={false} name="revenue" />
-                <Line type="monotone" dataKey="profit" stroke="#4abab9" strokeWidth={2} dot={false} name="profit" />
-              </LineChart>
-            </ResponsiveContainer>
-          </Box>
+          <TrendChart
+            data={report.series}
+            xKey="label"
+            series={[
+              { key: 'revenue', label: 'Doanh thu', color: '#16a34a' },
+              { key: 'profit', label: 'Lợi nhuận', color: '#4abab9' },
+            ]}
+            type="line"
+            formatValue={formatVND}
+            heightClassName="h-64"
+          />
         </Card>
 
         {/* Pie: tỷ trọng chi phí */}
@@ -126,27 +121,18 @@ const OverviewTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate,
               <Typography size="xs" variant="muted">Chưa có chi phí trong kỳ</Typography>
             </Box>
           ) : (
-            <Box layoutClassName="h-64 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={80} paddingAngle={2}>
-                    {pieData.map((d, i) => <Cell key={i} fill={d.color} />)}
-                  </Pie>
-                  <Tooltip formatter={(value: number | string) => formatVND(Number(value))} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </Box>
-          )}
-          {pieData.length > 0 && (
-            <Box layoutClassName="mt-2 space-y-1">
-              {pieData.map((d, i) => (
-                <Box key={i} layoutClassName="flex items-center gap-2 text-xs">
-                  <Box layoutClassName="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                  <Typography as="span" size="xs" variant="muted" layoutClassName="flex-1">{d.name}</Typography>
-                  <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{formatVND(d.value)}</Typography>
-                </Box>
-              ))}
-            </Box>
+            <>
+              <DonutChart
+                data={pieData.map((d) => ({ label: d.name, value: d.value, color: d.color }))}
+                formatValue={formatVND}
+                innerRadius={45}
+                outerRadius={80}
+                containerClassName="h-64 w-full"
+              />
+              <Box layoutClassName="mt-2">
+                <ChartLegend items={pieData.map((d) => ({ label: d.name, color: d.color, value: formatVND(d.value) }))} />
+              </Box>
+            </>
           )}
         </Card>
       </Box>
