@@ -34,6 +34,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   fromDate, toDate, preset, onApplyPreset, onFromChange, onToChange,
 }) => {
   const [open, setOpen] = useState(false);
+  // Canh dropdown: nút ở sát mép phải màn → mở xổ sang TRÁI (right-0) cho khỏi tràn/đè.
+  const [alignRight, setAlignRight] = useState(false);
   const [draftFrom, setDraftFrom] = useState(fromDate);
   const [draftTo, setDraftTo] = useState(toDate);
   const [draftPreset, setDraftPreset] = useState<DatePreset>(preset);
@@ -67,8 +69,15 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     };
   }, [open]);
 
+  // Rộng ~ dropdown desktop (preset + lịch); dùng để quyết canh trái/phải.
+  const DROPDOWN_WIDTH = 480;
+
   const toggleOpen = () => {
-    if (!open) syncFromProps();
+    if (!open) {
+      syncFromProps();
+      const rect = wrapperRef.current?.getBoundingClientRect();
+      if (rect) setAlignRight(window.innerWidth - rect.left < DROPDOWN_WIDTH + 16);
+    }
     setOpen((v) => !v);
   };
 
@@ -147,7 +156,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
       {open ? (
         <Box
-          layoutClassName="absolute left-0 top-full z-30 mt-2 flex w-[19rem] max-w-[calc(100vw-2rem)] flex-col gap-3 rounded-xl border p-3 shadow-lg sm:w-auto sm:flex-row"
+          layoutClassName={`absolute top-full z-30 mt-2 flex w-[19rem] max-w-[calc(100vw-2rem)] flex-col gap-4 rounded-xl border p-3 shadow-lg sm:w-auto sm:min-w-[30rem] sm:flex-row ${alignRight ? 'right-0' : 'left-0'}`}
           borderClassName="border-slate-200 dark:border-slate-700"
           backgroundClassName="bg-white dark:bg-slate-800">
           {/* Cột preset nhanh */}
