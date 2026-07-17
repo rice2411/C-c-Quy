@@ -222,7 +222,7 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
       ) : null}
 
       {/* ===== Desktop: bảng dày · Mobile: card ===== */}
-      <Box layoutClassName="max-h-[640px] overflow-auto p-1">
+      <Box layoutClassName="max-h-[640px] overflow-auto px-1 pb-1">
           {sortedMaterials.length === 0 ? (
             <EmptyState
               icon={<Package className="h-6 w-6" />}
@@ -306,13 +306,13 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableHeaderCell layoutClassName="w-8 p-2"> </TableHeaderCell>
-                    <TableHeaderCell layoutClassName="p-2 text-left">Tên NVL</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="p-2 text-right">Đơn giá gần nhất</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="p-2 text-right">Đã nhập</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="p-2 text-right">Số lần</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="p-2 text-left">NCC gần nhất</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="p-2 text-left">Nhập lần cuối</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="sticky top-0 z-20 w-8 p-2 bg-white dark:bg-slate-800"> </TableHeaderCell>
+                    <TableHeaderCell layoutClassName="sticky top-0 z-20 p-2 text-left bg-white dark:bg-slate-800">Tên NVL</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="sticky top-0 z-20 p-2 text-right bg-white dark:bg-slate-800">Đơn giá gần nhất</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="sticky top-0 z-20 p-2 text-right bg-white dark:bg-slate-800">Đã nhập</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="sticky top-0 z-20 p-2 text-right bg-white dark:bg-slate-800">Số lần</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="sticky top-0 z-20 p-2 text-left bg-white dark:bg-slate-800">NCC gần nhất</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="sticky top-0 z-20 p-2 text-left bg-white dark:bg-slate-800">Nhập lần cuối</TableHeaderCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
