@@ -4,6 +4,7 @@ import {
   ShoppingCart,
   Boxes,
   FileText,
+  Truck,
   Package,
   Users,
   Settings,
@@ -148,6 +149,13 @@ export const routes: RouteConfig[] = [
     labelKey: "nav.customers",
     icon: Users,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR],
+  },
+  {
+    type: "page",
+    path: "/suppliers",
+    labelKey: "nav.suppliers",
+    icon: Truck,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
     type: "page",

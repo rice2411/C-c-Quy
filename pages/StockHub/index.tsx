@@ -8,11 +8,10 @@ import OverviewTab from '@/pages/StockHub/OverviewTab';
 
 // Lazy để mỗi tab là 1 chunk riêng — không kéo OCR pipeline (Phiếu nhập) vào tab NCC/NVL.
 const StockReceiptsPage = lazy(() => import('@/pages/StockReceipts/index'));
-const SuppliersPage = lazy(() => import('@/pages/Suppliers/index'));
 const MaterialsPage = lazy(() => import('@/pages/Materials/index'));
 
-type StockTab = 'overview' | 'receipts' | 'suppliers' | 'materials';
-const VALID_TABS: StockTab[] = ['overview', 'receipts', 'suppliers', 'materials'];
+type StockTab = 'overview' | 'receipts' | 'materials';
+const VALID_TABS: StockTab[] = ['overview', 'receipts', 'materials'];
 
 /**
  * Nhập kho — gộp 3 phần cùng luồng nhập hàng thành 1 trang 3 tab:
@@ -34,7 +33,6 @@ const StockHubPage: React.FC = () => {
   const tabItems = [
     { id: 'overview', label: t('nav.stockOverview') },
     { id: 'receipts', label: t('nav.stockReceipts') },
-    { id: 'suppliers', label: t('nav.suppliers') },
     { id: 'materials', label: t('nav.materials') },
   ];
 
@@ -51,7 +49,6 @@ const StockHubPage: React.FC = () => {
         >
           {tab === 'overview' && <OverviewTab />}
           {tab === 'receipts' && <StockReceiptsPage />}
-          {tab === 'suppliers' && <SuppliersPage />}
           {tab === 'materials' && <MaterialsPage />}
         </Suspense>
       </Box>
