@@ -17,7 +17,11 @@ const CommissionGuidePage = lazy(() => import("./pages/Commission/GuidePage"));
 const MyCommissionPage = lazy(() => import("./pages/MyCommission/index"));
 const InventoryPage = lazy(() => import("./pages/Storage/index"));
 const ProductDetailPage = lazy(() => import("./pages/Storage/product/ProductDetailPage"));
-const CostHubPage = lazy(() => import("./pages/CostHub/index"));
+const CostOverviewPage = lazy(() => import("./pages/CostHub/OverviewTab"));
+const CostReceiptsPage = lazy(() => import("./pages/StockReceipts/index"));
+const CostMaterialsPage = lazy(() => import("./pages/Materials/index"));
+const CostAssetsPage = lazy(() => import("./pages/CostHub/AssetsTab"));
+const CostOpexPage = lazy(() => import("./pages/CostHub/OpexTab"));
 const SuppliersPage = lazy(() => import("./pages/Suppliers/index"));
 const CustomersPage = lazy(() => import("./pages/Customers/index"));
 const UsersPage = lazy(() => import("./pages/Users/index"));
@@ -162,15 +166,13 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      {/* Chi phí vận hành: 1 trang gom Tổng quan · Phiếu nhập · NVL · Tài sản · Vận hành. */}
-      <Route
-        path="expenses"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses")?.roles}>
-            <CostHubPage />
-          </RoleBasedRoute>
-        }
-      />
+      {/* Chi phí vận hành: 5 screen con (Tổng quan · Phiếu nhập · NVL · Tài sản · Vận hành). */}
+      <Route path="expenses" element={<Navigate to="/expenses/overview" replace />} />
+      <Route path="expenses/overview" element={<RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses/overview")?.roles}><CostOverviewPage /></RoleBasedRoute>} />
+      <Route path="expenses/receipts" element={<RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses/receipts")?.roles}><CostReceiptsPage /></RoleBasedRoute>} />
+      <Route path="expenses/materials" element={<RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses/materials")?.roles}><CostMaterialsPage /></RoleBasedRoute>} />
+      <Route path="expenses/assets" element={<RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses/assets")?.roles}><CostAssetsPage /></RoleBasedRoute>} />
+      <Route path="expenses/opex" element={<RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses/opex")?.roles}><CostOpexPage /></RoleBasedRoute>} />
       {/* NCC = page riêng. */}
       <Route
         path="suppliers"
@@ -180,10 +182,10 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      {/* Link cũ → tab tương ứng trong Chi phí vận hành. */}
-      <Route path="stock-receipts" element={<Navigate to="/expenses?tab=receipts" replace />} />
-      <Route path="materials" element={<Navigate to="/expenses?tab=materials" replace />} />
-      <Route path="bill-import" element={<Navigate to="/expenses?tab=receipts" replace />} />
+      {/* Link cũ → screen con tương ứng. */}
+      <Route path="stock-receipts" element={<Navigate to="/expenses/receipts" replace />} />
+      <Route path="materials" element={<Navigate to="/expenses/materials" replace />} />
+      <Route path="bill-import" element={<Navigate to="/expenses/receipts" replace />} />
       <Route
         path="customers"
         element={
