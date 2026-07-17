@@ -7,6 +7,8 @@ export interface Asset {
   category?: string | null;
   note?: string | null;
   createdAt?: string;
+  /** Nguồn: 'manual' (nhập tay) | 'receipt' (từ phiếu nhập). */
+  source?: 'manual' | 'receipt';
 }
 
 export type AssetCategory = 'equipment' | 'furniture' | 'renovation' | 'other';

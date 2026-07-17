@@ -17,9 +17,8 @@ const CommissionGuidePage = lazy(() => import("./pages/Commission/GuidePage"));
 const MyCommissionPage = lazy(() => import("./pages/MyCommission/index"));
 const InventoryPage = lazy(() => import("./pages/Storage/index"));
 const ProductDetailPage = lazy(() => import("./pages/Storage/product/ProductDetailPage"));
-const StockHubPage = lazy(() => import("./pages/StockHub/index"));
+const CostHubPage = lazy(() => import("./pages/CostHub/index"));
 const SuppliersPage = lazy(() => import("./pages/Suppliers/index"));
-const ExpensesPage = lazy(() => import("./pages/Expenses/index"));
 const CustomersPage = lazy(() => import("./pages/Customers/index"));
 const UsersPage = lazy(() => import("./pages/Users/index"));
 const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
@@ -163,23 +162,16 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      <Route
-        path="stock-receipts"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/stock-receipts")?.roles}>
-            <StockHubPage />
-          </RoleBasedRoute>
-        }
-      />
+      {/* Chi phí vận hành: 1 trang gom Tổng quan · Phiếu nhập · NVL · Tài sản · Vận hành. */}
       <Route
         path="expenses"
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses")?.roles}>
-            <ExpensesPage />
+            <CostHubPage />
           </RoleBasedRoute>
         }
       />
-      {/* NCC + NVL giờ là tab trong Nhập kho — giữ link cũ redirect sang tab tương ứng. */}
+      {/* NCC = page riêng. */}
       <Route
         path="suppliers"
         element={
@@ -188,9 +180,10 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      <Route path="materials" element={<Navigate to="/stock-receipts?tab=materials" replace />} />
-      {/* Back-compat redirect path cũ */}
-      <Route path="bill-import" element={<Navigate to="/stock-receipts" replace />} />
+      {/* Link cũ → tab tương ứng trong Chi phí vận hành. */}
+      <Route path="stock-receipts" element={<Navigate to="/expenses?tab=receipts" replace />} />
+      <Route path="materials" element={<Navigate to="/expenses?tab=materials" replace />} />
+      <Route path="bill-import" element={<Navigate to="/expenses?tab=receipts" replace />} />
       <Route
         path="customers"
         element={

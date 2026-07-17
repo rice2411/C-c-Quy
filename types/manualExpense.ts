@@ -7,4 +7,6 @@ export interface ManualExpense {
   spreadMonths: number; // số tháng phân bổ (1 = ghi 1 lần)
   note?: string | null;
   createdAt?: string;
+  /** Nguồn: 'manual' (nhập tay) | 'receipt' (từ phiếu nhập). */
+  source?: 'manual' | 'receipt';
 }

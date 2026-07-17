@@ -131,13 +131,6 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/stock-receipts",
-    labelKey: "nav.stockHub",
-    icon: FileText,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  },
-  {
-    type: "page",
     path: "/expenses",
     labelKey: "nav.expenses",
     icon: Building2,
@@ -347,15 +340,6 @@ export const navGroups: NavGroupConfig[] = [
       "/commission-settings",
       "/my-commission",
       "/commission-guide",
-    ],
-  },
-  {
-    key: "cost",
-    labelKey: "nav.costGroup",
-    icon: Building2,
-    childPaths: [
-      "/expenses",
-      "/stock-receipts",
     ],
   },
   {
