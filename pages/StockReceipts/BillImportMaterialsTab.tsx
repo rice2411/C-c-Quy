@@ -11,8 +11,11 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import DatePicker from '@/components/ui/DatePicker';
 import Typography from '@/components/ui/Typography';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
+import { useImportedSuppliers } from '@/hooks/queries/useStockReceiptQuery';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import { formatDateISO, parseDateValue } from '@/utils/format/dateUtil';
@@ -21,8 +24,8 @@ import EmptyState from '@/components/ui/EmptyState';
 
 import Checkbox from '@/components/ui/Checkbox';
 
-type MaterialForm = { name: string; unit: string; lastUnitPrice: string };
-const EMPTY_MATERIAL: MaterialForm = { name: '', unit: '', lastUnitPrice: '' };
+type MaterialForm = { name: string; unit: string; lastUnitPrice: string; supplierId: string; receiptDate: string };
+const EMPTY_MATERIAL: MaterialForm = { name: '', unit: '', lastUnitPrice: '', supplierId: '', receiptDate: '' };
 
 /** Mức độ "tươi mới" theo lần nhập cuối → màu xanh/vàng/đỏ. */
 const materialRecencyTier = (
@@ -90,6 +93,7 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState<MaterialForm>(EMPTY_MATERIAL);
   const [saving, setSaving] = useState(false);
+  const { suppliers } = useImportedSuppliers();
 
   // Apply period filter first, then sort
   const periodFiltered = useMemo(
@@ -131,12 +135,16 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
       return;
     }
     const price = form.lastUnitPrice.trim() ? Number(form.lastUnitPrice) : null;
+    const supplier = suppliers.find((s) => s.id === form.supplierId);
     setSaving(true);
     try {
       await createMaterial({
         name: form.name.trim(),
         unit: form.unit.trim() || null,
         lastUnitPrice: price != null && !Number.isNaN(price) ? price : null,
+        lastSupplierId: supplier?.id ?? null,
+        lastSupplierName: supplier?.name ?? null,
+        lastReceiptDate: form.receiptDate || null,
       });
       toast.success('Đã thêm nguyên vật liệu');
       setForm(EMPTY_MATERIAL);
@@ -421,6 +429,11 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
           <Input value={form.name} placeholder="Tên NVL (vd Bột mì)" onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} fullWidth />
           <Input value={form.unit} placeholder="Đơn vị (vd kg, cái) — tuỳ chọn" onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))} fullWidth />
           <Input type="number" min={0} value={form.lastUnitPrice} placeholder="Đơn giá tham khảo (VND) — tuỳ chọn" onChange={(e) => setForm((f) => ({ ...f, lastUnitPrice: e.target.value }))} fullWidth />
+          <Select value={form.supplierId} onChange={(e) => setForm((f) => ({ ...f, supplierId: e.target.value }))}>
+            <option value="">— Nhà cung cấp (tuỳ chọn) —</option>
+            {suppliers.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
+          </Select>
+          <DatePicker value={form.receiptDate} onChange={(v) => setForm((f) => ({ ...f, receiptDate: v }))} fullWidth placeholder="Ngày nhập gần nhất — tuỳ chọn" />
           <Typography size="xs" variant="muted">
             NVL thêm tay có 0 lần nhập; thống kê sẽ tự cập nhật khi phiếu nhập cùng tên được lưu.
           </Typography>

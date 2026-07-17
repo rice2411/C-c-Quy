@@ -227,6 +227,9 @@ export async function createMaterial(input: {
   name: string;
   unit?: string | null;
   lastUnitPrice?: number | null;
+  lastSupplierId?: string | null;
+  lastSupplierName?: string | null;
+  lastReceiptDate?: string | null;
 }): Promise<string> {
   const res = await apiClient.post<{ id: string }>(`${BASE}/materials`, input);
   return typeof res.data?.id === 'string' ? res.data.id : '';
