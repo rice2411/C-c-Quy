@@ -10,6 +10,7 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import { formatDateISO, parseDateValue } from '@/utils/format/dateUtil';
 import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/StockReceipts/MergeItemsModal';
@@ -220,7 +221,7 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
         </Typography>
       ) : null}
 
-      {/* ===== CARD GRID (mobile + desktop đồng nhất) ===== */}
+      {/* ===== Desktop: bảng dày · Mobile: card ===== */}
       <Box layoutClassName="max-h-[640px] overflow-auto p-1">
           {sortedMaterials.length === 0 ? (
             <EmptyState
@@ -228,7 +229,7 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
               title="Không có nguyên vật liệu phù hợp."
             />
           ) : (
-            <Box layoutClassName="grid gap-3 p-1 sm:grid-cols-2 xl:grid-cols-3">
+            <Box layoutClassName="grid gap-3 p-1 sm:hidden">
               {sortedMaterials.map((row) => {
                 const isChecked = selected.has(row.id);
                 const tier = materialRecencyTier(row.lastReceiptDate);
@@ -300,6 +301,58 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
               })}
             </Box>
           )}
+          {sortedMaterials.length > 0 ? (
+            <Box layoutClassName="hidden sm:block">
+              <Table>
+                <TableHead stateClassName="sticky top-0 z-10">
+                  <TableRow>
+                    <TableHeaderCell layoutClassName="w-8 p-2"> </TableHeaderCell>
+                    <TableHeaderCell layoutClassName="p-2 text-left">Tên NVL</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="p-2 text-right">Đơn giá gần nhất</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="p-2 text-right">Đã nhập</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="p-2 text-right">Số lần</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="p-2 text-left">NCC gần nhất</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="p-2 text-left">Nhập lần cuối</TableHeaderCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {sortedMaterials.map((row) => {
+                    const isChecked = selected.has(row.id);
+                    const tier = materialRecencyTier(row.lastReceiptDate);
+                    return (
+                      <TableRow
+                        key={row.id}
+                        borderClassName="border-b border-slate-100 dark:border-slate-700/60"
+                        backgroundClassName={isChecked ? 'bg-primary-50/70 dark:bg-primary-950/30' : ''}>
+                        <TableCell layoutClassName="p-2">
+                          <Checkbox
+                            checked={isChecked}
+                            onChange={() => toggle(row.id)}
+                            borderClassName="shrink-0 rounded border-slate-300"
+                            focusClassName="cursor-pointer text-primary-600 focus:ring-primary-500"
+                          />
+                        </TableCell>
+                        <TableCell layoutClassName="p-2" textClassName="text-sm font-medium text-slate-800 dark:text-slate-100">{row.name}</TableCell>
+                        <TableCell layoutClassName="p-2 text-right" textClassName="text-sm font-semibold tabular-nums text-primary-700 dark:text-primary-300">
+                          {formatVNDOrDash(row.lastUnitPrice)}
+                          {row.canonicalUnit ? <Typography as="span" size="xs" variant="muted">/{row.canonicalUnit}</Typography> : null}
+                        </TableCell>
+                        <TableCell layoutClassName="p-2 text-right" textClassName="text-sm tabular-nums text-slate-600 dark:text-slate-300">{row.totalQty} {row.canonicalUnit || ''}</TableCell>
+                        <TableCell layoutClassName="p-2 text-right" textClassName="text-sm tabular-nums text-slate-500 dark:text-slate-400">{row.importCount}</TableCell>
+                        <TableCell layoutClassName="p-2" textClassName="text-sm text-slate-600 dark:text-slate-300">{row.lastSupplierName || '—'}</TableCell>
+                        <TableCell layoutClassName="p-2">
+                          <Box layoutClassName="flex items-center gap-1.5">
+                            <Box layoutClassName="h-2 w-2 shrink-0" roundedClassName="rounded-full" backgroundClassName={tier.dotClassName} title={tier.label} />
+                            <Typography as="span" size="xs" variant="muted">{row.lastReceiptDate ? formatDateISO(row.lastReceiptDate) : '—'}</Typography>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </Box>
+          ) : null}
         </Box>
 
       <MergeItemsModal
