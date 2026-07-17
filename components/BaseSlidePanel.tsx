@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useSlideAnimation } from "@/hooks/useSlideAnimation";
 
@@ -35,9 +36,9 @@ const BaseSlidePanel: React.FC<BaseSlidePanelProps> = ({
     full: "w-full",
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 overflow-hidden"
+      className="fixed inset-0 z-[70] overflow-hidden"
       role="dialog"
       aria-modal="true"
       style={{ marginTop: 0 }}
@@ -89,7 +90,8 @@ const BaseSlidePanel: React.FC<BaseSlidePanelProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
