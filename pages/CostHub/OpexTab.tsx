@@ -11,6 +11,7 @@ import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
 import DatePicker from '@/components/ui/DatePicker';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import { EXPENSE_CATEGORIES, expenseCategoryLabel, type ManualExpense } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { fetchManualExpenses, upsertManualExpense, deleteManualExpense } from '@/services/manualExpenseService';
@@ -108,35 +109,83 @@ const OpexTab: React.FC = () => {
       {list.length === 0 ? (
         <EmptyState icon={<Coins className="h-6 w-6" />} title="Chưa có chi phí vận hành" />
       ) : (
-        <Box layoutClassName="space-y-2">
-          {list.map((m) => (
-            <Card key={m.id} padding="sm" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="flex flex-wrap items-center gap-3">
-              <Box layoutClassName="min-w-0 flex-1">
-                <Box layoutClassName="flex items-center gap-2">
-                  <Typography size="sm" layoutClassName="truncate font-semibold">
-                    {expenseCategoryLabel(m.category)} · {formatVND(m.amount)}
+        <>
+          {/* Mobile: card */}
+          <Box layoutClassName="space-y-2 sm:hidden">
+            {list.map((m) => (
+              <Card key={m.id} padding="sm" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="flex flex-wrap items-center gap-3">
+                <Box layoutClassName="min-w-0 flex-1">
+                  <Box layoutClassName="flex items-center gap-2">
+                    <Typography size="sm" layoutClassName="truncate font-semibold">
+                      {expenseCategoryLabel(m.category)} · {formatVND(m.amount)}
+                    </Typography>
+                    {m.source === 'receipt' ? (
+                      <Box layoutClassName="shrink-0 px-1.5 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-sky-100 dark:bg-sky-900/40">
+                        <Typography as="span" size="xs" textClassName="font-medium text-sky-700 dark:text-sky-300">Từ phiếu</Typography>
+                      </Box>
+                    ) : null}
+                  </Box>
+                  <Typography size="xs" variant="muted" layoutClassName="truncate">
+                    {m.date.split('-').reverse().join('/')}
+                    {m.spreadMonths > 1 ? ` · phân bổ ${formatVND(Math.round(m.amount / m.spreadMonths))}/tháng × ${m.spreadMonths}` : ''}
+                    {m.note ? ` · ${m.note}` : ''}
                   </Typography>
-                  {m.source === 'receipt' ? (
-                    <Box layoutClassName="shrink-0 px-1.5 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-sky-100 dark:bg-sky-900/40">
-                      <Typography as="span" size="xs" textClassName="font-medium text-sky-700 dark:text-sky-300">Từ phiếu</Typography>
-                    </Box>
-                  ) : null}
                 </Box>
-                <Typography size="xs" variant="muted" layoutClassName="truncate">
-                  {m.date.split('-').reverse().join('/')}
-                  {m.spreadMonths > 1 ? ` · phân bổ ${formatVND(Math.round(m.amount / m.spreadMonths))}/tháng × ${m.spreadMonths}` : ''}
-                  {m.note ? ` · ${m.note}` : ''}
-                </Typography>
-              </Box>
-              <Button type="button" onClick={() => edit(m)} aria-label="Sửa" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1.5" roundedClassName="rounded-lg" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500">
-                <Pencil className="h-4 w-4" />
-              </Button>
-              <Button type="button" disabled={busy} onClick={() => void remove(m.id)} aria-label="Xoá" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1.5" roundedClassName="rounded-lg" borderClassName="border border-transparent" textClassName="text-red-500" hoverClassName="hover:bg-red-50 dark:hover:bg-red-900/10">
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </Card>
-          ))}
-        </Box>
+                <Button type="button" onClick={() => edit(m)} aria-label="Sửa" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1.5" roundedClassName="rounded-lg" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500">
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button type="button" disabled={busy} onClick={() => void remove(m.id)} aria-label="Xoá" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1.5" roundedClassName="rounded-lg" borderClassName="border border-transparent" textClassName="text-red-500" hoverClassName="hover:bg-red-50 dark:hover:bg-red-900/10">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </Card>
+            ))}
+          </Box>
+          {/* Desktop: table */}
+          <Box layoutClassName="hidden sm:block overflow-x-auto">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell layoutClassName="p-2 text-left">Loại</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="p-2 text-right">Số tiền</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="p-2 text-left">Ngày</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="p-2 text-left">Phân bổ</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="p-2 text-left">Ghi chú</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="w-20 p-2"> </TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {list.map((m) => (
+                  <TableRow key={m.id} borderClassName="border-b border-slate-100 dark:border-slate-700/60">
+                    <TableCell layoutClassName="p-2">
+                      <Box layoutClassName="flex items-center gap-2">
+                        <Typography as="span" size="sm" layoutClassName="font-medium text-slate-800 dark:text-slate-100">{expenseCategoryLabel(m.category)}</Typography>
+                        {m.source === 'receipt' ? (
+                          <Box layoutClassName="shrink-0 px-1.5 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-sky-100 dark:bg-sky-900/40">
+                            <Typography as="span" size="xs" textClassName="font-medium text-sky-700 dark:text-sky-300">Từ phiếu</Typography>
+                          </Box>
+                        ) : null}
+                      </Box>
+                    </TableCell>
+                    <TableCell layoutClassName="p-2 text-right" textClassName="text-sm font-semibold tabular-nums text-slate-900 dark:text-white">{formatVND(m.amount)}</TableCell>
+                    <TableCell layoutClassName="p-2" textClassName="text-sm text-slate-500 dark:text-slate-400">{m.date.split('-').reverse().join('/')}</TableCell>
+                    <TableCell layoutClassName="p-2" textClassName="text-sm text-slate-600 dark:text-slate-300">{m.spreadMonths > 1 ? `${formatVND(Math.round(m.amount / m.spreadMonths))}/th × ${m.spreadMonths}` : '—'}</TableCell>
+                    <TableCell layoutClassName="p-2" textClassName="text-sm text-slate-600 dark:text-slate-300">{m.note || '—'}</TableCell>
+                    <TableCell layoutClassName="p-2">
+                      <Box layoutClassName="flex items-center gap-1">
+                        <Button type="button" onClick={() => edit(m)} aria-label="Sửa" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1.5" roundedClassName="rounded-lg" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button type="button" disabled={busy} onClick={() => void remove(m.id)} aria-label="Xoá" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1.5" roundedClassName="rounded-lg" borderClassName="border border-transparent" textClassName="text-red-500" hoverClassName="hover:bg-red-50 dark:hover:bg-red-900/10">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
+        </>
       )}
 
       <BaseSlidePanel
