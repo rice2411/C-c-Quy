@@ -306,13 +306,13 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
               <Table>
                 <TableHead stateClassName="sticky top-0 z-10">
                   <TableRow>
-                    <TableHeaderCell layoutClassName="w-8 p-2"> </TableHeaderCell>
-                    <TableHeaderCell layoutClassName="p-2 text-left">Tên NVL</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="p-2 text-right">Đơn giá gần nhất</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="p-2 text-right">Đã nhập</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="p-2 text-right">Số lần</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="p-2 text-left">NCC gần nhất</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="p-2 text-left">Nhập lần cuối</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="w-8 p-2 bg-white dark:bg-slate-800"> </TableHeaderCell>
+                    <TableHeaderCell layoutClassName="p-2 text-left bg-white dark:bg-slate-800">Tên NVL</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="p-2 text-right bg-white dark:bg-slate-800">Đơn giá gần nhất</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="p-2 text-right bg-white dark:bg-slate-800">Đã nhập</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="p-2 text-right bg-white dark:bg-slate-800">Số lần</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="p-2 text-left bg-white dark:bg-slate-800">NCC gần nhất</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="p-2 text-left bg-white dark:bg-slate-800">Nhập lần cuối</TableHeaderCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
