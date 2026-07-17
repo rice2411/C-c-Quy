@@ -24,8 +24,8 @@ const normalizeLine = (raw: Record<string, unknown>): BillLineItem => {
   };
 };
 
-/** Các bước hiển thị tiến trình cho UI. */
-export type BillImportProgressStage = 'vision' | 'validate' | 'structure';
+/** Các bước hiển thị tiến trình cho UI (đọc chữ → kiểm tra → cấu trúc → phân loại). */
+export type BillImportProgressStage = 'vision' | 'validate' | 'structure' | 'classify';
 
 /**
  * Pipeline OCR + Gemini + gating được gom hết về BE (POST /stock-receipts/process-bill).
@@ -44,12 +44,25 @@ export async function runBillImportPipeline(
   const onProgress = options?.onProgress;
   onProgress?.('vision');
 
-  // apiClient đã bóc envelope → data = { ocrText, structured, validation }.
-  const { data } = await apiClient.post('/stock-receipts/process-bill', {
-    imageBase64: imageBase64NoPrefix,
-  });
+  // BE xử lý trong 1 request (OCR → validate → structure → phân loại AI). Không có
+  // tiến trình phụ từ server nên mô phỏng các bước cho UI trong lúc chờ (~vài giây).
+  const timers: ReturnType<typeof setTimeout>[] = [];
+  timers.push(setTimeout(() => onProgress?.('validate'), 900));
+  timers.push(setTimeout(() => onProgress?.('structure'), 2100));
+  timers.push(setTimeout(() => onProgress?.('classify'), 3400));
 
-  onProgress?.('structure');
+  let data: unknown;
+  try {
+    // apiClient đã bóc envelope → data = { ocrText, structured, validation }.
+    const res = await apiClient.post('/stock-receipts/process-bill', {
+      imageBase64: imageBase64NoPrefix,
+    });
+    data = res.data;
+  } finally {
+    timers.forEach(clearTimeout);
+  }
+
+  onProgress?.('classify');
 
   const result = data as {
     ocrText: string;

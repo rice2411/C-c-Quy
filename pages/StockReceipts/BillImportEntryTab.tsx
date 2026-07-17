@@ -147,17 +147,23 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
   }, [draftStructured]);
 
   const activeStepIndex =
-    progressStage === 'vision' ? 0 : progressStage === 'validate' ? 1 : progressStage === 'structure' ? 2 : -1;
+    progressStage === 'vision' ? 0
+      : progressStage === 'validate' ? 1
+        : progressStage === 'structure' ? 2
+          : progressStage === 'classify' ? 3
+            : -1;
   const progressBarPct =
     progressStage === 'prepare'
-      ? 14
+      ? 10
       : progressStage === 'vision'
-        ? 40
+        ? 30
         : progressStage === 'validate'
-          ? 70
+          ? 55
           : progressStage === 'structure'
-            ? 96
-            : 0;
+            ? 80
+            : progressStage === 'classify'
+              ? 96
+              : 0;
 
   const contact = supplierContact || {};
 

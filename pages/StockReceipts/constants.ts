@@ -14,4 +14,5 @@ export const PIPELINE_STAGES: { id: BillImportProgressStage; labelKey: string }[
   { id: 'vision', labelKey: 'billImport.stageVision' },
   { id: 'validate', labelKey: 'billImport.stageValidate' },
   { id: 'structure', labelKey: 'billImport.stageStructure' },
+  { id: 'classify', labelKey: 'billImport.stageClassify' },
 ];
