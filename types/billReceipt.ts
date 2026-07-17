@@ -11,12 +11,24 @@ export interface BillValidationResult {
 }
 
 /** Kết quả chuẩn hoá từ hoá đơn / phiếu nhập hàng (OCR + LLM). */
+/** Phân loại dòng phiếu nhập: NVL tiêu hao | Tài sản (khấu hao) | Vận hành (OPEX). */
+export type LineItemType = 'material' | 'asset' | 'opex';
+
 export interface BillLineItem {
   name: string;
   quantity: number | null;
   unit: string | null;
   unitPrice: number | null;
   lineTotal: number | null;
+  /** Loại dòng (người chọn; mặc định material). */
+  itemType?: LineItemType;
+  /** Số tháng khấu hao (khi asset). */
+  usefulMonths?: number | null;
+  /** Loại chi tiết (asset: equipment/...; opex: rent/utilities/...). */
+  category?: string | null;
+  /** AI gợi ý ban đầu + độ chắc (để hiện badge/nhắc kiểm tra). */
+  aiSuggestedType?: LineItemType | null;
+  aiConfidence?: number | null;
 }
 
 export interface StockReceiptStructured {

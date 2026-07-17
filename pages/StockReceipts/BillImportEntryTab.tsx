@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/Table';
 import { PIPELINE_STAGES, type UiProgressStage } from '@/pages/StockReceipts/constants';
 import SupplierPicker from '@/pages/StockReceipts/SupplierPicker';
+import LineTypePicker from '@/pages/StockReceipts/LineTypePicker';
 import EmptyState from '@/components/ui/EmptyState';
 
 export interface BillImportEntryTabProps {
@@ -683,6 +684,10 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                         placeholder="Thành tiền"
                       />
                     </Box>
+                    <Box layoutClassName="space-y-1">
+                      <Typography as="span" size="xs" variant="muted" layoutClassName="font-medium uppercase tracking-wide">Phân loại</Typography>
+                      <LineTypePicker line={it} onChange={(patch) => updateDraftLine(idx, patch)} />
+                    </Box>
                   </Box>
                 ))
               )}
@@ -699,13 +704,14 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                     <TableHeaderCell>{t('billImport.colUnit')}</TableHeaderCell>
                     <TableHeaderCell>{t('billImport.colPrice')}</TableHeaderCell>
                     <TableHeaderCell>{t('billImport.colLineTotal')}</TableHeaderCell>
+                    <TableHeaderCell>Loại</TableHeaderCell>
                     <TableHeaderCell> </TableHeaderCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {draftStructured.lineItems.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7}>
+                      <TableCell colSpan={8}>
                         <EmptyState
                           icon={<FileText className="h-6 w-6" />}
                           title={t('billImport.emptyLines')}
@@ -762,6 +768,9 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                             }
                             placeholder="Thành tiền"
                           />
+                        </TableCell>
+                        <TableCell layoutClassName="min-w-[9rem]">
+                          <LineTypePicker line={it} onChange={(patch) => updateDraftLine(idx, patch)} />
                         </TableCell>
                         <TableCell>
                           <Button
