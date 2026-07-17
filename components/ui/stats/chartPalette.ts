@@ -15,3 +15,10 @@ export const CHART_COLORS = [
 
 /** Lấy màu theo index (lặp vòng khi vượt số màu). */
 export const colorAt = (i: number): string => CHART_COLORS[i % CHART_COLORS.length];
+
+/** Meta 3 nhánh chi phí — nhãn + màu dùng nhất quán (badge, chart, form). */
+export const LINE_TYPE_META: Record<'material' | 'asset' | 'opex', { label: string; color: string }> = {
+  material: { label: 'NVL', color: '#d97706' },   // nhập kho
+  asset: { label: 'Tài sản', color: '#64748b' },  // khấu hao
+  opex: { label: 'Vận hành', color: '#8b5cf6' },  // OPEX
+};

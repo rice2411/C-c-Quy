@@ -6,6 +6,7 @@ import Typography from '@/components/ui/Typography';
 import type { BillLineItem, LineItemType } from '@/types/billReceipt';
 import { ASSET_CATEGORIES } from '@/types/asset';
 import { EXPENSE_CATEGORIES } from '@/types/transaction';
+import { LINE_TYPE_META } from '@/components/ui/stats';
 
 const TYPE_OPTIONS: { value: LineItemType; label: string }[] = [
   { value: 'material', label: 'NVL' },
@@ -33,8 +34,10 @@ const LineTypePicker: React.FC<LineTypePickerProps> = ({ line, onChange }) => {
 
   return (
     <Box layoutClassName="flex flex-col gap-1">
-      <Select
-        value={type}
+      <Box layoutClassName="flex items-center gap-1.5">
+        <Box layoutClassName="h-2 w-2 shrink-0" roundedClassName="rounded-full" style={{ backgroundColor: LINE_TYPE_META[type].color }} />
+        <Select
+          value={type}
         onChange={(e) => {
           const next = e.target.value as LineItemType;
           onChange({
@@ -46,10 +49,11 @@ const LineTypePicker: React.FC<LineTypePickerProps> = ({ line, onChange }) => {
         }}
         borderClassName={lowConf ? 'border-amber-400 dark:border-amber-500' : undefined}
       >
-        {TYPE_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </Select>
+          {TYPE_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </Select>
+      </Box>
 
       {aiType ? (
         <Typography as="span" size="xs" variant="muted" layoutClassName="truncate">

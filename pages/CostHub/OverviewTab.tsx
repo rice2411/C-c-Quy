@@ -5,16 +5,16 @@ import Typography from '@/components/ui/Typography';
 import Card from '@/components/ui/Card';
 import Spinner from '@/components/ui/Spinner';
 import StatsBanner from '@/components/ui/StatsBanner';
-import { DonutChart, ChartLegend } from '@/components/ui/stats';
+import { DonutChart, ChartLegend, LINE_TYPE_META } from '@/components/ui/stats';
 import DateRangePicker, { DatePreset, computePresetRange } from '@/components/ui/DateRangePicker';
 import { useRevenueReport } from '@/hooks/queries/useTransactionsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { percentOf } from '@/utils/format/numberUtil';
 
-// Màu 3 nhánh chi phí (nhất quán toàn app).
-const C_STOCK = '#d97706'; // Nhập kho (NVL)
-const C_DEP = '#a3a3a3';   // Khấu hao (Tài sản)
-const C_OPEX = '#8b5cf6';  // Vận hành (OPEX)
+// Màu 3 nhánh chi phí (nhất quán toàn app — dùng chung LINE_TYPE_META).
+const C_STOCK = LINE_TYPE_META.material.color; // Nhập kho (NVL)
+const C_DEP = LINE_TYPE_META.asset.color;      // Khấu hao (Tài sản)
+const C_OPEX = LINE_TYPE_META.opex.color;      // Vận hành (OPEX)
 
 /** Tổng quan chi phí 3 nhánh: Nhập kho (NVL) · Khấu hao (Tài sản) · Vận hành (OPEX). */
 const OverviewTab: React.FC = () => {
