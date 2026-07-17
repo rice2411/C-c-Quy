@@ -11,12 +11,12 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import DatePicker from '@/components/ui/DatePicker';
 import Field from '@/components/ui/Field';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
+import AutocompleteInput, { type AutocompleteOption } from '@/components/AutocompleteInput';
 import { useImportedSuppliers } from '@/hooks/queries/useStockReceiptQuery';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
@@ -26,8 +26,8 @@ import EmptyState from '@/components/ui/EmptyState';
 
 import Checkbox from '@/components/ui/Checkbox';
 
-type MaterialForm = { name: string; unit: string; lastUnitPrice: string; supplierId: string; receiptDate: string };
-const EMPTY_MATERIAL: MaterialForm = { name: '', unit: '', lastUnitPrice: '', supplierId: '', receiptDate: '' };
+type MaterialForm = { name: string; unit: string; lastUnitPrice: string; quantity: string; supplierId: string; supplierName: string; receiptDate: string };
+const EMPTY_MATERIAL: MaterialForm = { name: '', unit: '', lastUnitPrice: '', quantity: '', supplierId: '', supplierName: '', receiptDate: '' };
 
 /** Mức độ "tươi mới" theo lần nhập cuối → màu xanh/vàng/đỏ. */
 const materialRecencyTier = (
@@ -96,6 +96,10 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
   const [form, setForm] = useState<MaterialForm>(EMPTY_MATERIAL);
   const [saving, setSaving] = useState(false);
   const { suppliers } = useImportedSuppliers();
+  const supplierOptions = useMemo<AutocompleteOption[]>(
+    () => suppliers.map((s) => ({ id: s.id, label: s.name })),
+    [suppliers],
+  );
 
   // Apply period filter first, then sort
   const periodFiltered = useMemo(
@@ -137,15 +141,17 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
       return;
     }
     const price = form.lastUnitPrice.trim() ? Number(form.lastUnitPrice) : null;
-    const supplier = suppliers.find((s) => s.id === form.supplierId);
+    const qty = form.quantity.trim() ? Number(form.quantity) : null;
     setSaving(true);
     try {
       await createMaterial({
         name: form.name.trim(),
         unit: form.unit.trim() || null,
         lastUnitPrice: price != null && !Number.isNaN(price) ? price : null,
-        lastSupplierId: supplier?.id ?? null,
-        lastSupplierName: supplier?.name ?? null,
+        quantity: qty != null && !Number.isNaN(qty) ? qty : null,
+        // Có id (chọn NCC có sẵn) → gửi id; nếu chỉ gõ tên mới → BE tự tạo NCC.
+        lastSupplierId: form.supplierId || null,
+        lastSupplierName: form.supplierName.trim() || null,
         lastReceiptDate: form.receiptDate || null,
       });
       toast.success('Đã thêm nguyên vật liệu');
@@ -436,25 +442,30 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
               <Input id="nvl-name" value={form.name} placeholder="vd Bột mì, Đường trắng" onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} fullWidth />
             </Field>
             <Box layoutClassName="grid grid-cols-2 gap-3">
+              <Field label="Số lượng" htmlFor="nvl-qty">
+                <Input id="nvl-qty" type="number" min={0} value={form.quantity} placeholder="vd 10" onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))} fullWidth />
+              </Field>
               <Field label="Đơn vị" htmlFor="nvl-unit">
                 <Input id="nvl-unit" value={form.unit} placeholder="vd kg, cái, gói" onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))} fullWidth />
               </Field>
-              <Field label="Đơn giá tham khảo" htmlFor="nvl-price">
-                <Input id="nvl-price" type="number" min={0} value={form.lastUnitPrice} placeholder="VND" onChange={(e) => setForm((f) => ({ ...f, lastUnitPrice: e.target.value }))} fullWidth />
-              </Field>
             </Box>
+            <Field label="Đơn giá tham khảo" htmlFor="nvl-price">
+              <Input id="nvl-price" type="number" min={0} value={form.lastUnitPrice} placeholder="VND" onChange={(e) => setForm((f) => ({ ...f, lastUnitPrice: e.target.value }))} fullWidth />
+            </Field>
           </Box>
 
           <Box layoutClassName="space-y-3">
             <Heading level={3} layoutClassName="flex items-center gap-2 uppercase tracking-wider" textClassName="text-sm font-semibold">
               <Truck className="h-4 w-4 text-primary-500" /> Nguồn nhập gần nhất
             </Heading>
-            <Field label="Nhà cung cấp" htmlFor="nvl-supplier">
-              <Select id="nvl-supplier" value={form.supplierId} onChange={(e) => setForm((f) => ({ ...f, supplierId: e.target.value }))}>
-                <option value="">— Chọn nhà cung cấp —</option>
-                {suppliers.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
-              </Select>
-            </Field>
+            <AutocompleteInput
+              label="Nhà cung cấp"
+              value={form.supplierName}
+              onChange={(v) => setForm((f) => ({ ...f, supplierName: v, supplierId: '' }))}
+              onSelect={(opt) => setForm((f) => ({ ...f, supplierName: opt.label, supplierId: opt.id }))}
+              options={supplierOptions}
+              placeholder="Gõ tên NCC — chọn có sẵn hoặc tạo mới"
+            />
             <Field label="Ngày nhập gần nhất" htmlFor="nvl-date">
               <DatePicker value={form.receiptDate} onChange={(v) => setForm((f) => ({ ...f, receiptDate: v }))} fullWidth placeholder="Chọn ngày" />
             </Field>
@@ -462,7 +473,7 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
 
           <Box layoutClassName="p-3" backgroundClassName="bg-slate-50 dark:bg-slate-800/60" borderClassName="border border-slate-200 dark:border-slate-700" roundedClassName="rounded-lg">
             <Typography size="xs" variant="muted">
-              NVL thêm tay có 0 lần nhập; thống kê (số lần, tổng SL, tổng chi) sẽ tự cộng dồn khi phiếu nhập cùng tên được lưu.
+              Nhập số lượng → tính là 1 lần nhập tay (tổng chi = SL × đơn giá). NCC gõ tên chưa có sẽ được tạo mới. Thống kê tự cộng dồn khi có phiếu nhập cùng tên.
             </Typography>
           </Box>
         </Box>

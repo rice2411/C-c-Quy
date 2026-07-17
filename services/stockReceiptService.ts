@@ -227,6 +227,7 @@ export async function createMaterial(input: {
   name: string;
   unit?: string | null;
   lastUnitPrice?: number | null;
+  quantity?: number | null;
   lastSupplierId?: string | null;
   lastSupplierName?: string | null;
   lastReceiptDate?: string | null;
