@@ -6,11 +6,11 @@ export async function validateReceiptWithGemini(ocrText: string): Promise<{
   confidence: number;
   reasonVi: string;
 }> {
-  return (await apiClient.post('/gemini/validate-receipt', { ocrText })).data;
+  return (await apiClient.post('/ai/validate-receipt', { ocrText })).data;
 }
 
 export async function structureStockReceiptWithGemini(
   ocrText: string,
 ): Promise<StockReceiptStructured> {
-  return (await apiClient.post('/gemini/structure-receipt', { ocrText })).data;
+  return (await apiClient.post('/ai/structure-receipt', { ocrText })).data;
 }
