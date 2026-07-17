@@ -45,6 +45,7 @@ const OverviewTab: React.FC = () => {
     { key: 'dep', label: 'Khấu hao (Tài sản)', value: depreciation, color: C_DEP },
     { key: 'opex', label: 'Vận hành', value: opex, color: C_OPEX },
   ].filter((x) => x.value > 0);
+  const hasTrend = (report?.series?.length ?? 0) > 1;
 
   return (
     <Box layoutClassName="space-y-4">
@@ -75,37 +76,39 @@ const OverviewTab: React.FC = () => {
               { icon: Coins, label: 'Vận hành', value: formatVND(opex), accent: C_OPEX },
             ]}
           />
-          <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
-            <Typography size="sm" layoutClassName="font-semibold">Cơ cấu chi phí (3 nhánh)</Typography>
-            {pie.length === 0 ? (
-              <Typography size="sm" variant="muted">Chưa có chi phí trong kỳ.</Typography>
-            ) : (
-              <Box layoutClassName="flex flex-col items-center gap-4 sm:flex-row">
-                <DonutChart data={pie} formatValue={formatVND} innerRadius={45} outerRadius={80} containerClassName="h-52 w-full sm:w-1/2" />
-                <Box layoutClassName="w-full sm:w-1/2">
-                  <ChartLegend items={pie.map((x) => ({ label: x.label, color: x.color, value: formatVND(x.value), percent: percentOf(x.value, total) }))} />
+          <Box layoutClassName="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName={`space-y-3${hasTrend ? '' : ' lg:col-span-2'}`}>
+              <Typography size="sm" layoutClassName="font-semibold">Cơ cấu chi phí (3 nhánh)</Typography>
+              {pie.length === 0 ? (
+                <Typography size="sm" variant="muted">Chưa có chi phí trong kỳ.</Typography>
+              ) : (
+                <Box layoutClassName="flex flex-col items-center gap-3">
+                  <DonutChart data={pie} formatValue={formatVND} innerRadius={45} outerRadius={80} containerClassName="h-48 w-full" />
+                  <Box layoutClassName="w-full">
+                    <ChartLegend items={pie.map((x) => ({ label: x.label, color: x.color, value: formatVND(x.value), percent: percentOf(x.value, total) }))} />
+                  </Box>
                 </Box>
-              </Box>
-            )}
-          </Card>
-
-          {(report?.series?.length ?? 0) > 1 ? (
-            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
-              <Typography size="sm" layoutClassName="font-semibold">Chi phí 3 nhánh theo kỳ</Typography>
-              <TrendChart
-                data={report!.series as unknown as Array<Record<string, unknown>>}
-                xKey="label"
-                series={[
-                  { key: 'stockIn', label: 'Nhập kho', color: C_STOCK },
-                  { key: 'depreciation', label: 'Khấu hao', color: C_DEP },
-                  { key: 'opex', label: 'Vận hành', color: C_OPEX },
-                ]}
-                type="line"
-                formatValue={formatVND}
-                heightClassName="h-56"
-              />
+              )}
             </Card>
-          ) : null}
+
+            {hasTrend ? (
+              <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+                <Typography size="sm" layoutClassName="font-semibold">Chi phí 3 nhánh theo kỳ</Typography>
+                <TrendChart
+                  data={report!.series as unknown as Array<Record<string, unknown>>}
+                  xKey="label"
+                  series={[
+                    { key: 'stockIn', label: 'Nhập kho', color: C_STOCK },
+                    { key: 'depreciation', label: 'Khấu hao', color: C_DEP },
+                    { key: 'opex', label: 'Vận hành', color: C_OPEX },
+                  ]}
+                  type="line"
+                  formatValue={formatVND}
+                  heightClassName="h-56"
+                />
+              </Card>
+            ) : null}
+          </Box>
         </Box>
       )}
     </Box>
