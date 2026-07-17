@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { GitMerge, Package, Plus, ShoppingBag, TrendingUp, X } from 'lucide-react';
+import { GitMerge, Package, Plus, ShoppingBag, TrendingUp, Truck, X } from 'lucide-react';
 import type { ImportedMaterialSummary } from '@/types/billReceipt';
 import { createMaterial, mergeMaterials } from '@/services/stockReceiptService';
 import StatsBanner from '@/components/ui/StatsBanner';
@@ -13,6 +13,8 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import DatePicker from '@/components/ui/DatePicker';
+import Field from '@/components/ui/Field';
+import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import { useImportedSuppliers } from '@/hooks/queries/useStockReceiptQuery';
@@ -425,18 +427,44 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
           </Box>
         }
       >
-        <Box layoutClassName="grid grid-cols-1 gap-3 p-4">
-          <Input value={form.name} placeholder="Tên NVL (vd Bột mì)" onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} fullWidth />
-          <Input value={form.unit} placeholder="Đơn vị (vd kg, cái) — tuỳ chọn" onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))} fullWidth />
-          <Input type="number" min={0} value={form.lastUnitPrice} placeholder="Đơn giá tham khảo (VND) — tuỳ chọn" onChange={(e) => setForm((f) => ({ ...f, lastUnitPrice: e.target.value }))} fullWidth />
-          <Select value={form.supplierId} onChange={(e) => setForm((f) => ({ ...f, supplierId: e.target.value }))}>
-            <option value="">— Nhà cung cấp (tuỳ chọn) —</option>
-            {suppliers.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
-          </Select>
-          <DatePicker value={form.receiptDate} onChange={(v) => setForm((f) => ({ ...f, receiptDate: v }))} fullWidth placeholder="Ngày nhập gần nhất — tuỳ chọn" />
-          <Typography size="xs" variant="muted">
-            NVL thêm tay có 0 lần nhập; thống kê sẽ tự cập nhật khi phiếu nhập cùng tên được lưu.
-          </Typography>
+        <Box layoutClassName="space-y-5 p-4">
+          <Box layoutClassName="space-y-3">
+            <Heading level={3} layoutClassName="flex items-center gap-2 uppercase tracking-wider" textClassName="text-sm font-semibold">
+              <Package className="h-4 w-4 text-primary-500" /> Thông tin nguyên vật liệu
+            </Heading>
+            <Field label="Tên nguyên vật liệu" htmlFor="nvl-name" required>
+              <Input id="nvl-name" value={form.name} placeholder="vd Bột mì, Đường trắng" onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} fullWidth />
+            </Field>
+            <Box layoutClassName="grid grid-cols-2 gap-3">
+              <Field label="Đơn vị" htmlFor="nvl-unit">
+                <Input id="nvl-unit" value={form.unit} placeholder="vd kg, cái, gói" onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))} fullWidth />
+              </Field>
+              <Field label="Đơn giá tham khảo" htmlFor="nvl-price">
+                <Input id="nvl-price" type="number" min={0} value={form.lastUnitPrice} placeholder="VND" onChange={(e) => setForm((f) => ({ ...f, lastUnitPrice: e.target.value }))} fullWidth />
+              </Field>
+            </Box>
+          </Box>
+
+          <Box layoutClassName="space-y-3">
+            <Heading level={3} layoutClassName="flex items-center gap-2 uppercase tracking-wider" textClassName="text-sm font-semibold">
+              <Truck className="h-4 w-4 text-primary-500" /> Nguồn nhập gần nhất
+            </Heading>
+            <Field label="Nhà cung cấp" htmlFor="nvl-supplier">
+              <Select id="nvl-supplier" value={form.supplierId} onChange={(e) => setForm((f) => ({ ...f, supplierId: e.target.value }))}>
+                <option value="">— Chọn nhà cung cấp —</option>
+                {suppliers.map((s) => (<option key={s.id} value={s.id}>{s.name}</option>))}
+              </Select>
+            </Field>
+            <Field label="Ngày nhập gần nhất" htmlFor="nvl-date">
+              <DatePicker value={form.receiptDate} onChange={(v) => setForm((f) => ({ ...f, receiptDate: v }))} fullWidth placeholder="Chọn ngày" />
+            </Field>
+          </Box>
+
+          <Box layoutClassName="p-3" backgroundClassName="bg-slate-50 dark:bg-slate-800/60" borderClassName="border border-slate-200 dark:border-slate-700" roundedClassName="rounded-lg">
+            <Typography size="xs" variant="muted">
+              NVL thêm tay có 0 lần nhập; thống kê (số lần, tổng SL, tổng chi) sẽ tự cộng dồn khi phiếu nhập cùng tên được lưu.
+            </Typography>
+          </Box>
         </Box>
       </BaseSlidePanel>
 
