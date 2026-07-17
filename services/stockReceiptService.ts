@@ -219,6 +219,19 @@ export async function updateMaterial(
   await apiClient.patch(`${BASE}/materials/${id}`, patch);
 }
 
+/**
+ * Tạo NVL thủ công (không qua phiếu nhập) → POST /stock-receipts/materials.
+ * Idempotent theo tên (BE trả id NVL cũ nếu đã tồn tại). Trả id.
+ */
+export async function createMaterial(input: {
+  name: string;
+  unit?: string | null;
+  lastUnitPrice?: number | null;
+}): Promise<string> {
+  const res = await apiClient.post<{ id: string }>(`${BASE}/materials`, input);
+  return typeof res.data?.id === 'string' ? res.data.id : '';
+}
+
 // ==================== ĐỐI SOÁT (tiền ra ↔ phiếu nhập) ====================
 
 /** 1 phiếu nhập + field đối soát — đối soát tiền ra ↔ phiếu nhập (tab Tiền ra). */

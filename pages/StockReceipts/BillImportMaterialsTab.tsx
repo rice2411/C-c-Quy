@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { GitMerge, Package, ShoppingBag, TrendingUp, X } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { GitMerge, Package, Plus, ShoppingBag, TrendingUp, X } from 'lucide-react';
 import type { ImportedMaterialSummary } from '@/types/billReceipt';
-import { mergeMaterials } from '@/services/stockReceiptService';
+import { createMaterial, mergeMaterials } from '@/services/stockReceiptService';
 import StatsBanner from '@/components/ui/StatsBanner';
 import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/StockReceipts/dateFilter';
 import FilterToolbar from '@/components/shared/FilterToolbar';
@@ -9,7 +10,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
+import BaseSlidePanel from '@/components/BaseSlidePanel';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import { formatDateISO, parseDateValue } from '@/utils/format/dateUtil';
@@ -17,6 +20,9 @@ import MergeItemsModal, { type MergeItemDescriptor } from '@/pages/StockReceipts
 import EmptyState from '@/components/ui/EmptyState';
 
 import Checkbox from '@/components/ui/Checkbox';
+
+type MaterialForm = { name: string; unit: string; lastUnitPrice: string };
+const EMPTY_MATERIAL: MaterialForm = { name: '', unit: '', lastUnitPrice: '' };
 
 /** Mức độ "tươi mới" theo lần nhập cuối → màu xanh/vàng/đỏ. */
 const materialRecencyTier = (
@@ -81,6 +87,9 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
   const [mergeOpen, setMergeOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'amount' | 'name' | 'count'>('recent');
   const [period, setPeriod] = useState<DatePeriod>('all');
+  const [addOpen, setAddOpen] = useState(false);
+  const [form, setForm] = useState<MaterialForm>(EMPTY_MATERIAL);
+  const [saving, setSaving] = useState(false);
 
   // Apply period filter first, then sort
   const periodFiltered = useMemo(
@@ -114,6 +123,32 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
   };
   const clearSelection = () => setSelected(new Set());
 
+  const openAdd = () => { setForm(EMPTY_MATERIAL); setAddOpen(true); };
+
+  const saveMaterial = async () => {
+    if (!form.name.trim()) {
+      toast.error('Nhập tên nguyên vật liệu');
+      return;
+    }
+    const price = form.lastUnitPrice.trim() ? Number(form.lastUnitPrice) : null;
+    setSaving(true);
+    try {
+      await createMaterial({
+        name: form.name.trim(),
+        unit: form.unit.trim() || null,
+        lastUnitPrice: price != null && !Number.isNaN(price) ? price : null,
+      });
+      toast.success('Đã thêm nguyên vật liệu');
+      setForm(EMPTY_MATERIAL);
+      setAddOpen(false);
+      await onRefresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Thêm NVL thất bại');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const selectedItems: MergeItemDescriptor[] = filteredMaterials
     .filter((m) => selected.has(m.id))
     .map((m) => ({
@@ -125,6 +160,19 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
   // Nút hành động đặt trong toolbar (giống slot actions của trang Products).
   const toolbarActions = (
     <>
+      <Button
+        type="button"
+        onClick={openAdd}
+        variant="primary"
+        leftIcon={<Plus />}
+        iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+        sizeClassName="px-3 py-2 text-xs"
+        roundedClassName="rounded-xl"
+        layoutClassName="inline-flex items-center gap-1.5"
+        disableVariantHover
+      >
+        Thêm NVL
+      </Button>
       {extraActions}
       {selected.size >= 2 ? (
         <Button
@@ -354,6 +402,30 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
             </Box>
           ) : null}
         </Box>
+
+      <BaseSlidePanel
+        isOpen={addOpen}
+        onClose={() => setAddOpen(false)}
+        title="Thêm nguyên vật liệu"
+        maxWidth="md"
+        footer={
+          <Box layoutClassName="flex gap-2 p-4">
+            <Button type="button" disabled={saving} onClick={() => void saveMaterial()} variant="primary" sizeClassName="px-4 py-2 text-sm" roundedClassName="rounded-lg" layoutClassName="inline-flex items-center gap-1.5" disableVariantHover>
+              Thêm
+            </Button>
+            <Button type="button" onClick={() => setAddOpen(false)} variant="secondary" sizeClassName="px-4 py-2 text-sm" roundedClassName="rounded-lg" disableVariantHover>Huỷ</Button>
+          </Box>
+        }
+      >
+        <Box layoutClassName="grid grid-cols-1 gap-3 p-4">
+          <Input value={form.name} placeholder="Tên NVL (vd Bột mì)" onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} fullWidth />
+          <Input value={form.unit} placeholder="Đơn vị (vd kg, cái) — tuỳ chọn" onChange={(e) => setForm((f) => ({ ...f, unit: e.target.value }))} fullWidth />
+          <Input type="number" min={0} value={form.lastUnitPrice} placeholder="Đơn giá tham khảo (VND) — tuỳ chọn" onChange={(e) => setForm((f) => ({ ...f, lastUnitPrice: e.target.value }))} fullWidth />
+          <Typography size="xs" variant="muted">
+            NVL thêm tay có 0 lần nhập; thống kê sẽ tự cập nhật khi phiếu nhập cùng tên được lưu.
+          </Typography>
+        </Box>
+      </BaseSlidePanel>
 
       <MergeItemsModal
         open={mergeOpen}
