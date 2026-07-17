@@ -91,7 +91,7 @@ const AssetsTab: React.FC = () => {
   }
 
   return (
-    <Box layoutClassName="max-w-4xl space-y-4">
+    <Box layoutClassName="space-y-4">
       <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
         <Typography size="sm" layoutClassName="font-semibold">
           {assetForm.id ? 'Sửa tài sản' : 'Thêm tài sản (CSVC/thiết bị)'}

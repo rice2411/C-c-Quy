@@ -49,6 +49,10 @@ export interface RevenuePoint {
   label: string;
   revenue: number;
   profit: number;
+  /** Chi phí 3 nhánh mỗi kỳ (cho line chart Tổng quan chi phí). */
+  stockIn?: number;
+  depreciation?: number;
+  opex?: number;
 }
 
 export interface RevenueReport {

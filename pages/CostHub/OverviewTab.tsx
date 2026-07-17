@@ -5,7 +5,7 @@ import Typography from '@/components/ui/Typography';
 import Card from '@/components/ui/Card';
 import Spinner from '@/components/ui/Spinner';
 import StatsBanner from '@/components/ui/StatsBanner';
-import { DonutChart, ChartLegend, LINE_TYPE_META } from '@/components/ui/stats';
+import { DonutChart, ChartLegend, TrendChart, LINE_TYPE_META } from '@/components/ui/stats';
 import DateRangePicker, { DatePreset, computePresetRange } from '@/components/ui/DateRangePicker';
 import { useRevenueReport } from '@/hooks/queries/useTransactionsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
@@ -88,6 +88,24 @@ const OverviewTab: React.FC = () => {
               </Box>
             )}
           </Card>
+
+          {(report?.series?.length ?? 0) > 1 ? (
+            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+              <Typography size="sm" layoutClassName="font-semibold">Chi phí 3 nhánh theo kỳ</Typography>
+              <TrendChart
+                data={report!.series as unknown as Array<Record<string, unknown>>}
+                xKey="label"
+                series={[
+                  { key: 'stockIn', label: 'Nhập kho', color: C_STOCK },
+                  { key: 'depreciation', label: 'Khấu hao', color: C_DEP },
+                  { key: 'opex', label: 'Vận hành', color: C_OPEX },
+                ]}
+                type="line"
+                formatValue={formatVND}
+                heightClassName="h-56"
+              />
+            </Card>
+          ) : null}
         </Box>
       )}
     </Box>
