@@ -47,7 +47,7 @@ const OverviewTab: React.FC = () => {
   ].filter((x) => x.value > 0);
 
   return (
-    <Box layoutClassName="max-w-5xl space-y-4">
+    <Box layoutClassName="space-y-4">
       <Box layoutClassName="flex flex-wrap items-center gap-2">
         <Box layoutClassName="ml-auto">
           <DateRangePicker
