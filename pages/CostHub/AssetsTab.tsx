@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Boxes, Pencil, Trash2 } from 'lucide-react';
+import { Boxes, Pencil, Plus, Trash2 } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
 import Button from '@/components/ui/Button';
@@ -10,6 +10,7 @@ import Card from '@/components/ui/Card';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
 import DatePicker from '@/components/ui/DatePicker';
+import BaseSlidePanel from '@/components/BaseSlidePanel';
 import { ASSET_CATEGORIES, type Asset } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { fetchAssets, upsertAsset, deleteAsset } from '@/services/assetService';
@@ -21,8 +22,11 @@ const EMPTY_ASSET: AssetForm = { name: '', cost: '', usefulMonths: '12', startDa
 const AssetsTab: React.FC = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [assetForm, setAssetForm] = useState<AssetForm>(EMPTY_ASSET);
+  const [formOpen, setFormOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const openAdd = () => { setAssetForm(EMPTY_ASSET); setFormOpen(true); };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,6 +60,7 @@ const AssetsTab: React.FC = () => {
       });
       toast.success(assetForm.id ? 'Đã cập nhật tài sản' : 'Đã thêm tài sản');
       setAssetForm(EMPTY_ASSET);
+      setFormOpen(false);
       await load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Lưu tài sản thất bại');
@@ -77,10 +82,13 @@ const AssetsTab: React.FC = () => {
     }
   };
 
-  const editAsset = (a: Asset) => setAssetForm({
-    id: a.id, name: a.name, cost: String(a.cost), usefulMonths: String(a.usefulMonths),
-    startDate: a.startDate, category: String(a.category ?? 'equipment'),
-  });
+  const editAsset = (a: Asset) => {
+    setAssetForm({
+      id: a.id, name: a.name, cost: String(a.cost), usefulMonths: String(a.usefulMonths),
+      startDate: a.startDate, category: String(a.category ?? 'equipment'),
+    });
+    setFormOpen(true);
+  };
 
   if (loading) {
     return (
@@ -92,28 +100,10 @@ const AssetsTab: React.FC = () => {
 
   return (
     <Box layoutClassName="space-y-4">
-      <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
-        <Typography size="sm" layoutClassName="font-semibold">
-          {assetForm.id ? 'Sửa tài sản' : 'Thêm tài sản (CSVC/thiết bị)'}
-        </Typography>
-        <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Input value={assetForm.name} placeholder="Tên (vd Tủ lạnh)" onChange={(e) => setAssetForm((f) => ({ ...f, name: e.target.value }))} fullWidth />
-          <Select value={assetForm.category} onChange={(e) => setAssetForm((f) => ({ ...f, category: e.target.value }))}>
-            {ASSET_CATEGORIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
-          </Select>
-          <Input type="number" min={0} value={assetForm.cost} placeholder="Nguyên giá (VND)" onChange={(e) => setAssetForm((f) => ({ ...f, cost: e.target.value }))} fullWidth />
-          <Input type="number" min={1} value={assetForm.usefulMonths} placeholder="Số tháng khấu hao" onChange={(e) => setAssetForm((f) => ({ ...f, usefulMonths: e.target.value }))} fullWidth />
-          <DatePicker value={assetForm.startDate} onChange={(v) => setAssetForm((f) => ({ ...f, startDate: v }))} fullWidth placeholder="Ngày bắt đầu khấu hao" />
-        </Box>
-        <Box layoutClassName="flex flex-wrap gap-2">
-          <Button type="button" disabled={busy} onClick={() => void saveAsset()} variant="primary" sizeClassName="px-3 py-1.5 text-xs" roundedClassName="rounded-lg" layoutClassName="inline-flex items-center gap-1.5" disableVariantHover>
-            {assetForm.id ? 'Cập nhật' : 'Thêm'}
-          </Button>
-          {assetForm.id ? (
-            <Button type="button" onClick={() => setAssetForm(EMPTY_ASSET)} variant="secondary" sizeClassName="px-3 py-1.5 text-xs" roundedClassName="rounded-lg" disableVariantHover>Huỷ</Button>
-          ) : null}
-        </Box>
-      </Card>
+      <Box layoutClassName="flex items-center justify-between gap-2">
+        <Typography size="sm" variant="muted">{assets.length} tài sản</Typography>
+        <Button type="button" onClick={openAdd} variant="primary" leftIcon={<Plus />} iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5" sizeClassName="px-3 py-1.5 text-xs" roundedClassName="rounded-lg" layoutClassName="inline-flex items-center gap-1.5" disableVariantHover>Thêm tài sản</Button>
+      </Box>
 
       {assets.length === 0 ? (
         <EmptyState icon={<Boxes className="h-6 w-6" />} title="Chưa có tài sản" />
@@ -144,6 +134,31 @@ const AssetsTab: React.FC = () => {
           ))}
         </Box>
       )}
+
+      <BaseSlidePanel
+        isOpen={formOpen}
+        onClose={() => setFormOpen(false)}
+        title={assetForm.id ? 'Sửa tài sản' : 'Thêm tài sản (CSVC/thiết bị)'}
+        maxWidth="md"
+        footer={
+          <Box layoutClassName="flex gap-2 p-4">
+            <Button type="button" disabled={busy} onClick={() => void saveAsset()} variant="primary" sizeClassName="px-4 py-2 text-sm" roundedClassName="rounded-lg" layoutClassName="inline-flex items-center gap-1.5" disableVariantHover>
+              {assetForm.id ? 'Cập nhật' : 'Thêm'}
+            </Button>
+            <Button type="button" onClick={() => setFormOpen(false)} variant="secondary" sizeClassName="px-4 py-2 text-sm" roundedClassName="rounded-lg" disableVariantHover>Huỷ</Button>
+          </Box>
+        }
+      >
+        <Box layoutClassName="grid grid-cols-1 gap-3 p-4">
+          <Input value={assetForm.name} placeholder="Tên (vd Tủ lạnh)" onChange={(e) => setAssetForm((f) => ({ ...f, name: e.target.value }))} fullWidth />
+          <Select value={assetForm.category} onChange={(e) => setAssetForm((f) => ({ ...f, category: e.target.value }))}>
+            {ASSET_CATEGORIES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+          </Select>
+          <Input type="number" min={0} value={assetForm.cost} placeholder="Nguyên giá (VND)" onChange={(e) => setAssetForm((f) => ({ ...f, cost: e.target.value }))} fullWidth />
+          <Input type="number" min={1} value={assetForm.usefulMonths} placeholder="Số tháng khấu hao" onChange={(e) => setAssetForm((f) => ({ ...f, usefulMonths: e.target.value }))} fullWidth />
+          <DatePicker value={assetForm.startDate} onChange={(v) => setAssetForm((f) => ({ ...f, startDate: v }))} fullWidth placeholder="Ngày bắt đầu khấu hao" />
+        </Box>
+      </BaseSlidePanel>
     </Box>
   );
 };
