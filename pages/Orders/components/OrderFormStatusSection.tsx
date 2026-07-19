@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Copy, CreditCard, MonitorSmartphone, QrCode, StickyNote, Wallet } from 'lucide-react';
+import { Copy, CreditCard, Home, MonitorSmartphone, QrCode, StickyNote, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { OrderStatus, PaymentMethod, PaymentStatus } from '@/types';
 import { generateQRCodeImage } from '@/utils/order/orderUtils';
 import { buildOrderEmvQr } from '@/utils/order/vietQrEmv';
-import { pushPosQr } from '@/services/posService';
+import { pushPosQr, clearPosQr } from '@/services/posService';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Field from '@/components/ui/Field';
@@ -60,6 +60,19 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
     try {
       await pushPosQr({ order_id: orderNumber, amount: total, qr: emv });
       toast.success(t('pos.qrPushed'));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t('pos.qrPushFailed'));
+    } finally {
+      setPosBusy(false);
+    }
+  };
+
+  // Huỷ QR trên thiết bị → ESP32 về màn hình chính.
+  const handleCancelPos = async () => {
+    setPosBusy(true);
+    try {
+      await clearPosQr();
+      toast.success(t('pos.backToHomeDone'));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t('pos.qrPushFailed'));
     } finally {
@@ -219,20 +232,36 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             <Typography size="xs" variant="muted" layoutClassName="mt-2 text-[10px]">
               {t('qr.instruction')}
             </Typography>
-            <Button
-              type="button"
-              onClick={() => void handlePushPos()}
-              disabled={posBusy}
-              variant="primary"
-              leftIcon={<MonitorSmartphone />}
-              iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-              sizeClassName="mt-2 px-3 py-2 text-xs"
-              roundedClassName="rounded-lg"
-              layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
-              disableVariantHover
-            >
-              {posBusy ? t('pos.qrPushing') : t('pos.pushToDevice')}
-            </Button>
+            <Box layoutClassName="mt-2 flex flex-col gap-2 sm:flex-row">
+              <Button
+                type="button"
+                onClick={() => void handlePushPos()}
+                disabled={posBusy}
+                variant="primary"
+                leftIcon={<MonitorSmartphone />}
+                iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                sizeClassName="px-3 py-2 text-xs"
+                roundedClassName="rounded-lg"
+                layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
+                disableVariantHover
+              >
+                {posBusy ? t('pos.qrPushing') : t('pos.pushToDevice')}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void handleCancelPos()}
+                disabled={posBusy}
+                variant="secondary"
+                leftIcon={<Home />}
+                iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                sizeClassName="px-3 py-2 text-xs"
+                roundedClassName="rounded-lg"
+                layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
+                disableVariantHover
+              >
+                {t('pos.backToHome')}
+              </Button>
+            </Box>
           </Box>
         </Box>
       ) : null}

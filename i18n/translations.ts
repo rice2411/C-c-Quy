@@ -636,7 +636,9 @@ export const translations = {
       qrPushing: "Sending...",
       qrPushed: "QR sent to POS device",
       qrPushFailed: "Failed to send QR to device",
-      qrBuildFailed: "Cannot build QR — check the payment bank account"
+      qrBuildFailed: "Cannot build QR — check the payment bank account",
+      backToHome: "Back to home",
+      backToHomeDone: "POS device back to home screen"
     },
     paymentSettings: {
       title: "Payment account",
@@ -1365,7 +1367,9 @@ export const translations = {
       qrPushing: "Đang gửi...",
       qrPushed: "Đã gửi QR lên máy POS",
       qrPushFailed: "Gửi QR lên thiết bị thất bại",
-      qrBuildFailed: "Không dựng được QR — kiểm tra tài khoản ngân hàng thanh toán"
+      qrBuildFailed: "Không dựng được QR — kiểm tra tài khoản ngân hàng thanh toán",
+      backToHome: "Về màn chính",
+      backToHomeDone: "Máy POS đã về màn hình chính"
     },
     paymentSettings: {
       title: "Tài khoản thanh toán",
