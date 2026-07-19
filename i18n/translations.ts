@@ -631,6 +631,13 @@ export const translations = {
       content: "Content",
       instruction: "Scan with any banking app to pay."
     },
+    pos: {
+      pushToDevice: "Show QR on POS device",
+      qrPushing: "Sending...",
+      qrPushed: "QR sent to POS device",
+      qrPushFailed: "Failed to send QR to device",
+      qrBuildFailed: "Cannot build QR — check the payment bank account"
+    },
     paymentSettings: {
       title: "Payment account",
       bankInfo: "Receiving bank account",
@@ -1352,6 +1359,13 @@ export const translations = {
       amount: "Số tiền",
       content: "Nội dung",
       instruction: "Quét mã bằng ứng dụng ngân hàng để thanh toán."
+    },
+    pos: {
+      pushToDevice: "Hiện QR lên máy POS",
+      qrPushing: "Đang gửi...",
+      qrPushed: "Đã gửi QR lên máy POS",
+      qrPushFailed: "Gửi QR lên thiết bị thất bại",
+      qrBuildFailed: "Không dựng được QR — kiểm tra tài khoản ngân hàng thanh toán"
     },
     paymentSettings: {
       title: "Tài khoản thanh toán",

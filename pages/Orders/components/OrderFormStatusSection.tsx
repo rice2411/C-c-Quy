@@ -1,10 +1,14 @@
-import React from 'react';
-import { Copy, CreditCard, QrCode, StickyNote, Wallet } from 'lucide-react';
+import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import { Copy, CreditCard, MonitorSmartphone, QrCode, StickyNote, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { OrderStatus, PaymentMethod, PaymentStatus } from '@/types';
 import { generateQRCodeImage } from '@/utils/order/orderUtils';
+import { buildOrderEmvQr } from '@/utils/order/vietQrEmv';
+import { pushPosQr } from '@/services/posService';
 import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
 import Field from '@/components/ui/Field';
 import Image from '@/components/ui/Image';
 import Select from '@/components/ui/Select';
@@ -38,10 +42,30 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
 }) => {
   const { t } = useLanguage();
   const { activeAccount } = usePaymentAccounts();
+  const [posBusy, setPosBusy] = useState(false);
 
   const description = `SEVQR ${orderNumber}`;
   // Không có TK active → qrUrl rỗng → block QR ẩn an toàn.
   const qrUrl = activeAccount ? generateQRCodeImage(orderNumber, total, activeAccount) : '';
+
+  // Đẩy QR (chuỗi VietQR EMV) xuống thiết bị POS/ESP32 để hiện QR + số tiền.
+  const handlePushPos = async () => {
+    if (!activeAccount) return;
+    const emv = buildOrderEmvQr(orderNumber, total, activeAccount);
+    if (!emv) {
+      toast.error(t('pos.qrBuildFailed'));
+      return;
+    }
+    setPosBusy(true);
+    try {
+      await pushPosQr({ order_id: orderNumber, amount: total, qr: emv });
+      toast.success(t('pos.qrPushed'));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t('pos.qrPushFailed'));
+    } finally {
+      setPosBusy(false);
+    }
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -51,7 +75,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
     <Box layoutClassName="space-y-6">
       <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label={t('form.status')} htmlFor="order-form-status">
-          <div>
+          <Box>
             <Select
               id="order-form-status"
               fullWidth
@@ -64,11 +88,11 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
                 </option>
               ))}
             </Select>
-          </div>
+          </Box>
         </Field>
 
         <Field label={t('detail.payment')} htmlFor="order-form-payment-status">
-          <div className="relative">
+          <Box layoutClassName="relative">
             <CreditCard className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Select
               id="order-form-payment-status"
@@ -83,12 +107,12 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
                 </option>
               ))}
             </Select>
-          </div>
+          </Box>
         </Field>
       </Box>
 
       <Field label={t('paymentMethod.label')} htmlFor="order-form-payment-method">
-        <div className="relative">
+        <Box layoutClassName="relative">
           <Wallet className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Select
             id="order-form-payment-method"
@@ -100,7 +124,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             <option value={PaymentMethod.CASH}>{t('paymentMethod.cash')}</option>
             <option value={PaymentMethod.BANKING}>{t('paymentMethod.banking')}</option>
           </Select>
-        </div>
+        </Box>
       </Field>
 
       {/* DeliveryType đã được chuyển lên OrderFormCustomerSection để gần ô địa chỉ */}
@@ -141,7 +165,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
               textClassName="font-semibold text-blue-800 dark:text-blue-300"
             >
               <QrCode className="h-4 w-4" />
-              <span>{t('qr.title')}</span>
+              <Typography as="span">{t('qr.title')}</Typography>
             </Box>
 
             <Box layoutClassName="space-y-1 text-sm text-slate-600 dark:text-slate-400">
@@ -195,6 +219,20 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             <Typography size="xs" variant="muted" layoutClassName="mt-2 text-[10px]">
               {t('qr.instruction')}
             </Typography>
+            <Button
+              type="button"
+              onClick={() => void handlePushPos()}
+              disabled={posBusy}
+              variant="primary"
+              leftIcon={<MonitorSmartphone />}
+              iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+              sizeClassName="mt-2 px-3 py-2 text-xs"
+              roundedClassName="rounded-lg"
+              layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
+              disableVariantHover
+            >
+              {posBusy ? t('pos.qrPushing') : t('pos.pushToDevice')}
+            </Button>
           </Box>
         </Box>
       ) : null}
