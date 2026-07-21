@@ -13,6 +13,7 @@ import Field from '@/components/ui/Field';
 import Image from '@/components/ui/Image';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
+import Input from '@/components/ui/Input';
 import Typography from '@/components/ui/Typography';
 
 interface OrderStatusSectionProps {
@@ -26,6 +27,9 @@ interface OrderStatusSectionProps {
   setNote: (val: string) => void;
   total: number;
   orderNumber: string;
+  depositAmount: number;
+  setDepositAmount: (val: number) => void;
+  paidAmount: number;
 }
 
 const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
@@ -39,6 +43,9 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
   setNote,
   total,
   orderNumber,
+  depositAmount,
+  setDepositAmount,
+  paidAmount,
 }) => {
   const { t } = useLanguage();
   const { activeAccount } = usePaymentAccounts();
@@ -47,18 +54,21 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
   const description = `SEVQR ${orderNumber}`;
   // Không có TK active → qrUrl rỗng → block QR ẩn an toàn.
   const qrUrl = activeAccount ? generateQRCodeImage(orderNumber, total, activeAccount) : '';
+  const remaining = Math.max(0, total - (Number(paidAmount) || 0));
+  const depositDue = Number(depositAmount) > 0 && (Number(paidAmount) || 0) < Number(depositAmount);
+  const fmt = (n: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
-  // Đẩy QR (chuỗi VietQR EMV) xuống thiết bị POS/ESP32 để hiện QR + số tiền.
-  const handlePushPos = async () => {
-    if (!activeAccount) return;
-    const emv = buildOrderEmvQr(orderNumber, total, activeAccount);
+  // Đẩy QR (chuỗi VietQR EMV) số tiền `amount` xuống thiết bị POS/ESP32.
+  const handlePushPos = async (amount: number) => {
+    if (!activeAccount || amount <= 0) return;
+    const emv = buildOrderEmvQr(orderNumber, amount, activeAccount);
     if (!emv) {
       toast.error(t('pos.qrBuildFailed'));
       return;
     }
     setPosBusy(true);
     try {
-      await pushPosQr({ order_id: orderNumber, amount: total, qr: emv });
+      await pushPosQr({ order_id: orderNumber, amount, qr: emv });
       toast.success(t('pos.qrPushed'));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t('pos.qrPushFailed'));
@@ -138,6 +148,25 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             <option value={PaymentMethod.BANKING}>{t('paymentMethod.banking')}</option>
           </Select>
         </Box>
+      </Field>
+
+      <Field label={t('form.deposit')} htmlFor="order-form-deposit">
+        <Input
+          id="order-form-deposit"
+          type="number"
+          min={0}
+          value={depositAmount || ''}
+          onChange={(e) => setDepositAmount(Number(e.target.value) || 0)}
+          placeholder="0"
+          fullWidth
+        />
+        {depositAmount > 0 || (Number(paidAmount) || 0) > 0 ? (
+          <Box layoutClassName="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5">
+            <Typography as="span" size="xs" variant="muted">{t('form.total')}: {fmt(total)}</Typography>
+            <Typography as="span" size="xs" variant="muted">{t('form.received')}: {fmt(Number(paidAmount) || 0)}</Typography>
+            <Typography as="span" size="xs" layoutClassName="font-semibold text-primary-600 dark:text-primary-400">{t('form.remaining')}: {fmt(remaining)}</Typography>
+          </Box>
+        ) : null}
       </Field>
 
       {/* DeliveryType đã được chuyển lên OrderFormCustomerSection để gần ô địa chỉ */}
@@ -232,12 +261,28 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             <Typography size="xs" variant="muted" layoutClassName="mt-2 text-[10px]">
               {t('qr.instruction')}
             </Typography>
-            <Box layoutClassName="mt-2 flex flex-col gap-2 sm:flex-row">
+            <Box layoutClassName="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              {depositDue ? (
+                <Button
+                  type="button"
+                  onClick={() => void handlePushPos(Number(depositAmount))}
+                  disabled={posBusy}
+                  variant="primary"
+                  leftIcon={<MonitorSmartphone />}
+                  iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                  sizeClassName="px-3 py-2 text-xs"
+                  roundedClassName="rounded-lg"
+                  layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
+                  disableVariantHover
+                >
+                  {t('pos.qrDeposit')} · {fmt(Number(depositAmount))}
+                </Button>
+              ) : null}
               <Button
                 type="button"
-                onClick={() => void handlePushPos()}
-                disabled={posBusy}
-                variant="primary"
+                onClick={() => void handlePushPos(remaining)}
+                disabled={posBusy || remaining <= 0}
+                variant={depositDue ? 'secondary' : 'primary'}
                 leftIcon={<MonitorSmartphone />}
                 iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
                 sizeClassName="px-3 py-2 text-xs"
@@ -245,7 +290,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
                 layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
                 disableVariantHover
               >
-                {posBusy ? t('pos.qrPushing') : t('pos.pushToDevice')}
+                {posBusy ? t('pos.qrPushing') : `${(Number(paidAmount) || 0) > 0 ? t('pos.qrRemaining') : t('pos.pushToDevice')} · ${fmt(remaining)}`}
               </Button>
               <Button
                 type="button"

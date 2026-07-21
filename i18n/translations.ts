@@ -145,6 +145,7 @@ export const translations = {
       paymentStatusLabels: {
         PAID: "Paid",
         UNPAID: "Unpaid",
+        DEPOSITED: "Deposited",
         REFUNDED: "Refunded"
       },
       delete: "Delete Order",
@@ -536,6 +537,10 @@ export const translations = {
       unitPrice: "Unit Price (VND)",
       shippingCost: "Shipping Cost (VND)",
       totalEstimate: "Total Estimate",
+      deposit: "Deposit",
+      total: "Total",
+      received: "Received",
+      remaining: "Remaining",
       status: "Status",
       note: "Note",
       cancel: "Cancel",
@@ -638,7 +643,9 @@ export const translations = {
       qrPushFailed: "Failed to send QR to device",
       qrBuildFailed: "Cannot build QR — check the payment bank account",
       backToHome: "Back to home",
-      backToHomeDone: "POS device back to home screen"
+      backToHomeDone: "POS device back to home screen",
+      qrDeposit: "Deposit QR",
+      qrRemaining: "Remaining QR"
     },
     paymentSettings: {
       title: "Payment account",
@@ -876,6 +883,7 @@ export const translations = {
       paymentStatusLabels: {
         PAID: "Đã thanh toán",
         UNPAID: "Chưa thanh toán",
+        DEPOSITED: "Đã cọc",
         REFUNDED: "Đã hoàn trả"
       },
       delete: "Xóa đơn hàng",
@@ -1267,6 +1275,10 @@ export const translations = {
       unitPrice: "Đơn giá (VND)",
       shippingCost: "Phí vận chuyển (VND)",
       totalEstimate: "Tạm tính",
+      deposit: "Tiền cọc",
+      total: "Tổng",
+      received: "Đã nhận",
+      remaining: "Còn lại",
       status: "Trạng thái",
       note: "Ghi chú",
       cancel: "Hủy bỏ",
@@ -1369,7 +1381,9 @@ export const translations = {
       qrPushFailed: "Gửi QR lên thiết bị thất bại",
       qrBuildFailed: "Không dựng được QR — kiểm tra tài khoản ngân hàng thanh toán",
       backToHome: "Về màn chính",
-      backToHomeDone: "Máy POS đã về màn hình chính"
+      backToHomeDone: "Máy POS đã về màn hình chính",
+      qrDeposit: "QR cọc",
+      qrRemaining: "QR còn lại"
     },
     paymentSettings: {
       title: "Tài khoản thanh toán",

@@ -26,5 +26,6 @@ export const PAYMENT_METHOD_COLORS: Record<PaymentMethod, string> = {
 export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
   [PaymentStatus.PAID]: "bg-emerald-100 text-emerald-800",
   [PaymentStatus.UNPAID]: "bg-red-200 text-red-700",
+  [PaymentStatus.DEPOSITED]: "bg-amber-100 text-amber-800",
   [PaymentStatus.REFUNDED]: "bg-purple-100 text-purple-800",
 };

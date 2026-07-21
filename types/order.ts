@@ -137,6 +137,12 @@ export interface Order {
   giftItems?: GiftItem[];
   /** = subtotal + shippingCost − discountAmount. */
   total: number;
+  /** Tiền cọc thoả thuận (VND). */
+  depositAmount?: number;
+  /** Đã nhận thực tế (cọc + trả thêm, webhook cộng dồn). */
+  paidAmount?: number;
+  /** Còn lại = total − paidAmount (BE tính, read-only). */
+  remaining?: number;
   shippingCost?: number;
   /** Cache shipping info từ AddressMapInput — tránh fetch SerpApi khi edit */
   shipInfo?: {

@@ -9,6 +9,7 @@ export enum OrderStatus {
 export enum PaymentStatus {
   PAID = 'PAID',
   UNPAID = 'UNPAID',
+  DEPOSITED = 'DEPOSITED',
   REFUNDED = 'REFUNDED'
 }
 

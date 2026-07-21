@@ -121,6 +121,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const [note, setNote] = useState('');
   const [status, setStatus] = useState<OrderStatus>(OrderStatus.PENDING);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(PaymentStatus.UNPAID);
+  const [depositAmount, setDepositAmount] = useState(0);   // tiền cọc thoả thuận
+  const [paidAmount, setPaidAmount] = useState(0);          // đã nhận (từ BE, read-only)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
   const [deliveryDate, setDeliveryDate] = useState<string>('');
   const [deliveryTime, setDeliveryTime] = useState<string>('');
@@ -179,6 +181,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setNote(initialData.note || '');
       setStatus(initialData.status);
       setPaymentStatus(initialData.paymentStatus || PaymentStatus.UNPAID);
+      setDepositAmount(initialData.depositAmount || 0);
+      setPaidAmount(initialData.paidAmount || 0);
       setPaymentMethod(initialData.paymentMethod || PaymentMethod.CASH);
       setDeliveryType(initialData.deliveryType || DeliveryType.SHIP);
       setShippingCost(initialData.shippingCost || 0);
@@ -247,6 +251,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setShippingCost(0);
       setStatus(OrderStatus.PENDING);
       setPaymentStatus(PaymentStatus.UNPAID);
+      setDepositAmount(0);
+      setPaidAmount(0);
       setPaymentMethod(PaymentMethod.CASH);
       setDeliveryType(DeliveryType.SHIP);
       setItems([]);
@@ -577,6 +583,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         appliedPromotionCode: promoCode.trim() || undefined,
         appliedPromotionIds: selectedPromoIds,
         total: total,
+        depositAmount: Number(depositAmount) || 0,
         note: note,
         deliveryDate: deliveryDate,
         deliveryTime: isDeliveryTimeEnabled && deliveryTime ? deliveryTime : undefined,
@@ -811,7 +818,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
                 className="min-w-0 overflow-hidden"
                 label={
                   <Box layoutClassName="flex w-full items-center justify-between">
-                    <span>Giờ nhận (tùy chọn)</span>
+                    <Typography as="span">Giờ nhận (tùy chọn)</Typography>
                     <Checkbox
                       checked={isDeliveryTimeEnabled}
                       onChange={(e) => {
@@ -846,7 +853,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
                 </Box>
               </Field>
             </Box>
-            <hr className="border-slate-100 dark:border-slate-700" />
+            <Box borderClassName="border-t border-slate-100 dark:border-slate-700" />
 
             <OrderFormItemsSection
               items={items}
@@ -862,7 +869,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               recentlyAddedId={recentlyAddedId}
             />
 
-            <hr className="border-slate-100 dark:border-slate-700" />
+            <Box borderClassName="border-t border-slate-100 dark:border-slate-700" />
 
             <OrderFormDecorationSection
               surcharges={surcharges}
@@ -871,7 +878,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               onChange={setSurcharges}
             />
 
-            <hr className="border-slate-100 dark:border-slate-700" />
+            <Box borderClassName="border-t border-slate-100 dark:border-slate-700" />
 
             {/* ─── Khuyến mãi ─── */}
             <Box layoutClassName="space-y-2">
@@ -961,7 +968,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               ))}
             </Box>
 
-            <hr className="border-slate-100 dark:border-slate-700" />
+            <Box borderClassName="border-t border-slate-100 dark:border-slate-700" />
             <OrderFormStatusSection
               status={status}
               setStatus={setStatus}
@@ -973,6 +980,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               setNote={setNote}
               total={total}
               orderNumber={orderNumber}
+              depositAmount={depositAmount}
+              setDepositAmount={setDepositAmount}
+              paidAmount={paidAmount}
             />
           </Box>
         </form>
