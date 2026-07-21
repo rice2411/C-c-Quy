@@ -109,22 +109,25 @@ export function userCanEditOrder(
  * Tạo URL ảnh QR code thanh toán (SePay VietQR).
  * Config (số TK / mã bank / template) = TK ACTIVE, bơm vào từ usePaymentAccounts() (React)
  * hoặc fetchPaymentAccounts() → find(isActive) (non-React) — KHÔNG hardcode.
- * Nội dung CK = "SEVQR <orderNumber>" (prefix SEVQR cố định, giữ nguyên orderNumber ORD-...).
+ * Nội dung CK = mã đơn đứng một mình (vd "ORD-000415"); nếu là CỌC thì thêm prefix "C"
+ * (vd "CORD-000415"). Bỏ prefix "SEVQR" cũ — BE vẫn trích ORD<digits> nên match như thường.
  * @param orderNumber - Mã đơn (vd "ORD-2026-001")
  * @param total - Tổng tiền (VND)
  * @param config - Cấu hình thanh toán (bankCode/accountNumber/qrTemplate)
+ * @param isDeposit - true → nội dung CK có prefix "C" (giao dịch cọc)
  * @returns URL ảnh QR, hoặc '' nếu thiếu số TK / mã bank (fallback an toàn, không tạo URL vỡ)
  */
 export const generateQRCodeImage = (
   orderNumber: string,
   total: number,
   config: { bankCode: string; accountNumber: string; qrTemplate?: string },
+  isDeposit = false,
 ): string => {
   const acc = (config?.accountNumber ?? '').trim();
   const bank = (config?.bankCode ?? '').trim();
   if (!acc || !bank) return '';
   const template = (config?.qrTemplate ?? 'compact').trim() || 'compact';
-  const des = `SEVQR ${orderNumber}`;
+  const des = `${isDeposit ? 'C' : ''}${orderNumber}`;
   const qrUrl = `https://qr.sepay.vn/img?acc=${encodeURIComponent(acc)}&bank=${encodeURIComponent(bank)}&amount=${Math.round(total)}&des=${encodeURIComponent(des)}&template=${encodeURIComponent(template)}`;
   return qrUrl;
 };

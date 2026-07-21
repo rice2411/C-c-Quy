@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Copy, CreditCard, Home, MonitorSmartphone, QrCode, StickyNote, Wallet } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Copy, CreditCard, Home, Link2, MonitorSmartphone, QrCode, StickyNote, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
-import { OrderStatus, PaymentMethod, PaymentStatus } from '@/types';
+import { qk } from '@/hooks/queryKeys';
+import { OrderStatus, PaymentMethod, PaymentStatus, Transaction } from '@/types';
 import { generateQRCodeImage } from '@/utils/order/orderUtils';
 import { buildOrderEmvQr } from '@/utils/order/vietQrEmv';
 import { pushPosQr, clearPosQr } from '@/services/posService';
+import { reconcileOrderTransaction } from '@/services/orderService';
+import OrderTxnReconcileModal from '@/pages/Orders/components/modals/OrderTxnReconcileModal';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Field from '@/components/ui/Field';
@@ -30,6 +34,9 @@ interface OrderStatusSectionProps {
   depositAmount: number;
   setDepositAmount: (val: number) => void;
   paidAmount: number;
+  setPaidAmount: (val: number) => void;
+  /** id đơn (chỉ có khi SỬA đơn) — cần để đối ứng giao dịch. */
+  orderId?: string;
 }
 
 const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
@@ -46,14 +53,37 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
   depositAmount,
   setDepositAmount,
   paidAmount,
+  setPaidAmount,
+  orderId,
 }) => {
   const { t } = useLanguage();
   const { activeAccount } = usePaymentAccounts();
   const [posBusy, setPosBusy] = useState(false);
   // Chế độ QR đang hiển thị/đẩy POS: 'deposit' (thu cọc) hoặc 'remainder' (gốc trừ cọc).
   const [qrMode, setQrMode] = useState<'deposit' | 'remainder'>('deposit');
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [reconciling, setReconciling] = useState(false);
+  const queryClient = useQueryClient();
 
-  const description = `SEVQR ${orderNumber}`;
+  // Đối ứng 1 giao dịch (in/out) với đơn: BE cộng/trừ paidAmount + suy status, gắn GD.
+  const handleReconcileTxn = async (tx: Transaction) => {
+    if (!orderId || reconciling) return;
+    setReconciling(true);
+    try {
+      const updated = await reconcileOrderTransaction(orderId, tx.id);
+      setPaidAmount(Number(updated.paidAmount) || 0);
+      if (updated.paymentStatus) setPaymentStatus(updated.paymentStatus);
+      await queryClient.invalidateQueries({ queryKey: qk.transactions.all });
+      const sign = (tx.transferType || 'in') === 'out' ? '−' : '+';
+      toast.success(`Đã đối ứng GD #${tx.sepayId} (${sign}${fmt(Number(tx.transferAmount) || 0)})`);
+      setPickerOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Không đối ứng được giao dịch');
+    } finally {
+      setReconciling(false);
+    }
+  };
+
   const remaining = Math.max(0, total - (Number(paidAmount) || 0)); // còn lại thực = tổng − đã nhận
   const hasDeposit = Number(depositAmount) > 0;
   // Đã thu (để trừ khỏi QR gốc): lớn hơn giữa cọc thoả thuận và tiền đã nhận thực tế.
@@ -62,16 +92,19 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
   const remainderAmount = Math.max(0, total - collected);
   // 2 chế độ QR chuyển đổi qua lại: 'deposit' (thu cọc) / 'remainder' (gốc trừ cọc). Không cọc → luôn remainder.
   const effectiveQrMode: 'deposit' | 'remainder' = hasDeposit ? qrMode : 'remainder';
-  const qrAmount = effectiveQrMode === 'deposit' ? Number(depositAmount) : (remainderAmount > 0 ? remainderAmount : total);
-  const qrAmountLabel = !hasDeposit ? '' : (effectiveQrMode === 'deposit' ? t('pos.qrDeposit') : t('pos.qrRemaining'));
-  // Không có TK active → qrUrl rỗng → block QR ẩn an toàn. QR khớp số đang chọn (qrAmount).
-  const qrUrl = activeAccount ? generateQRCodeImage(orderNumber, qrAmount, activeAccount) : '';
+  const isDepositQr = effectiveQrMode === 'deposit';
+  const qrAmount = isDepositQr ? Number(depositAmount) : (remainderAmount > 0 ? remainderAmount : total);
+  const qrAmountLabel = !hasDeposit ? '' : (isDepositQr ? t('pos.qrDeposit') : t('pos.qrRemaining'));
+  // Nội dung CK = mã đơn đứng một mình; cọc → prefix "C" (vd CORD-000415).
+  const description = `${isDepositQr ? 'C' : ''}${orderNumber}`;
+  // Không có TK active → qrUrl rỗng → block QR ẩn an toàn. QR khớp số đang chọn (qrAmount) + prefix cọc.
+  const qrUrl = activeAccount ? generateQRCodeImage(orderNumber, qrAmount, activeAccount, isDepositQr) : '';
   const fmt = (n: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
   // Đẩy QR (chuỗi VietQR EMV) số tiền `amount` xuống thiết bị POS/ESP32.
   const handlePushPos = async (amount: number) => {
     if (!activeAccount || amount <= 0) return;
-    const emv = buildOrderEmvQr(orderNumber, amount, activeAccount);
+    const emv = buildOrderEmvQr(orderNumber, amount, activeAccount, isDepositQr);
     if (!emv) {
       toast.error(t('pos.qrBuildFailed'));
       return;
@@ -176,6 +209,27 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             <Typography as="span" size="xs" variant="muted">{t('form.received')}: {fmt(Number(paidAmount) || 0)}</Typography>
             <Typography as="span" size="xs" layoutClassName="font-semibold text-primary-600 dark:text-primary-400">{t('form.remaining')}: {fmt(remaining)}</Typography>
           </Box>
+        ) : null}
+        {/* Đối ứng giao dịch — chỉ khi SỬA đơn (đã có orderId) */}
+        {orderId ? (
+          <Button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            disabled={reconciling}
+            variant="ghost"
+            leftIcon={<Link2 />}
+            iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+            sizeClassName="mt-2 px-3 py-1.5 text-xs"
+            roundedClassName="rounded-lg"
+            shadowClassName=""
+            borderClassName="border border-dashed border-slate-300 dark:border-slate-600"
+            backgroundClassName="bg-white dark:bg-slate-800"
+            textClassName="text-slate-600 dark:text-slate-300"
+            hoverClassName="hover:border-primary-300 dark:hover:border-primary-700"
+            layoutClassName="inline-flex items-center gap-1.5"
+          >
+            {reconciling ? 'Đang đối ứng…' : 'Đối ứng giao dịch (cọc / thanh toán)'}
+          </Button>
         ) : null}
       </Field>
 
@@ -342,6 +396,15 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             </Box>
           </Box>
         </Box>
+      ) : null}
+
+      {orderId ? (
+        <OrderTxnReconcileModal
+          isOpen={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onPick={(tx) => void handleReconcileTxn(tx)}
+          busy={reconciling}
+        />
       ) : null}
     </Box>
   );

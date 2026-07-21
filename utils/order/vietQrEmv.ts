@@ -88,16 +88,18 @@ export function buildVietQrEmv(
 }
 
 /**
- * Dựng EMV cho 1 đơn từ tài khoản nhận (bankCode/accountNumber) — nội dung
- * "SEVQR <orderNumber>" khớp cách SePay đối soát. Trả '' nếu thiếu BIN/TK.
+ * Dựng EMV cho 1 đơn từ tài khoản nhận (bankCode/accountNumber) — nội dung = mã đơn
+ * đứng một mình (vd "ORD-000415"), cọc thì thêm prefix "C" (vd "CORD-000415").
+ * BE vẫn trích ORD<digits> nên match đối soát như thường. Trả '' nếu thiếu BIN/TK.
  */
 export function buildOrderEmvQr(
   orderNumber: string,
   amount: number,
   account: { bankCode: string; accountNumber: string },
+  isDeposit = false,
 ): string {
   const bin = resolveBankBin(account?.bankCode ?? '');
   const acc = (account?.accountNumber ?? '').trim();
   if (!bin || !acc) return '';
-  return buildVietQrEmv(acc, bin, amount, `SEVQR ${orderNumber}`);
+  return buildVietQrEmv(acc, bin, amount, `${isDeposit ? 'C' : ''}${orderNumber}`);
 }

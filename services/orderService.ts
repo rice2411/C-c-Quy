@@ -194,6 +194,21 @@ export const unreconcileRefund = async (
 };
 
 /**
+ * Đối soát 1 giao dịch (tiền vào/ra) với đơn ngay từ form: in → cộng, out → trừ
+ * paidAmount rồi BE tự suy payment_status (UNPAID/DEPOSITED/PAID) + gắn order_number
+ * cho GD. Idempotent (GD đã gắn đơn này thì không cộng lại). BE trả Order đã cập nhật.
+ */
+export const reconcileOrderTransaction = async (
+  orderId: string,
+  transactionId: string,
+): Promise<Order> => {
+  const res = await apiClient.post(`/orders/${orderId}/reconcile-transaction`, {
+    transactionId,
+  });
+  return res.data as Order;
+};
+
+/**
  * Xoa don hang. BE xoa DB (DELETE /orders/:id). SAU DO gui Zalo notify
  * (GIU NGUYEN tren FE). Loi Zalo duoc nuot.
  */

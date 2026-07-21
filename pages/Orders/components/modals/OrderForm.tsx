@@ -989,6 +989,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               depositAmount={depositAmount}
               setDepositAmount={setDepositAmount}
               paidAmount={paidAmount}
+              setPaidAmount={setPaidAmount}
+              orderId={initialData?.id}
             />
           </Box>
         </form>
