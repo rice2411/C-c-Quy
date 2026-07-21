@@ -36,7 +36,10 @@ export interface OrderDecoration {
 /** 1 dòng phụ thu: nhãn (key tag động, optional) + số tiền riêng (VND). */
 export interface SurchargeLine {
   tag?: string;
+  /** Tổng phụ thu của dòng (VND). Khi có perUnit → = perUnit × tổng SL sản phẩm (tự tính). */
   amount: number;
+  /** Nếu set (>0) → phụ thu TÍNH THEO SỐ LƯỢNG: amount = perUnit × tổng SL sản phẩm. */
+  perUnit?: number;
 }
 
 /**

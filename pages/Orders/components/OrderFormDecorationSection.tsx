@@ -38,9 +38,12 @@ const OrderFormDecorationSection: React.FC<Props> = ({
     [items],
   );
 
+  // Số tiền hiệu lực 1 dòng: theo SL (perUnit × tổng SL) hoặc cố định.
+  const lineAmount = (l: SurchargeLine) =>
+    Number(l.perUnit) > 0 ? Math.round(Number(l.perUnit) * totalQty) : (Number(l.amount) || 0);
   const totalSurcharge = useMemo(
-    () => surcharges.reduce((s, x) => s + (Number(x.amount) || 0), 0),
-    [surcharges],
+    () => surcharges.reduce((s, x) => s + lineAmount(x), 0),
+    [surcharges, totalQty],
   );
 
   // Chia TỔNG phụ thu theo qty (preview) — khớp BE allocateSurcharge.
@@ -106,17 +109,42 @@ const OrderFormDecorationSection: React.FC<Props> = ({
                   ))}
                 </Select>
               </Box>
-              <Box layoutClassName="min-w-0 w-32">
+              <Box layoutClassName="min-w-0 w-44">
                 {idx === 0 ? <Label htmlFor={`surcharge-amount-${idx}`}>Số tiền</Label> : null}
-                <Input
-                  id={`surcharge-amount-${idx}`}
-                  type="number"
-                  min={0}
-                  step={1000}
-                  value={line.amount}
-                  onChange={(e) => updateLine(idx, { amount: Math.max(0, Number(e.target.value) || 0) })}
-                  sizeClassName="py-2 text-right text-sm font-semibold"
-                />
+                <Box layoutClassName="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => updateLine(idx, line.perUnit !== undefined ? { perUnit: undefined } : { perUnit: 0, amount: 0 })}
+                    sizeClassName="px-2 py-2 text-xs"
+                    roundedClassName="rounded-lg"
+                    shadowClassName=""
+                    borderClassName="border border-slate-200 dark:border-slate-600"
+                    backgroundClassName={line.perUnit !== undefined ? 'bg-primary-50 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
+                    textClassName={line.perUnit !== undefined ? 'font-semibold text-primary-600 dark:text-primary-300' : 'text-slate-500'}
+                    title="Đổi: cố định / theo số lượng sản phẩm"
+                  >
+                    {line.perUnit !== undefined ? '×SL' : 'đ'}
+                  </Button>
+                  <Input
+                    id={`surcharge-amount-${idx}`}
+                    type="number"
+                    min={0}
+                    step={1000}
+                    value={line.perUnit !== undefined ? (line.perUnit || '') : line.amount}
+                    onChange={(e) => {
+                      const v = Math.max(0, Number(e.target.value) || 0);
+                      updateLine(idx, line.perUnit !== undefined ? { perUnit: v } : { amount: v });
+                    }}
+                    placeholder={line.perUnit !== undefined ? 'đ/sp' : '0'}
+                    sizeClassName="py-2 text-right text-sm font-semibold"
+                  />
+                </Box>
+                {line.perUnit !== undefined ? (
+                  <Typography as="span" size="xs" variant="muted" layoutClassName="mt-0.5 block text-right">
+                    {totalQty} sp × {formatVND(Number(line.perUnit) || 0)} = {formatVND(lineAmount(line))}
+                  </Typography>
+                ) : null}
               </Box>
               <Button
                 type="button"

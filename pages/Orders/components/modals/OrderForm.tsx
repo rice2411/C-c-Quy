@@ -101,9 +101,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const { products } = useProducts();
 
   // Phụ thu cả đơn (mô hình mới) — 1 tổng + 1 nhãn, tự chia theo SL sản phẩm.
-  // Phụ thu nhiều dòng: mỗi nhãn 1 số tiền. Tổng = sum (dùng cho total + payload).
+  // Phụ thu nhiều dòng: mỗi nhãn 1 số tiền HOẶC tính theo SL (perUnit × tổng SL sản phẩm).
   const [surcharges, setSurcharges] = useState<SurchargeLine[]>([]);
-  const surchargeAmount = surcharges.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+  // Tổng SL sản phẩm (số bánh) — dùng cho phụ thu theo SL.
+  const totalQuantity = items.reduce((s, i) => s + (Number(i.quantity) || 0), 0);
+  // Dòng theo SL → amount tự tính = perUnit × totalQuantity (derive, luôn khớp SL hiện tại).
+  const effectiveSurcharges = surcharges.map((l) =>
+    Number(l.perUnit) > 0 ? { ...l, amount: Math.round(Number(l.perUnit) * totalQuantity) } : l,
+  );
+  const surchargeAmount = effectiveSurcharges.reduce((s, x) => s + (Number(x.amount) || 0), 0);
   const surchargeTag = surcharges[0]?.tag; // legacy (dòng đầu) cho preview khuyến mãi
 
   // Tag phụ thu động (Cài đặt đơn hàng) — chỉ hiện active, theo sortOrder.
@@ -574,7 +580,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         items: finalItems,
         surchargeAmount: Number(surchargeAmount || 0),
         // Nguồn chuẩn phụ thu nhiều dòng (BE tự cộng tổng + lấy tag dòng đầu). Bỏ dòng amount<=0.
-        surcharges: surcharges.filter((s) => Number(s.amount) > 0),
+        surcharges: effectiveSurcharges.filter((s) => Number(s.amount) > 0),
         shippingCost: Number(shippingCost),
         shipInfo: shipInfo ?? undefined,
         subtotal: subtotal,

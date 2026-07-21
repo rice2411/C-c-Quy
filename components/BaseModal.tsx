@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useFadeAnimation } from '@/hooks/useFadeAnimation';
 import IconButton from '@/components/ui/IconButton';
@@ -33,8 +34,9 @@ const BaseModal: React.FC<BaseModalProps> = ({
     xl: 'max-w-4xl'
   };
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  return createPortal(
+    // z-[80] > BaseSlidePanel (z-[70]) → modal luôn nổi trên slide panel (vd tạo KH trên form đơn).
+    <div className="fixed inset-0 z-[80] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
       <div className="flex min-h-screen items-center justify-center p-4 text-center sm:p-0 sm:px-4 sm:py-8">
         {/* Backdrop */}
         <div
@@ -93,7 +95,8 @@ const BaseModal: React.FC<BaseModalProps> = ({
           ) : null}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
