@@ -52,10 +52,15 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
   const [posBusy, setPosBusy] = useState(false);
 
   const description = `SEVQR ${orderNumber}`;
-  // Không có TK active → qrUrl rỗng → block QR ẩn an toàn.
-  const qrUrl = activeAccount ? generateQRCodeImage(orderNumber, total, activeAccount) : '';
   const remaining = Math.max(0, total - (Number(paidAmount) || 0));
   const depositDue = Number(depositAmount) > 0 && (Number(paidAmount) || 0) < Number(depositAmount);
+  // Số tiền QR hiển thị = số CẦN THU bây giờ: còn nợ cọc → cọc; đã cọc mà chưa đủ → còn lại; else → tổng.
+  const qrAmount = depositDue ? Number(depositAmount) : (remaining > 0 ? remaining : total);
+  const qrAmountLabel = depositDue
+    ? t('pos.qrDeposit')
+    : ((Number(paidAmount) || 0) > 0 && remaining > 0 ? t('pos.qrRemaining') : '');
+  // Không có TK active → qrUrl rỗng → block QR ẩn an toàn. QR khớp số cần thu (qrAmount).
+  const qrUrl = activeAccount ? generateQRCodeImage(orderNumber, qrAmount, activeAccount) : '';
   const fmt = (n: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
   // Đẩy QR (chuỗi VietQR EMV) số tiền `amount` xuống thiết bị POS/ESP32.
@@ -245,9 +250,16 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
                 <Typography as="span" size="xs" layoutClassName="min-w-[60px] font-medium uppercase text-slate-500">
                   {t('qr.amount')}
                 </Typography>
-                <Typography as="span" layoutClassName="font-bold text-primary-600 dark:text-primary-400">
-                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total)}
-                </Typography>
+                <Box layoutClassName="flex items-center gap-2">
+                  <Typography as="span" layoutClassName="font-bold text-primary-600 dark:text-primary-400">
+                    {fmt(qrAmount)}
+                  </Typography>
+                  {qrAmountLabel ? (
+                    <Typography as="span" size="xs" layoutClassName="rounded-full px-2 py-0.5 font-semibold" backgroundClassName="bg-amber-100 dark:bg-amber-900/40" textClassName="text-amber-700 dark:text-amber-300">
+                      {qrAmountLabel}
+                    </Typography>
+                  ) : null}
+                </Box>
               </Box>
               <Box layoutClassName="flex items-center justify-between rounded border border-slate-200 bg-white px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800 sm:justify-start sm:gap-4">
                 <Typography as="span" size="xs" layoutClassName="min-w-[60px] font-medium uppercase text-slate-500">
