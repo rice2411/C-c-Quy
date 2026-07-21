@@ -21,7 +21,6 @@ import { useTransactions, useTransactionMutations } from '@/hooks/queries/useTra
 import { fetchAllRefunds, reconcileRefund, unreconcileRefund, RefundListItem } from '@/services/orderService';
 import { markTransactionSettled, setTransactionExpense } from '@/services/transactionService';
 import OutReconcilePanel from './components/OutReconcilePanel';
-import { PaymentStatus } from '@/types/enums';
 import { Transaction } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import TransactionsDesktopTable from './components/desktop/TransactionsDesktopTable';
@@ -363,18 +362,24 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
     const linkedNumber = order.orderNumber || orderId;
+    // Cộng số tiền GD (tiền VÀO, chưa gán) vào paidAmount → BE tự suy ra trạng thái:
+    // < total → DEPOSITED (cọc), ≥ total → PAID. KHÔNG gửi paymentStatus (để BE derive).
+    const addAmount = (transaction.transferType === 'in' && !transaction.orderNumber)
+      ? (Number(transaction.transferAmount) || 0) : 0;
+    const newPaid = (Number(order.paidAmount) || 0) + addAmount;
+    const total = Number(order.total) || 0;
+    const { paymentStatus: _omitPay, ...orderRest } = order;
     try {
       await modifyOrder(orderId, {
-        ...order,
+        ...orderRest,
         sepayId: transaction.sepayId,
-        paymentStatus: order.paymentStatus === PaymentStatus.PAID ? order.paymentStatus : PaymentStatus.PAID,
+        paidAmount: newPaid,
       });
-      // Ghi orderNumber xuống transaction để F5 vẫn giữ trạng thái đã khớp;
-      // mutation invalidate qk.transactions.all → list tự refetch trạng thái mới.
       await linkOrder({ transactionId: transaction.id, orderNumber: linkedNumber });
-      toast.success(`Đã liên kết GD #${transaction.sepayId} → ${order.orderNumber}`);
+      const label = total > 0 && newPaid >= total ? 'đã đủ' : `cọc ${formatVND(newPaid)}/${formatVND(total)}`;
+      toast.success(`Đã gán GD #${transaction.sepayId} → ${order.orderNumber} (${label})`);
     } catch (err: any) {
-      toast.error(err?.message || 'Không liên kết được');
+      toast.error(err?.message || 'Không gán được');
       throw err;
     }
   };
