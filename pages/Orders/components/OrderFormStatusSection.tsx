@@ -50,16 +50,21 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
   const { t } = useLanguage();
   const { activeAccount } = usePaymentAccounts();
   const [posBusy, setPosBusy] = useState(false);
+  // Chế độ QR đang hiển thị/đẩy POS: 'deposit' (thu cọc) hoặc 'remainder' (gốc trừ cọc).
+  const [qrMode, setQrMode] = useState<'deposit' | 'remainder'>('deposit');
 
   const description = `SEVQR ${orderNumber}`;
-  const remaining = Math.max(0, total - (Number(paidAmount) || 0));
-  const depositDue = Number(depositAmount) > 0 && (Number(paidAmount) || 0) < Number(depositAmount);
-  // Số tiền QR hiển thị = số CẦN THU bây giờ: còn nợ cọc → cọc; đã cọc mà chưa đủ → còn lại; else → tổng.
-  const qrAmount = depositDue ? Number(depositAmount) : (remaining > 0 ? remaining : total);
-  const qrAmountLabel = depositDue
-    ? t('pos.qrDeposit')
-    : ((Number(paidAmount) || 0) > 0 && remaining > 0 ? t('pos.qrRemaining') : '');
-  // Không có TK active → qrUrl rỗng → block QR ẩn an toàn. QR khớp số cần thu (qrAmount).
+  const remaining = Math.max(0, total - (Number(paidAmount) || 0)); // còn lại thực = tổng − đã nhận
+  const hasDeposit = Number(depositAmount) > 0;
+  // Đã thu (để trừ khỏi QR gốc): lớn hơn giữa cọc thoả thuận và tiền đã nhận thực tế.
+  const collected = Math.max(Number(depositAmount) || 0, Number(paidAmount) || 0);
+  // QR "gốc trừ cọc" = tổng − đã thu (= còn lại).
+  const remainderAmount = Math.max(0, total - collected);
+  // 2 chế độ QR chuyển đổi qua lại: 'deposit' (thu cọc) / 'remainder' (gốc trừ cọc). Không cọc → luôn remainder.
+  const effectiveQrMode: 'deposit' | 'remainder' = hasDeposit ? qrMode : 'remainder';
+  const qrAmount = effectiveQrMode === 'deposit' ? Number(depositAmount) : (remainderAmount > 0 ? remainderAmount : total);
+  const qrAmountLabel = !hasDeposit ? '' : (effectiveQrMode === 'deposit' ? t('pos.qrDeposit') : t('pos.qrRemaining'));
+  // Không có TK active → qrUrl rỗng → block QR ẩn an toàn. QR khớp số đang chọn (qrAmount).
   const qrUrl = activeAccount ? generateQRCodeImage(orderNumber, qrAmount, activeAccount) : '';
   const fmt = (n: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
@@ -273,28 +278,44 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             <Typography size="xs" variant="muted" layoutClassName="mt-2 text-[10px]">
               {t('qr.instruction')}
             </Typography>
-            <Box layoutClassName="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-              {depositDue ? (
+            {/* Toggle 2 chế độ QR: thu cọc ↔ gốc trừ cọc (chỉ hiện khi đơn có cọc) */}
+            {hasDeposit ? (
+              <Box
+                layoutClassName="mt-2 inline-flex gap-1 rounded-lg p-1"
+                backgroundClassName="bg-slate-100 dark:bg-slate-800"
+              >
                 <Button
                   type="button"
-                  onClick={() => void handlePushPos(Number(depositAmount))}
-                  disabled={posBusy}
-                  variant="primary"
-                  leftIcon={<MonitorSmartphone />}
-                  iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-                  sizeClassName="px-3 py-2 text-xs"
-                  roundedClassName="rounded-lg"
-                  layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
+                  onClick={() => setQrMode('deposit')}
+                  variant={effectiveQrMode === 'deposit' ? 'primary' : 'ghost'}
+                  sizeClassName="px-3 py-1.5 text-xs"
+                  roundedClassName="rounded-md"
+                  shadowClassName=""
+                  layoutClassName="inline-flex items-center gap-1"
                   disableVariantHover
                 >
                   {t('pos.qrDeposit')} · {fmt(Number(depositAmount))}
                 </Button>
-              ) : null}
+                <Button
+                  type="button"
+                  onClick={() => setQrMode('remainder')}
+                  variant={effectiveQrMode === 'remainder' ? 'primary' : 'ghost'}
+                  sizeClassName="px-3 py-1.5 text-xs"
+                  roundedClassName="rounded-md"
+                  shadowClassName=""
+                  layoutClassName="inline-flex items-center gap-1"
+                  disableVariantHover
+                >
+                  {t('pos.qrRemaining')} · {fmt(remainderAmount)}
+                </Button>
+              </Box>
+            ) : null}
+            <Box layoutClassName="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <Button
                 type="button"
-                onClick={() => void handlePushPos(remaining)}
-                disabled={posBusy || remaining <= 0}
-                variant={depositDue ? 'secondary' : 'primary'}
+                onClick={() => void handlePushPos(qrAmount)}
+                disabled={posBusy || qrAmount <= 0}
+                variant="primary"
                 leftIcon={<MonitorSmartphone />}
                 iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
                 sizeClassName="px-3 py-2 text-xs"
@@ -302,7 +323,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
                 layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
                 disableVariantHover
               >
-                {posBusy ? t('pos.qrPushing') : `${(Number(paidAmount) || 0) > 0 ? t('pos.qrRemaining') : t('pos.pushToDevice')} · ${fmt(remaining)}`}
+                {posBusy ? t('pos.qrPushing') : `${t('pos.pushToDevice')} · ${fmt(qrAmount)}`}
               </Button>
               <Button
                 type="button"
