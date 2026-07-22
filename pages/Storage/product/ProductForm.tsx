@@ -3,7 +3,9 @@ import { AlertCircle, AlignLeft, DollarSign, Image, Loader2, Save, Tag, Upload }
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Tabs from '@/components/ui/Tabs';
 import Textarea from '@/components/ui/Textarea';
-import type { Product } from '@/types';
+import type { Product, PriceTier, ProductType } from '@/types';
+import { useProducts } from '@/hooks/queries/useProductsQuery';
+import ProductTypePricingSection from '@/pages/Storage/product/components/ProductTypePricingSection';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getProductImagePath, uploadImage } from '@/services/imageService';
 import { useBadges } from '@/hooks/queries/useBadgesQuery';
@@ -51,6 +53,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
   const [sizes, setSizes] = useState<ProductSize[]>([]);
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
+  const [type, setType] = useState<ProductType>('cake');
+  const [priceTiers, setPriceTiers] = useState<PriceTier[]>([]);
+  const [addOnProductIds, setAddOnProductIds] = useState<string[]>([]);
+  const { products: allProducts } = useProducts();
 
   // Tabs + history
   const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
@@ -89,6 +95,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
       setSizes(initialData.sizes || []);
       setDescription(initialData.description || '');
       setStatus(initialData.status);
+      setType((initialData.type as ProductType) || 'cake');
+      setPriceTiers(initialData.priceTiers || []);
+      setAddOnProductIds(initialData.addOnProductIds || []);
     } else {
       setName('');
       setPrice(0);
@@ -100,6 +109,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
       setSizes([]);
       setDescription('');
       setStatus('active');
+      setType('cake');
+      setPriceTiers([]);
+      setAddOnProductIds([]);
     }
   }, [initialData, productBadges]);
 
@@ -189,6 +201,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
         sizes,
         description,
         status,
+        type,
+        priceTiers: priceTiers.filter((t) => Number(t.minQty) > 0 && Number(t.price) > 0),
+        addOnProductIds,
       });
     } catch (err: any) {
       setError(err.message || 'Không thể lưu sản phẩm');
@@ -373,6 +388,19 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
 
               {/* Size (biến thể giá) */}
               <SizeEditor sizes={sizes} onChange={setSizes} galleryImages={[image, ...gallery].filter(Boolean)} />
+
+              {/* Phân loại + giá bậc theo SL + phụ phí gói tự thêm */}
+              <ProductTypePricingSection
+                type={type}
+                setType={setType}
+                basePrice={price}
+                priceTiers={priceTiers}
+                setPriceTiers={setPriceTiers}
+                addOnProductIds={addOnProductIds}
+                setAddOnProductIds={setAddOnProductIds}
+                allProducts={allProducts}
+                currentId={initialData?.id}
+              />
 
               {/* Status */}
               <Field label={t('inventory.status')}>

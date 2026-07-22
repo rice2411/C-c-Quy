@@ -20,10 +20,54 @@ export interface ProductFlavorVariant {
   price?: number;
 }
 
+/** Phân loại sản phẩm (mô hình "mọi thứ là sản phẩm"). */
+export type ProductType = 'cake' | 'packaging' | 'decoration' | 'accessory' | 'service';
+
+export const PRODUCT_TYPES: { value: ProductType; label: string }[] = [
+  { value: 'cake', label: 'Bánh' },
+  { value: 'packaging', label: 'Đóng gói' },
+  { value: 'decoration', label: 'Trang trí' },
+  { value: 'accessory', label: 'Phụ kiện' },
+  { value: 'service', label: 'Dịch vụ / khác' },
+];
+
+export const productTypeLabel = (t?: string): string =>
+  PRODUCT_TYPES.find((x) => x.value === t)?.label ?? 'Bánh';
+
+/** 1 bậc giá theo số lượng. price = đơn giá khi tổng SL của SP trong đơn >= minQty. */
+export interface PriceTier {
+  minQty: number;
+  price: number; // VND / đơn vị
+}
+
+/**
+ * Giá theo bậc SL: chọn bậc CAO NHẤT có minQty <= qty; không bậc nào khớp → base.
+ * Bỏ qua bậc giá <= 0. Dùng chung form đơn + báo giá.
+ */
+export const resolveTierPrice = (
+  base: number,
+  tiers: PriceTier[] | undefined,
+  qty: number,
+): number => {
+  if (!tiers || tiers.length === 0) return base;
+  const sorted = [...tiers]
+    .filter((t) => Number(t.price) > 0 && Number(t.minQty) > 0)
+    .sort((a, b) => Number(a.minQty) - Number(b.minQty));
+  let price = base;
+  for (const t of sorted) if (qty >= Number(t.minQty)) price = Number(t.price);
+  return price;
+};
+
 export interface Product {
   id: string;
   name: string;
   price: number;
+  /** Phân loại (cake mặc định / packaging / decoration / accessory / service). */
+  type?: ProductType;
+  /** Giá bậc theo SL (tính theo tổng SL của SP này trong đơn). */
+  priceTiers?: PriceTier[];
+  /** SP phụ phí tự thêm (qty đồng bộ theo SP cha) khi SP này được chọn vào đơn. */
+  addOnProductIds?: string[];
   image: string;
   /** Ảnh phụ (gallery) — các góc chụp/chi tiết khác. Primary vẫn là `image` */
   gallery?: string[];
