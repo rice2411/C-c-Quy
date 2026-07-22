@@ -3,8 +3,7 @@ import { AlertCircle, AlignLeft, DollarSign, Image, Loader2, Save, Tag, Upload }
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Tabs from '@/components/ui/Tabs';
 import Textarea from '@/components/ui/Textarea';
-import type { Product, PriceTier, ProductType } from '@/types';
-import { useProducts } from '@/hooks/queries/useProductsQuery';
+import type { Product, PriceTier, PackagingOption, ProductType } from '@/types';
 import ProductTypePricingSection from '@/pages/Storage/product/components/ProductTypePricingSection';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getProductImagePath, uploadImage } from '@/services/imageService';
@@ -55,8 +54,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
   const [type, setType] = useState<ProductType>('cake');
   const [priceTiers, setPriceTiers] = useState<PriceTier[]>([]);
-  const [addOnProductIds, setAddOnProductIds] = useState<string[]>([]);
-  const { products: allProducts } = useProducts();
+  const [packagingOptions, setPackagingOptions] = useState<PackagingOption[]>([]);
 
   // Tabs + history
   const [activeTab, setActiveTab] = useState<'details' | 'history'>('details');
@@ -97,7 +95,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
       setStatus(initialData.status);
       setType((initialData.type as ProductType) || 'cake');
       setPriceTiers(initialData.priceTiers || []);
-      setAddOnProductIds(initialData.addOnProductIds || []);
+      setPackagingOptions(initialData.packagingOptions || []);
     } else {
       setName('');
       setPrice(0);
@@ -111,7 +109,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
       setStatus('active');
       setType('cake');
       setPriceTiers([]);
-      setAddOnProductIds([]);
+      setPackagingOptions([]);
     }
   }, [initialData, productBadges]);
 
@@ -203,7 +201,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
         status,
         type,
         priceTiers: priceTiers.filter((t) => Number(t.minQty) > 0 && Number(t.price) > 0),
-        addOnProductIds,
+        packagingOptions: packagingOptions.filter((o) => o.label.trim()),
       });
     } catch (err: any) {
       setError(err.message || 'Không thể lưu sản phẩm');
@@ -396,10 +394,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
                 basePrice={price}
                 priceTiers={priceTiers}
                 setPriceTiers={setPriceTiers}
-                addOnProductIds={addOnProductIds}
-                setAddOnProductIds={setAddOnProductIds}
-                allProducts={allProducts}
-                currentId={initialData?.id}
+                packagingOptions={packagingOptions}
+                setPackagingOptions={setPackagingOptions}
               />
 
               {/* Status */}

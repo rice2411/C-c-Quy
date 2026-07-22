@@ -40,6 +40,12 @@ export interface PriceTier {
   price: number; // VND / đơn vị
 }
 
+/** 1 option gói: nhãn + phí cộng thêm mỗi đơn vị (cộng vào giá bậc). */
+export interface PackagingOption {
+  label: string;
+  perUnit: number; // VND / đơn vị
+}
+
 /**
  * Giá theo bậc SL: chọn bậc CAO NHẤT có minQty <= qty; không bậc nào khớp → base.
  * Bỏ qua bậc giá <= 0. Dùng chung form đơn + báo giá.
@@ -66,8 +72,10 @@ export interface Product {
   type?: ProductType;
   /** Giá bậc theo SL (tính theo tổng SL của SP này trong đơn). */
   priceTiers?: PriceTier[];
-  /** SP phụ phí tự thêm (qty đồng bộ theo SP cha) khi SP này được chọn vào đơn. */
+  /** SP phụ phí tự thêm (qty đồng bộ) — legacy, thay bằng packagingOptions. */
   addOnProductIds?: string[];
+  /** Option gói: chọn 1/dòng, phí/đơn vị cộng vào giá bậc (vd Đóng gói +2k, Gói hộp+thiệp +6k). */
+  packagingOptions?: PackagingOption[];
   image: string;
   /** Ảnh phụ (gallery) — các góc chụp/chi tiết khác. Primary vẫn là `image` */
   gallery?: string[];

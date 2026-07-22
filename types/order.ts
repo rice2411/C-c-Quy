@@ -13,6 +13,8 @@ export interface OrderItem {
   flavors?: string[];
   /** Size đã chọn (nếu sản phẩm có size) */
   size?: string;
+  /** Option gói đã chọn (nếu sản phẩm có packagingOptions) — phí đã tính vào price. */
+  packagingOption?: string;
   /** Nhiều size + số lượng trong 1 dòng (vd 2 Gia Đình + 1 Lẻ).
    *  `units`: vị RIÊNG của từng đơn vị (mỗi combo 1 rổ vị); units.length = qty. `flavors` là gộp phẳng. */
   sizeCounts?: { name: string; qty: number; units?: string[][] }[];

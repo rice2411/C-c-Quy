@@ -37,10 +37,11 @@ import Heading from '@/components/ui/Heading';
 import IconButton from '@/components/ui/IconButton';
 import Image from '@/components/ui/Image';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import Typography from '@/components/ui/Typography';
 import EmptyState from '@/components/ui/EmptyState';
 import ProductPickerModal from '@/pages/Orders/components/ProductPickerModal';
-import { formatVNDOrDash } from '@/utils/format/currencyUtil';
+import { formatVND, formatVNDOrDash } from '@/utils/format/currencyUtil';
 import { getRecentProductIds } from '@/utils/product/recentProducts';
 
 interface OrderItemsSectionProps {
@@ -255,16 +256,26 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                   </Box>
 
                   <Box layoutClassName="min-w-0 flex-1">
-                    <Box layoutClassName="flex items-center gap-1.5">
-                      <Typography size="sm" layoutClassName="truncate font-semibold">
-                        {item.productName || `Item #${index + 1}`}
-                      </Typography>
-                      {item.autoAddOn ? (
-                        <Typography as="span" size="xs" layoutClassName="shrink-0 rounded-full px-2 py-0.5 font-semibold" backgroundClassName="bg-sage-100 dark:bg-emerald-900/30" textClassName="text-emerald-700 dark:text-emerald-300">
-                          gói · tự thêm
-                        </Typography>
-                      ) : null}
-                    </Box>
+                    <Typography size="sm" layoutClassName="truncate font-semibold">
+                      {item.productName || `Item #${index + 1}`}
+                    </Typography>
+                    {/* Option gói — chọn 1, phí đã cộng vào giá dòng */}
+                    {itemProduct?.packagingOptions && itemProduct.packagingOptions.length > 0 ? (
+                      <Box layoutClassName="mt-1 flex items-center gap-1.5">
+                        <Package className="h-3.5 w-3.5 text-primary-500" />
+                        <Select
+                          value={item.packagingOption ?? itemProduct.packagingOptions[0].label}
+                          onChange={(e) => onUpdateItem(item.id, 'packagingOption', e.target.value)}
+                          sizeClassName="py-1 text-xs"
+                        >
+                          {itemProduct.packagingOptions.map((o) => (
+                            <option key={o.label} value={o.label}>
+                              {o.label}{o.perUnit > 0 ? ` (+${formatVND(o.perUnit)}/sp)` : ''}
+                            </option>
+                          ))}
+                        </Select>
+                      </Box>
+                    ) : null}
                     {isSized ? (
                       <Box layoutClassName="mt-1 flex flex-col gap-1.5">
                         <Typography as="span" size="xs" variant="muted">Loại (số lượng — chọn nhiều loại, mỗi combo 1 rổ vị riêng):</Typography>
@@ -557,7 +568,6 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                         id={`order-item-qty-${item.id}`}
                         type="number"
                         min={1}
-                        disabled={item.autoAddOn}
                         value={quantityInputs[item.id] ?? String(item.quantity)}
                         onChange={(e) => {
                           const raw = e.target.value;
@@ -592,18 +602,16 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                       />
                     </Box>
                     ) : null}
-                    {!item.autoAddOn ? (
-                      <IconButton
-                        type="button"
-                        label="Remove item"
-                        variant="ghost"
-                        layoutClassName="shrink-0 rounded-lg"
-                        hoverClassName="hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                        onClick={() => onRemoveItem(item.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </IconButton>
-                    ) : null}
+                    <IconButton
+                      type="button"
+                      label="Remove item"
+                      variant="ghost"
+                      layoutClassName="shrink-0 rounded-lg"
+                      hoverClassName="hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                      onClick={() => onRemoveItem(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </IconButton>
                   </Box>
                 </Box>
               </Box>

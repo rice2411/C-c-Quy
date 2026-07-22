@@ -58,8 +58,8 @@ export interface FormItem {
   size?: string;
   /** Nhiều size + số lượng trong 1 dòng; `units` = vị riêng từng đơn vị (mỗi combo 1 rổ). */
   sizeCounts?: { name: string; qty: number; units?: string[][] }[];
-  /** Dòng phụ phí gói TỰ SINH từ addOnProductIds của SP cha (qty đồng bộ, không sửa tay). */
-  autoAddOn?: boolean;
+  /** Option gói đã chọn (nhãn) — SP có packagingOptions; phí cộng vào giá bậc. */
+  packagingOption?: string;
 }
 const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCancel }) => {
   const { t } = useLanguage();
@@ -229,7 +229,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
             id: `item-${base}-${index}`,
             productId: pid, productName: item.name, quantity: item.quantity,
             unitPrice: item.price, image: item.image, flavors: item.flavors,
-            size: item.size, sizeCounts,
+            size: item.size, sizeCounts, packagingOption: item.packagingOption,
           };
         });
         setItems(loadedItems);
@@ -405,57 +405,35 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   };
 
   /**
-   * Reconcile "mọi thứ là sản phẩm" (Cách B):
-   *  1. Giá bậc: dòng có priceTiers → unitPrice = giá theo TỔNG SL của SP đó trong đơn.
-   *  2. Phụ phí gói: mỗi SP có addOnProductIds → tự sinh dòng add-on (qty = tổng SL SP cha,
-   *     giá = giá SP add-on). Dòng auto (id `addon-<pid>`) không sửa tay, đồng bộ theo cha.
-   * Idempotent + chỉ setItems khi khác (tránh vòng lặp).
+   * Tự tính giá dòng cho SP có bậc giá / option gói (Cách B — 1 sản phẩm):
+   *   unitPrice = giá bậc theo TỔNG SL của SP đó trong đơn + phí option đã chọn.
+   * SP có option nhưng chưa chọn → mặc định option đầu. SP không có bậc/option → giữ nguyên
+   * (không đụng giá sửa tay). Idempotent (map trả nguyên ref khi không đổi).
    */
   useEffect(() => {
-    const manual = items.filter((i) => !i.autoAddOn);
     const totalQtyByProduct = new Map<string, number>();
-    manual.forEach((i) => {
+    items.forEach((i) => {
       if (i.productId) totalQtyByProduct.set(i.productId, (totalQtyByProduct.get(i.productId) || 0) + (Number(i.quantity) || 0));
     });
-    // Áp giá bậc cho dòng thủ công có tiers
-    const manualPriced = manual.map((i) => {
+    const next = items.map((i) => {
       const p = products.find((x) => x.id === i.productId);
-      if (p && p.priceTiers && p.priceTiers.length > 0) {
-        const tp = resolveTierPrice(Number(p.price) || 0, p.priceTiers, totalQtyByProduct.get(i.productId) || 0);
-        return i.unitPrice === tp ? i : { ...i, unitPrice: tp };
-      }
-      return i;
+      if (!p) return i;
+      const hasTiers = !!(p.priceTiers && p.priceTiers.length);
+      const opts = p.packagingOptions || [];
+      const hasOpts = opts.length > 0;
+      if (!hasTiers && !hasOpts) return i;
+      let option = i.packagingOption;
+      if (hasOpts && (!option || !opts.some((o) => o.label === option))) option = opts[0].label;
+      if (!hasOpts) option = undefined;
+      const tierBase = hasTiers
+        ? resolveTierPrice(Number(p.price) || 0, p.priceTiers, totalQtyByProduct.get(i.productId) || 0)
+        : (Number(p.price) || 0);
+      const fee = hasOpts ? (opts.find((o) => o.label === option)?.perUnit || 0) : 0;
+      const desiredPrice = tierBase + fee;
+      if (i.unitPrice === desiredPrice && i.packagingOption === option) return i;
+      return { ...i, unitPrice: desiredPrice, packagingOption: option };
     });
-    // Gom SL add-on cần có = tổng SL các SP cha khai báo add-on đó
-    const addOnQty = new Map<string, number>();
-    manualPriced.forEach((i) => {
-      const p = products.find((x) => x.id === i.productId);
-      (p?.addOnProductIds || []).forEach((aid) => {
-        addOnQty.set(aid, (addOnQty.get(aid) || 0) + (Number(i.quantity) || 0));
-      });
-    });
-    const addOnIds = new Set(addOnQty.keys());
-    // Bỏ dòng thủ công trùng SP add-on (vd đơn cũ đã lưu dòng add-on → tránh nhân đôi);
-    // add-on luôn được SP cha tự sinh lại bên dưới.
-    const manualKept = manualPriced.filter((i) => !addOnIds.has(i.productId));
-    const autoLines: FormItem[] = [];
-    addOnQty.forEach((qty, aid) => {
-      const ap = products.find((x) => x.id === aid);
-      if (!ap || qty <= 0) return;
-      autoLines.push({
-        id: `addon-${aid}`,
-        productId: aid,
-        productName: ap.name,
-        image: ap.image,
-        quantity: qty,
-        unitPrice: Number(ap.price) || 0,
-        autoAddOn: true,
-      });
-    });
-    const next = [...manualKept, ...autoLines];
-    const sig = (arr: FormItem[]) =>
-      JSON.stringify(arr.map((i) => [i.id, i.productId, i.quantity, i.unitPrice, !!i.autoAddOn]));
-    if (sig(next) !== sig(items)) setItems(next);
+    if (next.some((n, idx) => n !== items[idx])) setItems(next);
   }, [items, products]);
 
   // Tổng tiền hàng TRƯỚC giảm (items + phụ thu cả đơn).
@@ -603,6 +581,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
            flavors: item.flavors && item.flavors.length ? item.flavors : undefined,
            size: item.size || undefined,
            sizeCounts: item.sizeCounts && item.sizeCounts.length ? item.sizeCounts : undefined,
+           packagingOption: item.packagingOption || undefined,
          };
       });
 
