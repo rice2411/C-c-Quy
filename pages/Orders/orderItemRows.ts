@@ -26,7 +26,7 @@ export const buildOrderItemRows = (items: OrderItem[], products: Product[]): Ord
     if (product && productUsesFlavorPricing(product) && flavors.length > 0) {
       return groupFlavors(flavors).map(({ name: fl, qty }) => ({
         key: `${it.id}-f-${fl}`,
-        img: flavorImage(product, fl) || it.image,
+        img: flavorImage(product, fl) || it.image || product.image,
         name: it.name,
         meta: [`Vị: ${fl}`],
         qty,
@@ -43,7 +43,7 @@ export const buildOrderItemRows = (items: OrderItem[], products: Product[]): Ord
         const cnt = product ? (sizeCount(product, sc.name) ?? 1) : 1;
         const isCombo = cnt > 1;
         const sizeLbl = sc.name;
-        const img = (product ? sizeImage(product, sc.name) : undefined) || it.image;
+        const img = (product ? sizeImage(product, sc.name) : undefined) || it.image || product?.image;
         if (sc.units && sc.units.length) {
           return sc.units.map((unit, u) => {
             const fl = groupFlavors(unit).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
@@ -62,6 +62,6 @@ export const buildOrderItemRows = (items: OrderItem[], products: Product[]): Ord
     // 3) Mặc định 1 hàng.
     const meta: string[] = [];
     if (flavorLine) meta.push(`Vị: ${flavorLine}`);
-    return [{ key: it.id, img: it.image, name: it.name || '', meta, qty: it.quantity || 0 }];
+    return [{ key: it.id, img: it.image || product?.image, name: it.name || '', meta, qty: it.quantity || 0 }];
   });
 };

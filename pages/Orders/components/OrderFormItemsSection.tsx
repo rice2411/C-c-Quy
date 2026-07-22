@@ -112,6 +112,9 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
 
   const getProductImage = (item: FormItem) => {
     if (item.image) return item.image;
+    // Đồng bộ ảnh theo sản phẩm hiện tại (khi dòng chưa có ảnh snapshot).
+    const p = products.find((x) => x.id === item.productId);
+    if (p?.image) return p.image;
     const displayText = item.productName || 'Product';
     return `https://placehold.co/200x200?text=${encodeURIComponent(displayText)}`;
   };

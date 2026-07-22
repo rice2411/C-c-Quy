@@ -11,6 +11,7 @@ import {
 import { PAYMENT_METHOD_COLORS, PAYMENT_STATUS_COLORS, STATUS_COLORS } from '@/constant/order';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
+import { useProducts } from '@/hooks/queries/useProductsQuery';
 import { orderAddressFallbackKey, surchargeTagLabel } from '@/types/order';
 import { Order } from '@/types';
 import { DeliveryType } from '@/types/enums';
@@ -43,10 +44,16 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
 }) => {
   const { t } = useLanguage();
   const { surchargeTags } = useSurchargeTags();
+  const { products } = useProducts();
 
-  const getOrderImage = (order: Order) =>
-    order.items?.[0]?.image ||
-    `https://placehold.co/200x200?text=${encodeURIComponent(order.items?.[0]?.name || 'Order')}`;
+  const getOrderImage = (order: Order) => {
+    const first = order.items?.[0];
+    return (
+      first?.image ||
+      products.find((p) => p.id === first?.productId)?.image ||
+      `https://placehold.co/200x200?text=${encodeURIComponent(first?.name || 'Order')}`
+    );
+  };
 
   return (
     <Box layoutClassName="hidden flex-1 overflow-auto lg:block">

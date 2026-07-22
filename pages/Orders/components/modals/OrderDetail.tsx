@@ -845,7 +845,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                        return [(
                          <Box key={item.id} layoutClassName="flex items-center gap-4 py-2">
                            <Box layoutClassName="h-16 w-16 shrink-0 overflow-hidden" roundedClassName="rounded-lg" backgroundClassName="bg-slate-100 dark:bg-slate-700">
-                             <Image src={item.image} alt={item.name} layoutClassName="h-full w-full object-cover" />
+                             <Image src={item.image || product?.image || ''} alt={item.name} layoutClassName="h-full w-full object-cover" />
                            </Box>
                            <Box layoutClassName="min-w-0 flex-1">
                              <Heading level={4} textClassName="text-sm font-medium text-slate-900 dark:text-white">{item.name}{sizeCountsLabel(item.sizeCounts) ? ` · ${sizeCountsLabel(item.sizeCounts)}` : item.size ? ` · ${item.size}` : ''}</Heading>
