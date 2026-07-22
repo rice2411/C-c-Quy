@@ -255,9 +255,16 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                   </Box>
 
                   <Box layoutClassName="min-w-0 flex-1">
-                    <Typography size="sm" layoutClassName="truncate font-semibold">
-                      {item.productName || `Item #${index + 1}`}
-                    </Typography>
+                    <Box layoutClassName="flex items-center gap-1.5">
+                      <Typography size="sm" layoutClassName="truncate font-semibold">
+                        {item.productName || `Item #${index + 1}`}
+                      </Typography>
+                      {item.autoAddOn ? (
+                        <Typography as="span" size="xs" layoutClassName="shrink-0 rounded-full px-2 py-0.5 font-semibold" backgroundClassName="bg-sage-100 dark:bg-emerald-900/30" textClassName="text-emerald-700 dark:text-emerald-300">
+                          gói · tự thêm
+                        </Typography>
+                      ) : null}
+                    </Box>
                     {isSized ? (
                       <Box layoutClassName="mt-1 flex flex-col gap-1.5">
                         <Typography as="span" size="xs" variant="muted">Loại (số lượng — chọn nhiều loại, mỗi combo 1 rổ vị riêng):</Typography>
@@ -550,6 +557,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                         id={`order-item-qty-${item.id}`}
                         type="number"
                         min={1}
+                        disabled={item.autoAddOn}
                         value={quantityInputs[item.id] ?? String(item.quantity)}
                         onChange={(e) => {
                           const raw = e.target.value;
@@ -584,16 +592,18 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                       />
                     </Box>
                     ) : null}
-                    <IconButton
-                      type="button"
-                      label="Remove item"
-                      variant="ghost"
-                      layoutClassName="shrink-0 rounded-lg"
-                      hoverClassName="hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
-                      onClick={() => onRemoveItem(item.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </IconButton>
+                    {!item.autoAddOn ? (
+                      <IconButton
+                        type="button"
+                        label="Remove item"
+                        variant="ghost"
+                        layoutClassName="shrink-0 rounded-lg"
+                        hoverClassName="hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                        onClick={() => onRemoveItem(item.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </IconButton>
+                    ) : null}
                   </Box>
                 </Box>
               </Box>
