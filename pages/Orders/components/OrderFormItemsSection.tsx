@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, DollarSign, Minus, Package, Plus, RotateCcw, Shuffle, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor, orderLineImage, sizeCount, sizeCountsPrice, groupFlavors } from '@/types';
+import { resolveTierPrice } from '@/types/product';
 import { FormItem } from '@/pages/Orders/components/modals/OrderForm';
 
 /** Mix vị: chọn ngẫu nhiên `count` vị từ `pool` (cho phép trùng) để điền đủ số lượng. */
@@ -263,22 +264,53 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                       {item.productName || `Item #${index + 1}`}
                     </Typography>
                     {/* Option gói — chọn 1, phí đã cộng vào giá dòng */}
-                    {itemProduct?.packagingOptions && itemProduct.packagingOptions.length > 0 ? (
-                      <Box layoutClassName="mt-1 flex items-center gap-1.5">
-                        <Package className="h-3.5 w-3.5 text-primary-500" />
-                        <Select
-                          value={item.packagingOption ?? itemProduct.packagingOptions[0].label}
-                          onChange={(e) => onUpdateItem(item.id, 'packagingOption', e.target.value)}
-                          sizeClassName="py-1 text-xs"
-                        >
-                          {itemProduct.packagingOptions.map((o) => (
-                            <option key={o.label} value={o.label}>
-                              {o.label}{o.perUnit > 0 ? ` (+${formatVND(o.perUnit)}/sp)` : ''}
-                            </option>
-                          ))}
-                        </Select>
-                      </Box>
-                    ) : null}
+                    {itemProduct?.packagingOptions && itemProduct.packagingOptions.length > 0 ? (() => {
+                      const opts = itemProduct.packagingOptions!;
+                      const curOpt = item.packagingOption ?? opts[0].label;
+                      // Giá theo bảng = giá bậc(tổng SL SP đó trong đơn) + phí option đang chọn.
+                      const totalQ = items
+                        .filter((x) => x.productId === item.productId)
+                        .reduce((s, x) => s + (Number(x.quantity) || 0), 0);
+                      const tierBase = resolveTierPrice(Number(itemProduct.price) || 0, itemProduct.priceTiers, totalQ);
+                      const fee = opts.find((o) => o.label === curOpt)?.perUnit || 0;
+                      const modelPrice = tierBase + fee;
+                      const mismatch = Number(item.unitPrice) !== modelPrice;
+                      return (
+                        <Box layoutClassName="mt-1 flex flex-wrap items-center gap-1.5">
+                          <Package className="h-3.5 w-3.5 text-primary-500" />
+                          <Select
+                            value={curOpt}
+                            onChange={(e) => onUpdateItem(item.id, 'packagingOption', e.target.value)}
+                            sizeClassName="py-1 text-xs"
+                          >
+                            {opts.map((o) => (
+                              <option key={o.label} value={o.label}>
+                                {o.label}{o.perUnit > 0 ? ` (+${formatVND(o.perUnit)}/sp)` : ''}
+                              </option>
+                            ))}
+                          </Select>
+                          {mismatch ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              onClick={() => onUpdateItem(item.id, 'unitPrice', modelPrice)}
+                              leftIcon={<RotateCcw />}
+                              iconClassName="inline-flex shrink-0 [&_svg]:h-3 [&_svg]:w-3"
+                              sizeClassName="px-2 py-1 text-xs"
+                              roundedClassName="rounded-lg"
+                              shadowClassName=""
+                              borderClassName="border border-dashed border-primary-300 dark:border-primary-700"
+                              backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+                              textClassName="font-medium text-primary-700 dark:text-primary-300"
+                              layoutClassName="inline-flex items-center gap-1"
+                              title="Áp giá theo bảng (bậc + option)"
+                            >
+                              ↻ {formatVND(modelPrice)}/sp
+                            </Button>
+                          ) : null}
+                        </Box>
+                      );
+                    })() : null}
                     {isSized ? (
                       <Box layoutClassName="mt-1 flex flex-col gap-1.5">
                         <Typography as="span" size="xs" variant="muted">Loại (số lượng — chọn nhiều loại, mỗi combo 1 rổ vị riêng):</Typography>
