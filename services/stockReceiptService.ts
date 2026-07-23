@@ -32,8 +32,13 @@ export function computeAmountCheck(structured: StockReceiptStructured): {
     return s + lt;
   }, 0);
   const totalAmount = typeof structured.totalAmount === 'number' ? structured.totalAmount : null;
+  // Kỳ vọng theo bill = dòng hàng + thuế + phí ship − giảm giá (khớp totalAmount).
+  const tax = typeof structured.tax === 'number' ? structured.tax : 0;
+  const shipping = typeof structured.shippingFee === 'number' ? structured.shippingFee : 0;
+  const discount = typeof structured.discount === 'number' ? structured.discount : 0;
+  const expected = sumLines + tax + shipping - discount;
   const deltaPct =
-    totalAmount && totalAmount > 0 ? Math.abs(sumLines - totalAmount) / totalAmount : 0;
+    totalAmount && totalAmount > 0 ? Math.abs(expected - totalAmount) / totalAmount : 0;
   return { sumLines, totalAmount, deltaPct, warn: deltaPct > 0.02 };
 }
 

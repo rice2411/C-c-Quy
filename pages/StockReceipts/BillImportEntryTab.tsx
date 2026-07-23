@@ -141,9 +141,11 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
       0,
     );
     const tax = typeof draftStructured.tax === 'number' ? draftStructured.tax : 0;
+    const shipping =
+      typeof draftStructured.shippingFee === 'number' ? draftStructured.shippingFee : 0;
     const discount =
       typeof draftStructured.discount === 'number' ? draftStructured.discount : 0;
-    return lineSum + tax - discount;
+    return lineSum + tax + shipping - discount;
   }, [draftStructured]);
 
   const activeStepIndex =
@@ -604,7 +606,13 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                       placeholder="0"
                     />
                     <ContactField
-                      label="Giảm giá"
+                      label="Phí vận chuyển"
+                      value={String(draftStructured.shippingFee ?? '')}
+                      onChange={(v) => updateDraftField('shippingFee', parseNonNegative(v))}
+                      placeholder="0"
+                    />
+                    <ContactField
+                      label="Giảm giá (gồm ưu đãi ship)"
                       value={String(draftStructured.discount ?? '')}
                       onChange={(v) => updateDraftField('discount', parseNonNegative(v))}
                       placeholder="0"

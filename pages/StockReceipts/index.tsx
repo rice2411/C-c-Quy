@@ -51,6 +51,7 @@ const buildEmptyStructured = (): StockReceiptStructured => ({
   productLineCount: 0,
   subtotal: null,
   tax: null,
+  shippingFee: null,
   discount: null,
   totalAmount: null,
   currency: 'VND',

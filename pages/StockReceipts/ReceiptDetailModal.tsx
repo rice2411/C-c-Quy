@@ -219,6 +219,22 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
                   </Table>
                 </Box>
               )}
+              {/* Breakdown: chỉ hiện dòng có giá trị */}
+              {[
+                { label: 'Tạm tính', val: receiptDetail.subtotal, neg: false },
+                { label: 'Thuế', val: receiptDetail.tax, neg: false },
+                { label: 'Phí vận chuyển', val: receiptDetail.shippingFee, neg: false },
+                { label: 'Giảm giá', val: receiptDetail.discount, neg: true },
+              ]
+                .filter((r) => typeof r.val === 'number' && r.val !== 0)
+                .map((r) => (
+                  <Box key={r.label} layoutClassName="flex items-center justify-between px-3 py-1">
+                    <Typography size="sm" variant="muted">{r.label}</Typography>
+                    <Typography size="sm" layoutClassName="tabular-nums" textClassName="text-slate-600 dark:text-slate-300">
+                      {r.neg ? '−' : ''}{formatVNDOrDash(Math.abs(r.val as number))}
+                    </Typography>
+                  </Box>
+                ))}
               <Box
                 layoutClassName="flex items-center justify-between border-t border-slate-200 px-3 py-2.5 dark:border-slate-700"
                 backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
