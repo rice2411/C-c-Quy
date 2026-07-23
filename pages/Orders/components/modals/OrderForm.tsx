@@ -99,9 +99,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   
   // New: Multiple Items State
   const [items, setItems] = useState<FormItem[]>([]);
-  // Id các dòng NẠP TỪ đơn cũ — effect tự-tính-giá KHÔNG đè giá lịch sử của chúng
-  // (chỉ auto-giá cho dòng thêm mới trong phiên). Tránh làm hỏng giá ad-hoc đơn cũ.
-  const loadedItemIdsRef = useRef<Set<string>>(new Set());
+  // Snapshot {qty, option} các dòng NẠP TỪ đơn cũ. Effect tự-tính-giá GIỮ NGUYÊN giá
+  // khi dòng còn y hệt lúc load (tránh đè giá ad-hoc); nhưng khi user ĐỔI số lượng/option
+  // thì tính lại theo bậc+option (giá nhảy đúng ý).
+  const loadedSnapRef = useRef<Map<string, { quantity: number; packagingOption?: string }>>(new Map());
 
   // Products: lấy từ React Query (P2 useProducts) thay vì tự fetch.
   const { products } = useProducts();
@@ -236,7 +237,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
           };
         });
         setItems(loadedItems);
-        loadedItemIdsRef.current = new Set(loadedItems.map((i) => i.id));
+        loadedSnapRef.current = new Map(
+          loadedItems.map((i) => [i.id, { quantity: i.quantity, packagingOption: i.packagingOption }]),
+        );
       } else if (products.length > 0) {
         setItems([{
           id: genItemId(),
@@ -246,7 +249,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
           unitPrice: products[0]?.price || 0,
           image: products[0]?.image
         }]);
-        loadedItemIdsRef.current = new Set();
+        loadedSnapRef.current = new Map();
       }
     } else {
       // orderNumber cho đơn mới được set từ React Query (effect riêng bên dưới).
@@ -270,7 +273,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPaymentMethod(PaymentMethod.CASH);
       setDeliveryType(DeliveryType.SHIP);
       setItems([]);
-      loadedItemIdsRef.current = new Set();
+      loadedSnapRef.current = new Map();
       setIsTest(false);
       setSurcharges([]);
       setPromoCode('');
@@ -422,8 +425,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       if (i.productId) totalQtyByProduct.set(i.productId, (totalQtyByProduct.get(i.productId) || 0) + (Number(i.quantity) || 0));
     });
     const next = items.map((i) => {
-      // Dòng nạp từ đơn cũ → giữ nguyên giá lịch sử (ad-hoc), không auto-tính đè.
-      if (loadedItemIdsRef.current.has(i.id)) return i;
+      // Dòng nạp từ đơn cũ CÒN Y HỆT lúc load (chưa đổi SL/option) → giữ giá lịch sử (ad-hoc).
+      // Khi user ĐỔI số lượng/option → cho tính lại theo bậc+option (giá nhảy đúng ý).
+      const snap = loadedSnapRef.current.get(i.id);
+      if (snap && snap.quantity === i.quantity && (snap.packagingOption ?? '') === (i.packagingOption ?? '')) {
+        return i;
+      }
       const p = products.find((x) => x.id === i.productId);
       if (!p) return i;
       const hasTiers = !!(p.priceTiers && p.priceTiers.length);
