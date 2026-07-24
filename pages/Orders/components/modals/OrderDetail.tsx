@@ -82,7 +82,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const { currentUser, userData } = useAuth();
   const { surchargeTags } = useSurchargeTags();
   const { activeAccount } = usePaymentAccounts();
-  const [activeTab, setActiveTab] = useState<'details' | 'refund' | 'history'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'refund' | 'history' | 'tracking'>('details');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [crMode, setCrMode] = useState<CancelRefundMode | null>(null);
@@ -480,40 +480,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
             ) : (
               currentOrder.trackingNumber
             )}
-            {currentOrder.trackingStatus ? ` · ${currentOrder.trackingStatus}` : ''}
+            {(() => {
+              const latest = trackingQuery.data?.events?.[0]?.label || currentOrder.trackingStatus;
+              return latest ? ` · ${latest}` : '';
+            })()}
           </Typography>
-        ) : null}
-        {/* Hành trình vận đơn LIVE (SPX) */}
-        {trackingQuery.data?.events?.length ? (
-          <Box
-            layoutClassName="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-lg p-3"
-            borderClassName="border border-slate-200 dark:border-slate-700"
-            backgroundClassName="bg-slate-50/70 dark:bg-slate-800/50"
-          >
-            {trackingQuery.data.status ? (
-              <Typography as="p" size="xs" layoutClassName="font-semibold" textClassName="text-primary-600 dark:text-primary-400">
-                Hành trình · {trackingQuery.data.status}
-              </Typography>
-            ) : null}
-            {trackingQuery.data.events.map((ev, i) => (
-              <Box key={i} layoutClassName="flex gap-2">
-                <Box
-                  layoutClassName="mt-1.5 h-2 w-2 shrink-0 rounded-full"
-                  backgroundClassName={i === 0 ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}
-                />
-                <Box layoutClassName="min-w-0 flex-1">
-                  <Typography as="p" size="xs" layoutClassName={i === 0 ? 'font-semibold' : ''} textClassName="text-slate-700 dark:text-slate-200">
-                    {ev.label}{ev.location ? ` · ${ev.location}` : ''}
-                  </Typography>
-                  <Typography as="span" size="xs" variant="muted">
-                    {new Date(ev.time * 1000).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                  </Typography>
-                </Box>
-              </Box>
-            ))}
-          </Box>
-        ) : trackingQuery.isFetching ? (
-          <Typography as="p" size="xs" variant="muted" layoutClassName="mt-1">Đang tải hành trình vận đơn…</Typography>
         ) : null}
       </Box>
       <IconButton
@@ -714,6 +685,28 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
               ) : null;
             })()}
           </Button>
+          {currentOrder.trackingNumber ? (
+            <Button
+              type="button"
+              onClick={() => setActiveTab('tracking')}
+              variant="ghost"
+              disableVariantHover
+              disableVariantTextColor
+              borderClassName={
+                activeTab === 'tracking' ? 'border-b-2 border-primary-600' : 'border-b-2 border-transparent'
+              }
+              textClassName={
+                activeTab === 'tracking'
+                  ? 'text-sm font-medium text-primary-600 dark:text-primary-400'
+                  : 'text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              }
+              layoutClassName="flex items-center gap-2 rounded-none py-4 shadow-none"
+              stateClassName="transition-colors"
+              leftIcon={<Truck className="h-4 w-4" />}
+            >
+              Hành trình
+            </Button>
+          ) : null}
         </Box>
 
         <Box
@@ -2028,6 +2021,66 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                   </Box>
                 );
               })()
+            ) : activeTab === 'tracking' ? (
+              <Box
+                layoutClassName="space-y-3 p-5"
+                backgroundClassName="bg-white dark:bg-slate-800"
+                roundedClassName="rounded-xl"
+                borderClassName="border border-slate-100 dark:border-slate-700"
+                shadowClassName="shadow-sm"
+              >
+                <Box layoutClassName="flex items-center justify-between gap-2">
+                  <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white" layoutClassName="uppercase tracking-wide">
+                    Hành trình vận đơn
+                  </Heading>
+                  {trackingQuery.data?.status ? (
+                    <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-primary-600 dark:text-primary-400">
+                      {trackingQuery.data.status}
+                    </Typography>
+                  ) : null}
+                </Box>
+                <Typography as="p" size="xs" variant="muted">
+                  Mã: {currentOrder.trackingNumber}
+                  {currentOrder.trackingLink ? (
+                    <>
+                      {' · '}
+                      <a href={currentOrder.trackingLink} target="_blank" rel="noopener noreferrer" className="underline">tra cứu trên hãng</a>
+                    </>
+                  ) : null}
+                </Typography>
+
+                {trackingQuery.isFetching ? (
+                  <Typography as="p" size="sm" variant="muted">Đang tải hành trình…</Typography>
+                ) : trackingQuery.data?.events?.length ? (
+                  <Box layoutClassName="space-y-3 pt-1">
+                    {trackingQuery.data.events.map((ev, i) => (
+                      <Box key={i} layoutClassName="flex gap-3">
+                        <Box layoutClassName="flex flex-col items-center">
+                          <Box
+                            layoutClassName="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                            backgroundClassName={i === 0 ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}
+                          />
+                          {i < trackingQuery.data!.events.length - 1 ? (
+                            <Box layoutClassName="mt-1 w-px flex-1" backgroundClassName="bg-slate-200 dark:bg-slate-600" />
+                          ) : null}
+                        </Box>
+                        <Box layoutClassName="min-w-0 flex-1 pb-1">
+                          <Typography as="p" size="sm" layoutClassName={i === 0 ? 'font-semibold' : ''} textClassName="text-slate-700 dark:text-slate-200">
+                            {ev.label}{ev.location ? ` · ${ev.location}` : ''}
+                          </Typography>
+                          <Typography as="span" size="xs" variant="muted">
+                            {new Date(ev.time * 1000).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                ) : (
+                  <Typography as="p" size="sm" variant="muted">
+                    Chưa lấy được hành trình (chỉ hỗ trợ đơn SPX, hoặc hãng chưa cập nhật).
+                  </Typography>
+                )}
+              </Box>
             ) : null}
         </Box>
       </Box>
