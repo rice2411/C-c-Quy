@@ -33,7 +33,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { qk } from '@/hooks/queryKeys';
-import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund } from '@/services/orderService';
+import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund, fetchTrackingTimeline } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber, fetchOutUnlinkedTransactions } from '@/services/transactionService';
 import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor, groupFlavors, sizeCountsLabel, sizeImage, sizeCount } from '@/types';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
@@ -110,6 +110,15 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     enabled: !!currentUser && !!orderNumberForTx,
   });
   const relatedTransactions: Transaction[] = txQuery.data ?? [];
+
+  // Hành trình vận đơn LIVE (SPX) — tra cứu theo mã khi mở đơn.
+  const trackingTn = order?.trackingNumber ?? '';
+  const trackingQuery = useQuery({
+    queryKey: ['tracking', trackingTn],
+    queryFn: () => fetchTrackingTimeline(trackingTn),
+    enabled: isOpen && /^SPXVN/i.test(trackingTn),
+    staleTime: 5 * 60 * 1000,
+  });
 
   React.useEffect(() => {
     setLocalOrder(order);
@@ -473,6 +482,38 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
             )}
             {currentOrder.trackingStatus ? ` · ${currentOrder.trackingStatus}` : ''}
           </Typography>
+        ) : null}
+        {/* Hành trình vận đơn LIVE (SPX) */}
+        {trackingQuery.data?.events?.length ? (
+          <Box
+            layoutClassName="mt-2 max-h-56 space-y-2 overflow-y-auto rounded-lg p-3"
+            borderClassName="border border-slate-200 dark:border-slate-700"
+            backgroundClassName="bg-slate-50/70 dark:bg-slate-800/50"
+          >
+            {trackingQuery.data.status ? (
+              <Typography as="p" size="xs" layoutClassName="font-semibold" textClassName="text-primary-600 dark:text-primary-400">
+                Hành trình · {trackingQuery.data.status}
+              </Typography>
+            ) : null}
+            {trackingQuery.data.events.map((ev, i) => (
+              <Box key={i} layoutClassName="flex gap-2">
+                <Box
+                  layoutClassName="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                  backgroundClassName={i === 0 ? 'bg-primary-500' : 'bg-slate-300 dark:bg-slate-600'}
+                />
+                <Box layoutClassName="min-w-0 flex-1">
+                  <Typography as="p" size="xs" layoutClassName={i === 0 ? 'font-semibold' : ''} textClassName="text-slate-700 dark:text-slate-200">
+                    {ev.label}{ev.location ? ` · ${ev.location}` : ''}
+                  </Typography>
+                  <Typography as="span" size="xs" variant="muted">
+                    {new Date(ev.time * 1000).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        ) : trackingQuery.isFetching ? (
+          <Typography as="p" size="xs" variant="muted" layoutClassName="mt-1">Đang tải hành trình vận đơn…</Typography>
         ) : null}
       </Box>
       <IconButton

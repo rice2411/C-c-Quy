@@ -234,6 +234,15 @@ export const syncOrderTracking = async (
   return res.data as TrackingSyncResult;
 };
 
+export interface TrackingEvent { time: number; label: string; location?: string }
+export interface TrackingTimeline { tn: string; status: string | null; events: TrackingEvent[] }
+
+/** Tra cứu LIVE hành trình vận đơn (SPX) theo mã — BE proxy. */
+export const fetchTrackingTimeline = async (tn: string): Promise<TrackingTimeline> => {
+  const res = await apiClient.get('/orders/tracking', { params: { tn } });
+  return res.data as TrackingTimeline;
+};
+
 /**
  * Xoa don hang. BE xoa DB (DELETE /orders/:id). SAU DO gui Zalo notify
  * (GIU NGUYEN tren FE). Loi Zalo duoc nuot.
