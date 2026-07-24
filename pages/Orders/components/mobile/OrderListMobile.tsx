@@ -155,6 +155,17 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                     <Box layoutClassName="mb-1 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                       <Package className="h-3 w-3 shrink-0" />
                       <span className="font-medium">{getItemCount(order)} món</span>
+                      {order.items?.find((i) => i.packagingOption)?.packagingOption ? (
+                        <Badge
+                          size="sm"
+                          layoutClassName="px-2 py-0.5 text-[10px] font-semibold"
+                          borderClassName="border-transparent"
+                          backgroundClassName="bg-primary-100 dark:bg-primary-900/40"
+                          textClassName="text-primary-700 dark:text-primary-300"
+                        >
+                          📦 {order.items.find((i) => i.packagingOption)?.packagingOption}
+                        </Badge>
+                      ) : null}
                     </Box>
                     <OrderItemsMini items={order.items ?? []} />
                   </Box>

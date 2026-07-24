@@ -21,6 +21,8 @@ export const buildOrderItemRows = (items: OrderItem[], products: Product[]): Ord
     const product = products.find((p) => p.id === it.productId);
     const flavors = it.flavors ?? [];
     const flavorLine = groupFlavors(flavors).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
+    // Option gói (Hộp / Gói) → 1 chip meta, hiện ở cả order list + card chia sẻ.
+    const packMeta = it.packagingOption ? [it.packagingOption] : [];
 
     // 1) Tính giá theo vị → mỗi vị 1 hàng (ảnh vị).
     if (product && productUsesFlavorPricing(product) && flavors.length > 0) {
@@ -28,7 +30,7 @@ export const buildOrderItemRows = (items: OrderItem[], products: Product[]): Ord
         key: `${it.id}-f-${fl}`,
         img: flavorImage(product, fl) || it.image || product.image,
         name: it.name,
-        meta: [`Vị: ${fl}`],
+        meta: [`Vị: ${fl}`, ...packMeta],
         qty,
       }));
     }
@@ -49,12 +51,14 @@ export const buildOrderItemRows = (items: OrderItem[], products: Product[]): Ord
             const fl = groupFlavors(unit).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
             const meta = [`${sizeLbl}${sc.qty > 1 ? ` #${u + 1}` : ''}`];
             if (fl) meta.push(`Vị: ${fl}`);
+            meta.push(...packMeta);
             return { key: `${it.id}-s-${sc.name}-${u}`, img, name: it.name, meta, qty: 1 };
           });
         }
         const label = sc.qty > 1 ? `${sizeLbl} ×${sc.qty}` : sizeLbl;
         const meta = [label];
         if (!isCombo && flavorLine) meta.push(`Vị: ${flavorLine}`);
+        meta.push(...packMeta);
         return [{ key: `${it.id}-s-${sc.name}`, img, name: it.name, meta, qty: sc.qty }];
       });
     }
@@ -62,6 +66,7 @@ export const buildOrderItemRows = (items: OrderItem[], products: Product[]): Ord
     // 3) Mặc định 1 hàng.
     const meta: string[] = [];
     if (flavorLine) meta.push(`Vị: ${flavorLine}`);
+    meta.push(...packMeta);
     return [{ key: it.id, img: it.image || product?.image, name: it.name || '', meta, qty: it.quantity || 0 }];
   });
 };
