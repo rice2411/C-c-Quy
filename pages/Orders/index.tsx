@@ -57,6 +57,17 @@ const OrdersPage: React.FC = () => {
     setSelectedOrder(order);
   };
 
+  // Tự refresh mốc VĐ mới nhất khi mở trang (throttle 5' để không spam SPX) → list hiện chi tiết.
+  useEffect(() => {
+    const KEY = 'cq_tracking_refresh_at';
+    const last = Number(localStorage.getItem(KEY) || 0);
+    if (Date.now() - last < 5 * 60 * 1000) return;
+    localStorage.setItem(KEY, String(Date.now()));
+    refreshOrderTracking()
+      .then((r) => { if (r.updated > 0) void refreshOrders(); })
+      .catch(() => {});
+  }, []);
+
   // Auto-sync selectedOrder khi orders list refresh (sau update)
   useEffect(() => {
     if (!selectedOrder) return;
