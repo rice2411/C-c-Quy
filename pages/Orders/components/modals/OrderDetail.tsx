@@ -455,6 +455,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
             {currentOrder.deliveryTime ? ` • ${currentOrder.deliveryTime}` : ''}
           </Typography>
         ) : null}
+        {currentOrder.trackingNumber ? (
+          <Typography size="sm" layoutClassName="font-medium" textClassName="text-primary-600 dark:text-primary-400">
+            🚚 Mã vận đơn: {currentOrder.trackingNumber}
+          </Typography>
+        ) : null}
       </Box>
       <IconButton
         type="button"

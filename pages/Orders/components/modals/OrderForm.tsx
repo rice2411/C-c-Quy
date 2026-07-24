@@ -141,6 +141,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const [deliveryTime, setDeliveryTime] = useState<string>('');
   const [isDeliveryTimeEnabled, setIsDeliveryTimeEnabled] = useState<boolean>(false);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>(DeliveryType.SHIP);
+  const [trackingNumber, setTrackingNumber] = useState('');   // mã vận đơn (ship tỉnh)
   // Đơn hàng test — dùng để test tính năng. Khi bật, Zalo message sẽ có banner === ĐƠN HÀNG TEST ===
   const [isTest, setIsTest] = useState<boolean>(false);
 
@@ -198,6 +199,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPaidAmount(initialData.paidAmount || 0);
       setPaymentMethod(initialData.paymentMethod || PaymentMethod.CASH);
       setDeliveryType(initialData.deliveryType || DeliveryType.SHIP);
+      setTrackingNumber(initialData.trackingNumber || '');
       setShippingCost(initialData.shippingCost || 0);
       setShipInfo(initialData.shipInfo ?? null);
       setIsTest(!!initialData.isTest);
@@ -272,6 +274,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPaidAmount(0);
       setPaymentMethod(PaymentMethod.CASH);
       setDeliveryType(DeliveryType.SHIP);
+      setTrackingNumber('');
       setItems([]);
       loadedSnapRef.current = new Map();
       setIsTest(false);
@@ -648,6 +651,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         paymentStatus: paymentStatus,
         paymentMethod: paymentMethod,
         deliveryType: deliveryType,
+        trackingNumber: deliveryType === DeliveryType.SHIP_PROVINCE ? trackingNumber.trim() : '',
         isTest: isTest,
         createdBy: currentUser.uid,
         ...(commissionAmount !== undefined && { commissionAmount }),
@@ -856,6 +860,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               address={address} setAddress={setAddress}
               deliveryType={deliveryType}
               setDeliveryType={setDeliveryType}
+              trackingNumber={trackingNumber}
+              setTrackingNumber={setTrackingNumber}
               shippingCost={shippingCost}
               onShipFeeChange={(fee) => { if (fee != null) setShippingCost(fee); }}
               initialShipInfo={shipInfo ?? undefined}

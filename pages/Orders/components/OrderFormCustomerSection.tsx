@@ -20,6 +20,8 @@ interface CustomerSectionProps {
   setAddress: (val: string) => void;
   deliveryType: DeliveryType;
   setDeliveryType: (val: DeliveryType) => void;
+  trackingNumber?: string;
+  setTrackingNumber?: (val: string) => void;
   shippingCost?: number;
   onShipFeeChange?: (fee: number | null) => void;
   initialShipInfo?: ShipInfoSnapshot;
@@ -35,6 +37,8 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
   setAddress,
   deliveryType,
   setDeliveryType,
+  trackingNumber,
+  setTrackingNumber,
   shippingCost,
   onShipFeeChange,
   initialShipInfo,
@@ -192,6 +196,19 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
                     const raw = e.target.value;onShipFeeChange?.(raw === '' ? null : Number(raw));
                   }}
                   leftIcon={<Package className="h-4 w-4" />}
+                  leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+                />
+              </Field>
+            ) : null}
+
+            {deliveryType === DeliveryType.SHIP_PROVINCE && setTrackingNumber ? (
+              <Field label="Mã vận đơn" htmlFor="order-form-tracking-number">
+                <Input
+                  id="order-form-tracking-number"
+                  placeholder="Mã vận đơn của đơn vị vận chuyển (GHTK, GHN, VNPost...)"
+                  value={trackingNumber ?? ''}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                  leftIcon={<Truck className="h-4 w-4" />}
                   leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
                 />
               </Field>
