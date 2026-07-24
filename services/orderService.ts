@@ -243,6 +243,12 @@ export const fetchTrackingTimeline = async (tn: string): Promise<TrackingTimelin
   return res.data as TrackingTimeline;
 };
 
+/** Refresh mốc VĐ mới nhất cho các đơn SPX đang chạy → lưu DB (hiện ở order list). */
+export const refreshOrderTracking = async (): Promise<{ updated: number; total: number }> => {
+  const res = await apiClient.post('/orders/refresh-tracking');
+  return res.data as { updated: number; total: number };
+};
+
 /**
  * Xoa don hang. BE xoa DB (DELETE /orders/:id). SAU DO gui Zalo notify
  * (GIU NGUYEN tren FE). Loi Zalo duoc nuot.
