@@ -208,6 +208,32 @@ export const reconcileOrderTransaction = async (
   return res.data as Order;
 };
 
+/** 1 dòng vận đơn từ file 3PL (SPX/GHTK…). */
+export interface TrackingRow {
+  tracking: string;
+  link?: string;
+  status?: string;
+  name?: string;
+  phone?: string;
+}
+
+export interface TrackingSyncResult {
+  matched: { tracking: string; link?: string; status?: string; orderNumber: string; orderCustomer: string; receiverName?: string; hadTracking: boolean }[];
+  unmatched: { tracking: string; receiverName?: string; phone?: string }[];
+  applied: boolean;
+  matchedCount: number;
+  unmatchedCount: number;
+}
+
+/** Đồng bộ vận đơn từ file 3PL. apply=false → preview match; true → ghi vào đơn. */
+export const syncOrderTracking = async (
+  rows: TrackingRow[],
+  apply: boolean,
+): Promise<TrackingSyncResult> => {
+  const res = await apiClient.post('/orders/sync-tracking', { rows, apply });
+  return res.data as TrackingSyncResult;
+};
+
 /**
  * Xoa don hang. BE xoa DB (DELETE /orders/:id). SAU DO gui Zalo notify
  * (GIU NGUYEN tren FE). Loi Zalo duoc nuot.

@@ -457,7 +457,21 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         ) : null}
         {currentOrder.trackingNumber ? (
           <Typography size="sm" layoutClassName="font-medium" textClassName="text-primary-600 dark:text-primary-400">
-            🚚 Mã vận đơn: {currentOrder.trackingNumber}
+            🚚 Mã vận đơn:{' '}
+            {currentOrder.trackingLink ? (
+              <a
+                href={currentOrder.trackingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="underline hover:opacity-80"
+              >
+                {currentOrder.trackingNumber}
+              </a>
+            ) : (
+              currentOrder.trackingNumber
+            )}
+            {currentOrder.trackingStatus ? ` · ${currentOrder.trackingStatus}` : ''}
           </Typography>
         ) : null}
       </Box>

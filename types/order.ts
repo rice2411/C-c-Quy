@@ -166,6 +166,10 @@ export interface Order {
   deliveryDate?: string;
   deliveryTime?: string;
   trackingNumber?: string;
+  /** Link tra cứu vận đơn (3PL) — bấm để xem trạng thái mới nhất. */
+  trackingLink?: string;
+  /** Trạng thái vận chuyển từ file 3PL (đồng bộ lúc upload). */
+  trackingStatus?: string;
   note?: string;
   createdByUid?: string;
   createdBy?: string;
