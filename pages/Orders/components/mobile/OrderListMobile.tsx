@@ -167,6 +167,43 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                         </Badge>
                       ) : null}
                     </Box>
+                    {order.deliveryType === DeliveryType.SHIP_PROVINCE || order.trackingNumber ? (
+                      <Box layoutClassName="mb-1 flex flex-wrap items-center gap-1 text-xs">
+                        {order.deliveryType === DeliveryType.SHIP_PROVINCE ? (
+                          <Badge
+                            size="sm"
+                            layoutClassName="px-2 py-0.5 text-[10px] font-semibold"
+                            borderClassName="border-transparent"
+                            backgroundClassName="bg-sky-100 dark:bg-sky-900/40"
+                            textClassName="text-sky-700 dark:text-sky-300"
+                          >
+                            🚚 Ship tỉnh
+                          </Badge>
+                        ) : null}
+                        {order.trackingNumber ? (
+                          order.trackingLink ? (
+                            <a
+                              href={order.trackingLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="font-medium text-blue-600 underline dark:text-blue-400"
+                            >
+                              {order.trackingNumber}
+                            </a>
+                          ) : (
+                            <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-600 dark:text-slate-300">
+                              {order.trackingNumber}
+                            </Typography>
+                          )
+                        ) : (
+                          <Typography as="span" size="xs" textClassName="text-slate-400 dark:text-slate-500">chưa có mã VĐ</Typography>
+                        )}
+                        {order.trackingStatus ? (
+                          <Typography as="span" size="xs" variant="muted">· {order.trackingStatus}</Typography>
+                        ) : null}
+                      </Box>
+                    ) : null}
                     <OrderItemsMini items={order.items ?? []} />
                   </Box>
                 </Box>
