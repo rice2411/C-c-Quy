@@ -42,7 +42,9 @@ import { orderAddressFallbackKey, surchargeTagLabel, reconcileMethodLabel } from
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { allocateSurcharge, generateQRCodeImage, getOrderTotal } from '@/utils/order/orderUtils';
-import { Sparkles } from 'lucide-react';
+import { buildOrderEmvQr } from '@/utils/order/vietQrEmv';
+import { pushPosQr, clearPosQr } from '@/services/posService';
+import { Sparkles, MonitorSmartphone, Home } from 'lucide-react';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
@@ -83,6 +85,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const { surchargeTags } = useSurchargeTags();
   const { activeAccount } = usePaymentAccounts();
   const [activeTab, setActiveTab] = useState<'details' | 'refund' | 'history' | 'tracking'>('details');
+  const [qrMode, setQrMode] = useState<'deposit' | 'remainder'>('deposit');
+  const [posBusy, setPosBusy] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [crMode, setCrMode] = useState<CancelRefundMode | null>(null);
@@ -162,12 +166,44 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         : []
   ).filter((s) => Number(s.amount) > 0);
 
-  const description = `SEVQR ${currentOrder.orderNumber}`;
+  // QR cọc / còn lại ngay trong chi tiết (khỏi vào Edit).
+  const depositAmt = Number(currentOrder.depositAmount) || 0;
+  const paidAmt = Number(currentOrder.paidAmount) || 0;
+  const hasDeposit = depositAmt > 0;
+  const collected = Math.max(depositAmt, paidAmt);
+  const remainderAmt = Math.max(0, finalTotal - collected);
+  const isDepositQr = hasDeposit && qrMode === 'deposit';
+  const qrAmount = isDepositQr ? depositAmt : (remainderAmt > 0 ? remainderAmt : finalTotal);
+  // Nội dung CK: mã đơn; cọc → prefix "C".
+  const description = `${isDepositQr ? 'C' : ''}${currentOrder.orderNumber}`;
   // Không có TK active → qrUrl rỗng → section QR ẩn an toàn.
-  const qrUrl = activeAccount ? generateQRCodeImage(currentOrder.orderNumber, finalTotal, activeAccount) : '';
+  const qrUrl = activeAccount ? generateQRCodeImage(currentOrder.orderNumber, qrAmount, activeAccount, isDepositQr) : '';
+  // QR cho card chia sẻ = luôn tổng đơn (không đổi theo toggle cọc).
+  const shareDescription = currentOrder.orderNumber;
+  const shareQrUrl = activeAccount ? generateQRCodeImage(currentOrder.orderNumber, finalTotal, activeAccount, false) : '';
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+  };
+
+  // Đẩy QR (EMV) số tiền `amount` xuống máy POS/ESP32.
+  const handlePushPos = async (amount: number) => {
+    if (!activeAccount || amount <= 0) return;
+    const emv = buildOrderEmvQr(currentOrder.orderNumber, amount, activeAccount, isDepositQr);
+    if (!emv) { toast.error(t('pos.qrBuildFailed')); return; }
+    setPosBusy(true);
+    try {
+      await pushPosQr({ order_id: currentOrder.orderNumber, amount, qr: emv });
+      toast.success(t('pos.qrPushed'));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t('pos.qrPushFailed'));
+    } finally { setPosBusy(false); }
+  };
+  const handleCancelPos = async () => {
+    setPosBusy(true);
+    try { await clearPosQr(); toast.success(t('pos.backToHomeDone')); }
+    catch (e) { toast.error(e instanceof Error ? e.message : t('pos.qrPushFailed')); }
+    finally { setPosBusy(false); }
   };
 
   // Chụp thẻ thông tin gửi khách (ShareableOrderCard, off-screen) → ảnh PNG rồi
@@ -1431,6 +1467,32 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                     stateClassName="transition-colors"
                   >
                      <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white" layoutClassName="mb-4 uppercase tracking-wide">{t('qr.sectionTitle')}</Heading>
+                     {hasDeposit ? (
+                       <Box layoutClassName="mb-3 inline-flex gap-1 rounded-lg p-1" backgroundClassName="bg-slate-100 dark:bg-slate-800">
+                         <Button
+                           type="button"
+                           onClick={() => setQrMode('deposit')}
+                           variant={isDepositQr ? 'primary' : 'ghost'}
+                           sizeClassName="px-3 py-1.5 text-xs"
+                           roundedClassName="rounded-md"
+                           shadowClassName=""
+                           disableVariantHover
+                         >
+                           {t('pos.qrDeposit')} · {formatVND(depositAmt)}
+                         </Button>
+                         <Button
+                           type="button"
+                           onClick={() => setQrMode('remainder')}
+                           variant={!isDepositQr ? 'primary' : 'ghost'}
+                           sizeClassName="px-3 py-1.5 text-xs"
+                           roundedClassName="rounded-md"
+                           shadowClassName=""
+                           disableVariantHover
+                         >
+                           {t('pos.qrRemaining')} · {formatVND(remainderAmt)}
+                         </Button>
+                       </Box>
+                     ) : null}
                      <Box
                        layoutClassName="p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start"
                        backgroundClassName="bg-blue-50 dark:bg-blue-900/20"
@@ -1497,7 +1559,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                               >
                                   <Typography as="span" size="xs" layoutClassName="uppercase font-medium min-w-[60px]" textClassName="text-slate-500">{t('qr.amount')}</Typography>
                                   <Typography as="span" size="inherit" layoutClassName="font-bold" textClassName="text-primary-600 dark:text-primary-400">
-                                    {formatVND(finalTotal)}
+                                    {formatVND(qrAmount)}{hasDeposit ? (isDepositQr ? ` · ${t('pos.qrDeposit')}` : ` · ${t('pos.qrRemaining')}`) : ''}
                                   </Typography>
                               </Box>
                               <Box
@@ -1515,6 +1577,38 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                             <Typography as="p" size="inherit" layoutClassName="text-[10px] mt-2" textClassName="text-slate-400">
                                {t('qr.instruction')}
                             </Typography>
+                            <Box layoutClassName="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                              <Button
+                                type="button"
+                                onClick={() => void handlePushPos(qrAmount)}
+                                disabled={posBusy || qrAmount <= 0}
+                                variant="primary"
+                                leftIcon={<MonitorSmartphone />}
+                                iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                                sizeClassName="px-3 py-2 text-xs"
+                                roundedClassName="rounded-lg"
+                                layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
+                                disableVariantHover
+                              >
+                                {posBusy ? t('pos.qrPushing') : `${t('pos.pushToDevice')} · ${formatVND(qrAmount)}`}
+                              </Button>
+                              <Button
+                                type="button"
+                                onClick={() => void handleCancelPos()}
+                                disabled={posBusy}
+                                variant="secondary"
+                                leftIcon={<Home />}
+                                iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                                sizeClassName="px-3 py-2 text-xs"
+                                roundedClassName="rounded-lg"
+                                borderClassName="border border-slate-200 dark:border-slate-600"
+                                backgroundClassName="bg-white dark:bg-slate-800"
+                                layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
+                                disableVariantHover
+                              >
+                                {t('pos.backToHome')}
+                              </Button>
+                            </Box>
                         </Box>
                      </Box>
                   </Box>
@@ -2223,8 +2317,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           currentOrder.paymentMethod === PaymentMethod.CASH ? t('paymentMethod.cash')
           : currentOrder.paymentMethod === PaymentMethod.BANKING ? t('paymentMethod.banking') : ''
         }
-        qrUrl={qrUrl}
-        description={description}
+        qrUrl={shareQrUrl}
+        description={shareDescription}
         bankCode={activeAccount?.bankCode}
         accountNumber={activeAccount?.accountNumber}
         accountHolder={activeAccount?.accountHolder}
