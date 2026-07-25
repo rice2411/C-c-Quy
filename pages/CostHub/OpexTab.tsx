@@ -124,6 +124,11 @@ const OpexTab: React.FC = () => {
                         <Typography as="span" size="xs" textClassName="font-medium text-sky-700 dark:text-sky-300">Từ phiếu</Typography>
                       </Box>
                     ) : null}
+                    {m.transactionId ? (
+                      <Box layoutClassName="shrink-0 px-1.5 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-violet-100 dark:bg-violet-900/40">
+                        <Typography as="span" size="xs" textClassName="font-medium text-violet-700 dark:text-violet-300">Từ GD bank</Typography>
+                      </Box>
+                    ) : null}
                   </Box>
                   <Typography size="xs" variant="muted" layoutClassName="truncate">
                     {m.date.split('-').reverse().join('/')}
@@ -162,6 +167,11 @@ const OpexTab: React.FC = () => {
                         {m.source === 'receipt' ? (
                           <Box layoutClassName="shrink-0 px-1.5 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-sky-100 dark:bg-sky-900/40">
                             <Typography as="span" size="xs" textClassName="font-medium text-sky-700 dark:text-sky-300">Từ phiếu</Typography>
+                          </Box>
+                        ) : null}
+                        {m.transactionId ? (
+                          <Box layoutClassName="shrink-0 px-1.5 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-violet-100 dark:bg-violet-900/40">
+                            <Typography as="span" size="xs" textClassName="font-medium text-violet-700 dark:text-violet-300">Từ GD bank</Typography>
                           </Box>
                         ) : null}
                       </Box>

@@ -9,4 +9,6 @@ export interface ManualExpense {
   createdAt?: string;
   /** Nguồn: 'manual' (nhập tay) | 'receipt' (từ phiếu nhập). */
   source?: 'manual' | 'receipt';
+  /** GD tiền-ra đã gắn (đối soát chi phí). null/undefined = chưa gắn. */
+  transactionId?: string | null;
 }

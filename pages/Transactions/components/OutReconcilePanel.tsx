@@ -9,8 +9,10 @@ import {
   RotateCcw,
   Undo2,
   Banknote,
+  Wallet,
 } from 'lucide-react';
 import { Transaction, EXPENSE_CATEGORIES, expenseCategoryLabel } from '@/types/transaction';
+import { ManualExpense } from '@/types';
 import { RefundListItem } from '@/services/orderService';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { formatDateTime } from '@/utils/format/dateUtil';
@@ -27,32 +29,43 @@ const InlineSpinner: React.FC<{ className?: string }> = ({ className }) => (
 interface OutReconcilePanelProps {
   transactions: Transaction[];      // giao dịch tiền RA (transferType='out')
   refunds: RefundListItem[];        // toàn bộ phiếu hoàn
+  manualExpenses: ManualExpense[];  // chi phí thủ công (để đối soát tiền ra ↔ chi phí)
   onReconcileRefund: (orderId: string, refundId: string, transactionId: string) => Promise<void>;
   onUnreconcileRefund: (orderId: string, refundId: string) => Promise<void>;
   onMarkSettled: (transactionId: string) => Promise<void>;     // đánh dấu "đã kết toán"
   onUnmarkSettled: (transactionId: string) => Promise<void>;
   onSetExpense: (transactionId: string, category: string | null, excluded: boolean) => Promise<void>;
+  onLinkExpense: (transactionId: string, expenseId: string) => Promise<void>;
+  onUnlinkExpense: (transactionId: string) => Promise<void>;
+  onCreateExpense: (transaction: Transaction) => Promise<void>;
   formatDate: (dateStr: string) => string;
 }
 
 interface OutRowProps {
   transaction: Transaction;
   linkedRefund?: RefundListItem;
+  linkedExpense?: ManualExpense;
+  unlinkedExpenses: ManualExpense[];
   pendingRefunds: RefundListItem[];
   onReconcileRefund: (orderId: string, refundId: string) => Promise<void>;
   onUnreconcileRefund: (orderId: string, refundId: string) => Promise<void>;
   onMarkSettled: () => Promise<void>;
   onUnmarkSettled: () => Promise<void>;
   onSetExpense: (category: string | null, excluded: boolean) => Promise<void>;
+  onLinkExpense: (expenseId: string) => Promise<void>;
+  onUnlinkExpense: () => Promise<void>;
+  onCreateExpense: () => Promise<void>;
   formatDate: (dateStr: string) => string;
 }
 
 const OutRow: React.FC<OutRowProps> = ({
-  transaction: tr, linkedRefund, pendingRefunds,
-  onReconcileRefund, onUnreconcileRefund, onMarkSettled, onUnmarkSettled, onSetExpense, formatDate,
+  transaction: tr, linkedRefund, linkedExpense, unlinkedExpenses, pendingRefunds,
+  onReconcileRefund, onUnreconcileRefund, onMarkSettled, onUnmarkSettled, onSetExpense,
+  onLinkExpense, onUnlinkExpense, onCreateExpense, formatDate,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [pickExpId, setPickExpId] = useState('');
 
   const refundSug = useMemo(() => {
     const exact = pendingRefunds.filter(r => r.amount === tr.transferAmount);
@@ -85,6 +98,16 @@ const OutRow: React.FC<OutRowProps> = ({
           <Banknote className="h-3.5 w-3.5 text-sky-500" />
           <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-sky-600 dark:text-sky-300">
             Đã kết toán
+          </Typography>
+        </Box>
+      );
+    }
+    if (linkedExpense) {
+      return (
+        <Box layoutClassName="flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 dark:bg-violet-900/20">
+          <Wallet className="h-3.5 w-3.5 text-violet-500" />
+          <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-violet-600 dark:text-violet-300">
+            Chi phí · {expenseCategoryLabel(linkedExpense.category)}
           </Typography>
         </Box>
       );
@@ -163,7 +186,7 @@ const OutRow: React.FC<OutRowProps> = ({
         )}
       </Box>
 
-      {expanded && !isLinked && (
+      {expanded && !isLinked && !linkedExpense && (
         <Box layoutClassName="border-t border-slate-100 dark:border-slate-700">
           {/* Phân loại chi phí (auto theo nội dung CK; đây là gán/sửa tay backup) */}
           <Box layoutClassName="flex flex-wrap items-center gap-2 px-4 py-3">
@@ -218,6 +241,57 @@ const OutRow: React.FC<OutRowProps> = ({
               stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50">
               {busyId === 'settled' ? <InlineSpinner className="border-sky-400" /> : <Banknote className="h-3.5 w-3.5" />}
               Đánh dấu đã kết toán
+            </Button>
+          </Box>
+
+          {/* Hoặc gắn vào 1 khoản chi phí (đối soát tiền ra ↔ chi phí, chống đếm trùng) */}
+          <Box layoutClassName="flex flex-wrap items-center gap-2 border-t border-slate-100 px-4 py-3 dark:border-slate-700">
+            <Typography size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">Khớp chi phí:</Typography>
+            <Select
+              value={pickExpId}
+              disabled={!!busyId || unlinkedExpenses.length === 0}
+              onChange={(e) => setPickExpId(e.target.value)}
+            >
+              <option value="">{unlinkedExpenses.length ? '— Chọn khoản chi có sẵn —' : '— Chưa có khoản chi trống —'}</option>
+              {unlinkedExpenses.map((ex) => (
+                <option key={ex.id} value={ex.id}>
+                  {formatVND(ex.amount)} · {ex.date} · {expenseCategoryLabel(ex.category)}
+                </option>
+              ))}
+            </Select>
+            <Button
+              type="button"
+              disabled={!!busyId || !pickExpId}
+              onClick={() => void handleBusy('linkExp', async () => { await onLinkExpense(pickExpId); setPickExpId(''); })}
+              variant="ghost"
+              disableVariantHover
+              disableVariantTextColor
+              layoutClassName="inline-flex items-center gap-1.5"
+              roundedClassName="rounded-lg"
+              borderClassName="border border-emerald-300 dark:border-emerald-600"
+              backgroundClassName="bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40"
+              sizeClassName="px-2.5 py-1.5 text-xs"
+              textClassName="font-semibold text-emerald-700 dark:text-emerald-300"
+              stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50">
+              {busyId === 'linkExp' ? <InlineSpinner className="border-emerald-400" /> : <Link2 className="h-3.5 w-3.5" />}
+              Khớp
+            </Button>
+            <Button
+              type="button"
+              disabled={!!busyId}
+              onClick={() => void handleBusy('createExp', () => onCreateExpense())}
+              variant="ghost"
+              disableVariantHover
+              disableVariantTextColor
+              layoutClassName="inline-flex items-center gap-1.5"
+              roundedClassName="rounded-lg"
+              borderClassName="border border-violet-300 dark:border-violet-600"
+              backgroundClassName="bg-violet-50 hover:bg-violet-100 dark:bg-violet-900/20 dark:hover:bg-violet-900/40"
+              sizeClassName="px-2.5 py-1.5 text-xs"
+              textClassName="font-semibold text-violet-700 dark:text-violet-300"
+              stateClassName="transition-colors disabled:opacity-50">
+              {busyId === 'createExp' ? <InlineSpinner className="border-violet-400" /> : <Wallet className="h-3.5 w-3.5" />}
+              Tạo chi phí từ GD
             </Button>
           </Box>
 
@@ -286,13 +360,42 @@ const OutRow: React.FC<OutRowProps> = ({
           )}
         </Box>
       )}
+
+      {expanded && linkedExpense && (
+        <Box layoutClassName="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 dark:border-slate-700">
+          <Box layoutClassName="flex min-w-0 items-center gap-2">
+            <Wallet className="h-4 w-4 shrink-0 text-violet-500" />
+            <Typography size="xs" variant="muted">
+              Đã gán chi phí: {expenseCategoryLabel(linkedExpense.category)} · {formatVND(linkedExpense.amount)}{linkedExpense.note ? ` · ${linkedExpense.note}` : ''}
+            </Typography>
+          </Box>
+          <Button
+            type="button"
+            disabled={!!busyId}
+            onClick={() => void handleBusy('unlinkExp', () => onUnlinkExpense())}
+            variant="ghost"
+            disableVariantHover
+            disableVariantTextColor
+            layoutClassName="flex shrink-0 items-center gap-1.5"
+            roundedClassName="rounded-lg"
+            borderClassName="border border-slate-200 hover:border-red-200 dark:border-slate-600 dark:hover:border-red-700"
+            backgroundClassName="bg-slate-50 hover:bg-red-50 dark:bg-slate-700 dark:hover:bg-red-900/20"
+            sizeClassName="px-2.5 py-1.5 text-xs"
+            textClassName="font-medium text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400"
+            stateClassName="transition-colors disabled:opacity-50">
+            {busyId === 'unlinkExp' ? <InlineSpinner /> : <RotateCcw className="h-3.5 w-3.5" />}
+            Bỏ khớp
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };
 
 const OutReconcilePanel: React.FC<OutReconcilePanelProps> = ({
-  transactions, refunds,
-  onReconcileRefund, onUnreconcileRefund, onMarkSettled, onUnmarkSettled, onSetExpense, formatDate,
+  transactions, refunds, manualExpenses,
+  onReconcileRefund, onUnreconcileRefund, onMarkSettled, onUnmarkSettled, onSetExpense,
+  onLinkExpense, onUnlinkExpense, onCreateExpense, formatDate,
 }) => {
   const pendingRefunds = useMemo(
     () => refunds.filter(r => !r.reconciled && !r.transactionId),
@@ -303,6 +406,15 @@ const OutReconcilePanel: React.FC<OutReconcilePanelProps> = ({
     refunds.forEach(r => { if (r.transactionId) m.set(r.transactionId, r); });
     return m;
   }, [refunds]);
+  const expenseByTxId = useMemo(() => {
+    const m = new Map<string, ManualExpense>();
+    manualExpenses.forEach(e => { if (e.transactionId) m.set(e.transactionId, e); });
+    return m;
+  }, [manualExpenses]);
+  const unlinkedExpenses = useMemo(
+    () => manualExpenses.filter(e => !e.transactionId),
+    [manualExpenses],
+  );
 
   if (transactions.length === 0) {
     return (
@@ -320,17 +432,23 @@ const OutReconcilePanel: React.FC<OutReconcilePanelProps> = ({
       key={tr.id}
       transaction={tr}
       linkedRefund={refundByTxId.get(tr.id)}
+      linkedExpense={expenseByTxId.get(tr.id)}
+      unlinkedExpenses={unlinkedExpenses}
       pendingRefunds={pendingRefunds}
       onReconcileRefund={(orderId, refundId) => onReconcileRefund(orderId, refundId, tr.id)}
       onUnreconcileRefund={onUnreconcileRefund}
       onMarkSettled={() => onMarkSettled(tr.id)}
       onUnmarkSettled={() => onUnmarkSettled(tr.id)}
       onSetExpense={(cat, exc) => onSetExpense(tr.id, cat, exc)}
+      onLinkExpense={(expenseId) => onLinkExpense(tr.id, expenseId)}
+      onUnlinkExpense={() => onUnlinkExpense(tr.id)}
+      onCreateExpense={() => onCreateExpense(tr)}
       formatDate={formatDate}
     />
   );
 
-  const isMatched = (tr: Transaction) => refundByTxId.has(tr.id) || !!tr.settledOut;
+  const isMatched = (tr: Transaction) =>
+    refundByTxId.has(tr.id) || expenseByTxId.has(tr.id) || !!tr.settledOut;
   const unmatched = transactions.filter(tr => !isMatched(tr));
   const matched = transactions.filter(isMatched);
 

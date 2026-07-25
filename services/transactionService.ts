@@ -138,3 +138,71 @@ export const reconcileTransactionsApply = async (
   );
   return res.data;
 };
+
+// ── Đối soát CHI PHÍ: tiền RA ↔ chi phí thủ công (chống đếm trùng) ──
+
+/** 1 cặp GD tiền-ra ↔ chi phí tay khớp tự động (từ preview). */
+export interface ExpenseReconcileMatch {
+  transactionId: string;
+  expenseId: string;
+  amount: number;
+  transactionDate: string;
+  expenseDate: string;
+  category: string | null;
+  note: string | null;
+  description: string | null;
+}
+
+export interface ExpenseReconcilePreviewResult {
+  /** Các cặp tiền-ra ↔ chi phí khớp DUY NHẤT (số tiền + gần ngày). */
+  matched: ExpenseReconcileMatch[];
+  /** GD có ≥2 chi phí ứng viên / tranh chấp → bỏ qua, khớp tay. */
+  skippedAmbiguous: number;
+  /** GD không tìm được chi phí nào khớp. */
+  skippedNoMatch: number;
+  /** Tổng GD tiền-ra chưa gắn đã quét. */
+  totalUnlinkedTx: number;
+  /** Tổng khoản chi tay chưa gắn. */
+  totalUnlinkedExpense: number;
+}
+
+/** Preview (dry-run): gợi ý cặp tiền-ra ↔ chi phí tay theo số tiền + ngày. KHÔNG ghi. */
+export const expenseReconcilePreview = async (): Promise<ExpenseReconcilePreviewResult> => {
+  const res = await apiClient.post<ExpenseReconcilePreviewResult>(
+    '/transactions/expense-reconcile/preview',
+  );
+  return res.data;
+};
+
+/** Apply: gắn danh sách cặp user đã confirm (BE atomic + idempotent). */
+export const expenseReconcileApply = async (
+  pairs: { transactionId: string; expenseId: string }[],
+): Promise<{ applied: number; skipped: number }> => {
+  const res = await apiClient.post<{ applied: number; skipped: number }>(
+    '/transactions/expense-reconcile/apply',
+    { pairs },
+  );
+  return res.data;
+};
+
+/** Khớp tay 1 GD tiền-ra với 1 khoản chi phí có sẵn. */
+export const linkTransactionExpense = async (
+  transactionId: string,
+  expenseId: string,
+): Promise<{ ok: boolean }> => {
+  const res = await apiClient.post<{ ok: boolean }>(
+    `/transactions/${transactionId}/expense-link`,
+    { expenseId },
+  );
+  return res.data;
+};
+
+/** Bỏ khớp khoản chi khỏi 1 GD tiền-ra (quay lại tính OPEX auto). */
+export const unlinkTransactionExpense = async (
+  transactionId: string,
+): Promise<{ unlinked: number }> => {
+  const res = await apiClient.delete<{ unlinked: number }>(
+    `/transactions/${transactionId}/expense-link`,
+  );
+  return res.data;
+};

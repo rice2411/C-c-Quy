@@ -10,6 +10,7 @@ import {
   BarChart2,
   Link2,
   ArrowDownLeft,
+  Wallet,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -19,9 +20,19 @@ import { qk } from '@/hooks/queryKeys';
 import { useOrders } from '@/hooks/useOrders';
 import { useTransactions, useTransactionMutations } from '@/hooks/queries/useTransactionsQuery';
 import { fetchAllRefunds, reconcileRefund, unreconcileRefund, RefundListItem } from '@/services/orderService';
-import { markTransactionSettled, setTransactionExpense } from '@/services/transactionService';
+import {
+  markTransactionSettled,
+  setTransactionExpense,
+  expenseReconcilePreview,
+  expenseReconcileApply,
+  linkTransactionExpense,
+  unlinkTransactionExpense,
+  ExpenseReconcilePreviewResult,
+} from '@/services/transactionService';
+import { fetchManualExpenses, upsertManualExpense } from '@/services/manualExpenseService';
 import OutReconcilePanel from './components/OutReconcilePanel';
-import { Transaction } from '@/types';
+import ExpenseReconcileSyncModal from './components/ExpenseReconcileSyncModal';
+import { Transaction, ManualExpense } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import TransactionsDesktopTable from './components/desktop/TransactionsDesktopTable';
 import TransactionsMobileList from './components/mobile/TransactionsMobileList';
@@ -168,11 +179,18 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     queryFn: fetchAllRefunds,
     enabled: !!currentUser,
   });
+  // Chi phí thủ công — để đối soát tiền ra ↔ chi phí (gắn transaction_id).
+  const { data: manualExpenses = [] } = useQuery<ManualExpense[]>({
+    queryKey: ['manualExpenses'],
+    queryFn: fetchManualExpenses,
+    enabled: !!currentUser,
+  });
   const refreshAfterReconcile = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: qk.orders.refunds }),
       queryClient.invalidateQueries({ queryKey: qk.transactions.all }),
       queryClient.invalidateQueries({ queryKey: qk.orders.all }),
+      queryClient.invalidateQueries({ queryKey: ['manualExpenses'] }),
     ]);
   };
 
@@ -239,6 +257,11 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncApplying, setSyncApplying] = useState(false);
   const [syncPreview, setSyncPreview] = useState<ReconcilePreviewResult | null>(null);
+  // Đối soát CHI PHÍ (tiền ra ↔ chi phí tay)
+  const [expSyncOpen, setExpSyncOpen] = useState(false);
+  const [expSyncLoading, setExpSyncLoading] = useState(false);
+  const [expSyncApplying, setExpSyncApplying] = useState(false);
+  const [expSyncPreview, setExpSyncPreview] = useState<ExpenseReconcilePreviewResult | null>(null);
 
   useEffect(() => {
     if (error) toast.error(t('transactions.loadError') || 'Không tải được giao dịch');
@@ -282,6 +305,80 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
       toast.error(err?.message || t('transactions.sync.applyError') || 'Khớp thất bại');
     } finally {
       setSyncApplying(false);
+    }
+  };
+
+  // Đối soát CHI PHÍ: quét gợi ý cặp tiền ra ↔ chi phí tay.
+  const handleOpenExpSync = async () => {
+    setExpSyncOpen(true);
+    setExpSyncPreview(null);
+    setExpSyncLoading(true);
+    try {
+      setExpSyncPreview(await expenseReconcilePreview());
+    } catch (err: any) {
+      toast.error(err?.message || 'Không quét được chi phí');
+      setExpSyncOpen(false);
+    } finally {
+      setExpSyncLoading(false);
+    }
+  };
+
+  const handleConfirmExpSync = async () => {
+    if (!expSyncPreview || expSyncPreview.matched.length === 0) return;
+    setExpSyncApplying(true);
+    try {
+      const pairs = expSyncPreview.matched.map((m) => ({ transactionId: m.transactionId, expenseId: m.expenseId }));
+      const { applied, skipped } = await expenseReconcileApply(pairs);
+      toast.success(`Đã khớp ${applied}${skipped ? ` · bỏ qua ${skipped}` : ''}`);
+      await refreshAfterReconcile();
+      setExpSyncOpen(false);
+    } catch (err: any) {
+      toast.error(err?.message || 'Khớp chi phí thất bại');
+    } finally {
+      setExpSyncApplying(false);
+    }
+  };
+
+  // Khớp tay 1 GD tiền ra với 1 khoản chi phí có sẵn.
+  const handleLinkExpense = async (transactionId: string, expenseId: string) => {
+    try {
+      const { ok } = await linkTransactionExpense(transactionId, expenseId);
+      if (!ok) throw new Error('Không gắn được (khoản chi đã gắn GD khác?)');
+      toast.success('Đã khớp chi phí với giao dịch');
+      await refreshAfterReconcile();
+    } catch (err: any) {
+      toast.error(err?.message || 'Khớp chi phí thất bại');
+      throw err;
+    }
+  };
+
+  const handleUnlinkExpense = async (transactionId: string) => {
+    try {
+      await unlinkTransactionExpense(transactionId);
+      toast.success('Đã bỏ khớp chi phí');
+      await refreshAfterReconcile();
+    } catch (err: any) {
+      toast.error(err?.message || 'Bỏ khớp thất bại');
+      throw err;
+    }
+  };
+
+  // Tạo 1 khoản chi phí tay TỪ giao dịch tiền ra (gắn luôn) — chi tiết chỉnh ở tab Chi phí.
+  const handleCreateExpenseFromTx = async (tx: Transaction) => {
+    try {
+      await upsertManualExpense({
+        date: (tx.transactionDate || '').slice(0, 10) || new Date().toISOString().slice(0, 10),
+        amount: tx.transferAmount,
+        category: tx.expenseCategory || 'other',
+        spreadMonths: 1,
+        note: (tx.content || '').slice(0, 120) || null,
+        transactionId: tx.id,
+      });
+      toast.success('Đã tạo chi phí từ giao dịch');
+      await refreshAfterReconcile();
+    } catch (err: any) {
+      toast.error(err?.message || 'Tạo chi phí thất bại');
+      throw err;
     }
   };
 
@@ -492,6 +589,21 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
             {t('transactions.sync.button') || 'Đồng bộ với đơn'}
           </Typography>
         </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={handleOpenExpSync}
+          disabled={expSyncLoading || expSyncApplying}
+          layoutClassName="flex shrink-0 items-center gap-1.5"
+          roundedClassName="rounded-xl"
+          sizeClassName="px-3 py-2.5 text-sm"
+          stateClassName="transition-colors disabled:opacity-50"
+        >
+          <Wallet className={`h-4 w-4 ${expSyncLoading ? 'animate-spin' : ''}`} />
+          <Typography as="span" layoutClassName="hidden sm:inline">
+            {t('transactions.expenseSync.button') || 'Đồng bộ chi phí'}
+          </Typography>
+        </Button>
         <IconButton
           type="button"
           label="Làm mới"
@@ -598,11 +710,15 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
                 <OutReconcilePanel
                   transactions={outUnmatched}
                   refunds={refunds}
+                  manualExpenses={manualExpenses}
                   onReconcileRefund={handleReconcileOut}
                   onUnreconcileRefund={handleUnreconcileOut}
                   onMarkSettled={handleMarkSettled}
                   onUnmarkSettled={handleUnmarkSettled}
                   onSetExpense={handleSetExpense}
+                  onLinkExpense={handleLinkExpense}
+                  onUnlinkExpense={handleUnlinkExpense}
+                  onCreateExpense={handleCreateExpenseFromTx}
                   formatDate={formatDate}
                 />
               </Box>
@@ -613,11 +729,15 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
         <OutReconcilePanel
           transactions={outTransactions}
           refunds={refunds}
+          manualExpenses={manualExpenses}
           onReconcileRefund={handleReconcileOut}
           onUnreconcileRefund={handleUnreconcileOut}
           onMarkSettled={handleMarkSettled}
           onUnmarkSettled={handleUnmarkSettled}
           onSetExpense={handleSetExpense}
+          onLinkExpense={handleLinkExpense}
+          onUnlinkExpense={handleUnlinkExpense}
+          onCreateExpense={handleCreateExpenseFromTx}
           formatDate={formatDate}
         />
       ) : displayedTransactions.length === 0 ? (
@@ -648,6 +768,15 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
         loading={syncLoading}
         applying={syncApplying}
         onConfirm={handleConfirmSync}
+      />
+
+      <ExpenseReconcileSyncModal
+        isOpen={expSyncOpen}
+        onClose={() => { if (!expSyncApplying) setExpSyncOpen(false); }}
+        preview={expSyncPreview}
+        loading={expSyncLoading}
+        applying={expSyncApplying}
+        onConfirm={handleConfirmExpSync}
       />
     </Box>
   );
