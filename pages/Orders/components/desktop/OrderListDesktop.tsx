@@ -25,6 +25,7 @@ const isFreeShip = (order: Order) => {
   return !!order.customer?.address;
 };
 import { formatVND } from '@/utils/format/currencyUtil';
+import { getDepositInfo } from '@/utils/order/orderUtils';
 import { buildDeliveryBadge } from '@/utils/order/deliveryDateBadge';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
@@ -321,11 +322,14 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                         Ship: {formatVND(order.shippingCost)}
                       </Typography>
                     ) : null}
-                    {Number(order.paidAmount) > 0 && Number(order.paidAmount) < Number(order.total) ? (
-                      <Typography as="span" size="xs" layoutClassName="mt-1 font-medium" textClassName="text-amber-600 dark:text-amber-400">
-                        Đã cọc {formatVND(Number(order.paidAmount))} · Còn {formatVND(Number(order.total) - Number(order.paidAmount))}
-                      </Typography>
-                    ) : null}
+                    {(() => {
+                      const dep = getDepositInfo(order, Number(order.total));
+                      return dep.show ? (
+                        <Typography as="span" size="xs" layoutClassName="mt-1 font-medium" textClassName="text-amber-600 dark:text-amber-400">
+                          Cọc {formatVND(dep.deposit || dep.paid)} · {dep.statusLabel}{dep.remaining > 0 && dep.paid < Number(order.total) ? ` · Còn ${formatVND(dep.remaining)}` : ''}
+                        </Typography>
+                      ) : null;
+                    })()}
                   </Box>
                 </Box>
               </Card>

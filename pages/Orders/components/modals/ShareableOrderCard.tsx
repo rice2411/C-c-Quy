@@ -2,6 +2,7 @@ import React from 'react';
 import { Order } from '@/types';
 import { surchargeTagLabel } from '@/types/surchargeTag';
 import { formatVND } from '@/utils/format/currencyUtil';
+import { getDepositInfo } from '@/utils/order/orderUtils';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
 import { buildOrderItemRows } from '@/pages/Orders/orderItemRows';
 import Box from '@/components/ui/Box';
@@ -151,18 +152,26 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
             <Typography as="span" size="sm" layoutClassName="font-bold" textClassName="text-slate-900">TỔNG</Typography>
             <Typography as="span" size="lg" layoutClassName="font-extrabold" textClassName="text-primary-600">{formatVND(finalTotal)}</Typography>
           </Box>
-          {Number(order.paidAmount) > 0 && Number(order.paidAmount) < finalTotal ? (
-            <>
-              <Box layoutClassName={rowClass}>
-                <Typography as="span" size="sm" textClassName="text-amber-600">Đã cọc</Typography>
-                <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-amber-600">−{formatVND(Number(order.paidAmount))}</Typography>
-              </Box>
-              <Box layoutClassName={`${rowClass} border-t border-slate-200 pt-2`}>
-                <Typography as="span" size="sm" layoutClassName="font-bold" textClassName="text-slate-900">CÒN LẠI</Typography>
-                <Typography as="span" size="lg" layoutClassName="font-extrabold" textClassName="text-rose-600">{formatVND(finalTotal - Number(order.paidAmount))}</Typography>
-              </Box>
-            </>
-          ) : null}
+          {(() => {
+            const dep = getDepositInfo(order, finalTotal);
+            if (!dep.show) return null;
+            return (
+              <>
+                <Box layoutClassName={rowClass}>
+                  <Typography as="span" size="sm" textClassName="text-amber-600">Tiền cọc</Typography>
+                  <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-amber-600">
+                    {formatVND(dep.deposit || dep.paid)} · {dep.statusLabel}
+                  </Typography>
+                </Box>
+                {dep.remaining > 0 && dep.paid < finalTotal ? (
+                  <Box layoutClassName={`${rowClass} border-t border-slate-200 pt-2`}>
+                    <Typography as="span" size="sm" layoutClassName="font-bold" textClassName="text-slate-900">CÒN LẠI</Typography>
+                    <Typography as="span" size="lg" layoutClassName="font-extrabold" textClassName="text-rose-600">{formatVND(dep.remaining)}</Typography>
+                  </Box>
+                ) : null}
+              </>
+            );
+          })()}
         </Box>
 
         {/* QR chuyển khoản */}

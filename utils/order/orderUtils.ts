@@ -72,6 +72,26 @@ export const getOrderTotal = (order: Order): number => {
   return Math.max(0, gross - Number(order.discountAmount || 0));
 };
 
+/** Thông tin cọc để hiển thị (list + card chia sẻ + chi tiết). */
+export interface DepositDisplay {
+  show: boolean;
+  deposit: number;   // cọc thoả thuận
+  paid: number;      // đã nhận
+  remaining: number; // còn lại
+  statusLabel: string;
+}
+
+export const getDepositInfo = (order: Order, total: number): DepositDisplay => {
+  const deposit = Number(order.depositAmount) || 0;
+  const paid = Number(order.paidAmount) || 0;
+  const show = deposit > 0 || (paid > 0 && paid < total);
+  const statusLabel =
+    total > 0 && paid >= total ? 'Đã thanh toán đủ'
+    : paid > 0 ? 'Đã cọc'
+    : 'Chưa cọc';
+  return { show, deposit, paid, remaining: Math.max(0, total - paid), statusLabel };
+};
+
 /**
  * Mốc thời gian "doanh thu" của 1 đơn — dùng cho mọi tính toán revenue/period
  * trên Dashboard (Today / Chart / Goal / TopProducts / TopCustomers).

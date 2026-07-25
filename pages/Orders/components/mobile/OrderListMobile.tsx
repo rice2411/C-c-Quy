@@ -15,6 +15,7 @@ const isFreeShip = (order: Order) => {
   return !!order.customer?.address;
 };
 import { formatVND } from '@/utils/format/currencyUtil';
+import { getDepositInfo } from '@/utils/order/orderUtils';
 import { buildDeliveryBadge } from '@/utils/order/deliveryDateBadge';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
@@ -270,13 +271,16 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                 </Typography>
               </Box>
 
-              {Number(order.paidAmount) > 0 && Number(order.paidAmount) < Number(order.total) ? (
-                <Box layoutClassName="px-4 pb-1 text-right">
-                  <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-amber-600 dark:text-amber-400">
-                    Đã cọc {formatVND(Number(order.paidAmount))} · Còn {formatVND(Number(order.total) - Number(order.paidAmount))}
-                  </Typography>
-                </Box>
-              ) : null}
+              {(() => {
+                const dep = getDepositInfo(order, Number(order.total));
+                return dep.show ? (
+                  <Box layoutClassName="px-4 pb-1 text-right">
+                    <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-amber-600 dark:text-amber-400">
+                      Cọc {formatVND(dep.deposit || dep.paid)} · {dep.statusLabel}{dep.remaining > 0 && dep.paid < Number(order.total) ? ` · Còn ${formatVND(dep.remaining)}` : ''}
+                    </Typography>
+                  </Box>
+                ) : null;
+              })()}
 
               <Box layoutClassName="flex items-center justify-end gap-1 px-4 pb-2 pt-1">
                 <Typography
