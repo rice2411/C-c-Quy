@@ -29,20 +29,6 @@ const OrdersPage: React.FC = () => {
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
-  const [isRefreshingTracking, setIsRefreshingTracking] = useState(false);
-
-  const handleRefreshTracking = async () => {
-    setIsRefreshingTracking(true);
-    try {
-      const res = await refreshOrderTracking();
-      toast.success(`Đã cập nhật ${res.updated}/${res.total} vận đơn`);
-      await refreshOrders();
-    } catch {
-      toast.error('Cập nhật vận đơn thất bại');
-    } finally {
-      setIsRefreshingTracking(false);
-    }
-  };
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
@@ -141,6 +127,8 @@ const OrdersPage: React.FC = () => {
 
     setIsRefreshing(true);
     try {
+      // Sync SPX (mốc mới nhất) TRƯỚC rồi mới tải lại đơn → list hiện trạng thái mới nhất.
+      await refreshOrderTracking().catch(() => {});
       await refreshOrders();
       toast.success(t('orders.refreshSuccess'));
     } catch (error) {
@@ -218,27 +206,6 @@ const OrdersPage: React.FC = () => {
       >
         <Typography as="span" size="xs" layoutClassName="hidden sm:inline">
           Đồng bộ vận đơn
-        </Typography>
-      </Button>
-      <Button
-        type="button"
-        onClick={handleRefreshTracking}
-        disabled={isRefreshingTracking}
-        variant="secondary"
-        disableVariantHover
-        disableVariantTextColor
-        backgroundClassName="bg-white dark:bg-slate-800"
-        borderClassName="border border-slate-200 dark:border-slate-600"
-        textClassName="font-medium text-slate-700 dark:text-slate-200"
-        roundedClassName="rounded-xl"
-        sizeClassName="px-3 py-2 text-xs"
-        layoutClassName="inline-flex items-center gap-1.5"
-        stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-        leftIcon={<RefreshCw />}
-        iconClassName={`inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5${isRefreshingTracking ? ' [&_svg]:animate-spin' : ''}`}
-      >
-        <Typography as="span" size="xs" layoutClassName="hidden sm:inline">
-          Cập nhật VĐ
         </Typography>
       </Button>
       <Button
