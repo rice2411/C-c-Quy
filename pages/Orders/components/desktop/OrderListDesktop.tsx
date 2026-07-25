@@ -321,6 +321,11 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                         Ship: {formatVND(order.shippingCost)}
                       </Typography>
                     ) : null}
+                    {Number(order.paidAmount) > 0 && Number(order.paidAmount) < Number(order.total) ? (
+                      <Typography as="span" size="xs" layoutClassName="mt-1 font-medium" textClassName="text-amber-600 dark:text-amber-400">
+                        Đã cọc {formatVND(Number(order.paidAmount))} · Còn {formatVND(Number(order.total) - Number(order.paidAmount))}
+                      </Typography>
+                    ) : null}
                   </Box>
                 </Box>
               </Card>

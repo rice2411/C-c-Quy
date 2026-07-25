@@ -270,6 +270,14 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                 </Typography>
               </Box>
 
+              {Number(order.paidAmount) > 0 && Number(order.paidAmount) < Number(order.total) ? (
+                <Box layoutClassName="px-4 pb-1 text-right">
+                  <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-amber-600 dark:text-amber-400">
+                    Đã cọc {formatVND(Number(order.paidAmount))} · Còn {formatVND(Number(order.total) - Number(order.paidAmount))}
+                  </Typography>
+                </Box>
+              ) : null}
+
               <Box layoutClassName="flex items-center justify-end gap-1 px-4 pb-2 pt-1">
                 <Typography
                   as="span"
