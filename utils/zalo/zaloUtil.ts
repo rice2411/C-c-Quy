@@ -220,18 +220,51 @@ export const formatPendingOrdersMessage = (orders: Order[]): string => {
   return lines.join('\n');
 };
 
-export const formatDeliveryDueMessage = (orders: Order[], targetDate?: Date): string => {
-  const dateStr = targetDate ? formatDateShort(targetDate).split(' ')[0] : 'hôm nay';
-  if (orders.length === 0) return `✅ Không có đơn hàng cần giao vào ${dateStr}.`;
+/** 1 dòng gọn cho 1 đơn: "Tên KH - N gói - <vị> - <note>". Gộp vị từ items.flavors. */
+const deliveryOrderLine = (o: Order): string => {
+  const qty = (o.items || []).reduce((s, it) => s + (Number(it.quantity) || 0), 0);
+  const flavorCounts = new Map<string, number>();
+  (o.items || []).forEach((it) =>
+    (it.flavors || []).forEach((f) => {
+      const fl = (f || '').trim();
+      if (fl) flavorCounts.set(fl, (flavorCounts.get(fl) || 0) + 1);
+    }),
+  );
+  const flavors = Array.from(flavorCounts.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([f, c]) => `${c} ${f}`)
+    .join(', ');
+  const note = (o.note || '').trim();
+  const name = o.customer?.name?.trim() || '(?)';
+  return `• ${name} - ${qty} gói${flavors ? ` - ${flavors}` : ''}${note ? ` - ${note}` : ''}`;
+};
+
+/** Thông báo đơn cần giao — hỗ trợ 1 ngày hoặc KHOẢNG ngày (from → to). */
+export const formatDeliveryDueMessage = (orders: Order[], fromDate?: Date, toDate?: Date): string => {
+  const fromStr = fromDate ? dm(fromDate) : '';
+  const toStr = toDate ? dm(toDate) : '';
+  const rangeStr =
+    fromStr && toStr && fromStr !== toStr ? `${fromStr}–${toStr}` : fromStr || toStr || 'hôm nay';
+  if (orders.length === 0) return `✅ Không có đơn hàng cần giao (${rangeStr}).`;
+  const totalGoi = orders.reduce(
+    (s, o) => s + (o.items || []).reduce((a, it) => a + (Number(it.quantity) || 0), 0),
+    0,
+  );
   const lines: string[] = [];
-  lines.push(`🚚 ĐƠN CẦN GIAO · ${dateStr} · ${orders.length} đơn`);
+  lines.push(`🚚 CẦN GIAO · ${rangeStr} · ${orders.length} đơn · ${totalGoi} gói`);
   lines.push(DIVIDER);
-  orders.forEach((o, i) => {
+  // sắp theo ngày giao rồi tên
+  const sorted = [...orders].sort((a, b) => {
+    const da = a.deliveryDate ? parseDateValue(a.deliveryDate)?.getTime() ?? 0 : 0;
+    const db = b.deliveryDate ? parseDateValue(b.deliveryDate)?.getTime() ?? 0 : 0;
+    return da - db || (a.customer?.name || '').localeCompare(b.customer?.name || '');
+  });
+  let curDate = '';
+  sorted.forEach((o) => {
     const dd = o.deliveryDate ? parseDateValue(o.deliveryDate) : null;
-    lines.push(`${i + 1}. ${o.orderNumber || o.id} · ${formatVND(getOrderTotal(o))} · ${customerLine(o.customer?.name, o.customer?.phone)}`);
-    if (o.customer?.address) lines.push(`   🏠 ${o.customer.address}`);
-    if (dd) lines.push(`   📅 Giao ${dm(dd)}${o.deliveryTime ? ' ' + o.deliveryTime : ' ' + hm(dd)}`);
-    (o.items || []).forEach((it) => itemLines(it).forEach((l) => lines.push(`   ${l}`)));
+    const dLbl = dd ? dm(dd) : '—';
+    if (dLbl !== curDate) { curDate = dLbl; lines.push(`📅 ${dLbl}`); }
+    lines.push(deliveryOrderLine(o));
   });
   return lines.join('\n');
 };

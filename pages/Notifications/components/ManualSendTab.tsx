@@ -83,7 +83,8 @@ const ManualSendTab: React.FC = () => {
   const [selectedType, setSelectedType] = useState<NotificationType>('unpaid');
   const [isSending, setIsSending] = useState(false);
   const [customMessage, setCustomMessage] = useState('');
-  const [deliveryDate, setDeliveryDate] = useState('');
+  const [deliveryFrom, setDeliveryFrom] = useState('');
+  const [deliveryTo, setDeliveryTo] = useState('');
 
   const unpaidOrders = useMemo(() => {
     return orders.filter((order) => {
@@ -103,9 +104,14 @@ const ManualSendTab: React.FC = () => {
   }, [orders]);
 
   const deliveryDueOrders = useMemo(() => {
-    if (!deliveryDate) return [];
-    const targetDate = new Date(deliveryDate);
-    targetDate.setHours(0, 0, 0, 0);
+    if (!deliveryFrom) return [];
+    const fromDate = new Date(deliveryFrom);
+    fromDate.setHours(0, 0, 0, 0);
+    // Nếu chưa chọn "đến" thì mặc định = ngày "từ" (1 ngày).
+    const toDate = new Date(deliveryTo || deliveryFrom);
+    toDate.setHours(0, 0, 0, 0);
+    const lo = Math.min(fromDate.getTime(), toDate.getTime());
+    const hi = Math.max(fromDate.getTime(), toDate.getTime());
 
     return orders.filter((order) => {
       if (!order.deliveryDate) return false;
@@ -114,14 +120,16 @@ const ManualSendTab: React.FC = () => {
 
       const orderDate = new Date(orderDeliveryDate);
       orderDate.setHours(0, 0, 0, 0);
+      const t = orderDate.getTime();
 
       return (
-        orderDate.getTime() === targetDate.getTime() &&
+        t >= lo &&
+        t <= hi &&
         order.status !== OrderStatus.DELIVERED &&
         order.status !== OrderStatus.CANCELLED
       );
     });
-  }, [orders, deliveryDate]);
+  }, [orders, deliveryFrom, deliveryTo]);
 
   const productionTomorrowOrders = useMemo(() => {
     const now = new Date();
@@ -305,7 +313,7 @@ const ManualSendTab: React.FC = () => {
           break;
 
         case 'delivery':
-          if (!deliveryDate) {
+          if (!deliveryFrom) {
             toast.error(t('notifications.selectDeliveryDate'));
             return;
           }
@@ -313,7 +321,11 @@ const ManualSendTab: React.FC = () => {
             toast.error(t('notifications.noDeliveryOrders'));
             return;
           }
-          await sendDeliveryDueNotification(deliveryDueOrders, new Date(deliveryDate));
+          await sendDeliveryDueNotification(
+            deliveryDueOrders,
+            new Date(deliveryFrom),
+            new Date(deliveryTo || deliveryFrom),
+          );
           toast.success(t('notifications.sentSuccess'));
           break;
 
@@ -493,15 +505,28 @@ const ManualSendTab: React.FC = () => {
       <Card padding="lg">
         {selectedType === 'delivery' ? (
           <Box layoutClassName="mb-6">
-            <Field label={t('notifications.selectDeliveryDate')} htmlFor="notification-delivery-date">
-              <DatePicker
-                id="notification-delivery-date"
-                value={deliveryDate}
-                onChange={setDeliveryDate}
-                fullWidth
-              />
-            </Field>
-            {deliveryDate && deliveryDueOrders.length > 0 ? (
+            <Box layoutClassName="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label={t('notifications.deliveryDateFrom') || 'Từ ngày'} htmlFor="notification-delivery-from">
+                <DatePicker
+                  id="notification-delivery-from"
+                  value={deliveryFrom}
+                  onChange={setDeliveryFrom}
+                  fullWidth
+                />
+              </Field>
+              <Field label={t('notifications.deliveryDateTo') || 'Đến ngày'} htmlFor="notification-delivery-to">
+                <DatePicker
+                  id="notification-delivery-to"
+                  value={deliveryTo}
+                  onChange={setDeliveryTo}
+                  fullWidth
+                />
+              </Field>
+            </Box>
+            <Typography size="xs" variant="muted" layoutClassName="mt-1.5">
+              {t('notifications.deliveryRangeHint') || 'Bỏ trống "Đến ngày" để gộp đúng 1 ngày.'}
+            </Typography>
+            {deliveryFrom && deliveryDueOrders.length > 0 ? (
               <Typography size="sm" variant="muted" layoutClassName="mt-2">
                 {t('notifications.foundOrders')?.replace('{count}', String(deliveryDueOrders.length)) ||
                   `Tìm thấy ${deliveryDueOrders.length} đơn hàng`}
@@ -548,7 +573,7 @@ const ManualSendTab: React.FC = () => {
           onClick={handleSendNotification}
           disabled={
             isSending ||
-            (selectedType === 'delivery' && !deliveryDate) ||
+            (selectedType === 'delivery' && !deliveryFrom) ||
             (selectedType === 'custom' && !customMessage.trim())
           }
           leftIcon={

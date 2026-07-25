@@ -117,8 +117,8 @@ export const sendPendingOrdersNotification = async (orders: Order[]) => {
   await sendZaloMessage(message);
 };
 
-export const sendDeliveryDueNotification = async (orders: Order[], targetDate?: Date) => {
-  const message = formatDeliveryDueMessage(orders, targetDate);
+export const sendDeliveryDueNotification = async (orders: Order[], fromDate?: Date, toDate?: Date) => {
+  const message = formatDeliveryDueMessage(orders, fromDate, toDate);
   await sendZaloMessage(message);
 };
 
