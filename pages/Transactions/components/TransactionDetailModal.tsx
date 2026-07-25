@@ -9,8 +9,10 @@ import {
   FileText,
   Hash,
   Clock,
+  Wallet,
 } from 'lucide-react';
-import { Transaction } from '@/types';
+import { Transaction, ManualExpense } from '@/types';
+import { expenseCategoryLabel } from '@/types/transaction';
 import { formatVND } from '@/utils/format/currencyUtil';
 import BaseModal from '@/components/BaseModal';
 import Badge from '@/components/ui/Badge';
@@ -23,6 +25,8 @@ interface TransactionDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   transaction: Transaction | null;
+  /** Khoản chi phí tay tương ứng (nếu GD tiền-ra này đã được gán). */
+  linkedExpense?: ManualExpense;
   formatDate: (dateStr: string) => string;
 }
 
@@ -30,6 +34,7 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
   isOpen,
   onClose,
   transaction,
+  linkedExpense,
   formatDate,
 }) => {
   if (!transaction) return null;
@@ -142,6 +147,22 @@ const TransactionDetailModal: React.FC<TransactionDetailModalProps> = ({
             </Typography>
           </Card>
         </Box>
+
+        {linkedExpense && (
+          <Card layoutClassName="p-3" backgroundClassName="bg-violet-50 dark:bg-violet-900/20" borderClassName="border-violet-200 dark:border-violet-700">
+            <Box layoutClassName="mb-2 flex items-center gap-2">
+              <Wallet className="h-4 w-4 text-violet-500" />
+              <Typography as="span" size="xs" layoutClassName="font-medium uppercase" textClassName="text-violet-600 dark:text-violet-300">
+                Chi phí tương ứng
+              </Typography>
+            </Box>
+            <Typography size="sm" textClassName="text-slate-900 dark:text-white">
+              {expenseCategoryLabel(linkedExpense.category)} · {formatVND(linkedExpense.amount)}
+              {linkedExpense.spreadMonths > 1 ? ` · phân bổ × ${linkedExpense.spreadMonths} tháng` : ''}
+              {linkedExpense.note ? ` · ${linkedExpense.note}` : ''}
+            </Typography>
+          </Card>
+        )}
 
         <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {transaction.orderNumber && (

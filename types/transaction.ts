@@ -31,9 +31,13 @@ export interface Transaction {
 
 /** Category chi phí vận hành (union — theo types-convention). */
 export type ExpenseCategory =
-  | 'rent' | 'utilities' | 'internet' | 'marketing' | 'maintenance' | 'salary' | 'facility' | 'other';
+  | 'rent' | 'utilities' | 'internet' | 'marketing' | 'maintenance' | 'salary' | 'facility'
+  | 'supplier' | 'shipping' | 'packaging' | 'other'
+  // Nhóm PHI-CHI-PHÍ (cost:false) — KHÔNG tính vào P&L quán khi gán.
+  | 'personal' | 'owner' | 'internal';
 
-export const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string }[] = [
+/** cost=false → không tính vào chi phí quán (cá nhân/rút vốn/nội bộ). Mặc định coi là chi phí. */
+export const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; cost?: boolean }[] = [
   { value: 'rent', label: 'Thuê mặt bằng' },
   { value: 'utilities', label: 'Điện nước' },
   { value: 'internet', label: 'Internet/ĐT' },
@@ -41,11 +45,21 @@ export const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string }[] = [
   { value: 'maintenance', label: 'Bảo trì' },
   { value: 'salary', label: 'Lương' },
   { value: 'facility', label: 'CSVC/Thiết bị' },
+  { value: 'supplier', label: 'Trả NCC/Nhập hàng' },
+  { value: 'shipping', label: 'Vận chuyển/Ship' },
+  { value: 'packaging', label: 'Bao bì/Hộp' },
   { value: 'other', label: 'Khác' },
+  { value: 'personal', label: 'Cá nhân (không tính)', cost: false },
+  { value: 'owner', label: 'Rút vốn (không tính)', cost: false },
+  { value: 'internal', label: 'Nội bộ/Nạp ví (không tính)', cost: false },
 ];
 
 export const expenseCategoryLabel = (c?: string | null): string =>
   EXPENSE_CATEGORIES.find((x) => x.value === c)?.label ?? (c ? 'Khác' : '—');
+
+/** Category này có tính vào chi phí quán không (khớp expense_category_is_cost ở BE). */
+export const expenseCategoryIsCost = (c?: string | null): boolean =>
+  !!c && c !== 'personal' && c !== 'owner' && c !== 'internal';
 
 /** Rule phân loại chi phí (nội dung CK chứa keyword → category). */
 export interface ExpenseRule {

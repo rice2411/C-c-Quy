@@ -12,9 +12,10 @@ import EmptyState from '@/components/ui/EmptyState';
 import DatePicker from '@/components/ui/DatePicker';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
-import { EXPENSE_CATEGORIES, expenseCategoryLabel, type ManualExpense } from '@/types';
+import { EXPENSE_CATEGORIES, expenseCategoryLabel, type ManualExpense, type Transaction } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { fetchManualExpenses, upsertManualExpense, deleteManualExpense } from '@/services/manualExpenseService';
+import { fetchTransactions } from '@/services/transactionService';
 
 type ManualForm = { id?: string; date: string; amount: string; category: string; spreadMonths: string; note: string };
 const EMPTY_MANUAL: ManualForm = { date: '', amount: '', category: 'rent', spreadMonths: '1', note: '' };
@@ -22,6 +23,7 @@ const EMPTY_MANUAL: ManualForm = { date: '', amount: '', category: 'rent', sprea
 /** Chi phí vận hành (OPEX) — nhập tay (mặt bằng/điện nước/wifi...) HOẶC từ phiếu (source=receipt). */
 const OpexTab: React.FC = () => {
   const [list, setList] = useState<ManualExpense[]>([]);
+  const [txById, setTxById] = useState<Map<string, Transaction>>(new Map());
   const [form, setForm] = useState<ManualForm>(EMPTY_MANUAL);
   const [formOpen, setFormOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -32,13 +34,19 @@ const OpexTab: React.FC = () => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setList(await fetchManualExpenses());
+      const [mx, txs] = await Promise.all([fetchManualExpenses(), fetchTransactions()]);
+      setList(mx);
+      setTxById(new Map(txs.map((tx) => [tx.id, tx])));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Tải chi phí thất bại');
     } finally {
       setLoading(false);
     }
   }, []);
+
+  /** GD tiền-ra tương ứng của 1 khoản chi (đối soát). */
+  const linkedTx = (m: ManualExpense): Transaction | undefined =>
+    m.transactionId ? txById.get(m.transactionId) : undefined;
 
   useEffect(() => { void load(); }, [load]);
 
@@ -135,6 +143,14 @@ const OpexTab: React.FC = () => {
                     {m.spreadMonths > 1 ? ` · phân bổ ${formatVND(Math.round(m.amount / m.spreadMonths))}/tháng × ${m.spreadMonths}` : ''}
                     {m.note ? ` · ${m.note}` : ''}
                   </Typography>
+                  {(() => {
+                    const tx = linkedTx(m);
+                    return tx ? (
+                      <Typography size="xs" layoutClassName="truncate" textClassName="text-violet-600 dark:text-violet-300">
+                        ↔ GD {tx.transactionDate?.slice(0, 10).split('-').reverse().join('/')} · {formatVND(tx.transferAmount)}{tx.content ? ` · ${tx.content}` : ''}
+                      </Typography>
+                    ) : null;
+                  })()}
                 </Box>
                 <Button type="button" onClick={() => edit(m)} aria-label="Sửa" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1.5" roundedClassName="rounded-lg" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500">
                   <Pencil className="h-4 w-4" />
@@ -155,6 +171,7 @@ const OpexTab: React.FC = () => {
                   <TableHeaderCell layoutClassName="p-2 text-left">Ngày</TableHeaderCell>
                   <TableHeaderCell layoutClassName="p-2 text-left">Phân bổ</TableHeaderCell>
                   <TableHeaderCell layoutClassName="p-2 text-left">Ghi chú</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="p-2 text-left">Giao dịch tương ứng</TableHeaderCell>
                   <TableHeaderCell layoutClassName="w-20 p-2"> </TableHeaderCell>
                 </TableRow>
               </TableHead>
@@ -180,6 +197,18 @@ const OpexTab: React.FC = () => {
                     <TableCell layoutClassName="p-2" textClassName="text-sm text-slate-500 dark:text-slate-400">{m.date.split('-').reverse().join('/')}</TableCell>
                     <TableCell layoutClassName="p-2" textClassName="text-sm text-slate-600 dark:text-slate-300">{m.spreadMonths > 1 ? `${formatVND(Math.round(m.amount / m.spreadMonths))}/th × ${m.spreadMonths}` : '—'}</TableCell>
                     <TableCell layoutClassName="p-2" textClassName="text-sm text-slate-600 dark:text-slate-300">{m.note || '—'}</TableCell>
+                    <TableCell layoutClassName="p-2">
+                      {(() => {
+                        const tx = linkedTx(m);
+                        return tx ? (
+                          <Typography as="span" size="xs" layoutClassName="block max-w-[220px] truncate" textClassName="text-violet-600 dark:text-violet-300">
+                            {tx.transactionDate?.slice(0, 10).split('-').reverse().join('/')} · {formatVND(tx.transferAmount)}{tx.content ? ` · ${tx.content}` : ''}
+                          </Typography>
+                        ) : (
+                          <Typography as="span" size="sm" textClassName="text-slate-400 dark:text-slate-500">—</Typography>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell layoutClassName="p-2">
                       <Box layoutClassName="flex items-center gap-1">
                         <Button type="button" onClick={() => edit(m)} aria-label="Sửa" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-1.5" roundedClassName="rounded-lg" borderClassName="border border-slate-200 dark:border-slate-600" textClassName="text-slate-500">

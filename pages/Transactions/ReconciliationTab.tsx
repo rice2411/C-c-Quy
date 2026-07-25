@@ -758,6 +758,7 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
         isOpen={isDetailModalOpen}
         onClose={() => { setIsDetailModalOpen(false); setSelectedTransaction(null); }}
         transaction={selectedTransaction}
+        linkedExpense={selectedTransaction ? manualExpenses.find((e) => e.transactionId === selectedTransaction.id) : undefined}
         formatDate={formatDate}
       />
 
