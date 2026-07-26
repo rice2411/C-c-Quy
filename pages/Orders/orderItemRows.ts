@@ -16,6 +16,20 @@ export interface OrderItemRow {
   qty: number;
 }
 
+/**
+ * Tổng số lượng (cái/phần) của đơn — dùng cho "N món".
+ * Ưu tiên sizeCounts (mỗi phần có qty, vd 21 bánh lẻ), rồi flavors (mỗi cái 1 vị),
+ * cuối cùng mới tới quantity — vì đơn size/vị thường để quantity = 1.
+ */
+export const orderItemsTotalQty = (items: OrderItem[]): number =>
+  (items ?? []).reduce((sum, it) => {
+    if (it.sizeCounts && it.sizeCounts.length) {
+      return sum + it.sizeCounts.reduce((s, sc) => s + (sc.qty || 0), 0);
+    }
+    if (it.flavors && it.flavors.length) return sum + it.flavors.length;
+    return sum + (it.quantity || 0);
+  }, 0);
+
 export const buildOrderItemRows = (items: OrderItem[], products: Product[]): OrderItemRow[] => {
   return (items ?? []).flatMap((it) => {
     const product = products.find((p) => p.id === it.productId);

@@ -15,6 +15,7 @@ import { useProducts } from '@/hooks/queries/useProductsQuery';
 import { orderAddressFallbackKey, surchargeTagLabel } from '@/types/order';
 import { Order } from '@/types';
 import { DeliveryType } from '@/types/enums';
+import { orderItemsTotalQty } from '@/pages/Orders/orderItemRows';
 
 /** FREE SHIP = ship cost 0 và là đơn giao (SHIP/SHIP_PROVINCE, hoặc đơn cũ có địa chỉ) */
 const isFreeShip = (order: Order) => {
@@ -62,8 +63,7 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
         {orders.length > 0 ? (
           orders.map((order) => {
             const dlv = buildDeliveryBadge(order.deliveryDate, { status: order.status });
-            const totalItems =
-              order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
+            const totalItems = orderItemsTotalQty(order.items);
             return (
               <Card
                 key={order.id}

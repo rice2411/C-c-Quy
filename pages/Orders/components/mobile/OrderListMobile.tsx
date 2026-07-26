@@ -7,6 +7,7 @@ import { useProducts } from '@/hooks/queries/useProductsQuery';
 import { orderAddressFallbackKey, surchargeTagLabel } from '@/types/order';
 import { Order } from '@/types';
 import { DeliveryType } from '@/types/enums';
+import { orderItemsTotalQty } from '@/pages/Orders/orderItemRows';
 
 const isFreeShip = (order: Order) => {
   if (order.shippingCost && order.shippingCost > 0) return false;
@@ -34,8 +35,7 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
   const { surchargeTags } = useSurchargeTags();
   const { products } = useProducts();
 
-  const getItemCount = (order: Order) =>
-    order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
+  const getItemCount = (order: Order) => orderItemsTotalQty(order.items);
 
   const getOrderImage = (order: Order) => {
     const first = order.items?.[0];
