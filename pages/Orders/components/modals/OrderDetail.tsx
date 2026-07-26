@@ -87,6 +87,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const [activeTab, setActiveTab] = useState<'details' | 'refund' | 'history' | 'tracking'>('details');
   const [qrMode, setQrMode] = useState<'deposit' | 'remainder'>('deposit');
   const [posBusy, setPosBusy] = useState(false);
+  const [qrCopying, setQrCopying] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [crMode, setCrMode] = useState<CancelRefundMode | null>(null);
@@ -204,6 +205,39 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     try { await clearPosQr(); toast.success(t('pos.backToHomeDone')); }
     catch (e) { toast.error(e instanceof Error ? e.message : t('pos.qrPushFailed')); }
     finally { setPosBusy(false); }
+  };
+
+  // Copy ảnh QR đang hiển thị (cọc / thanh toán tuỳ toggle) vào clipboard.
+  const handleCopyQr = async () => {
+    if (!qrUrl || qrCopying) return;
+    const canClipboard = typeof ClipboardItem !== 'undefined' && !!navigator.clipboard?.write;
+    if (!canClipboard) {
+      toast.error(t('detail.copyImageUnsupported') || 'Trình duyệt không hỗ trợ copy ảnh');
+      return;
+    }
+    setQrCopying(true);
+    try {
+      const res = await fetch(qrUrl, { mode: 'cors' });
+      const raw = await res.blob();
+      // Clipboard cần image/png → convert nếu QR trả JPG.
+      let png = raw;
+      if (raw.type !== 'image/png') {
+        const bmp = await createImageBitmap(raw);
+        const canvas = document.createElement('canvas');
+        canvas.width = bmp.width;
+        canvas.height = bmp.height;
+        canvas.getContext('2d')?.drawImage(bmp, 0, 0);
+        png = await new Promise<Blob>((resolve, reject) =>
+          canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png'),
+        );
+      }
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+      toast.success(isDepositQr ? (t('qr.copiedDeposit') || 'Đã copy QR cọc') : (t('qr.copiedPayment') || 'Đã copy QR thanh toán'));
+    } catch {
+      toast.error(t('detail.copyImageError') || 'Copy QR thất bại');
+    } finally {
+      setQrCopying(false);
+    }
   };
 
   // Chụp thẻ thông tin gửi khách (ShareableOrderCard, off-screen) → ảnh PNG rồi
@@ -1607,6 +1641,26 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                 disableVariantHover
                               >
                                 {t('pos.backToHome')}
+                              </Button>
+                              <Button
+                                type="button"
+                                onClick={() => void handleCopyQr()}
+                                disabled={qrCopying || !qrUrl}
+                                variant="secondary"
+                                leftIcon={<Copy />}
+                                iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                                sizeClassName="px-3 py-2 text-xs"
+                                roundedClassName="rounded-lg"
+                                borderClassName="border border-slate-200 dark:border-slate-600"
+                                backgroundClassName="bg-white dark:bg-slate-800"
+                                layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
+                                disableVariantHover
+                              >
+                                {qrCopying
+                                  ? (t('qr.copying') || 'Đang copy...')
+                                  : isDepositQr
+                                    ? (t('qr.copyDeposit') || 'Copy QR cọc')
+                                    : (t('qr.copyPayment') || 'Copy QR thanh toán')}
                               </Button>
                             </Box>
                         </Box>

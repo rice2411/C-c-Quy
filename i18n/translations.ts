@@ -637,7 +637,12 @@ export const translations = {
       accountName: "Name",
       amount: "Amount",
       content: "Content",
-      instruction: "Scan with any banking app to pay."
+      instruction: "Scan with any banking app to pay.",
+      copyDeposit: "Copy deposit QR",
+      copyPayment: "Copy payment QR",
+      copiedDeposit: "Deposit QR copied",
+      copiedPayment: "Payment QR copied",
+      copying: "Copying..."
     },
     pos: {
       pushToDevice: "Show QR on POS device",
@@ -1378,7 +1383,12 @@ export const translations = {
       accountName: "Tên TK",
       amount: "Số tiền",
       content: "Nội dung",
-      instruction: "Quét mã bằng ứng dụng ngân hàng để thanh toán."
+      instruction: "Quét mã bằng ứng dụng ngân hàng để thanh toán.",
+      copyDeposit: "Copy QR cọc",
+      copyPayment: "Copy QR thanh toán",
+      copiedDeposit: "Đã copy QR cọc",
+      copiedPayment: "Đã copy QR thanh toán",
+      copying: "Đang copy..."
     },
     pos: {
       pushToDevice: "Hiện QR lên máy POS",
