@@ -47,13 +47,23 @@ export const buildOrderItemRows = (items: OrderItem[], products: Product[]): Ord
         const sizeLbl = sc.name;
         const img = (product ? sizeImage(product, sc.name) : undefined) || it.image || product?.image;
         if (sc.units && sc.units.length) {
-          return sc.units.map((unit, u) => {
-            const fl = groupFlavors(unit).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
-            const meta = [`${sizeLbl}${sc.qty > 1 ? ` #${u + 1}` : ''}`];
-            if (fl) meta.push(`Vị: ${fl}`);
-            meta.push(...packMeta);
-            return { key: `${it.id}-s-${sc.name}-${u}`, img, name: it.name, meta, qty: 1 };
-          });
+          // Combo THẬT (mỗi phần nhiều cái) → mỗi phần 1 hàng riêng (#index + vị của phần).
+          if (isCombo) {
+            return sc.units.map((unit, u) => {
+              const fl = groupFlavors(unit).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
+              const meta = [`${sizeLbl}${sc.qty > 1 ? ` #${u + 1}` : ''}`];
+              if (fl) meta.push(`Vị: ${fl}`);
+              meta.push(...packMeta);
+              return { key: `${it.id}-s-${sc.name}-${u}`, img, name: it.name, meta, qty: 1 };
+            });
+          }
+          // Đơn lẻ (mỗi phần 1 cái) → GỘP tất cả vị vào 1 hàng, không liệt kê từng cái.
+          const fl = groupFlavors(sc.units.flat())
+            .map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
+          const meta = [sizeLbl];
+          if (fl) meta.push(`Vị: ${fl}`);
+          meta.push(...packMeta);
+          return [{ key: `${it.id}-s-${sc.name}`, img, name: it.name, meta, qty: sc.units.length }];
         }
         const label = sc.qty > 1 ? `${sizeLbl} ×${sc.qty}` : sizeLbl;
         const meta = [label];
