@@ -1,6 +1,7 @@
 import { unzipSync, zipSync, strToU8, strFromU8 } from 'fflate';
 import { Order, DeliveryType, OrderStatus } from '@/types';
 import { getOrderTotal } from '@/utils/order/orderUtils';
+import { matchAddress } from '@/utils/order/spxAddressMatch';
 
 /** Định dạng địa chỉ SPX: 'new' = 2 cấp (Tỉnh/Xã, sau sáp nhập 2025), 'old' = 3 cấp (Tỉnh/Quận/Xã). */
 export type SpxAddressMode = 'new' | 'old';
@@ -33,8 +34,10 @@ const buildRow = (o: Order, weightKg: number, mode: SpxAddressMode): (string | n
   const productName = (o.items || []).map((i) => `${i.name} x${i.quantity}`).join(', ');
   const detailAddress = [o.customer.address, o.customer.city].filter(Boolean).join(', ');
 
-  // 'new' = Tỉnh + Xã; 'old' = Tỉnh + Quận + Xã. Quận/Xã để trống cho người dùng chọn dropdown trên SPX.
-  const addressCols = mode === 'old' ? [o.customer.city || '', '', ''] : [o.customer.city || '', ''];
+  // Tự tách Tỉnh + Xã (khớp list chuẩn SPX). Không khớp → '' để chọn tay trên SPX.
+  // 'new' = Tỉnh + Xã; 'old' = Tỉnh + Quận (để trống) + Xã.
+  const { province, ward } = matchAddress(detailAddress);
+  const addressCols = mode === 'old' ? [province, '', ward] : [province, ward];
 
   return [
     o.orderNumber || o.id,          // Mã đơn hàng

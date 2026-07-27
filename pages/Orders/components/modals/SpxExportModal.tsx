@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { AlertTriangle, PackageCheck } from 'lucide-react';
 import { Order } from '@/types';
 import { exportOrdersToSpx, isSpxShippable, codRemaining, SpxAddressMode } from '@/utils/order/spxOrderExport';
+import { matchAddress } from '@/utils/order/spxAddressMatch';
 import { getOrderTotal } from '@/utils/order/orderUtils';
 import { formatVND } from '@/utils/format/currencyUtil';
 import BaseModal from '@/components/BaseModal';
@@ -27,6 +28,16 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
   const eligible = useMemo(() => orders.filter(isSpxShippable), [orders]);
   const totalCod = useMemo(() => eligible.reduce((s, o) => s + codRemaining(o), 0), [eligible]);
   const totalValue = useMemo(() => eligible.reduce((s, o) => s + getOrderTotal(o), 0), [eligible]);
+  const addrStats = useMemo(() => {
+    let p = 0;
+    let w = 0;
+    eligible.forEach((o) => {
+      const m = matchAddress([o.customer.address, o.customer.city].filter(Boolean).join(', '));
+      if (m.province) p += 1;
+      if (m.ward) w += 1;
+    });
+    return { p, w };
+  }, [eligible]);
 
   const handleExport = async () => {
     if (eligible.length === 0) return;
@@ -69,6 +80,9 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
           </Typography>
           <Typography as="span" size="sm" textClassName="text-slate-700 dark:text-slate-200">
             Tổng COD cần thu: <b>{formatVND(totalCod)}</b>
+          </Typography>
+          <Typography as="span" size="sm" textClassName="text-slate-700 dark:text-slate-200">
+            Tự điền địa chỉ: Tỉnh <b>{addrStats.p}/{eligible.length}</b> · Xã <b>{addrStats.w}/{eligible.length}</b>
           </Typography>
         </Box>
 
@@ -135,9 +149,9 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <Typography as="p" size="xs" textClassName="text-amber-700 dark:text-amber-300">
             File ghi thẳng vào <b>template gốc SPX</b> (sheet {addressMode === 'new' ? '"địa chỉ mới"' : '"địa chỉ cũ"'}),
-            upload trực tiếp lên SPX được. Vì hệ thống chỉ lưu địa chỉ dạng chữ nên đã điền sẵn <b>Địa chỉ chi tiết</b> + đoán Tỉnh/Thành,
-            còn cột <b>{addressMode === 'new' ? 'Xã/Phường' : 'Quận/Huyện, Xã/Phường'}</b> cần chọn lại trên SPX (dropdown).
-            Cân nặng áp chung — chỉnh từng đơn trên SPX nếu cần.
+            upload trực tiếp được. Tỉnh/Xã được <b>tự tách từ địa chỉ</b> khớp danh mục SPX; đơn nào không tách được
+            (địa chỉ thiếu/tỉnh cũ đã sáp nhập) để trống — mở file <b>chọn dropdown Tỉnh + Xã</b> cho tới khi ô xanh
+            "Đủ điều kiện" rồi mới upload. Cân nặng áp chung — chỉnh trên SPX nếu cần.
           </Typography>
         </Box>
 
