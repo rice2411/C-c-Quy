@@ -266,6 +266,23 @@ export const syncOrderCod = async (
   return res.data as CodSyncResult;
 };
 
+/** Nhờ Claude AI tách địa chỉ lộn xộn → Tỉnh/Xã chuẩn 2025 (theo thứ tự đầu vào). */
+export const aiMatchSpxAddresses = async (
+  addresses: string[],
+): Promise<{ province: string; ward: string }[]> => {
+  const res = await apiClient.post('/ai/spx-address', { addresses });
+  const items = (res.data as { items?: unknown })?.items;
+  return Array.isArray(items)
+    ? items.map((r) => {
+        const o = (r ?? {}) as { province?: unknown; ward?: unknown };
+        return {
+          province: typeof o.province === 'string' ? o.province : '',
+          ward: typeof o.ward === 'string' ? o.ward : '',
+        };
+      })
+    : [];
+};
+
 export interface TrackingEvent { time: number; label: string; location?: string }
 export interface TrackingTimeline { tn: string; status: string | null; events: TrackingEvent[] }
 

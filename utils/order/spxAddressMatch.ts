@@ -1,4 +1,6 @@
 import { SPX_PROVINCES, SPX_WARDS_BY_PROVINCE } from '@/assets/spxAdminList';
+import type { Order } from '@/types';
+import { aiMatchSpxAddresses } from '@/services/orderService';
 
 /**
  * Tách Tỉnh/Thành + Xã/Phường (theo đúng list chuẩn SPX sau sáp nhập 2025) từ địa chỉ free-text.
@@ -117,4 +119,57 @@ export const matchAddress = (address: string): { province: string; ward: string 
   const province = matchProvince(address);
   const ward = province ? matchWard(address, province) : '';
   return { province, ward };
+};
+
+/** Snap tên tỉnh AI trả về → đúng chuỗi trong danh mục SPX (khớp không dấu, fallback alias). */
+export const snapProvince = (name: string): string => {
+  const key = normalize(stripProvincePrefix(name || ''));
+  if (!key) return '';
+  const exact = SPX_PROVINCES.find((p) => normalize(stripProvincePrefix(p)) === key);
+  return exact ?? matchProvince(name);
+};
+
+/** Snap tên xã AI trả về → đúng chuỗi xã trong tỉnh đã khớp (fallback khớp gần đúng). */
+export const snapWard = (name: string, province: string): string => {
+  const wards = SPX_WARDS_BY_PROVINCE[province];
+  if (!wards || !name) return '';
+  const key = normalize(stripWardPrefix(name));
+  if (!key) return '';
+  const exact = wards.find((w) => normalize(stripWardPrefix(w)) === key);
+  return exact ?? matchWard(name, province);
+};
+
+/**
+ * Giải địa chỉ cho danh sách đơn: rule-based trước; nếu useAi thì gọi Claude AI cho các
+ * đơn còn thiếu Tỉnh/Xã rồi snap về danh mục SPX. Trả mảng {province, ward} ĐÚNG THỨ TỰ đơn.
+ * AI lỗi → giữ nguyên kết quả rule-based (không chặn xuất file).
+ */
+export const resolveSpxAddresses = async (
+  orders: Order[],
+  useAi: boolean,
+): Promise<{ province: string; ward: string }[]> => {
+  const addrs = orders.map((o) =>
+    [o.customer.address, o.customer.city].filter(Boolean).join(', '),
+  );
+  const resolved = addrs.map((a) => matchAddress(a));
+  if (!useAi) return resolved;
+
+  const missIdx = resolved
+    .map((r, i) => (!r.province || !r.ward ? i : -1))
+    .filter((i) => i >= 0);
+  if (missIdx.length === 0) return resolved;
+
+  try {
+    const ai = await aiMatchSpxAddresses(missIdx.map((i) => addrs[i]));
+    missIdx.forEach((oi, k) => {
+      const a = ai[k];
+      if (!a) return;
+      const province = resolved[oi].province || snapProvince(a.province);
+      const ward = resolved[oi].ward || (province ? snapWard(a.ward, province) : '');
+      resolved[oi] = { province, ward };
+    });
+  } catch {
+    // AI lỗi → dùng kết quả rule-based đã có.
+  }
+  return resolved;
 };

@@ -3,6 +3,12 @@ import { Order, DeliveryType, OrderStatus } from '@/types';
 import { getOrderTotal } from '@/utils/order/orderUtils';
 import { matchAddress } from '@/utils/order/spxAddressMatch';
 
+/** Tỉnh/Xã đã giải sẵn cho 1 đơn (rule-based hoặc AI). */
+export interface ResolvedAddress {
+  province: string;
+  ward: string;
+}
+
 /** Định dạng địa chỉ SPX: 'new' = 2 cấp (Tỉnh/Xã, sau sáp nhập 2025), 'old' = 3 cấp (Tỉnh/Quận/Xã). */
 export type SpxAddressMode = 'new' | 'old';
 
@@ -29,14 +35,19 @@ export const codRemaining = (o: Order): number =>
   Math.max(0, getOrderTotal(o) - (Number(o.paidAmount) || 0));
 
 /** 1 dòng đơn theo đúng thứ tự cột template SPX (khác nhau ở cột Quận/Huyện giữa 2 chế độ). */
-const buildRow = (o: Order, weightKg: number, mode: SpxAddressMode): (string | number)[] => {
+const buildRow = (
+  o: Order,
+  weightKg: number,
+  mode: SpxAddressMode,
+  resolved?: ResolvedAddress,
+): (string | number)[] => {
   const cod = codRemaining(o);
   const productName = (o.items || []).map((i) => `${i.name} x${i.quantity}`).join(', ');
   const detailAddress = [o.customer.address, o.customer.city].filter(Boolean).join(', ');
 
-  // Tự tách Tỉnh + Xã (khớp list chuẩn SPX). Không khớp → '' để chọn tay trên SPX.
-  // 'new' = Tỉnh + Xã; 'old' = Tỉnh + Quận (để trống) + Xã.
-  const { province, ward } = matchAddress(detailAddress);
+  // Tỉnh/Xã: dùng kết quả đã giải sẵn (rule-based + AI) nếu có, không thì tự khớp rule-based.
+  // Không khớp → '' để chọn tay trên SPX. 'new' = Tỉnh + Xã; 'old' = Tỉnh + Quận (trống) + Xã.
+  const { province, ward } = resolved ?? matchAddress(detailAddress);
   const addressCols = mode === 'old' ? [province, '', ward] : [province, ward];
 
   return [
@@ -112,9 +123,9 @@ const MAX_ROWS = 994;
  */
 export const exportOrdersToSpx = async (
   orders: Order[],
-  opts: { weightKg?: number; addressMode?: SpxAddressMode } = {},
+  opts: { weightKg?: number; addressMode?: SpxAddressMode; resolved?: ResolvedAddress[] } = {},
 ): Promise<number> => {
-  const { weightKg = 1, addressMode = 'new' } = opts;
+  const { weightKg = 1, addressMode = 'new', resolved } = opts;
 
   // Template nhúng base64 (lazy chunk) — KHÔNG fetch runtime (service worker PWA có thể trả nhầm HTML).
   const { SPX_TEMPLATE_B64 } = await import('@/assets/spxTemplateBase64');
@@ -150,7 +161,7 @@ export const exportOrdersToSpx = async (
   const list = orders.slice(0, MAX_ROWS);
   list.forEach((o, idx) => {
     const r = idx + 2; // dòng 1 = header
-    buildRow(o, weightKg, addressMode).forEach((v, c) => {
+    buildRow(o, weightKg, addressMode, resolved?.[idx]).forEach((v, c) => {
       if (v === '' || v === null || v === undefined) return; // để trống → giữ cell template
       const ref = `${colLetter(c)}${r}`;
       const re = new RegExp(`<c r="${ref}"([^>]*?)/>`); // cell rỗng tự đóng, giữ style ở group 1

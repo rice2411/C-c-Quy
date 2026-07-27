@@ -3,12 +3,13 @@ import toast from 'react-hot-toast';
 import { AlertTriangle, PackageCheck } from 'lucide-react';
 import { Order } from '@/types';
 import { exportOrdersToSpx, isSpxShippable, codRemaining, SpxAddressMode } from '@/utils/order/spxOrderExport';
-import { matchAddress } from '@/utils/order/spxAddressMatch';
+import { matchAddress, resolveSpxAddresses } from '@/utils/order/spxAddressMatch';
 import { getOrderTotal } from '@/utils/order/orderUtils';
 import { formatVND } from '@/utils/format/currencyUtil';
 import BaseModal from '@/components/BaseModal';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
+import Checkbox from '@/components/ui/Checkbox';
 import Input from '@/components/ui/Input';
 import Label from '@/components/ui/Label';
 import Typography from '@/components/ui/Typography';
@@ -23,6 +24,7 @@ interface Props {
 const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
   const [weight, setWeight] = useState('1');
   const [addressMode, setAddressMode] = useState<SpxAddressMode>('new');
+  const [useAi, setUseAi] = useState(true);
   const [busy, setBusy] = useState(false);
 
   const eligible = useMemo(() => orders.filter(isSpxShippable), [orders]);
@@ -47,11 +49,16 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
       return;
     }
     setBusy(true);
+    const loadingId = useAi ? toast.loading('Đang nhờ AI tách địa chỉ…') : undefined;
     try {
-      const n = await exportOrdersToSpx(eligible, { weightKg: w, addressMode });
-      toast.success(`Đã xuất ${n} đơn ra file tạo đơn SPX`);
+      const resolved = await resolveSpxAddresses(eligible, useAi);
+      if (loadingId) toast.dismiss(loadingId);
+      const n = await exportOrdersToSpx(eligible, { weightKg: w, addressMode, resolved });
+      const filled = resolved.filter((r) => r.province && r.ward).length;
+      toast.success(`Đã xuất ${n} đơn · điền đủ Tỉnh+Xã ${filled}/${n}`);
       onClose();
     } catch (err) {
+      if (loadingId) toast.dismiss(loadingId);
       toast.error(err instanceof Error ? err.message : 'Xuất file thất bại');
     } finally {
       setBusy(false);
@@ -137,6 +144,16 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
             sizeClassName="w-24 px-3 py-1.5 text-sm"
             borderClassName="border border-slate-200 dark:border-slate-600"
             roundedClassName="rounded-lg"
+          />
+        </Box>
+
+        {/* Toggle dùng AI tách địa chỉ */}
+        <Box layoutClassName="flex items-center gap-3">
+          <Checkbox
+            label="Dùng Claude AI tách Tỉnh/Xã cho đơn rule-based bỏ sót (chậm hơn vài giây)"
+            checked={useAi}
+            onChange={(e) => setUseAi(e.target.checked)}
+            labelClassName="text-sm text-slate-700 dark:text-slate-200"
           />
         </Box>
 
