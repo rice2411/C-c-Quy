@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { AlertTriangle, PackageCheck } from 'lucide-react';
 import { Order } from '@/types';
-import { exportOrdersToSpx, isSpxShippable, codRemaining } from '@/utils/order/spxOrderExport';
+import { exportOrdersToSpx, isSpxShippable, codRemaining, SpxAddressMode } from '@/utils/order/spxOrderExport';
 import { getOrderTotal } from '@/utils/order/orderUtils';
 import { formatVND } from '@/utils/format/currencyUtil';
 import BaseModal from '@/components/BaseModal';
@@ -21,13 +21,14 @@ interface Props {
 
 const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
   const [weight, setWeight] = useState('1');
+  const [addressMode, setAddressMode] = useState<SpxAddressMode>('new');
   const [busy, setBusy] = useState(false);
 
   const eligible = useMemo(() => orders.filter(isSpxShippable), [orders]);
   const totalCod = useMemo(() => eligible.reduce((s, o) => s + codRemaining(o), 0), [eligible]);
   const totalValue = useMemo(() => eligible.reduce((s, o) => s + getOrderTotal(o), 0), [eligible]);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (eligible.length === 0) return;
     const w = Number(weight);
     if (!Number.isFinite(w) || w <= 0) {
@@ -36,7 +37,7 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
     }
     setBusy(true);
     try {
-      const n = exportOrdersToSpx(eligible, w);
+      const n = await exportOrdersToSpx(eligible, { weightKg: w, addressMode });
       toast.success(`Đã xuất ${n} đơn ra file tạo đơn SPX`);
       onClose();
     } catch (err) {
@@ -71,6 +72,41 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
           </Typography>
         </Box>
 
+        {/* Chế độ địa chỉ */}
+        <Box layoutClassName="flex flex-wrap items-center gap-3">
+          <Label className="mb-0">Định dạng địa chỉ</Label>
+          <Box layoutClassName="inline-flex gap-1.5">
+            <Button
+              type="button"
+              onClick={() => setAddressMode('new')}
+              variant={addressMode === 'new' ? 'primary' : 'secondary'}
+              sizeClassName="px-3 py-1.5 text-sm"
+              roundedClassName="rounded-lg"
+              borderClassName="border border-slate-200 dark:border-slate-600"
+              backgroundClassName={addressMode === 'new' ? 'bg-primary-600' : 'bg-white dark:bg-slate-800'}
+              textClassName={addressMode === 'new' ? 'font-medium text-white' : 'text-slate-700 dark:text-slate-200'}
+              disableVariantHover
+              disableVariantTextColor
+            >
+              Địa chỉ mới (2 cấp)
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setAddressMode('old')}
+              variant={addressMode === 'old' ? 'primary' : 'secondary'}
+              sizeClassName="px-3 py-1.5 text-sm"
+              roundedClassName="rounded-lg"
+              borderClassName="border border-slate-200 dark:border-slate-600"
+              backgroundClassName={addressMode === 'old' ? 'bg-primary-600' : 'bg-white dark:bg-slate-800'}
+              textClassName={addressMode === 'old' ? 'font-medium text-white' : 'text-slate-700 dark:text-slate-200'}
+              disableVariantHover
+              disableVariantTextColor
+            >
+              Địa chỉ cũ (3 cấp)
+            </Button>
+          </Box>
+        </Box>
+
         {/* Cân nặng mặc định */}
         <Box layoutClassName="flex items-center gap-3">
           <Label htmlFor="spx-weight" className="mb-0">
@@ -98,9 +134,10 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <Typography as="p" size="xs" textClassName="text-amber-700 dark:text-amber-300">
-            Hệ thống chỉ lưu địa chỉ dạng chữ nên file điền sẵn <b>Địa chỉ chi tiết</b> + đoán Tỉnh/Thành,
-            còn cột <b>Quận/Huyện, Xã/Phường</b> cần chọn lại trên SPX (dropdown). Cân nặng áp chung
-            theo giá trị trên — chỉnh lại từng đơn trên SPX nếu cần.
+            File ghi thẳng vào <b>template gốc SPX</b> (sheet {addressMode === 'new' ? '"địa chỉ mới"' : '"địa chỉ cũ"'}),
+            upload trực tiếp lên SPX được. Vì hệ thống chỉ lưu địa chỉ dạng chữ nên đã điền sẵn <b>Địa chỉ chi tiết</b> + đoán Tỉnh/Thành,
+            còn cột <b>{addressMode === 'new' ? 'Xã/Phường' : 'Quận/Huyện, Xã/Phường'}</b> cần chọn lại trên SPX (dropdown).
+            Cân nặng áp chung — chỉnh từng đơn trên SPX nếu cần.
           </Typography>
         </Box>
 
@@ -118,7 +155,7 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
           </Button>
           <Button
             type="button"
-            onClick={handleExport}
+            onClick={() => void handleExport()}
             disabled={busy || eligible.length === 0}
             variant="primary"
             leftIcon={<PackageCheck />}

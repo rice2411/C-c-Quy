@@ -2,40 +2,13 @@ import * as XLSX from 'xlsx-js-style';
 import { Order, DeliveryType, OrderStatus } from '@/types';
 import { getOrderTotal } from '@/utils/order/orderUtils';
 
-// Header đúng thứ tự sheet "Tạo đơn (địa chỉ cũ)" của template tạo đơn hàng loạt SPX
-// (địa chỉ 3 cấp: Tỉnh/Quận/Xã). Giữ nguyên văn bản gồm cả dấu * (cột bắt buộc).
-const SPX_HEADER: string[] = [
-  '*Mã đơn hàng',
-  '*Tên người nhận',
-  '*Số điện thoại',
-  '*Tỉnh/Thành Phố',
-  '*Quận/Huyện',
-  '*Xã/Phường',
-  '*Địa chỉ chi tiết',
-  'Lưu ý về địa chỉ',
-  'Mã bưu chính',
-  '*Tên sản phẩm',
-  'Số lượng (Thông tin bắt buộc khi chọn Giao hàng một phần & Thu COD)',
-  'Giá tiền (Thông tin bắt buộc khi chọn Giao hàng một phần & Thu COD)',
-  '*Tổng cân nặng bưu gửi (KG)',
-  'Chiều dài (CM)',
-  'Chiều rộng (CM)',
-  'Chiều cao (CM)',
-  'Mã khách hàng',
-  '*Giá trị đơn hàng',
-  '*Giao hàng một phần (Y/N)',
-  '*Cho phép thử hàng (Y/N)',
-  '*Cho xem hàng, không cho thử (Y/N)',
-  'Thu phí từ chối nhận hàng (Y/N)',
-  'Phí từ chối nhận hàng cần thu',
-  '*Thu COD (Y/N)',
-  'Số tiền COD',
-  'bưu gửi giá trị cao (Y/N)',
-  '*Hình thức thanh Toán',
-  'Lưu ý giao hàng',
-  'Nhắc nhở điền đúng số tiền COD',
-  'Đơn chỉ hoàn thành nếu ở dưới hiện "Đủ điều kiện"',
-];
+/** Định dạng địa chỉ SPX: 'new' = 2 cấp (Tỉnh/Xã, sau sáp nhập 2025), 'old' = 3 cấp (Tỉnh/Quận/Xã). */
+export type SpxAddressMode = 'new' | 'old';
+
+const SHEET_BY_MODE: Record<SpxAddressMode, string> = {
+  new: 'Tạo đơn (địa chỉ mới)',
+  old: 'Tạo đơn (địa chỉ cũ)',
+};
 
 /** Đơn cần tạo vận đơn SPX: giao ship, chưa có mã vận đơn, chưa huỷ/giao/hoàn. */
 export const isSpxShippable = (o: Order): boolean => {
@@ -51,59 +24,74 @@ export const isSpxShippable = (o: Order): boolean => {
 export const codRemaining = (o: Order): number =>
   Math.max(0, getOrderTotal(o) - (Number(o.paidAmount) || 0));
 
+/** 1 dòng đơn theo đúng thứ tự cột template SPX (khác nhau ở cột Quận/Huyện giữa 2 chế độ). */
+const buildRow = (o: Order, weightKg: number, mode: SpxAddressMode): (string | number)[] => {
+  const cod = codRemaining(o);
+  const productName = (o.items || []).map((i) => `${i.name} x${i.quantity}`).join(', ');
+  const detailAddress = [o.customer.address, o.customer.city].filter(Boolean).join(', ');
+
+  // Phần đầu khác nhau: 'new' = Tỉnh + Xã; 'old' = Tỉnh + Quận + Xã.
+  const addressCols =
+    mode === 'old'
+      ? [o.customer.city || '', '', ''] // Tỉnh (đoán) / Quận (chọn trên SPX) / Xã (chọn trên SPX)
+      : [o.customer.city || '', '']; // Tỉnh (đoán) / Xã (chọn trên SPX)
+
+  return [
+    o.orderNumber || o.id,          // *Mã đơn hàng
+    o.customer.name || '',          // *Tên người nhận
+    String(o.customer.phone || ''), // *Số điện thoại
+    ...addressCols,                 // *Tỉnh/Thành [+ *Quận/Huyện nếu 'old'] + *Xã/Phường
+    detailAddress,                  // *Địa chỉ chi tiết
+    '',                             // Lưu ý về địa chỉ
+    '',                             // Mã bưu chính
+    productName,                    // *Tên sản phẩm
+    '',                             // Số lượng (không bắt buộc khi Giao 1 phần = N)
+    '',                             // Giá tiền
+    weightKg,                       // *Tổng cân nặng (KG)
+    '',                             // Chiều dài
+    '',                             // Chiều rộng
+    '',                             // Chiều cao
+    '',                             // Mã khách hàng
+    getOrderTotal(o),               // *Giá trị đơn hàng
+    'N',                            // *Giao hàng một phần
+    'N',                            // *Cho phép thử hàng
+    'Y',                            // *Cho xem hàng, không cho thử
+    'N',                            // Thu phí từ chối nhận hàng
+    '',                             // Phí từ chối nhận hàng cần thu
+    cod > 0 ? 'Y' : 'N',            // *Thu COD
+    cod > 0 ? cod : '',             // Số tiền COD (còn lại phải thu)
+    'N',                            // bưu gửi giá trị cao
+    'Người gửi trả',                // *Hình thức thanh Toán
+    o.note || '',                   // Lưu ý giao hàng
+    '',                             // Nhắc nhở điền đúng số tiền COD
+    '',                             // Đơn chỉ hoàn thành nếu "Đủ điều kiện"
+  ];
+};
+
 /**
- * Xuất danh sách đơn ra file .xlsx theo template tạo đơn hàng loạt SPX rồi tải về.
- * Địa chỉ chỉ có free-text → điền đủ vào "Địa chỉ chi tiết" + đoán Tỉnh từ city;
- * cột Quận/Xã để trống cho người dùng chọn trên SPX. Cân nặng dùng giá trị mặc định.
- * Trả về số dòng đơn đã ghi.
+ * Xuất đơn ra file tạo đơn hàng loạt SPX bằng cách GHI DỮ LIỆU VÀO CHÍNH TEMPLATE GỐC
+ * (public/spx_order_template.xlsx) — giữ nguyên các sheet danh mục + cấu trúc SPX yêu cầu,
+ * nếu tạo file mới từ đầu SPX sẽ báo "Tải không thành công".
+ * Ghi từ dòng 2 của sheet theo chế độ địa chỉ, giữ nguyên header dòng 1. Trả về số đơn đã ghi.
  */
-export const exportOrdersToSpx = (orders: Order[], defaultWeightKg = 1): number => {
-  const rows: (string | number)[][] = [SPX_HEADER];
+export const exportOrdersToSpx = async (
+  orders: Order[],
+  opts: { weightKg?: number; addressMode?: SpxAddressMode } = {},
+): Promise<number> => {
+  const { weightKg = 1, addressMode = 'new' } = opts;
 
-  orders.forEach((o) => {
-    const cod = codRemaining(o);
-    const productName = (o.items || []).map((i) => `${i.name} x${i.quantity}`).join(', ');
-    const detailAddress = [o.customer.address, o.customer.city].filter(Boolean).join(', ');
+  const res = await fetch(`${import.meta.env.BASE_URL}spx_order_template.xlsx`);
+  if (!res.ok) throw new Error('Không tải được template SPX gốc.');
+  const buf = await res.arrayBuffer();
+  const wb = XLSX.read(buf, { type: 'array' });
 
-    rows.push([
-      o.orderNumber || o.id,          // *Mã đơn hàng
-      o.customer.name || '',          // *Tên người nhận
-      String(o.customer.phone || ''), // *Số điện thoại (giữ dạng text, không mất số 0 đầu)
-      o.customer.city || '',          // *Tỉnh/Thành Phố (đoán từ city, cần chỉnh trên SPX)
-      '',                             // *Quận/Huyện (chọn trên SPX)
-      '',                             // *Xã/Phường (chọn trên SPX)
-      detailAddress,                  // *Địa chỉ chi tiết
-      '',                             // Lưu ý về địa chỉ
-      '',                             // Mã bưu chính
-      productName,                    // *Tên sản phẩm
-      '',                             // Số lượng (không bắt buộc khi Giao 1 phần = N)
-      '',                             // Giá tiền
-      defaultWeightKg,                // *Tổng cân nặng (KG)
-      '',                             // Chiều dài
-      '',                             // Chiều rộng
-      '',                             // Chiều cao
-      '',                             // Mã khách hàng
-      getOrderTotal(o),               // *Giá trị đơn hàng
-      'N',                            // *Giao hàng một phần
-      'N',                            // *Cho phép thử hàng
-      'Y',                            // *Cho xem hàng, không cho thử
-      'N',                            // Thu phí từ chối nhận hàng
-      '',                             // Phí từ chối nhận hàng cần thu
-      cod > 0 ? 'Y' : 'N',            // *Thu COD
-      cod > 0 ? cod : '',             // Số tiền COD (còn lại phải thu)
-      'N',                            // bưu gửi giá trị cao
-      'Người gửi trả',                // *Hình thức thanh Toán
-      o.note || '',                   // Lưu ý giao hàng
-      '',                             // Nhắc nhở điền đúng số tiền COD
-      '',                             // Đơn chỉ hoàn thành nếu "Đủ điều kiện"
-    ]);
-  });
+  const sheetName = SHEET_BY_MODE[addressMode];
+  const ws = wb.Sheets[sheetName];
+  if (!ws) throw new Error(`Template SPX thiếu sheet "${sheetName}".`);
 
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = SPX_HEADER.map(() => ({ wch: 18 }));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Tạo đơn (địa chỉ cũ)');
-  const fileName = `SPX_TaoDon_${new Date().toISOString().split('T')[0]}.xlsx`;
-  XLSX.writeFile(wb, fileName);
+  const rows = orders.map((o) => buildRow(o, weightKg, addressMode));
+  XLSX.utils.sheet_add_aoa(ws, rows, { origin: 'A2' }); // giữ header dòng 1, ghi data từ dòng 2
+
+  XLSX.writeFile(wb, `SPX_TaoDon_${new Date().toISOString().split('T')[0]}.xlsx`);
   return orders.length;
 };
