@@ -234,6 +234,38 @@ export const syncOrderTracking = async (
   return res.data as TrackingSyncResult;
 };
 
+/** 1 dòng "Tiền thu hộ" (COD) từ file giao dịch ví SPX. */
+export interface CodRow {
+  txId: string;    // Mã giao dịch ví SPX (khóa chống trùng)
+  tracking: string; // Mã vận đơn SPXVN
+  amount: number;  // Số tiền thu hộ (VND)
+  date?: string;   // Thời gian giao dịch (text)
+}
+
+export interface CodSyncResult {
+  matched: {
+    txId: string; tracking: string; amount: number;
+    orderNumber: string; orderCustomer: string;
+    total: number; paidBefore: number; paidAfter: number; remainingAfter: number;
+    statusAfter: string;
+  }[];
+  unmatched: { txId: string; tracking: string; amount: number }[];
+  duplicate: { txId: string; tracking: string; amount: number; orderNumber?: string }[];
+  applied: boolean;
+  matchedCount: number;
+  unmatchedCount: number;
+  duplicateCount: number;
+}
+
+/** Đồng bộ tiền thu hộ (COD) từ file ví SPX. apply=false → preview; true → tạo GD + cộng paid. */
+export const syncOrderCod = async (
+  rows: CodRow[],
+  apply: boolean,
+): Promise<CodSyncResult> => {
+  const res = await apiClient.post('/orders/sync-cod', { rows, apply });
+  return res.data as CodSyncResult;
+};
+
 export interface TrackingEvent { time: number; label: string; location?: string }
 export interface TrackingTimeline { tn: string; status: string | null; events: TrackingEvent[] }
 
