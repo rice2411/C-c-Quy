@@ -5,12 +5,13 @@ import { getOrderTotal } from '@/utils/order/orderUtils';
 /** Định dạng địa chỉ SPX: 'new' = 2 cấp (Tỉnh/Xã, sau sáp nhập 2025), 'old' = 3 cấp (Tỉnh/Quận/Xã). */
 export type SpxAddressMode = 'new' | 'old';
 
-// File worksheet tương ứng trong template gốc (xác định qua workbook.xml.rels):
+// File worksheet trong template gốc (xác định qua workbook.xml.rels):
 //   rId1 = sheet1.xml = "Tạo đơn (địa chỉ cũ)"; rId2 = sheet2.xml = "Tạo đơn (địa chỉ mới)".
 const SHEET_FILE: Record<SpxAddressMode, string> = {
   new: 'xl/worksheets/sheet2.xml',
   old: 'xl/worksheets/sheet1.xml',
 };
+const SHARED_STRINGS = 'xl/sharedStrings.xml';
 
 /** Đơn cần tạo vận đơn SPX: giao ship, chưa có mã vận đơn, chưa huỷ/giao/hoàn. */
 export const isSpxShippable = (o: Order): boolean => {
@@ -44,7 +45,7 @@ const buildRow = (o: Order, weightKg: number, mode: SpxAddressMode): (string | n
     '',                             // Lưu ý về địa chỉ
     '',                             // Mã bưu chính
     productName,                    // Tên sản phẩm
-    '',                             // Số lượng (không bắt buộc khi Giao 1 phần = N)
+    '',                             // Số lượng
     '',                             // Giá tiền
     weightKg,                       // Tổng cân nặng (KG)
     '',                             // Chiều dài
@@ -62,8 +63,8 @@ const buildRow = (o: Order, weightKg: number, mode: SpxAddressMode): (string | n
     'N',                            // bưu gửi giá trị cao
     'Người gửi trả',                // Hình thức thanh Toán
     o.note || '',                   // Lưu ý giao hàng
-    '',                             // Nhắc nhở (cột công thức — để trống, giữ formula template)
-    '',                             // Đơn chỉ hoàn thành nếu "Đủ điều kiện" (formula)
+    '',                             // Nhắc nhở (cột công thức — giữ nguyên)
+    '',                             // Đơn chỉ hoàn thành nếu "Đủ điều kiện" (công thức)
   ];
 };
 
@@ -80,11 +81,6 @@ const colLetter = (i: number): string => {
 
 const escapeXml = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-const cellXml = (ref: string, attrs: string, val: string | number): string =>
-  typeof val === 'number'
-    ? `<c r="${ref}"${attrs}><v>${val}</v></c>`
-    : `<c r="${ref}"${attrs} t="inlineStr"><is><t xml:space="preserve">${escapeXml(val)}</t></is></c>`;
 
 const triggerDownload = (bytes: Uint8Array, fileName: string): void => {
   const blob = new Blob([bytes], {
@@ -105,9 +101,10 @@ const MAX_ROWS = 994;
 
 /**
  * Xuất đơn ra file tạo đơn hàng loạt SPX bằng cách MỔ TRỰC TIẾP file zip .xlsx của template gốc:
- * chỉ thay các cell rỗng (giữ nguyên style) trong đúng 1 sheet, giữ nguyên byte 48 phần còn lại
- * (dropdown Tỉnh/Xã, data-validation Y/N, công thức "Đủ điều kiện"...). Ghi lại bằng thư viện xlsx
- * sẽ cắt xén cấu trúc → SPX báo "Tải không thành công", nên bắt buộc dùng cách này.
+ * thay các cell rỗng (giữ style) trong đúng 1 sheet + thêm chuỗi vào sharedStrings, giữ nguyên byte
+ * các phần còn lại (dropdown, data-validation, công thức). QUAN TRỌNG:
+ *  - Text ghi dạng SHARED STRING (t="s") giống hệt Excel/SPX — dùng inlineStr hoặc ghi lại bằng thư
+ *    viện xlsx đều làm SPX báo "Tải không thành công".
  * Trả về số đơn đã ghi.
  */
 export const exportOrdersToSpx = async (
@@ -125,28 +122,55 @@ export const exportOrdersToSpx = async (
   const files = unzipSync(bytes);
   const sheetPath = SHEET_FILE[addressMode];
   if (!files[sheetPath]) throw new Error(`Template SPX thiếu ${sheetPath}.`);
+  if (!files[SHARED_STRINGS]) throw new Error('Template SPX thiếu sharedStrings.xml.');
 
   let xml = strFromU8(files[sheetPath]);
-  const list = orders.slice(0, MAX_ROWS);
+  let ss = strFromU8(files[SHARED_STRINGS]);
 
+  // Bộ nạp chuỗi vào sharedStrings: dedupe các chuỗi mới, trả index để cell tham chiếu t="s".
+  const sstOpen = ss.match(/<sst[^>]*>/)?.[0] ?? '';
+  let count = parseInt(sstOpen.match(/\bcount="(\d+)"/)?.[1] ?? '0', 10);
+  let unique = parseInt(sstOpen.match(/\buniqueCount="(\d+)"/)?.[1] ?? '0', 10);
+  let nextIndex = unique;
+  const addedSi: string[] = [];
+  const strIndex = new Map<string, number>();
+  let refsAdded = 0;
+  const internString = (s: string): number => {
+    const existing = strIndex.get(s);
+    if (existing !== undefined) return existing;
+    const idx = nextIndex++;
+    strIndex.set(s, idx);
+    addedSi.push(`<si><t xml:space="preserve">${escapeXml(s)}</t></si>`);
+    return idx;
+  };
+
+  const list = orders.slice(0, MAX_ROWS);
   list.forEach((o, idx) => {
     const r = idx + 2; // dòng 1 = header
     buildRow(o, weightKg, addressMode).forEach((v, c) => {
       if (v === '' || v === null || v === undefined) return; // để trống → giữ cell template
       const ref = `${colLetter(c)}${r}`;
-      const re = new RegExp(`<c r="${ref}"([^>]*?)/>`); // cell rỗng tự đóng, giữ nguyên style ở group 1
+      const re = new RegExp(`<c r="${ref}"([^>]*?)/>`); // cell rỗng tự đóng, giữ style ở group 1
       const m = xml.match(re);
-      if (m) {
-        xml = xml.replace(re, cellXml(ref, m[1], v));
-      } else {
-        // Cell chưa dựng sẵn (hiếm) → chèn trước </row> của đúng dòng.
-        const rowRe = new RegExp(`(<row r="${r}"[^>]*>)([\\s\\S]*?)(</row>)`);
-        xml = xml.replace(rowRe, (_all, open, inner, close) => open + inner + cellXml(ref, '', v) + close);
-      }
+      if (!m) return; // cell không dựng sẵn (hiếm) → bỏ qua an toàn
+      const attrs = m[1];
+      const cell =
+        typeof v === 'number'
+          ? `<c r="${ref}"${attrs}><v>${v}</v></c>`
+          : `<c r="${ref}"${attrs} t="s"><v>${(refsAdded++, internString(String(v)))}</v></c>`;
+      xml = xml.replace(re, cell);
     });
   });
 
+  if (addedSi.length > 0) {
+    ss = ss
+      .replace(/(<sst[^>]*\bcount=")\d+(")/, `$1${count + refsAdded}$2`)
+      .replace(/(<sst[^>]*\buniqueCount=")\d+(")/, `$1${nextIndex}$2`)
+      .replace('</sst>', `${addedSi.join('')}</sst>`);
+    files[SHARED_STRINGS] = strToU8(ss);
+  }
   files[sheetPath] = strToU8(xml);
+
   const out = zipSync(files);
   triggerDownload(out, `SPX_TaoDon_${new Date().toISOString().split('T')[0]}.xlsx`);
   return list.length;
