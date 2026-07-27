@@ -80,10 +80,13 @@ export const exportOrdersToSpx = async (
 ): Promise<number> => {
   const { weightKg = 1, addressMode = 'new' } = opts;
 
-  const res = await fetch(`${import.meta.env.BASE_URL}spx_order_template.xlsx`);
-  if (!res.ok) throw new Error('Không tải được template SPX gốc.');
-  const buf = await res.arrayBuffer();
-  const wb = XLSX.read(buf, { type: 'array' });
+  // Template nhúng base64 (lazy chunk) — KHÔNG fetch runtime để tránh service worker PWA
+  // trả nhầm index.html → workbook rỗng → file tải xuống bị trống.
+  const { SPX_TEMPLATE_B64 } = await import('@/assets/spxTemplateBase64');
+  const bin = atob(SPX_TEMPLATE_B64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const wb = XLSX.read(bytes, { type: 'array' });
 
   const sheetName = SHEET_BY_MODE[addressMode];
   const ws = wb.Sheets[sheetName];
@@ -91,6 +94,14 @@ export const exportOrdersToSpx = async (
 
   const rows = orders.map((o) => buildRow(o, weightKg, addressMode));
   XLSX.utils.sheet_add_aoa(ws, rows, { origin: 'A2' }); // giữ header dòng 1, ghi data từ dòng 2
+
+  // Mở file lên hiển thị đúng sheet đã điền data (mặc định template mở ở sheet đầu, đang trống).
+  const activeTab = wb.SheetNames.indexOf(sheetName);
+  if (activeTab >= 0) {
+    (wb as unknown as { Workbook: { Views: { activeTab: number }[] } }).Workbook = {
+      Views: [{ activeTab }],
+    };
+  }
 
   XLSX.writeFile(wb, `SPX_TaoDon_${new Date().toISOString().split('T')[0]}.xlsx`);
   return orders.length;
