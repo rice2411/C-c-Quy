@@ -187,6 +187,16 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     navigator.clipboard.writeText(text);
   };
 
+  // Copy thông tin khách hàng: tên \n sdt \n địa chỉ (kèm city/country nếu có).
+  const handleCopyCustomer = () => {
+    const c = currentOrder.customer;
+    const addressLine = c.address || t(orderAddressFallbackKey(currentOrder.deliveryType));
+    const fullAddress = c.city ? `${addressLine}, ${c.city}, ${c.country}` : addressLine;
+    const info = [c.name, c.phone, fullAddress].filter(Boolean).join('\n');
+    copyToClipboard(info);
+    toast.success(t('detail.customerCopied'));
+  };
+
   // Đẩy QR (EMV) số tiền `amount` xuống máy POS/ESP32.
   const handlePushPos = async (amount: number) => {
     if (!activeAccount || amount <= 0) return;
@@ -794,7 +804,17 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                   shadowClassName="shadow-sm"
                   stateClassName="transition-colors"
                 >
-                  <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white" layoutClassName="mb-4 uppercase tracking-wide">{t('detail.customer')}</Heading>
+                  <Box layoutClassName="flex items-center justify-between mb-4">
+                    <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white" layoutClassName="uppercase tracking-wide">{t('detail.customer')}</Heading>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      leftIcon={<Copy className="w-4 h-4" />}
+                      onClick={handleCopyCustomer}
+                    >
+                      {t('detail.copyCustomer')}
+                    </Button>
+                  </Box>
                   <Box layoutClassName="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Box layoutClassName="space-y-3">
                       {currentOrder.customer.name && (
