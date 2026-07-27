@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Package, Plus, RefreshCw, Truck } from 'lucide-react';
+import { Download, Package, PackagePlus, Plus, RefreshCw, Truck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,6 +13,7 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Typography from '@/components/ui/Typography';
 import ExportModal from '@/pages/Orders/components/modals/ExportModal';
+import SpxExportModal from '@/pages/Orders/components/modals/SpxExportModal';
 import TrackingImportModal from '@/pages/Orders/components/modals/TrackingImportModal';
 import OrderDetail from '@/pages/Orders/components/modals/OrderDetail';
 import OrderForm from '@/pages/Orders/components/modals/OrderForm';
@@ -29,6 +30,7 @@ const OrdersPage: React.FC = () => {
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const [isSpxExportOpen, setIsSpxExportOpen] = useState(false);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
@@ -210,6 +212,26 @@ const OrdersPage: React.FC = () => {
       </Button>
       <Button
         type="button"
+        onClick={() => setIsSpxExportOpen(true)}
+        variant="secondary"
+        disableVariantHover
+        disableVariantTextColor
+        backgroundClassName="bg-white dark:bg-slate-800"
+        borderClassName="border border-slate-200 dark:border-slate-600"
+        textClassName="font-medium text-slate-700 dark:text-slate-200"
+        roundedClassName="rounded-xl"
+        sizeClassName="px-3 py-2 text-xs"
+        layoutClassName="inline-flex items-center gap-1.5"
+        stateClassName="transition-colors"
+        leftIcon={<PackagePlus />}
+        iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+      >
+        <Typography as="span" size="xs" layoutClassName="hidden sm:inline">
+          Xuất file SPX
+        </Typography>
+      </Button>
+      <Button
+        type="button"
         onClick={handleCreateNewOrder}
         leftIcon={<Plus />}
         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
@@ -294,6 +316,12 @@ const OrdersPage: React.FC = () => {
         onClose={() => setIsExportModalOpen(false)}
         orders={orders}
         userRole={userData?.role}
+      />
+
+      <SpxExportModal
+        isOpen={isSpxExportOpen}
+        onClose={() => setIsSpxExportOpen(false)}
+        orders={orders}
       />
 
       <TrackingImportModal
