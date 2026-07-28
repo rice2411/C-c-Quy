@@ -296,6 +296,28 @@ export const aiPickSpxWard = async (
   return Array.isArray(wards) ? wards.map((w) => (typeof w === 'string' ? w : '')) : [];
 };
 
+/**
+ * Tách địa chỉ khách → Tỉnh/Quận/Xã hệ CŨ 3 cấp (danh mục SPX cũ trong DB) để xuất file
+ * SPX "địa chỉ cũ". BE làm rule-based (grounded DB) + Claude AI. Trả đúng thứ tự đầu vào.
+ */
+export const resolveSpxOldAddresses = async (
+  addresses: string[],
+  useAi: boolean,
+): Promise<{ state: string; city: string; ward: string }[]> => {
+  const res = await apiClient.post('/ai/spx-address-old', { addresses, useAi });
+  const items = (res.data as { items?: unknown })?.items;
+  return Array.isArray(items)
+    ? items.map((r) => {
+        const o = (r ?? {}) as { state?: unknown; city?: unknown; ward?: unknown };
+        return {
+          state: typeof o.state === 'string' ? o.state : '',
+          city: typeof o.city === 'string' ? o.city : '',
+          ward: typeof o.ward === 'string' ? o.ward : '',
+        };
+      })
+    : [];
+};
+
 export interface TrackingEvent { time: number; label: string; location?: string }
 export interface TrackingTimeline { tn: string; status: string | null; events: TrackingEvent[] }
 

@@ -2,8 +2,9 @@ import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { AlertTriangle, PackageCheck } from 'lucide-react';
 import { Order } from '@/types';
-import { exportOrdersToSpx, isSpxShippable, codRemaining, SpxAddressMode } from '@/utils/order/spxOrderExport';
-import { matchAddress, resolveSpxAddresses } from '@/utils/order/spxAddressMatch';
+import { exportOrdersToSpx, isSpxShippable, codRemaining, SpxAddressMode, ResolvedAddress } from '@/utils/order/spxOrderExport';
+import { resolveSpxAddresses } from '@/utils/order/spxAddressMatch';
+import { resolveSpxOldAddresses } from '@/services/orderService';
 import { getOrderTotal } from '@/utils/order/orderUtils';
 import { formatVND } from '@/utils/format/currencyUtil';
 import BaseModal from '@/components/BaseModal';
@@ -23,23 +24,13 @@ interface Props {
 
 const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
   const [weight, setWeight] = useState('1');
-  const [addressMode, setAddressMode] = useState<SpxAddressMode>('new');
+  const [addressMode, setAddressMode] = useState<SpxAddressMode>('old');
   const [useAi, setUseAi] = useState(true);
   const [busy, setBusy] = useState(false);
 
   const eligible = useMemo(() => orders.filter(isSpxShippable), [orders]);
   const totalCod = useMemo(() => eligible.reduce((s, o) => s + codRemaining(o), 0), [eligible]);
   const totalValue = useMemo(() => eligible.reduce((s, o) => s + getOrderTotal(o), 0), [eligible]);
-  const addrStats = useMemo(() => {
-    let p = 0;
-    let w = 0;
-    eligible.forEach((o) => {
-      const m = matchAddress([o.customer.address, o.customer.city].filter(Boolean).join(', '));
-      if (m.province) p += 1;
-      if (m.ward) w += 1;
-    });
-    return { p, w };
-  }, [eligible]);
 
   const handleExport = async () => {
     if (eligible.length === 0) return;
@@ -49,13 +40,27 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
       return;
     }
     setBusy(true);
-    const loadingId = useAi ? toast.loading('Đang nhờ AI tách địa chỉ…') : undefined;
+    const loadingId = toast.loading(useAi ? 'Đang tách địa chỉ (rule + AI)…' : 'Đang tách địa chỉ…');
     try {
-      const resolved = await resolveSpxAddresses(eligible, useAi);
+      const addrs = eligible.map((o) =>
+        [o.customer.address, o.customer.city].filter(Boolean).join(', '),
+      );
+      let resolved: ResolvedAddress[];
+      let filled: number;
+      if (addressMode === 'old') {
+        // Hệ CŨ 3 cấp: giải ở BE (danh mục SPX cũ trong DB + AI).
+        const old = await resolveSpxOldAddresses(addrs, useAi);
+        resolved = old.map((r) => ({ state: r.state, city: r.city, ward: r.ward }));
+        filled = old.filter((r) => r.state && r.city && r.ward).length;
+      } else {
+        const nw = await resolveSpxAddresses(eligible, useAi);
+        resolved = nw.map((r) => ({ province: r.province, ward: r.ward }));
+        filled = nw.filter((r) => r.province && r.ward).length;
+      }
       if (loadingId) toast.dismiss(loadingId);
       const n = await exportOrdersToSpx(eligible, { weightKg: w, addressMode, resolved });
-      const filled = resolved.filter((r) => r.province && r.ward).length;
-      toast.success(`Đã xuất ${n} đơn · điền đủ Tỉnh+Xã ${filled}/${n}`);
+      const label = addressMode === 'old' ? 'đủ Tỉnh+Quận+Xã' : 'đủ Tỉnh+Xã';
+      toast.success(`Đã xuất ${n} đơn · điền ${label} ${filled}/${n}`);
       onClose();
     } catch (err) {
       if (loadingId) toast.dismiss(loadingId);
@@ -87,9 +92,6 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
           </Typography>
           <Typography as="span" size="sm" textClassName="text-slate-700 dark:text-slate-200">
             Tổng COD cần thu: <b>{formatVND(totalCod)}</b>
-          </Typography>
-          <Typography as="span" size="sm" textClassName="text-slate-700 dark:text-slate-200">
-            Tự điền địa chỉ: Tỉnh <b>{addrStats.p}/{eligible.length}</b> · Xã <b>{addrStats.w}/{eligible.length}</b>
           </Typography>
         </Box>
 
@@ -165,9 +167,9 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <Typography as="p" size="xs" textClassName="text-amber-700 dark:text-amber-300">
-            File ghi thẳng vào <b>template gốc SPX</b> (sheet {addressMode === 'new' ? '"địa chỉ mới"' : '"địa chỉ cũ"'}),
-            upload trực tiếp được. Tỉnh/Xã được <b>tự tách từ địa chỉ</b> khớp danh mục SPX; đơn nào không tách được
-            (địa chỉ thiếu/tỉnh cũ đã sáp nhập) để trống — mở file <b>chọn dropdown Tỉnh + Xã</b> cho tới khi ô xanh
+            File ghi thẳng vào <b>template gốc SPX</b> (sheet {addressMode === 'new' ? '"địa chỉ mới" — 2 cấp Tỉnh/Xã' : '"địa chỉ cũ" — 3 cấp Tỉnh/Quận-Huyện/Xã'}),
+            upload trực tiếp được. Địa chỉ được <b>tự tách</b> khớp danh mục SPX; đơn nào không tách được
+            (địa chỉ thiếu) để trống — mở file <b>chọn dropdown</b> cho tới khi ô xanh
             "Đủ điều kiện" rồi mới upload. Cân nặng áp chung — chỉnh trên SPX nếu cần.
           </Typography>
         </Box>

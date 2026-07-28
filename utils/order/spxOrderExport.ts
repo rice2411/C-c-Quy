@@ -6,9 +6,15 @@ import { matchAddress } from '@/utils/order/spxAddressMatch';
 /** Định dạng địa chỉ SPX: 'new' = 2 cấp (Tỉnh/Xã), 'old' = 3 cấp (Tỉnh/Quận/Xã). */
 export type SpxAddressMode = 'new' | 'old';
 
-/** Tỉnh/Xã đã giải sẵn cho 1 đơn (rule-based hoặc AI). */
+/**
+ * Địa chỉ đã giải sẵn cho 1 đơn.
+ * - Hệ MỚI (2 cấp): dùng `province` + `ward`.
+ * - Hệ CŨ (3 cấp): dùng `state` (Tỉnh) + `city` (Quận/Huyện) + `ward` (Xã/Phường).
+ */
 export interface ResolvedAddress {
-  province: string;
+  province?: string;
+  state?: string;
+  city?: string;
   ward: string;
 }
 
@@ -37,9 +43,14 @@ const buildRow = (
   const productName = (o.items || []).map((i) => `${i.name} x${i.quantity}`).join(', ');
   const detailAddress = [o.customer.address, o.customer.city].filter(Boolean).join(', ');
 
-  const { province, ward } = resolved ?? matchAddress(detailAddress);
-  // 'old' = Tỉnh + Quận (để trống) + Xã; 'new' = Tỉnh + Xã.
-  const addressCols = mode === 'old' ? [province, '', ward] : [province, ward];
+  // 'old' = Tỉnh + Quận/Huyện + Xã (3 cấp, danh mục cũ, giải ở BE); 'new' = Tỉnh + Xã (2 cấp).
+  let addressCols: string[];
+  if (mode === 'old') {
+    addressCols = [resolved?.state ?? '', resolved?.city ?? '', resolved?.ward ?? ''];
+  } else {
+    const r = resolved ?? matchAddress(detailAddress);
+    addressCols = [r.province ?? '', r.ward];
+  }
 
   return [
     o.orderNumber || o.id,          // Mã đơn hàng
@@ -84,7 +95,7 @@ export const exportOrdersToSpx = async (
   orders: Order[],
   opts: { weightKg?: number; addressMode?: SpxAddressMode; resolved?: ResolvedAddress[] } = {},
 ): Promise<number> => {
-  const { weightKg = 1, addressMode = 'new', resolved } = opts;
+  const { weightKg = 1, addressMode = 'old', resolved } = opts;
   const list = orders.slice(0, MAX_ROWS);
   const rows = list.map((o, i) => buildRow(o, weightKg, addressMode, resolved?.[i]));
 
