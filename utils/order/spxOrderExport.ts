@@ -18,14 +18,14 @@ export interface ResolvedAddress {
   ward: string;
 }
 
-/** Đơn cần tạo vận đơn SPX: giao ship, chưa có mã vận đơn, chưa huỷ/giao/hoàn. */
+/** Đơn cần tạo vận đơn SPX: CHỈ giao ship TỈNH, chưa có mã vận đơn, chưa huỷ/giao/hoàn. */
 export const isSpxShippable = (o: Order): boolean => {
-  const isShip = o.deliveryType === DeliveryType.SHIP || o.deliveryType === DeliveryType.SHIP_PROVINCE;
+  const isShipProvince = o.deliveryType === DeliveryType.SHIP_PROVINCE;
   const done =
     o.status === OrderStatus.CANCELLED ||
     o.status === OrderStatus.DELIVERED ||
     o.status === OrderStatus.RETURNED;
-  return isShip && !done && !o.trackingNumber;
+  return isShipProvince && !done && !o.trackingNumber;
 };
 
 /** COD cần thu = còn lại = total − đã trả (đơn cọc trước + ship COD). */
