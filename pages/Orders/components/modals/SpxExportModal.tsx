@@ -2,8 +2,7 @@ import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { AlertTriangle, PackageCheck } from 'lucide-react';
 import { Order } from '@/types';
-import { exportOrdersToSpx, isSpxShippable, codRemaining, SpxAddressMode, ResolvedAddress } from '@/utils/order/spxOrderExport';
-import { resolveSpxAddresses } from '@/utils/order/spxAddressMatch';
+import { exportOrdersToSpx, isSpxShippable, codRemaining, ResolvedAddress } from '@/utils/order/spxOrderExport';
 import { resolveSpxOldAddresses } from '@/services/orderService';
 import { getOrderTotal } from '@/utils/order/orderUtils';
 import { formatVND } from '@/utils/format/currencyUtil';
@@ -24,7 +23,6 @@ interface Props {
 
 const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
   const [weight, setWeight] = useState('1');
-  const [addressMode, setAddressMode] = useState<SpxAddressMode>('old');
   const [useAi, setUseAi] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -45,22 +43,17 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
       const addrs = eligible.map((o) =>
         [o.customer.address, o.customer.city].filter(Boolean).join(', '),
       );
-      let resolved: ResolvedAddress[];
-      let filled: number;
-      if (addressMode === 'old') {
-        // Hệ CŨ 3 cấp: giải ở BE (danh mục SPX cũ trong DB + AI).
-        const old = await resolveSpxOldAddresses(addrs, useAi);
-        resolved = old.map((r) => ({ state: r.state, city: r.city, ward: r.ward }));
-        filled = old.filter((r) => r.state && r.city && r.ward).length;
-      } else {
-        const nw = await resolveSpxAddresses(eligible, useAi);
-        resolved = nw.map((r) => ({ province: r.province, ward: r.ward }));
-        filled = nw.filter((r) => r.province && r.ward).length;
-      }
+      // SPX (CucQuy) chỉ nhận format CŨ 3 cấp → luôn giải hệ cũ ở BE (danh mục DB + AI).
+      const old = await resolveSpxOldAddresses(addrs, useAi);
+      const resolved: ResolvedAddress[] = old.map((r) => ({
+        state: r.state,
+        city: r.city,
+        ward: r.ward,
+      }));
+      const filled = old.filter((r) => r.state && r.city && r.ward).length;
       if (loadingId) toast.dismiss(loadingId);
-      const n = await exportOrdersToSpx(eligible, { weightKg: w, addressMode, resolved });
-      const label = addressMode === 'old' ? 'đủ Tỉnh+Quận+Xã' : 'đủ Tỉnh+Xã';
-      toast.success(`Đã xuất ${n} đơn · điền ${label} ${filled}/${n}`);
+      const n = await exportOrdersToSpx(eligible, { weightKg: w, addressMode: 'old', resolved });
+      toast.success(`Đã xuất ${n} đơn · điền đủ Tỉnh+Quận+Xã ${filled}/${n}`);
       onClose();
     } catch (err) {
       if (loadingId) toast.dismiss(loadingId);
@@ -93,41 +86,6 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
           <Typography as="span" size="sm" textClassName="text-slate-700 dark:text-slate-200">
             Tổng COD cần thu: <b>{formatVND(totalCod)}</b>
           </Typography>
-        </Box>
-
-        {/* Chế độ địa chỉ */}
-        <Box layoutClassName="flex flex-wrap items-center gap-3">
-          <Label className="mb-0">Định dạng địa chỉ</Label>
-          <Box layoutClassName="inline-flex gap-1.5">
-            <Button
-              type="button"
-              onClick={() => setAddressMode('new')}
-              variant={addressMode === 'new' ? 'primary' : 'secondary'}
-              sizeClassName="px-3 py-1.5 text-sm"
-              roundedClassName="rounded-lg"
-              borderClassName="border border-slate-200 dark:border-slate-600"
-              backgroundClassName={addressMode === 'new' ? 'bg-primary-600' : 'bg-white dark:bg-slate-800'}
-              textClassName={addressMode === 'new' ? 'font-medium text-white' : 'text-slate-700 dark:text-slate-200'}
-              disableVariantHover
-              disableVariantTextColor
-            >
-              Địa chỉ mới (2 cấp)
-            </Button>
-            <Button
-              type="button"
-              onClick={() => setAddressMode('old')}
-              variant={addressMode === 'old' ? 'primary' : 'secondary'}
-              sizeClassName="px-3 py-1.5 text-sm"
-              roundedClassName="rounded-lg"
-              borderClassName="border border-slate-200 dark:border-slate-600"
-              backgroundClassName={addressMode === 'old' ? 'bg-primary-600' : 'bg-white dark:bg-slate-800'}
-              textClassName={addressMode === 'old' ? 'font-medium text-white' : 'text-slate-700 dark:text-slate-200'}
-              disableVariantHover
-              disableVariantTextColor
-            >
-              Địa chỉ cũ (3 cấp)
-            </Button>
-          </Box>
         </Box>
 
         {/* Cân nặng mặc định */}
@@ -167,10 +125,10 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <Typography as="p" size="xs" textClassName="text-amber-700 dark:text-amber-300">
-            File ghi thẳng vào <b>template gốc SPX</b> (sheet {addressMode === 'new' ? '"địa chỉ mới" — 2 cấp Tỉnh/Xã' : '"địa chỉ cũ" — 3 cấp Tỉnh/Quận-Huyện/Xã'}),
-            upload trực tiếp được. Địa chỉ được <b>tự tách</b> khớp danh mục SPX; đơn nào không tách được
-            (địa chỉ thiếu) để trống — mở file <b>chọn dropdown</b> cho tới khi ô xanh
-            "Đủ điều kiện" rồi mới upload. Cân nặng áp chung — chỉnh trên SPX nếu cần.
+            File ghi thẳng vào <b>template gốc SPX</b> (sheet <b>"Tạo đơn (địa chỉ cũ)"</b> — 3 cấp
+            Tỉnh/Quận-Huyện/Xã, đúng định dạng SPX yêu cầu), upload trực tiếp được. Địa chỉ được <b>tự
+            tách</b> khớp danh mục SPX; đơn nào không tách được (địa chỉ thiếu) để trống — mở file <b>chọn
+            dropdown</b> cho tới khi ô xanh "Đủ điều kiện" rồi mới upload. Cân nặng áp chung — chỉnh trên SPX nếu cần.
           </Typography>
         </Box>
 
