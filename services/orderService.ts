@@ -283,6 +283,19 @@ export const aiMatchSpxAddresses = async (
     : [];
 };
 
+/**
+ * Nhờ Claude AI CHỌN Xã chuẩn 2025 từ danh mục hợp lệ của tỉnh (grounded — AI chỉ được
+ * chép trong `wards`, không bịa). Dùng cho đơn đã ra Tỉnh nhưng còn thiếu Xã (tên xã cũ).
+ * Trả mảng tên Xã đúng thứ tự đầu vào (rỗng nếu AI không chọn được).
+ */
+export const aiPickSpxWard = async (
+  items: { address: string; province: string; wards: string[] }[],
+): Promise<string[]> => {
+  const res = await apiClient.post('/ai/spx-ward', { items });
+  const wards = (res.data as { wards?: unknown })?.wards;
+  return Array.isArray(wards) ? wards.map((w) => (typeof w === 'string' ? w : '')) : [];
+};
+
 export interface TrackingEvent { time: number; label: string; location?: string }
 export interface TrackingTimeline { tn: string; status: string | null; events: TrackingEvent[] }
 

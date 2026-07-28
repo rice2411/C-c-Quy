@@ -1,6 +1,6 @@
 import { SPX_PROVINCES, SPX_WARDS_BY_PROVINCE } from '@/assets/spxAdminList';
 import type { Order } from '@/types';
-import { aiMatchSpxAddresses } from '@/services/orderService';
+import { aiMatchSpxAddresses, aiPickSpxWard } from '@/services/orderService';
 
 /**
  * Tách Tỉnh/Thành + Xã/Phường (theo đúng list chuẩn SPX sau sáp nhập 2025) từ địa chỉ free-text.
@@ -165,11 +165,37 @@ export const resolveSpxAddresses = async (
       const a = ai[k];
       if (!a) return;
       const province = resolved[oi].province || snapProvince(a.province);
-      const ward = resolved[oi].ward || (province ? snapWard(a.ward, province) : '');
+      // Xã: ưu tiên rule-based; rồi snap tên AI trả; cuối cùng thử khớp lại tên xã ngay
+      // trong địa chỉ gốc theo list của tỉnh vừa ra (bắt được xã cũ còn tồn tại trong list).
+      let ward = resolved[oi].ward;
+      if (!ward && province) ward = snapWard(a.ward, province) || matchWard(addrs[oi], province);
       resolved[oi] = { province, ward };
     });
   } catch {
     // AI lỗi → dùng kết quả rule-based đã có.
+  }
+
+  // Pass 2 (grounded): đơn đã có TỈNH nhưng vẫn thiếu XÃ → nhờ AI chọn xã từ đúng danh mục
+  // của tỉnh (xử lý tên xã/huyện cũ đã sáp nhập mà rule/snap không bắt được).
+  const wardMiss = resolved
+    .map((r, i) => (r.province && !r.ward && SPX_WARDS_BY_PROVINCE[r.province]?.length ? i : -1))
+    .filter((i) => i >= 0);
+  if (wardMiss.length > 0) {
+    try {
+      const picks = await aiPickSpxWard(
+        wardMiss.map((i) => ({
+          address: addrs[i],
+          province: resolved[i].province,
+          wards: SPX_WARDS_BY_PROVINCE[resolved[i].province],
+        })),
+      );
+      wardMiss.forEach((oi, k) => {
+        const w = picks[k];
+        if (w) resolved[oi] = { ...resolved[oi], ward: snapWard(w, resolved[oi].province) };
+      });
+    } catch {
+      // AI lỗi → để trống cho user chọn dropdown.
+    }
   }
   return resolved;
 };
