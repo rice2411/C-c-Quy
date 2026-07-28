@@ -52,7 +52,7 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
       }));
       const filled = old.filter((r) => r.state && r.city && r.ward).length;
       if (loadingId) toast.dismiss(loadingId);
-      const n = await exportOrdersToSpx(eligible, { weightKg: w, addressMode: 'old', resolved });
+      const n = await exportOrdersToSpx(eligible, { weightKg: w, resolved });
       toast.success(`Đã xuất ${n} đơn · điền đủ Tỉnh+Quận+Xã ${filled}/${n}`);
       onClose();
     } catch (err) {
@@ -125,10 +125,10 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <Typography as="p" size="xs" textClassName="text-amber-700 dark:text-amber-300">
-            File ghi thẳng vào <b>template gốc SPX</b> (sheet <b>"Tạo đơn (địa chỉ cũ)"</b> — 3 cấp
-            Tỉnh/Quận-Huyện/Xã, đúng định dạng SPX yêu cầu), upload trực tiếp được. Địa chỉ được <b>tự
-            tách</b> khớp danh mục SPX; đơn nào không tách được (địa chỉ thiếu) để trống — mở file <b>chọn
-            dropdown</b> cho tới khi ô xanh "Đủ điều kiện" rồi mới upload. Cân nặng áp chung — chỉnh trên SPX nếu cần.
+            File ghi vào sheet <b>"Tạo đơn (địa chỉ mới)"</b> với Tỉnh dạng <b>TP. HỒ CHÍ MINH</b> +
+            Xã (bỏ cột Quận/Huyện), upload trực tiếp được. Địa chỉ được <b>tự tách</b> khớp danh mục SPX;
+            đơn nào không tách được (địa chỉ thiếu) để trống — mở file <b>chọn dropdown</b> cho tới khi ô
+            xanh "Đủ điều kiện" rồi mới upload. Cân nặng áp chung — chỉnh trên SPX nếu cần.
           </Typography>
         </Box>
 
