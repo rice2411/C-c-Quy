@@ -23,7 +23,7 @@ interface Props {
 
 const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
   const [weight, setWeight] = useState('1');
-  const [addressMode, setAddressMode] = useState<SpxAddressMode>('old');
+  const [addressMode, setAddressMode] = useState<SpxAddressMode>('new');
   const [useAi, setUseAi] = useState(true);
   const [busy, setBusy] = useState(false);
 
