@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { PackageCheck } from 'lucide-react';
-import { Order } from '@/types';
+import { Order, DeliveryType, OrderStatus } from '@/types';
 import { exportOrdersToSpx, isSpxShippable, codRemaining, ResolvedAddress, SpxAddressMode } from '@/utils/order/spxOrderExport';
 import { resolveSpxOldAddresses } from '@/services/orderService';
 import { resolveSpxAddresses } from '@/utils/order/spxAddressMatch';
@@ -31,6 +31,24 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
   const eligible = useMemo(() => orders.filter(isSpxShippable), [orders]);
   const totalCod = useMemo(() => eligible.reduce((s, o) => s + codRemaining(o), 0), [eligible]);
   const totalValue = useMemo(() => eligible.reduce((s, o) => s + getOrderTotal(o), 0), [eligible]);
+
+  // Đơn ship tỉnh còn "treo" (chưa xong) nhưng CHƯA đủ điều kiện xuất — kèm lý do.
+  const ineligible = useMemo(() => {
+    const done = (o: Order) =>
+      o.status === OrderStatus.CANCELLED ||
+      o.status === OrderStatus.DELIVERED ||
+      o.status === OrderStatus.RETURNED;
+    return orders
+      .filter((o) => o.deliveryType === DeliveryType.SHIP_PROVINCE && !done(o) && !isSpxShippable(o))
+      .map((o) => ({
+        o,
+        reason: o.trackingNumber
+          ? 'đã có mã vận đơn'
+          : (Number(o.paidAmount) || 0) <= 0
+            ? 'chưa cọc'
+            : 'chưa đủ điều kiện',
+      }));
+  }, [orders]);
 
   const handleExport = async () => {
     if (eligible.length === 0) return;
@@ -139,6 +157,34 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
             </Typography>
           </Box>
         )}
+
+        {/* Đơn ship tỉnh CHƯA đủ điều kiện xuất — kèm lý do */}
+        {ineligible.length > 0 ? (
+          <Box layoutClassName="space-y-1">
+            <Typography as="p" size="xs" layoutClassName="font-semibold" textClassName="text-amber-600 dark:text-amber-400">
+              Chưa đủ điều kiện ({ineligible.length}) — không xuất
+            </Typography>
+            <Box
+              layoutClassName="max-h-[22vh] space-y-1 overflow-y-auto rounded-lg p-1"
+              borderClassName="border border-amber-200 dark:border-amber-900/40"
+            >
+              {ineligible.map(({ o, reason }) => (
+                <Box
+                  key={o.id}
+                  layoutClassName="flex items-center justify-between gap-3 rounded-md px-2.5 py-1.5"
+                  backgroundClassName="bg-amber-50/60 dark:bg-amber-900/15"
+                >
+                  <Typography as="p" size="sm" layoutClassName="min-w-0 flex-1 truncate" textClassName="text-slate-700 dark:text-slate-200">
+                    {o.orderNumber} · {o.customer.name}
+                  </Typography>
+                  <Typography as="span" size="xs" layoutClassName="shrink-0 font-medium" textClassName="text-amber-600 dark:text-amber-400">
+                    {reason}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        ) : null}
 
         {/* Chọn định dạng địa chỉ */}
         <Box layoutClassName="flex flex-wrap items-center gap-3">
