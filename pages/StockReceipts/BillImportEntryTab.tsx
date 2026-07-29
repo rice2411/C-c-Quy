@@ -20,6 +20,7 @@ import type {
   BillLineItem,
   BillValidationResult,
   ImportedSupplierSummary,
+  ImportedMaterialSummary,
   StockReceiptStructured,
   SupplierContactInfo,
 } from '@/types/billReceipt';
@@ -43,6 +44,7 @@ import {
 import { PIPELINE_STAGES, type UiProgressStage } from '@/pages/StockReceipts/constants';
 import SupplierPicker from '@/pages/StockReceipts/SupplierPicker';
 import LineTypePicker from '@/pages/StockReceipts/LineTypePicker';
+import MaterialLinePicker from '@/pages/StockReceipts/MaterialLinePicker';
 import EmptyState from '@/components/ui/EmptyState';
 
 export interface BillImportEntryTabProps {
@@ -63,6 +65,8 @@ export interface BillImportEntryTabProps {
   /** Đính ảnh bill giấy để lưu trữ ở mode manual (không OCR). */
   onManualImageSelected?: (file: File | undefined) => void;
   supplierList: ImportedSupplierSummary[];
+  /** Danh mục NVL đã nhập — để gợi ý/khớp/tự chọn khi nhập dòng bill. */
+  materialList: ImportedMaterialSummary[];
   selectedSupplierId: string | null;
   supplierContact: SupplierContactInfo;
   onSupplierSelect: (next: {
@@ -119,6 +123,7 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
   onRemoveLine,
   onManualImageSelected,
   supplierList,
+  materialList,
   selectedSupplierId,
   supplierContact,
   onSupplierSelect,
@@ -666,12 +671,26 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                         Xoá
                       </Button>
                     </Box>
-                    <ContactField
-                      label={t('billImport.colName')}
-                      value={it.name ?? ''}
-                      onChange={(v) => updateDraftLine(idx, { name: v })}
-                      placeholder="Tên nguyên vật liệu"
-                    />
+                    <Box layoutClassName="space-y-1">
+                      <Typography size="xs" variant="muted" layoutClassName="font-medium uppercase tracking-wide">
+                        {t('billImport.colName')}
+                      </Typography>
+                      {(it.itemType ?? 'material') === 'material' ? (
+                        <MaterialLinePicker
+                          value={it.name ?? ''}
+                          materials={materialList}
+                          unit={it.unit}
+                          unitPrice={it.unitPrice}
+                          onChange={(patch) => updateDraftLine(idx, patch)}
+                        />
+                      ) : (
+                        <Input
+                          value={it.name ?? ''}
+                          onChange={(e) => updateDraftLine(idx, { name: e.target.value })}
+                          placeholder="Tên khoản"
+                        />
+                      )}
+                    </Box>
                     <Box layoutClassName="grid grid-cols-2 gap-2">
                       <ContactField
                         label={t('billImport.colQty')}
@@ -737,11 +756,21 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                       <TableRow key={`d-${idx}`}>
                         <TableCell>{idx + 1}</TableCell>
                         <TableCell>
-                          <Input
-                            value={it.name}
-                            onChange={(e) => updateDraftLine(idx, { name: e.target.value })}
-                            placeholder="Tên nguyên vật liệu"
-                          />
+                          {(it.itemType ?? 'material') === 'material' ? (
+                            <MaterialLinePicker
+                              value={it.name}
+                              materials={materialList}
+                              unit={it.unit}
+                              unitPrice={it.unitPrice}
+                              onChange={(patch) => updateDraftLine(idx, patch)}
+                            />
+                          ) : (
+                            <Input
+                              value={it.name}
+                              onChange={(e) => updateDraftLine(idx, { name: e.target.value })}
+                              placeholder="Tên khoản"
+                            />
+                          )}
                         </TableCell>
                         <TableCell>
                           <Input

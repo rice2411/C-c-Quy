@@ -10,6 +10,7 @@ import type {
   SupplierContactInfo,
 } from '@/types/billReceipt';
 import {
+  useImportedMaterials,
   useImportedSuppliers,
   useStockReceiptDetail,
   useStockReceiptMutations,
@@ -26,7 +27,8 @@ import BillImportSourceModal from '@/pages/StockReceipts/BillImportSourceModal';
 import type { UiProgressStage } from '@/pages/StockReceipts/constants';
 import { fileToBase64NoPrefix } from '@/utils/io/fileUtil';
 import { formatImportedAt } from '@/utils/format/dateUtil';
-import { normalizeSearchText } from '@/utils/format/stringUtil';
+import { normalizeSearchText, bestMaterialMatch } from '@/utils/format/stringUtil';
+import type { ImportedMaterialSummary } from '@/types/billReceipt';
 
 const EMPTY_CONTACT: SupplierContactInfo = {};
 
@@ -36,6 +38,34 @@ const EMPTY_LINE: BillLineItem = {
   unit: null,
   unitPrice: null,
   lineTotal: null,
+};
+
+/**
+ * Tự khớp NVL sẵn có cho các dòng NVL: tên khớp ≥70% → đổi tên về NVL chuẩn (BE gộp theo
+ * normalized_name, tránh tạo trùng) + điền đơn vị/đơn giá gần nhất nếu ô đang trống.
+ */
+const autoMatchMaterials = (
+  s: StockReceiptStructured,
+  materials: ImportedMaterialSummary[],
+): StockReceiptStructured => {
+  if (!materials.length || !s.lineItems?.length) return s;
+  return {
+    ...s,
+    lineItems: s.lineItems.map((li) => {
+      if ((li.itemType ?? 'material') !== 'material') return li;
+      const m = bestMaterialMatch(li.name || '', materials, 0.7);
+      if (!m) return li;
+      return {
+        ...li,
+        name: m.item.name,
+        unit: li.unit && li.unit.trim() ? li.unit : (m.item.canonicalUnit ?? li.unit),
+        unitPrice:
+          li.unitPrice == null || li.unitPrice === 0
+            ? (m.item.lastUnitPrice ?? li.unitPrice)
+            : li.unitPrice,
+      };
+    }),
+  };
 };
 
 /** Phiếu trống cho luồng nhập thủ công (không OCR) — 1 dòng hàng sẵn để gõ. */
@@ -94,11 +124,13 @@ const StockReceiptsPage: React.FC = () => {
   // supplierRows vẫn cần cho EntryTab (supplierList) + SupplierPicker.
   const receiptsQuery = useStockReceiptSummaries();
   const suppliersQuery = useImportedSuppliers();
+  const materialsQuery = useImportedMaterials();
   const detailQuery = useStockReceiptDetail(detailReceiptId);
   const { saveDraft } = useStockReceiptMutations();
 
   const receiptRows = receiptsQuery.receipts;
   const supplierRows = suppliersQuery.suppliers;
+  const materialRows = materialsQuery.materials;
   const receiptDetail: SavedStockReceiptDetail | null = detailQuery.detail;
   const detailLoading = detailQuery.loading;
 
@@ -139,7 +171,7 @@ const StockReceiptsPage: React.FC = () => {
           onProgress: (stage) => setProgressStage(stage),
         });
         setOcrText(result.ocrText);
-        setDraftStructured(result.structured);
+        setDraftStructured(autoMatchMaterials(result.structured, materialRows));
         setValidation(result.validation);
         // Pre-fill supplier contact form từ SĐT / địa chỉ Gemini trích được.
         setSupplierContact({
@@ -156,7 +188,7 @@ const StockReceiptsPage: React.FC = () => {
         setProgressStage(null);
       }
     },
-    [resetOutput, t],
+    [resetOutput, t, materialRows],
   );
 
   const handleFileSelected = useCallback(
@@ -442,6 +474,7 @@ const StockReceiptsPage: React.FC = () => {
           onRemoveLine={removeDraftLine}
           onManualImageSelected={handleManualImageSelected}
           supplierList={supplierRows}
+          materialList={materialRows}
           selectedSupplierId={selectedSupplierId}
           supplierContact={supplierContact}
           onSupplierSelect={handleSupplierSelect}
