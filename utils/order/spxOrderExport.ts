@@ -56,8 +56,8 @@ const buildRow = (
     '',                             // Lưu ý về địa chỉ
     '',                             // Mã bưu chính
     productName,                    // Tên sản phẩm
-    '',                             // Số lượng
-    '',                             // Giá tiền
+    1,                              // Số lượng (gộp cả đơn = 1 dòng; bắt buộc khi Thu COD)
+    cod > 0 ? cod : getOrderTotal(o), // Giá tiền = COD (để COD = SL×giá); đơn ko COD = giá trị đơn
     weightKg,                       // Tổng cân nặng (KG)
     '',                             // Chiều dài
     '',                             // Chiều rộng
