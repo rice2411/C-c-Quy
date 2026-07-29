@@ -148,6 +148,12 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
               <Typography as="span" size="sm" textClassName="text-emerald-600">−{formatVND(order.discountAmount)}</Typography>
             </Box>
           ) : null}
+          {order.manualDiscountAmount && order.manualDiscountAmount > 0 ? (
+            <Box layoutClassName={rowClass}>
+              <Typography as="span" size="sm" textClassName="text-rose-600">Giảm giá</Typography>
+              <Typography as="span" size="sm" textClassName="text-rose-600">−{formatVND(order.manualDiscountAmount)}</Typography>
+            </Box>
+          ) : null}
           <Box layoutClassName={`${rowClass} border-t border-slate-200 pt-2`}>
             <Typography as="span" size="sm" layoutClassName="font-bold" textClassName="text-slate-900">TỔNG</Typography>
             <Typography as="span" size="lg" layoutClassName="font-extrabold" textClassName="text-primary-600">{formatVND(finalTotal)}</Typography>

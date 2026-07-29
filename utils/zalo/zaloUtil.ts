@@ -122,9 +122,11 @@ export const formatOrderMessage = (order: any): string => {
     lines.push(' (không có)');
   }
 
+  const manualDiscount = Number(order.manualDiscountAmount || 0);
   const money = [`Hàng ${formatVND(subtotal)}`];
   if (shipping > 0) money.push(`Ship ${formatVND(shipping)}`);
   if (surcharge > 0) money.push(`Phụ thu ${formatVND(surcharge)}`);
+  if (manualDiscount > 0) money.push(`Giảm ${formatVND(manualDiscount)}`);
   lines.push(`💰 ${money.join(' · ')}`);
   lines.push(`💵 TỔNG: ${formatVND(total)}`);
   if (order.note) lines.push(`💬 ${order.note}`);
