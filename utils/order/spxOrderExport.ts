@@ -57,13 +57,13 @@ const buildRow = (
     '',                             // Mã bưu chính
     productName,                    // Tên sản phẩm
     1,                              // Số lượng (gộp cả đơn = 1 dòng; bắt buộc khi Thu COD)
-    cod > 0 ? cod : getOrderTotal(o), // Giá tiền = COD (để COD = SL×giá); đơn ko COD = giá trị đơn
+    cod > 0 ? cod : getOrderTotal(o), // Giá tiền = số THU HỘ (đã trừ cọc); đơn ko COD = tổng
     weightKg,                       // Tổng cân nặng (KG)
     '',                             // Chiều dài
     '',                             // Chiều rộng
     '',                             // Chiều cao
     o.orderNumber || o.id,          // Mã khách hàng = mã tham chiếu đơn của shop
-    getOrderTotal(o),               // Giá trị đơn hàng
+    cod > 0 ? cod : getOrderTotal(o), // Giá trị đơn hàng = số thu hộ (KHÔNG khai tổng); = Giá tiền = COD
     'N',                            // Giao hàng một phần
     'N',                            // Cho phép thử hàng
     'Y',                            // Cho xem hàng, không cho thử
