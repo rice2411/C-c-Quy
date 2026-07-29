@@ -43,8 +43,8 @@ const buildRow = (
   const productName = (o.items || []).map((i) => `${i.name} x${i.quantity}`).join(', ');
   const detailAddress = [o.customer.address, o.customer.city].filter(Boolean).join(', ');
 
-  // Sheet "địa chỉ mới": D = Tỉnh (TP. HỒ CHÍ MINH), E = Xã. Không có cột Quận/Huyện.
-  const addressCols = [resolved?.state ?? '', resolved?.ward ?? ''];
+  // Sheet "địa chỉ mới" (2 cấp): D = Tỉnh (TP. HỒ CHÍ MINH), E = Quận/Huyện.
+  const addressCols = [resolved?.state ?? '', resolved?.city ?? ''];
 
   return [
     o.orderNumber || o.id,          // Mã đơn hàng
