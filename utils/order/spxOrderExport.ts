@@ -16,14 +16,15 @@ export interface ResolvedAddress {
   ward: string;
 }
 
-/** Đơn cần tạo vận đơn SPX: CHỈ giao ship TỈNH, chưa có mã vận đơn, chưa huỷ/giao/hoàn. */
+/** Đơn cần tạo vận đơn SPX: CHỈ giao ship TỈNH, ĐÃ CỌC (đã nhận tiền), chưa có mã vận đơn, chưa huỷ/giao/hoàn. */
 export const isSpxShippable = (o: Order): boolean => {
   const isShipProvince = o.deliveryType === DeliveryType.SHIP_PROVINCE;
+  const deposited = (Number(o.paidAmount) || 0) > 0; // đã cọc/trả một phần
   const done =
     o.status === OrderStatus.CANCELLED ||
     o.status === OrderStatus.DELIVERED ||
     o.status === OrderStatus.RETURNED;
-  return isShipProvince && !done && !o.trackingNumber;
+  return isShipProvince && deposited && !done && !o.trackingNumber;
 };
 
 /** COD cần thu = còn lại = total − đã trả (đơn cọc trước + ship COD). */

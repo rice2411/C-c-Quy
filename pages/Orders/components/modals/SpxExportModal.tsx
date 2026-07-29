@@ -77,9 +77,8 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
     <BaseModal isOpen={isOpen} onClose={onClose} title="Xuất file tạo đơn hàng loạt SPX" size="lg">
       <Box layoutClassName="space-y-4">
         <Typography as="p" size="sm" variant="muted">
-          Xuất các đơn <b>cần tạo vận đơn</b> (giao ship, chưa có mã vận đơn, chưa huỷ/giao) ra file
-          Excel đúng cột template SPX. Số tiền COD = <b>còn lại phải thu</b> (tổng đơn − đã trả) nên đơn
-          đã cọc chỉ thu phần còn thiếu.
+          Chỉ xuất đơn <b>ship tỉnh · ĐÃ CỌC · chưa có mã vận đơn</b>. Số tiền COD = <b>còn lại phải thu</b>
+          (tổng đơn − đã cọc) — SPX chỉ thu phần còn thiếu.
         </Typography>
 
         <Box
@@ -97,6 +96,49 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
             Tổng COD cần thu: <b>{formatVND(totalCod)}</b>
           </Typography>
         </Box>
+
+        {/* Chi tiết đơn sẽ xuất: đã cọc bao nhiêu, còn thu COD bao nhiêu */}
+        {eligible.length > 0 ? (
+          <Box
+            layoutClassName="max-h-[32vh] space-y-1 overflow-y-auto rounded-lg p-1"
+            borderClassName="border border-slate-200 dark:border-slate-700"
+          >
+            {eligible.map((o) => {
+              const total = getOrderTotal(o);
+              const paid = Number(o.paidAmount) || 0;
+              const cod = codRemaining(o);
+              return (
+                <Box
+                  key={o.id}
+                  layoutClassName="flex items-center justify-between gap-3 rounded-md px-2.5 py-1.5"
+                  backgroundClassName="bg-slate-50 dark:bg-slate-800/40"
+                >
+                  <Box layoutClassName="min-w-0 flex-1">
+                    <Typography as="p" size="sm" layoutClassName="truncate font-medium" textClassName="text-slate-800 dark:text-slate-100">
+                      {o.orderNumber} · {o.customer.name}
+                    </Typography>
+                    <Typography as="span" size="xs" variant="muted">
+                      Tổng {formatVND(total)} · đã cọc {formatVND(paid)}
+                    </Typography>
+                  </Box>
+                  <Typography as="span" size="sm" layoutClassName="shrink-0 font-semibold" textClassName="text-emerald-600 dark:text-emerald-400">
+                    thu COD {formatVND(cod)}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
+        ) : (
+          <Box
+            layoutClassName="rounded-lg p-3 text-center"
+            borderClassName="border border-slate-200 dark:border-slate-700"
+            backgroundClassName="bg-slate-50 dark:bg-slate-800/40"
+          >
+            <Typography as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">
+              Không có đơn nào đủ điều kiện (ship tỉnh · đã cọc · chưa có mã vận đơn).
+            </Typography>
+          </Box>
+        )}
 
         {/* Chọn định dạng địa chỉ */}
         <Box layoutClassName="flex flex-wrap items-center gap-3">
