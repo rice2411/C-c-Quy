@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { AlertTriangle, PackageCheck } from 'lucide-react';
+import { PackageCheck } from 'lucide-react';
 import { Order } from '@/types';
 import { exportOrdersToSpx, isSpxShippable, codRemaining, ResolvedAddress, SpxAddressMode } from '@/utils/order/spxOrderExport';
 import { resolveSpxOldAddresses } from '@/services/orderService';
@@ -10,7 +10,6 @@ import { formatVND } from '@/utils/format/currencyUtil';
 import BaseModal from '@/components/BaseModal';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
-import Checkbox from '@/components/ui/Checkbox';
 import Input from '@/components/ui/Input';
 import Label from '@/components/ui/Label';
 import Typography from '@/components/ui/Typography';
@@ -26,7 +25,7 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
   const [weight, setWeight] = useState('1');
   // Mặc định 'old' — SPX chỉ đọc sheet ĐẦU "Tạo đơn (địa chỉ cũ)"; để data ở sheet "mới" (sheet2) → SPX đọc sheet đầu trống → fail.
   const [addressMode, setAddressMode] = useState<SpxAddressMode>('old');
-  const [useAi, setUseAi] = useState(true);
+  const useAi = true; // luôn dùng AI tách địa chỉ (không cho tắt).
   const [busy, setBusy] = useState(false);
 
   const eligible = useMemo(() => orders.filter(isSpxShippable), [orders]);
@@ -151,35 +150,6 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
             borderClassName="border border-slate-200 dark:border-slate-600"
             roundedClassName="rounded-lg"
           />
-        </Box>
-
-        {/* Toggle dùng AI tách địa chỉ */}
-        <Box layoutClassName="flex items-center gap-3">
-          <Checkbox
-            label="Dùng Claude AI tách Tỉnh/Xã cho đơn rule-based bỏ sót (chậm hơn vài giây)"
-            checked={useAi}
-            onChange={(e) => setUseAi(e.target.checked)}
-            labelClassName="text-sm text-slate-700 dark:text-slate-200"
-          />
-        </Box>
-
-        {/* Cảnh báo giới hạn dữ liệu */}
-        <Box
-          layoutClassName="flex items-start gap-2 rounded-lg px-3 py-2.5"
-          borderClassName="border border-amber-200 dark:border-amber-900/50"
-          backgroundClassName="bg-amber-50/70 dark:bg-amber-900/15"
-        >
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-          <Typography as="p" size="xs" textClassName="text-amber-700 dark:text-amber-300">
-            {addressMode === 'old' ? (
-              <>Ghi vào sheet <b>"Tạo đơn (địa chỉ cũ)"</b> — 3 cấp <b>Tỉnh + Quận/Huyện + Xã/Phường</b> (hệ cũ, TP. HỒ CHÍ MINH).</>
-            ) : (
-              <>Ghi vào sheet <b>"Tạo đơn (địa chỉ mới)"</b> — 2 cấp <b>Tỉnh + Phường/Xã</b> (hệ mới 2025, Thành phố Hồ Chí Minh + Phường…).</>
-            )}{' '}
-            Số tiền (Giá tiền/Giá trị đơn/COD) đều = <b>phần thu hộ còn lại</b> (đã trừ cọc). Địa chỉ
-            <b> tự tách</b> (rule + Claude AI); đơn không tách được để trống — mở file <b>chọn dropdown</b>
-            cho tới khi ô xanh "Đủ điều kiện" rồi upload. Cân nặng áp chung — chỉnh trên SPX nếu cần.
-          </Typography>
         </Box>
 
         <Box layoutClassName="flex justify-end gap-2 pt-1">
