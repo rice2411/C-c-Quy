@@ -36,6 +36,7 @@ export const codRemaining = (o: Order): number =>
  */
 const buildRow = (
   o: Order,
+  seq: number,
   weightKg: number,
   resolved?: ResolvedAddress,
 ): (string | number)[] => {
@@ -47,10 +48,10 @@ const buildRow = (
   const addressCols = [resolved?.state ?? '', resolved?.city ?? ''];
 
   return [
-    o.orderNumber || o.id,          // Mã đơn hàng
+    seq,                            // Mã đơn hàng = SỐ nhóm bưu gửi (1,2,3…); 1 đơn = 1 bưu gửi
     o.customer.name || '',          // Tên người nhận
     String(o.customer.phone || ''), // Số điện thoại (giữ số 0 đầu)
-    ...addressCols,                 // Tỉnh + Xã
+    ...addressCols,                 // Tỉnh + Quận/Huyện
     detailAddress,                  // Địa chỉ chi tiết
     '',                             // Lưu ý về địa chỉ
     '',                             // Mã bưu chính
@@ -61,7 +62,7 @@ const buildRow = (
     '',                             // Chiều dài
     '',                             // Chiều rộng
     '',                             // Chiều cao
-    '',                             // Mã khách hàng
+    o.orderNumber || o.id,          // Mã khách hàng = mã tham chiếu đơn của shop
     getOrderTotal(o),               // Giá trị đơn hàng
     'N',                            // Giao hàng một phần
     'N',                            // Cho phép thử hàng
@@ -91,7 +92,7 @@ export const exportOrdersToSpx = async (
 ): Promise<number> => {
   const { weightKg = 1, resolved } = opts;
   const list = orders.slice(0, MAX_ROWS);
-  const rows = list.map((o, i) => buildRow(o, weightKg, resolved?.[i]));
+  const rows = list.map((o, i) => buildRow(o, i + 1, weightKg, resolved?.[i]));
 
   // Điền vào sheet "Tạo đơn (địa chỉ mới)" (BE mode 'new' → sheet2).
   const res = await apiClient.post(
