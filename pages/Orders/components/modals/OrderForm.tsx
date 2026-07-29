@@ -17,7 +17,7 @@ import { getNextOrderNumber } from '@/services/orderService';
 import { fetchCommissionGroups } from '@/services/commissionGroupService';
 import { calcItemCommission } from '@/types/commissionGroup';
 import { getUserByUid } from '@/services/userService';
-import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product, SurchargeLine, sizeCount } from '@/types/index';
+import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product, SurchargeLine, DiscountLine, sizeCount } from '@/types/index';
 import { resolveTierPrice } from '@/types/product';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
@@ -35,6 +35,7 @@ import RefundConfirmModal, { type RefundConfirmResult, type RefundLine } from '@
 import OrderFormCustomerSection from '@/pages/Orders/components/OrderFormCustomerSection';
 import OrderFormItemsSection from '@/pages/Orders/components/OrderFormItemsSection';
 import OrderFormDecorationSection from '@/pages/Orders/components/OrderFormDecorationSection';
+import OrderFormDiscountSection from '@/pages/Orders/components/OrderFormDiscountSection';
 import OrderFormStatusSection from '@/pages/Orders/components/OrderFormStatusSection';
 import { pushRecentProductId } from '@/utils/product/recentProducts';
 
@@ -118,6 +119,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   );
   const surchargeAmount = effectiveSurcharges.reduce((s, x) => s + (Number(x.amount) || 0), 0);
   const surchargeTag = surcharges[0]?.tag; // legacy (dòng đầu) cho preview khuyến mãi
+
+  // Giảm giá TAY nhiều dòng (ghi chú + số tiền) — trừ vào total sau khuyến mãi.
+  const [discounts, setDiscounts] = useState<DiscountLine[]>([]);
+  const manualDiscount = discounts.reduce((s, d) => s + (Number(d.amount) || 0), 0);
 
   // Tag phụ thu động (Cài đặt đơn hàng) — chỉ hiện active, theo sortOrder.
   const { surchargeTags: allSurchargeTags } = useSurchargeTags();
@@ -210,6 +215,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
             ? [{ tag: initialData.surchargeTag, amount: initialData.surchargeAmount }]
             : [],
       );
+      setDiscounts(initialData.discounts && initialData.discounts.length > 0 ? initialData.discounts : []);
       // Điền lại mã + chiến dịch đã áp để sửa đơn không mất khuyến mãi.
       setPromoCode(initialData.appliedPromotions?.find((p) => p.code)?.code ?? '');
       setSelectedPromoIds((initialData.appliedPromotions ?? []).map((p) => p.promotionId));
@@ -279,6 +285,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       loadedSnapRef.current = new Map();
       setIsTest(false);
       setSurcharges([]);
+      setDiscounts([]);
       setPromoCode('');
       setPromoPreview(null);
       setSelectedPromoIds([]);
@@ -459,7 +466,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
     items.reduce((sum, item) => sum + Number(item.unitPrice) * Number(item.quantity), 0) +
     Number(surchargeAmount || 0);
   const discountAmount = promoPreview?.discountAmount ?? 0;
-  const total = Math.max(0, subtotal + Number(shippingCost) - discountAmount);
+  // Total = subtotal + ship − giảm KM − giảm giá TAY (khớp BE order_create/update).
+  const total = Math.max(0, subtotal + Number(shippingCost) - discountAmount - manualDiscount);
 
   // Giữ mã mới nhất để effect tự-áp dùng mà không phụ thuộc vào từng phím gõ.
   const promoCodeRef = useRef(promoCode);
@@ -635,6 +643,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         surchargeAmount: Number(surchargeAmount || 0),
         // Nguồn chuẩn phụ thu nhiều dòng (BE tự cộng tổng + lấy tag dòng đầu). Bỏ dòng amount<=0.
         surcharges: effectiveSurcharges.filter((s) => Number(s.amount) > 0),
+        // Giảm giá tay: BE tự cộng tổng + trừ vào total. Bỏ dòng amount<=0.
+        discounts: discounts.filter((d) => Number(d.amount) > 0),
+        manualDiscountAmount: Number(manualDiscount || 0),
         shippingCost: Number(shippingCost),
         shipInfo: shipInfo ?? undefined,
         subtotal: subtotal,
@@ -940,6 +951,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               items={items.map((i) => ({ name: i.productName || 'Sản phẩm', quantity: Number(i.quantity) }))}
               onChange={setSurcharges}
             />
+
+            <Box borderClassName="border-t border-slate-100 dark:border-slate-700" />
+
+            <OrderFormDiscountSection discounts={discounts} onChange={setDiscounts} />
 
             <Box borderClassName="border-t border-slate-100 dark:border-slate-700" />
 

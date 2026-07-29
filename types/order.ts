@@ -44,6 +44,12 @@ export interface SurchargeLine {
   perUnit?: number;
 }
 
+/** 1 dòng giảm giá TAY: ghi chú tự do + số tiền giảm (VND). Trừ vào total sau khuyến mãi. */
+export interface DiscountLine {
+  note?: string;
+  amount: number; // VND
+}
+
 /**
  * Nhãn phụ thu cho đơn — nay là tag ĐỘNG quản lý trong Cài đặt đơn hàng.
  * Đơn chỉ lưu `key` (string). Định nghĩa + helper ở `@/types/surchargeTag`.
@@ -136,6 +142,10 @@ export interface Order {
   subtotal?: number;
   /** Tổng tiền đã giảm bởi khuyến mãi. */
   discountAmount?: number;
+  /** Giảm giá TAY nhiều dòng {note, amount} — trừ vào total sau khuyến mãi. */
+  discounts?: DiscountLine[];
+  /** TỔNG giảm giá tay (VND) = sum(discounts.amount). */
+  manualDiscountAmount?: number;
   /** Các khuyến mãi đã áp vào đơn. */
   appliedPromotions?: AppliedPromotion[];
   /** Quà tặng (Mua X tặng Y) — giá 0. */

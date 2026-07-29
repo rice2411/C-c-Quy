@@ -1090,6 +1090,17 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                          <Typography as="span" size="sm" layoutClassName="shrink-0 font-medium" textClassName="text-emerald-600 dark:text-emerald-400">−{formatVND(currentOrder.discountAmount)}</Typography>
                        </Box>
                      ) : null}
+                     {currentOrder.manualDiscountAmount && currentOrder.manualDiscountAmount > 0 ? (
+                       <Box layoutClassName="flex items-start justify-between gap-2">
+                         <Box layoutClassName="min-w-0">
+                           <Typography as="span" size="sm" layoutClassName="font-medium" textClassName="text-rose-600 dark:text-rose-400">Giảm giá</Typography>
+                           {(currentOrder.discounts ?? []).filter((d) => Number(d.amount) > 0).map((d, idx) => (
+                             <Typography key={idx} as="p" size="xs" textClassName="text-slate-500 dark:text-slate-400">• {d.note?.trim() || 'Giảm giá'} · −{formatVND(Number(d.amount))}</Typography>
+                           ))}
+                         </Box>
+                         <Typography as="span" size="sm" layoutClassName="shrink-0 font-medium" textClassName="text-rose-600 dark:text-rose-400">−{formatVND(currentOrder.manualDiscountAmount)}</Typography>
+                       </Box>
+                     ) : null}
                      <Box layoutClassName="flex justify-between items-center pt-2" borderClassName="border-t border-slate-50 dark:border-slate-700">
                        <Typography as="span" size="inherit" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{t('detail.total')}</Typography>
                        <Typography as="span" size="lg" layoutClassName="font-bold" textClassName="text-primary-600 dark:text-primary-400">{formatVND(finalTotal)}</Typography>

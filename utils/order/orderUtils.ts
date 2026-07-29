@@ -68,8 +68,11 @@ export const getOrderTotal = (order: Order): number => {
     order.decorations || [],
     order.surchargeAmount || 0,
   );
-  // Thiếu order.total → tự tính net = gộp − GIẢM GIÁ (nếu có), tránh doanh thu bị thổi phồng.
-  return Math.max(0, gross - Number(order.discountAmount || 0));
+  // Thiếu order.total → tự tính net = gộp − GIẢM GIÁ KM − GIẢM GIÁ TAY, tránh thổi phồng doanh thu.
+  return Math.max(
+    0,
+    gross - Number(order.discountAmount || 0) - Number(order.manualDiscountAmount || 0),
+  );
 };
 
 /** Thông tin cọc để hiển thị (list + card chia sẻ + chi tiết). */
