@@ -137,7 +137,7 @@ export const exportOrdersToSpx = async (
   orders: Order[],
   opts: { weightKg?: number; addressMode?: SpxAddressMode; resolved?: ResolvedAddress[] } = {},
 ): Promise<number> => {
-  const { weightKg = 1, addressMode = 'new', resolved } = opts;
+  const { weightKg = 1, addressMode = 'old', resolved } = opts;
   const list = orders.slice(0, MAX_ROWS);
   const rows = list.map((o, i) => buildRow(o, i + 1, weightKg, addressMode, resolved?.[i]));
 
