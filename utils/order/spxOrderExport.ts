@@ -92,13 +92,14 @@ const buildRow = (
     ];
   }
 
-  // 2 cấp — khớp cột sheet "Tạo đơn (địa chỉ mới)" (A..AC, 29 cột), E = Quận/Huyện.
+  // 2 cấp — sheet "Tạo đơn (địa chỉ mới)" (A..AC, 29 cột). Hệ MỚI: D=Tỉnh, E=Phường/Xã (KHÔNG Quận).
+  const province = resolved?.province ?? '';
   return [
     seq,            // A Mã đơn (số nhóm bưu gửi)
     name,           // B Tên
     phone,          // C SĐT
-    st,             // D Tỉnh
-    city,           // E Quận/Huyện (ô địa chỉ 2 của sheet mới)
+    province,       // D Tỉnh (hệ mới, vd "Thành phố Hồ Chí Minh")
+    ward,           // E Phường/Xã (hệ mới, vd "Phường An Đông")
     detailAddress,  // F Địa chỉ chi tiết
     '',             // G Lưu ý địa chỉ
     '',             // H Mã bưu chính

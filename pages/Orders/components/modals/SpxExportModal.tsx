@@ -4,6 +4,7 @@ import { AlertTriangle, PackageCheck } from 'lucide-react';
 import { Order } from '@/types';
 import { exportOrdersToSpx, isSpxShippable, codRemaining, ResolvedAddress, SpxAddressMode } from '@/utils/order/spxOrderExport';
 import { resolveSpxOldAddresses } from '@/services/orderService';
+import { resolveSpxAddresses } from '@/utils/order/spxAddressMatch';
 import { getOrderTotal } from '@/utils/order/orderUtils';
 import { formatVND } from '@/utils/format/currencyUtil';
 import BaseModal from '@/components/BaseModal';
@@ -42,24 +43,27 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
     setBusy(true);
     const loadingId = toast.loading(useAi ? 'Đang tách địa chỉ (rule + AI)…' : 'Đang tách địa chỉ…');
     try {
-      const addrs = eligible.map((o) =>
-        [o.customer.address, o.customer.city].filter(Boolean).join(', '),
-      );
-      // Giải địa chỉ hệ CŨ ở BE (danh mục DB + AI) → có đủ Tỉnh/Quận/Xã cho cả 2 layout.
-      const old = await resolveSpxOldAddresses(addrs, useAi);
-      const resolved: ResolvedAddress[] = old.map((r) => ({
-        state: r.state,
-        city: r.city,
-        ward: r.ward,
-      }));
-      // Đủ điều kiện: 'old' cần Tỉnh+Quận+Xã; 'new' cần Tỉnh+Quận/Huyện.
-      const filled =
-        addressMode === 'old'
-          ? old.filter((r) => r.state && r.city && r.ward).length
-          : old.filter((r) => r.state && r.city).length;
+      let resolved: ResolvedAddress[];
+      let filled: number;
+      let label: string;
+      if (addressMode === 'old') {
+        // Hệ CŨ 3 cấp (BE, danh mục spx_*_old + AI): Tỉnh + Quận/Huyện + Xã/Phường.
+        const addrs = eligible.map((o) =>
+          [o.customer.address, o.customer.city].filter(Boolean).join(', '),
+        );
+        const old = await resolveSpxOldAddresses(addrs, useAi);
+        resolved = old.map((r) => ({ state: r.state, city: r.city, ward: r.ward }));
+        filled = old.filter((r) => r.state && r.city && r.ward).length;
+        label = 'Tỉnh+Quận+Xã';
+      } else {
+        // Hệ MỚI 2 cấp (danh mục 2025 + AI): Tỉnh + Phường/Xã (KHÔNG Quận).
+        const nw = await resolveSpxAddresses(eligible, useAi);
+        resolved = nw.map((r) => ({ province: r.province, ward: r.ward }));
+        filled = nw.filter((r) => r.province && r.ward).length;
+        label = 'Tỉnh+Phường/Xã';
+      }
       if (loadingId) toast.dismiss(loadingId);
       const n = await exportOrdersToSpx(eligible, { weightKg: w, addressMode, resolved });
-      const label = addressMode === 'old' ? 'Tỉnh+Quận+Xã' : 'Tỉnh+Quận/Huyện';
       toast.success(`Đã xuất ${n} đơn · điền đủ ${label} ${filled}/${n}`);
       onClose();
     } catch (err) {
@@ -168,9 +172,9 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <Typography as="p" size="xs" textClassName="text-amber-700 dark:text-amber-300">
             {addressMode === 'old' ? (
-              <>Ghi vào sheet <b>"Tạo đơn (địa chỉ cũ)"</b> — 3 cấp <b>Tỉnh + Quận/Huyện + Xã/Phường</b> (TP. HỒ CHÍ MINH).</>
+              <>Ghi vào sheet <b>"Tạo đơn (địa chỉ cũ)"</b> — 3 cấp <b>Tỉnh + Quận/Huyện + Xã/Phường</b> (hệ cũ, TP. HỒ CHÍ MINH).</>
             ) : (
-              <>Ghi vào sheet <b>"Tạo đơn (địa chỉ mới)"</b> — 2 cấp <b>Tỉnh + Quận/Huyện</b> (TP. HỒ CHÍ MINH).</>
+              <>Ghi vào sheet <b>"Tạo đơn (địa chỉ mới)"</b> — 2 cấp <b>Tỉnh + Phường/Xã</b> (hệ mới 2025, Thành phố Hồ Chí Minh + Phường…).</>
             )}{' '}
             Số tiền (Giá tiền/Giá trị đơn/COD) đều = <b>phần thu hộ còn lại</b> (đã trừ cọc). Địa chỉ
             <b> tự tách</b> (rule + Claude AI); đơn không tách được để trống — mở file <b>chọn dropdown</b>
