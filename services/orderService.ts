@@ -220,9 +220,12 @@ export interface TrackingRow {
 export interface TrackingSyncResult {
   matched: { tracking: string; link?: string; status?: string; orderNumber: string; orderCustomer: string; receiverName?: string; hadTracking: boolean }[];
   unmatched: { tracking: string; receiverName?: string; phone?: string }[];
+  /** Đơn khớp nhưng ĐÃ CÓ mã vận đơn → bỏ qua, không ghi đè. */
+  skipped: { tracking: string; orderNumber: string; orderCustomer: string; receiverName?: string; existingTracking: string }[];
   applied: boolean;
   matchedCount: number;
   unmatchedCount: number;
+  skippedCount: number;
 }
 
 /** Đồng bộ vận đơn từ file 3PL. apply=false → preview match; true → ghi vào đơn. */

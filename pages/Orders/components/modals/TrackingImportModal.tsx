@@ -242,6 +242,9 @@ const TrackingImportModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) =>
               <Typography as="span" size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold" textClassName="text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 className="h-4 w-4" /> Khớp {trackPreview.matchedCount} đơn
               </Typography>
+              <Typography as="span" size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold" textClassName="text-amber-600 dark:text-amber-400">
+                <Copy className="h-4 w-4" /> Đã có vận đơn {trackPreview.skippedCount}
+              </Typography>
               <Typography as="span" size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold" textClassName="text-rose-500 dark:text-rose-400">
                 <XCircle className="h-4 w-4" /> Không khớp {trackPreview.unmatchedCount}
               </Typography>
@@ -258,13 +261,30 @@ const TrackingImportModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) =>
                   <Box layoutClassName="min-w-0 flex-1">
                     <Typography as="p" size="sm" layoutClassName="truncate font-semibold" textClassName="text-slate-700 dark:text-slate-200">
                       {m.orderNumber} · {m.orderCustomer}
-                      {m.hadTracking ? ' (ghi đè)' : ''}
                     </Typography>
                     <Typography as="span" size="xs" variant="muted">
                       {m.tracking}{m.status ? ` · ${m.status}` : ''}
                     </Typography>
                   </Box>
                   <Truck className="h-4 w-4 shrink-0 text-emerald-500" />
+                </Box>
+              ))}
+              {trackPreview.skipped.map((s, i) => (
+                <Box
+                  key={`s-${i}`}
+                  layoutClassName="flex items-center justify-between gap-3 rounded-lg px-3 py-2"
+                  borderClassName="border border-amber-100 dark:border-amber-900/40"
+                  backgroundClassName="bg-amber-50/60 dark:bg-amber-900/15"
+                >
+                  <Box layoutClassName="min-w-0 flex-1">
+                    <Typography as="p" size="sm" layoutClassName="truncate" textClassName="text-amber-700 dark:text-amber-300">
+                      {s.orderNumber} · {s.orderCustomer}
+                    </Typography>
+                    <Typography as="span" size="xs" variant="muted">
+                      đã có {s.existingTracking} · giữ nguyên (bỏ qua {s.tracking})
+                    </Typography>
+                  </Box>
+                  <Copy className="h-4 w-4 shrink-0 text-amber-400" />
                 </Box>
               ))}
               {trackPreview.unmatched.map((u, i) => (
