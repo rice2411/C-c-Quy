@@ -171,13 +171,34 @@ const StockReceiptsPage: React.FC = () => {
           onProgress: (stage) => setProgressStage(stage),
         });
         setOcrText(result.ocrText);
-        setDraftStructured(autoMatchMaterials(result.structured, materialRows));
+        // Tự khớp NCC ≥70% (kể cả tên hơi khác) → chọn NCC có sẵn thay vì tạo mới.
+        const supMatch = bestMaterialMatch(result.structured.supplierName ?? '', supplierRows, 0.7);
+        setDraftStructured(
+          autoMatchMaterials(
+            { ...result.structured, supplierName: supMatch ? supMatch.item.name : result.structured.supplierName },
+            materialRows,
+          ),
+        );
         setValidation(result.validation);
-        // Pre-fill supplier contact form từ SĐT / địa chỉ Gemini trích được.
-        setSupplierContact({
-          phone: result.structured.supplierPhone ?? null,
-          address: result.structured.supplierAddress ?? null,
-        });
+        // NCC khớp sẵn → chọn luôn + đổ contact từ NCC cũ; else pre-fill từ SĐT/địa chỉ AI trích.
+        if (supMatch) {
+          setSelectedSupplierId(supMatch.item.id);
+          setSupplierContact({
+            phone: supMatch.item.phone ?? result.structured.supplierPhone ?? null,
+            address: supMatch.item.address ?? result.structured.supplierAddress ?? null,
+            contactPerson: supMatch.item.contactPerson ?? null,
+            email: supMatch.item.email ?? null,
+            taxCode: supMatch.item.taxCode ?? null,
+            category: supMatch.item.category ?? null,
+            channel: supMatch.item.channel,
+            notes: supMatch.item.notes ?? null,
+          });
+        } else {
+          setSupplierContact({
+            phone: result.structured.supplierPhone ?? null,
+            address: result.structured.supplierAddress ?? null,
+          });
+        }
         toast.success(t('billImport.done'));
       } catch (e) {
         console.error(e);
@@ -188,7 +209,7 @@ const StockReceiptsPage: React.FC = () => {
         setProgressStage(null);
       }
     },
-    [resetOutput, t, materialRows],
+    [resetOutput, t, materialRows, supplierRows],
   );
 
   const handleFileSelected = useCallback(
