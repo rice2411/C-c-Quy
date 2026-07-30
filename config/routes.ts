@@ -68,6 +68,13 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
+    path: "/analytics",
+    labelKey: "nav.analytics",
+    icon: TrendingUp,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
     path: "/finance/overview",
     labelKey: "nav.txOverview",
     icon: LayoutDashboard,

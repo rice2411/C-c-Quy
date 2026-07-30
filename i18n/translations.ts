@@ -10,6 +10,7 @@ export const translations = {
     nav: {
       dashboard: "Dashboard",
       orders: "Orders",
+      analytics: "Analytics",
       inventory: "Product list",
       billImport: "Stock-in",
       stockHub: "Purchasing",
@@ -758,6 +759,7 @@ export const translations = {
     nav: {
       dashboard: "Tổng quan",
       orders: "Đơn hàng",
+      analytics: "Phân tích",
       inventory: "Danh sách sản phẩm",
       billImport: "Nhập kho",
       stockHub: "Nhập hàng",
