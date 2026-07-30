@@ -94,7 +94,9 @@ const ContactField: React.FC<{
   onChange: (v: string) => void;
   placeholder?: string;
   layoutClassName?: string;
-}> = ({ label, value, onChange, placeholder, layoutClassName }) => (
+  /** Ô số: căn phải + bàn phím số. */
+  numeric?: boolean;
+}> = ({ label, value, onChange, placeholder, layoutClassName, numeric }) => (
   <Box layoutClassName={layoutClassName ?? 'space-y-1'}>
     <Typography size="xs" variant="muted" layoutClassName="font-medium uppercase tracking-wide">
       {label}
@@ -103,6 +105,8 @@ const ContactField: React.FC<{
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
+      inputMode={numeric ? 'decimal' : undefined}
+      textClassName={numeric ? 'text-right' : undefined}
     />
   </Box>
 );
@@ -696,25 +700,28 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                         label={t('billImport.colQty')}
                         value={String(it.quantity ?? '')}
                         onChange={(v) => updateDraftLine(idx, { quantity: parseNonNegative(v) })}
-                        placeholder="SL"
+                        placeholder="0"
+                        numeric
                       />
                       <ContactField
                         label={t('billImport.colUnit')}
                         value={it.unit ?? ''}
                         onChange={(v) => updateDraftLine(idx, { unit: v })}
-                        placeholder="Đơn vị"
+                        placeholder="đv (kg, gói…)"
                       />
                       <ContactField
-                        label={t('billImport.colPrice')}
+                        label={`${t('billImport.colPrice')} (đ)`}
                         value={String(it.unitPrice ?? '')}
                         onChange={(v) => updateDraftLine(idx, { unitPrice: parseNonNegative(v) })}
-                        placeholder="Đơn giá"
+                        placeholder="0"
+                        numeric
                       />
                       <ContactField
-                        label={t('billImport.colLineTotal')}
+                        label={`${t('billImport.colLineTotal')} (đ)`}
                         value={String(it.lineTotal ?? '')}
                         onChange={(v) => updateDraftLine(idx, { lineTotal: parseNonNegative(v) })}
-                        placeholder="Thành tiền"
+                        placeholder="0"
+                        numeric
                       />
                     </Box>
                     <Box layoutClassName="space-y-1">
@@ -731,14 +738,14 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableHeaderCell>#</TableHeaderCell>
-                    <TableHeaderCell>{t('billImport.colName')}</TableHeaderCell>
-                    <TableHeaderCell>{t('billImport.colQty')}</TableHeaderCell>
-                    <TableHeaderCell>{t('billImport.colUnit')}</TableHeaderCell>
-                    <TableHeaderCell>{t('billImport.colPrice')}</TableHeaderCell>
-                    <TableHeaderCell>{t('billImport.colLineTotal')}</TableHeaderCell>
-                    <TableHeaderCell>Loại</TableHeaderCell>
-                    <TableHeaderCell> </TableHeaderCell>
+                    <TableHeaderCell layoutClassName="w-8">#</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="min-w-[16rem]">{t('billImport.colName')}</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="w-16 text-right">{t('billImport.colQty')}</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="w-20">{t('billImport.colUnit')}</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="w-28 text-right">{t('billImport.colPrice')} (đ)</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="w-28 text-right">{t('billImport.colLineTotal')} (đ)</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="w-40">Loại</TableHeaderCell>
+                    <TableHeaderCell layoutClassName="w-10"> </TableHeaderCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -780,14 +787,16 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                                 quantity: parseNonNegative(e.target.value),
                               })
                             }
-                            placeholder="SL"
+                            placeholder="0"
+                            inputMode="decimal"
+                            textClassName="text-right"
                           />
                         </TableCell>
                         <TableCell>
                           <Input
                             value={it.unit ?? ''}
                             onChange={(e) => updateDraftLine(idx, { unit: e.target.value })}
-                            placeholder="Đơn vị"
+                            placeholder="đv"
                           />
                         </TableCell>
                         <TableCell>
@@ -798,7 +807,9 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                                 unitPrice: parseNonNegative(e.target.value),
                               })
                             }
-                            placeholder="Đơn giá"
+                            placeholder="0"
+                            inputMode="decimal"
+                            textClassName="text-right"
                           />
                         </TableCell>
                         <TableCell>
@@ -809,7 +820,9 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
                                 lineTotal: parseNonNegative(e.target.value),
                               })
                             }
-                            placeholder="Thành tiền"
+                            placeholder="0"
+                            inputMode="decimal"
+                            textClassName="text-right font-medium"
                           />
                         </TableCell>
                         <TableCell layoutClassName="min-w-[9rem]">
