@@ -248,46 +248,34 @@ const AnalyticsPage: React.FC = () => {
             </Card>
           </Box>
 
-          {/* Thời gian giao đơn tỉnh: SPX giao thực vs ngày cần giao */}
+          {/* Thời gian giao đơn tỉnh: SPX nhận hàng → giao xong mất bao lâu */}
           <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
             <Box layoutClassName="flex flex-wrap items-center justify-between gap-2">
               <Typography size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold">
-                <Truck className="h-4 w-4 text-cyan-500" /> Thời gian giao đơn tỉnh (SPX thực vs ngày cần giao)
+                <Truck className="h-4 w-4 text-cyan-500" /> Thời gian giao đơn tỉnh (SPX nhận → giao xong)
               </Typography>
-              {data.shipTimeliness.count > 0 ? (
+              {data.shipDuration.count > 0 ? (
                 <Typography as="span" size="xs" variant="muted">
-                  {data.shipTimeliness.count} đơn có mốc giao · TB {data.shipTimeliness.avgDelta > 0 ? `trễ ${data.shipTimeliness.avgDelta}` : data.shipTimeliness.avgDelta < 0 ? `sớm ${Math.abs(data.shipTimeliness.avgDelta)}` : '≈ đúng 0'} ngày
+                  {data.shipDuration.count} đơn · TB {data.shipDuration.avgDays} ngày · nhanh {data.shipDuration.minDays} · lâu {data.shipDuration.maxDays}
                 </Typography>
               ) : null}
             </Box>
-            {data.shipTimeliness.count === 0 ? (
+            {data.shipDuration.count === 0 ? (
               <Typography as="p" size="xs" variant="muted">
-                Chưa có mốc "đã giao" nào. Vào <b>Đơn hàng → Làm mới vận đơn</b> để đồng bộ mốc giao SPX, rồi mở lại trang này.
+                Chưa có đơn tỉnh nào đủ mốc nhận + giao. Vào <b>Đơn hàng → Làm mới vận đơn</b> để đồng bộ mốc SPX, rồi mở lại trang này.
               </Typography>
             ) : (
-              <>
-                <Box layoutClassName="flex flex-wrap gap-2">
-                  <Typography as="span" size="xs" layoutClassName="rounded-full px-2 py-0.5 font-medium" backgroundClassName="bg-emerald-50 dark:bg-emerald-950/40" textClassName="text-emerald-700 dark:text-emerald-300">Giao sớm: {data.shipTimeliness.early}</Typography>
-                  <Typography as="span" size="xs" layoutClassName="rounded-full px-2 py-0.5 font-medium" backgroundClassName="bg-sky-50 dark:bg-sky-950/40" textClassName="text-sky-700 dark:text-sky-300">Đúng hẹn: {data.shipTimeliness.onTime}</Typography>
-                  <Typography as="span" size="xs" layoutClassName="rounded-full px-2 py-0.5 font-medium" backgroundClassName="bg-rose-50 dark:bg-rose-950/40" textClassName="text-rose-700 dark:text-rose-300">Trễ hẹn: {data.shipTimeliness.late} (max {data.shipTimeliness.maxLate}n)</Typography>
-                </Box>
-                <Box layoutClassName="max-h-64 space-y-1 overflow-y-auto">
-                  {data.shipTimeliness.orders.map((o) => {
-                    const late = o.delta > 0;
-                    const early = o.delta < 0;
-                    const label = late ? `trễ ${o.delta} ngày` : early ? `sớm ${Math.abs(o.delta)} ngày` : 'đúng hẹn';
-                    return (
-                      <Box key={o.orderNumber} layoutClassName="flex items-center justify-between gap-3 rounded-md px-2.5 py-1.5" backgroundClassName="bg-slate-50 dark:bg-slate-800/40">
-                        <Box layoutClassName="min-w-0 flex-1">
-                          <Typography as="p" size="sm" layoutClassName="truncate font-medium" textClassName="text-slate-800 dark:text-slate-100">{o.orderNumber}</Typography>
-                          <Typography as="span" size="xs" variant="muted">Cần: {o.needDate} · Giao: {o.deliveredDate}</Typography>
-                        </Box>
-                        <Typography as="span" size="sm" layoutClassName="shrink-0 font-semibold" textClassName={late ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}>{label}</Typography>
-                      </Box>
-                    );
-                  })}
-                </Box>
-              </>
+              <Box layoutClassName="max-h-64 space-y-1 overflow-y-auto">
+                {data.shipDuration.orders.map((o) => (
+                  <Box key={o.orderNumber} layoutClassName="flex items-center justify-between gap-3 rounded-md px-2.5 py-1.5" backgroundClassName="bg-slate-50 dark:bg-slate-800/40">
+                    <Box layoutClassName="min-w-0 flex-1">
+                      <Typography as="p" size="sm" layoutClassName="truncate font-medium" textClassName="text-slate-800 dark:text-slate-100">{o.orderNumber}</Typography>
+                      <Typography as="span" size="xs" variant="muted">Nhận: {o.shippedDate} · Giao: {o.deliveredDate}</Typography>
+                    </Box>
+                    <Typography as="span" size="sm" layoutClassName="shrink-0 font-semibold" textClassName={o.days >= 5 ? 'text-rose-600 dark:text-rose-400' : o.days >= 3 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}>{o.days} ngày</Typography>
+                  </Box>
+                ))}
+              </Box>
             )}
           </Card>
 
