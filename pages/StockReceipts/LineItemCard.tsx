@@ -8,12 +8,21 @@ import type { BillLineItem, ImportedMaterialSummary } from '@/types/billReceipt'
 import LineTypePicker from '@/pages/StockReceipts/LineTypePicker';
 import MaterialLinePicker from '@/pages/StockReceipts/MaterialLinePicker';
 
+const moneyFmt = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 });
+
 const parseNonNegative = (v: string): number | null => {
   if (v === '') return null;
   const n = Number(v);
   if (Number.isNaN(n)) return null;
   return Math.max(0, n);
 };
+
+/** Thành tiền = SL × Đơn giá khi có đủ 2; thiếu 1 trong 2 → giữ giá trị cũ (vd từ OCR). */
+const recomputeTotal = (
+  qty: number | null,
+  price: number | null,
+  prev: number | null,
+): number | null => (qty != null && price != null ? Math.round(qty * price) : prev);
 
 const Field: React.FC<{
   label: string;
@@ -93,7 +102,10 @@ const LineItemCard: React.FC<LineItemCardProps> = ({ idx, line, materials, onCha
         <Field label="Số lượng">
           <Input
             value={String(line.quantity ?? '')}
-            onChange={(e) => onChange({ quantity: parseNonNegative(e.target.value) })}
+            onChange={(e) => {
+              const q = parseNonNegative(e.target.value);
+              onChange({ quantity: q, lineTotal: recomputeTotal(q, line.unitPrice ?? null, line.lineTotal ?? null) });
+            }}
             placeholder="0"
             inputMode="decimal"
             textClassName="text-right"
@@ -109,7 +121,10 @@ const LineItemCard: React.FC<LineItemCardProps> = ({ idx, line, materials, onCha
         <Field label="Đơn giá (đ)">
           <Input
             value={String(line.unitPrice ?? '')}
-            onChange={(e) => onChange({ unitPrice: parseNonNegative(e.target.value) })}
+            onChange={(e) => {
+              const p = parseNonNegative(e.target.value);
+              onChange({ unitPrice: p, lineTotal: recomputeTotal(line.quantity ?? null, p, line.lineTotal ?? null) });
+            }}
             placeholder="0"
             inputMode="decimal"
             textClassName="text-right"
@@ -117,11 +132,12 @@ const LineItemCard: React.FC<LineItemCardProps> = ({ idx, line, materials, onCha
         </Field>
         <Field label="Thành tiền (đ)">
           <Input
-            value={String(line.lineTotal ?? '')}
-            onChange={(e) => onChange({ lineTotal: parseNonNegative(e.target.value) })}
-            placeholder="0"
-            inputMode="decimal"
-            textClassName="text-right font-medium"
+            value={line.lineTotal != null ? moneyFmt.format(line.lineTotal) : ''}
+            readOnly
+            placeholder="= SL × đơn giá"
+            textClassName="text-right font-semibold"
+            backgroundClassName="bg-slate-100 dark:bg-slate-800"
+            title="Tự tính = Số lượng × Đơn giá"
           />
         </Field>
       </Box>
