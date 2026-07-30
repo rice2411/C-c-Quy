@@ -18,6 +18,15 @@ export interface AnalyticsOverview {
   statusBreakdown: { status: string; orders: number }[];
   paymentBreakdown: { status: string; orders: number }[];
   topProducts: { name: string; qty: number; revenue: number }[];
+  shipTimeliness: {
+    count: number;
+    avgDelta: number;
+    early: number;
+    onTime: number;
+    late: number;
+    maxLate: number;
+    orders: { orderNumber: string; needDate: string; deliveredDate: string; delta: number }[];
+  };
   generatedAt: string;
 }
 
@@ -57,6 +66,20 @@ export const fetchAnalyticsOverview = async (): Promise<AnalyticsOverview> => {
     statusBreakdown: arr(d.statusBreakdown).map((x) => ({ status: String(x.status ?? ''), orders: num(x.orders) })),
     paymentBreakdown: arr(d.paymentBreakdown).map((x) => ({ status: String(x.status ?? ''), orders: num(x.orders) })),
     topProducts: arr(d.topProducts).map((x) => ({ name: String(x.name ?? ''), qty: num(x.qty), revenue: num(x.revenue) })),
+    shipTimeliness: {
+      count: num(d.shipTimeliness?.count),
+      avgDelta: num(d.shipTimeliness?.avgDelta),
+      early: num(d.shipTimeliness?.early),
+      onTime: num(d.shipTimeliness?.onTime),
+      late: num(d.shipTimeliness?.late),
+      maxLate: num(d.shipTimeliness?.maxLate),
+      orders: arr(d.shipTimeliness?.orders).map((x) => ({
+        orderNumber: String(x.order_number ?? ''),
+        needDate: String(x.need_date ?? ''),
+        deliveredDate: String(x.delivered_date ?? ''),
+        delta: num(x.delta),
+      })),
+    },
     generatedAt: String(d.generatedAt ?? ''),
   };
 };
