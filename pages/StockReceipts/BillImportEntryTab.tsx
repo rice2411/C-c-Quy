@@ -12,7 +12,6 @@ import {
   Receipt,
   Store,
   Tag,
-  Trash2,
   Wallet,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -33,18 +32,9 @@ import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
-} from '@/components/ui/Table';
 import { PIPELINE_STAGES, type UiProgressStage } from '@/pages/StockReceipts/constants';
 import SupplierPicker from '@/pages/StockReceipts/SupplierPicker';
-import LineTypePicker from '@/pages/StockReceipts/LineTypePicker';
-import MaterialLinePicker from '@/pages/StockReceipts/MaterialLinePicker';
+import LineItemCard from '@/pages/StockReceipts/LineItemCard';
 import EmptyState from '@/components/ui/EmptyState';
 
 export interface BillImportEntryTabProps {
@@ -643,210 +633,25 @@ const BillImportEntryTab: React.FC<BillImportEntryTabProps> = ({
               {t('billImport.items')}
             </Typography>
 
-            {/* ===== MOBILE: card layout (mỗi line = 1 card với labels) ===== */}
-            <Box layoutClassName="space-y-3 md:hidden">
-              {draftStructured.lineItems.length === 0 ? (
-                <EmptyState
-                  icon={<FileText className="h-6 w-6" />}
-                  title={t('billImport.emptyLines')}
-                />
-              ) : (
-                draftStructured.lineItems.map((it, idx) => (
-                  <Box
-                    key={`m-${idx}`}
-                    layoutClassName="rounded-xl border p-3 space-y-2"
-                    borderClassName="border-slate-200 dark:border-slate-700"
-                    backgroundClassName="bg-slate-50/60 dark:bg-slate-900/40"
-                  >
-                    <Box layoutClassName="flex items-center justify-between">
-                      <Typography size="xs" variant="muted" layoutClassName="font-bold uppercase tracking-wider">
-                        #{idx + 1}
-                      </Typography>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => onRemoveLine(idx)}
-                        leftIcon={<Trash2 />}
-                        iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-                        sizeClassName="px-2 py-1 text-xs"
-                        layoutClassName="inline-flex items-center gap-1"
-                        textClassName="text-red-600 dark:text-red-400"
-                      >
-                        Xoá
-                      </Button>
-                    </Box>
-                    <Box layoutClassName="space-y-1">
-                      <Typography size="xs" variant="muted" layoutClassName="font-medium uppercase tracking-wide">
-                        {t('billImport.colName')}
-                      </Typography>
-                      {(it.itemType ?? 'material') === 'material' ? (
-                        <MaterialLinePicker
-                          value={it.name ?? ''}
-                          materials={materialList}
-                          unit={it.unit}
-                          unitPrice={it.unitPrice}
-                          onChange={(patch) => updateDraftLine(idx, patch)}
-                        />
-                      ) : (
-                        <Input
-                          value={it.name ?? ''}
-                          onChange={(e) => updateDraftLine(idx, { name: e.target.value })}
-                          placeholder="Tên khoản"
-                        />
-                      )}
-                    </Box>
-                    <Box layoutClassName="grid grid-cols-2 gap-2">
-                      <ContactField
-                        label={t('billImport.colQty')}
-                        value={String(it.quantity ?? '')}
-                        onChange={(v) => updateDraftLine(idx, { quantity: parseNonNegative(v) })}
-                        placeholder="0"
-                        numeric
-                      />
-                      <ContactField
-                        label={t('billImport.colUnit')}
-                        value={it.unit ?? ''}
-                        onChange={(v) => updateDraftLine(idx, { unit: v })}
-                        placeholder="đv (kg, gói…)"
-                      />
-                      <ContactField
-                        label={`${t('billImport.colPrice')} (đ)`}
-                        value={String(it.unitPrice ?? '')}
-                        onChange={(v) => updateDraftLine(idx, { unitPrice: parseNonNegative(v) })}
-                        placeholder="0"
-                        numeric
-                      />
-                      <ContactField
-                        label={`${t('billImport.colLineTotal')} (đ)`}
-                        value={String(it.lineTotal ?? '')}
-                        onChange={(v) => updateDraftLine(idx, { lineTotal: parseNonNegative(v) })}
-                        placeholder="0"
-                        numeric
-                      />
-                    </Box>
-                    <Box layoutClassName="space-y-1">
-                      <Typography as="span" size="xs" variant="muted" layoutClassName="font-medium uppercase tracking-wide">Phân loại</Typography>
-                      <LineTypePicker line={it} onChange={(patch) => updateDraftLine(idx, patch)} />
-                    </Box>
-                  </Box>
-                ))
-              )}
-            </Box>
-
-            {/* ===== TABLET/DESKTOP: table layout ===== */}
-            <Box layoutClassName="hidden md:block overflow-x-auto">
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableHeaderCell layoutClassName="w-8">#</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="min-w-[16rem]">{t('billImport.colName')}</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="w-16 text-right">{t('billImport.colQty')}</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="w-20">{t('billImport.colUnit')}</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="w-28 text-right">{t('billImport.colPrice')} (đ)</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="w-28 text-right">{t('billImport.colLineTotal')} (đ)</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="w-40">Loại</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="w-10"> </TableHeaderCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {draftStructured.lineItems.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8}>
-                        <EmptyState
-                          icon={<FileText className="h-6 w-6" />}
-                          title={t('billImport.emptyLines')}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    draftStructured.lineItems.map((it, idx) => (
-                      <TableRow key={`d-${idx}`}>
-                        <TableCell>{idx + 1}</TableCell>
-                        <TableCell>
-                          {(it.itemType ?? 'material') === 'material' ? (
-                            <MaterialLinePicker
-                              value={it.name}
-                              materials={materialList}
-                              unit={it.unit}
-                              unitPrice={it.unitPrice}
-                              onChange={(patch) => updateDraftLine(idx, patch)}
-                            />
-                          ) : (
-                            <Input
-                              value={it.name}
-                              onChange={(e) => updateDraftLine(idx, { name: e.target.value })}
-                              placeholder="Tên khoản"
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={String(it.quantity ?? '')}
-                            onChange={(e) =>
-                              updateDraftLine(idx, {
-                                quantity: parseNonNegative(e.target.value),
-                              })
-                            }
-                            placeholder="0"
-                            inputMode="decimal"
-                            textClassName="text-right"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={it.unit ?? ''}
-                            onChange={(e) => updateDraftLine(idx, { unit: e.target.value })}
-                            placeholder="đv"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={String(it.unitPrice ?? '')}
-                            onChange={(e) =>
-                              updateDraftLine(idx, {
-                                unitPrice: parseNonNegative(e.target.value),
-                              })
-                            }
-                            placeholder="0"
-                            inputMode="decimal"
-                            textClassName="text-right"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={String(it.lineTotal ?? '')}
-                            onChange={(e) =>
-                              updateDraftLine(idx, {
-                                lineTotal: parseNonNegative(e.target.value),
-                              })
-                            }
-                            placeholder="0"
-                            inputMode="decimal"
-                            textClassName="text-right font-medium"
-                          />
-                        </TableCell>
-                        <TableCell layoutClassName="min-w-[9rem]">
-                          <LineTypePicker line={it} onChange={(patch) => updateDraftLine(idx, patch)} />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => onRemoveLine(idx)}
-                            leftIcon={<Trash2 />}
-                            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-                            sizeClassName="px-2 py-1"
-                            layoutClassName="inline-flex items-center"
-                            textClassName="text-red-600 dark:text-red-400"
-                            aria-label="Xoá dòng"
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </Box>
+            {draftStructured.lineItems.length === 0 ? (
+              <EmptyState
+                icon={<FileText className="h-6 w-6" />}
+                title={t('billImport.emptyLines')}
+              />
+            ) : (
+              <Box layoutClassName="space-y-3">
+                {draftStructured.lineItems.map((it, idx) => (
+                  <LineItemCard
+                    key={idx}
+                    idx={idx}
+                    line={it}
+                    materials={materialList}
+                    onChange={(patch) => updateDraftLine(idx, patch)}
+                    onRemove={() => onRemoveLine(idx)}
+                  />
+                ))}
+              </Box>
+            )}
 
             <Box layoutClassName="flex justify-start">
               <Button
