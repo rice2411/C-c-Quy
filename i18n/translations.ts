@@ -499,6 +499,9 @@ export const translations = {
         previewError: "Could not scan transactions",
         applyError: "Matching failed",
       },
+      expenseSync: {
+        button: "Sync expenses",
+      },
       totalIn: "Total Received",
       totalOut: "Total Out",
       netAmount: "Net Amount",
@@ -1247,6 +1250,9 @@ export const translations = {
         skippedToast: "bỏ qua",
         previewError: "Không quét được giao dịch",
         applyError: "Khớp thất bại",
+      },
+      expenseSync: {
+        button: "Đồng bộ chi phí",
       },
       totalIn: "Tổng nhận",
       totalOut: "Tổng chi",

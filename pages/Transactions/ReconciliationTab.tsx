@@ -447,8 +447,9 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     refunds.forEach(r => { if (r.transactionId) s.add(r.transactionId); });
     return s;
   }, [refunds]);
+  // Chưa khớp = chưa gắn phiếu hoàn, chưa kết toán, chưa đánh "không tính chi phí".
   const outUnmatched = useMemo(
-    () => outTransactions.filter(tr => !refundLinkedTxIds.has(tr.id) && !tr.settledOut),
+    () => outTransactions.filter(tr => !refundLinkedTxIds.has(tr.id) && !tr.settledOut && !tr.costExcluded),
     [outTransactions, refundLinkedTxIds],
   );
 

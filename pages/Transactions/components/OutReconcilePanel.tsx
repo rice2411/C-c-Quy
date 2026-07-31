@@ -124,6 +124,26 @@ const OutRow: React.FC<OutRowProps> = ({
         </Box>
       );
     }
+    if (tr.costExcluded) {
+      return (
+        <Box layoutClassName="flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 dark:bg-slate-700">
+          <Wallet className="h-3.5 w-3.5 text-slate-500" />
+          <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-slate-600 dark:text-slate-300">
+            Không tính CP · {expenseCategoryLabel(tr.expenseCategory)}
+          </Typography>
+        </Box>
+      );
+    }
+    if (tr.expenseCategory && tr.expenseCategory.trim()) {
+      return (
+        <Box layoutClassName="flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 dark:bg-violet-900/20">
+          <Wallet className="h-3.5 w-3.5 text-violet-500" />
+          <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-violet-600 dark:text-violet-300">
+            Chi phí · {expenseCategoryLabel(tr.expenseCategory)}
+          </Typography>
+        </Box>
+      );
+    }
     return (
       <Badge size="sm" layoutClassName="gap-1 px-2 py-0.5 text-[10px]"
         borderClassName="border-amber-200 dark:border-amber-700"
@@ -538,8 +558,9 @@ const OutReconcilePanel: React.FC<OutReconcilePanelProps> = ({
     />
   );
 
+  // Đã xử lý = gắn phiếu hoàn / gắn chi phí tay / kết toán / đã đánh "không tính chi phí".
   const isMatched = (tr: Transaction) =>
-    refundByTxId.has(tr.id) || expenseByTxId.has(tr.id) || !!tr.settledOut;
+    refundByTxId.has(tr.id) || expenseByTxId.has(tr.id) || !!tr.settledOut || !!tr.costExcluded;
   const unmatched = transactions.filter(tr => !isMatched(tr));
   const matched = transactions.filter(isMatched);
 
