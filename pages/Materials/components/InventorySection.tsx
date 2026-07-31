@@ -10,7 +10,8 @@ import Typography from '@/components/ui/Typography';
 import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
 import IconButton from '@/components/ui/IconButton';
-import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
+import DataTable from '@/components/ui/DataTable';
+import { TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 
 /** Tồn kho NVL theo đơn nhập từ mốc (mặc định 13/7); trước đó = 0. Nhúng trong tab Nguyên vật liệu. */
 const InventorySection: React.FC = () => {
@@ -107,8 +108,7 @@ const InventorySection: React.FC = () => {
           <Typography size="sm" variant="muted">Không có vật liệu nào trong kỳ</Typography>
         </Box>
       ) : (
-        <Card padding="none" layoutClassName="overflow-x-auto" backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
-          <Table>
+        <DataTable scrollClassName="min-w-[720px]">
             <TableHead>
               <TableRow>
                 <TableHeaderCell>Vật liệu</TableHeaderCell>
@@ -146,8 +146,7 @@ const InventorySection: React.FC = () => {
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
-        </Card>
+        </DataTable>
       )}
     </Box>
   );

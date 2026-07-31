@@ -54,9 +54,10 @@ const TableHead = React.forwardRef<HTMLTableSectionElement, TableSectionProps>(
     },
     ref,
   ) => {
+    // Chuẩn app (theo bảng product): header slate-50, in đậm uppercase, dính đầu khi cuộn.
     const classes = twMerge(
       [
-        'border-b border-slate-100 bg-slate-50 text-xs uppercase text-slate-500 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400',
+        'sticky top-0 z-10 border-b border-slate-100 bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400',
         layoutClassName ?? '',
         backgroundClassName ?? '',
         borderClassName ?? '',
@@ -89,9 +90,10 @@ const TableBody = React.forwardRef<HTMLTableSectionElement, TableSectionProps>(
     },
     ref,
   ) => {
+    // Hover row chuẩn app (chỉ áp cho row trong body, không đụng header).
     const classes = twMerge(
       [
-        'divide-y divide-slate-100 dark:divide-slate-700',
+        'divide-y divide-slate-100 dark:divide-slate-700 [&_tr]:transition-colors [&_tr:hover]:bg-slate-50 dark:[&_tr:hover]:bg-slate-800/40',
         layoutClassName ?? '',
         backgroundClassName ?? '',
         borderClassName ?? '',
@@ -137,9 +139,10 @@ const TableRow = React.forwardRef<HTMLTableRowElement, TableRowProps>(
 
 const TableHeaderCell = React.forwardRef<HTMLTableCellElement, TableCellProps>(
   ({ hoverClassName, layoutClassName, stateClassName, textClassName, className, children, ...props }, ref) => {
+    // Padding gọn chuẩn app (thay px-6 py-3 rộng cũ) — module vẫn override qua layoutClassName.
     const classes = twMerge(
       [
-        'px-6 py-3 font-medium',
+        'px-3 py-2.5 text-left',
         layoutClassName ?? '',
         textClassName ?? '',
         hoverClassName ?? '',
@@ -159,8 +162,9 @@ const TableHeaderCell = React.forwardRef<HTMLTableCellElement, TableCellProps>(
 
 const TableCell = React.forwardRef<HTMLTableCellElement, TableDataCellProps>(
   ({ layoutClassName, textClassName, className, children, ...props }, ref) => {
+    // Padding gọn chuẩn app (thay px-6 py-4 rộng cũ) — module vẫn override qua layoutClassName.
     const classes = twMerge(
-      ['px-6 py-4', layoutClassName ?? '', textClassName ?? '', className ?? ''].filter(Boolean).join(' '),
+      ['px-3 py-2.5 align-middle', layoutClassName ?? '', textClassName ?? '', className ?? ''].filter(Boolean).join(' '),
     );
     return (
       <td ref={ref} className={classes} {...props}>
