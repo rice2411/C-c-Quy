@@ -97,11 +97,34 @@ export interface OrderRefundItem {
 /** Cách đối soát phiếu hoàn với dòng tiền ra (khớp BE). */
 export type RefundReconcileMethod = 'sepay' | 'cash';
 
+/** Hạng mục hoàn tiền (khớp BE order_refunds.category). */
+export type RefundCategory =
+  | 'overcollected_cod' // đã cọc mà SPX vẫn thu COD → thu hộ trùng
+  | 'ship_refund'       // KH đổi ship → tới lấy, hoàn phí ship
+  | 'cancel'            // huỷ đơn
+  | 'reduce_qty'        // giảm số lượng (tự sinh #179)
+  | 'other';            // khác
+
+/** Danh mục hạng mục hoàn cho dropdown (types-convention). */
+export const REFUND_CATEGORIES: { value: RefundCategory; label: string }[] = [
+  { value: 'overcollected_cod', label: 'Thu hộ trùng (đã cọc còn thu COD)' },
+  { value: 'ship_refund', label: 'Hoàn phí ship (đổi qua tới lấy)' },
+  { value: 'cancel', label: 'Huỷ đơn' },
+  { value: 'reduce_qty', label: 'Giảm số lượng' },
+  { value: 'other', label: 'Khác' },
+];
+
+/** Nhãn hạng mục hoàn tiền; rỗng/không rõ → 'Khác'. */
+export const refundCategoryLabel = (c?: string | null): string =>
+  REFUND_CATEGORIES.find((x) => x.value === c)?.label ?? 'Khác';
+
 /** 1 bản ghi hoàn tiền của đơn (khớp BE). Mảng refunds sắp mới→cũ. */
 export interface OrderRefund {
   id: string;
   amount: number; // VND
   reason?: string;
+  /** Hạng mục hoàn tiền (thu hộ trùng / hoàn ship / huỷ / giảm SL / khác). */
+  category?: RefundCategory | string;
   items: OrderRefundItem[];
   createdAt?: any;
   createdBy?: string;

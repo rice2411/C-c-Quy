@@ -10,9 +10,11 @@ import {
   Undo2,
   Banknote,
   Wallet,
+  Undo,
 } from 'lucide-react';
 import { Transaction, EXPENSE_CATEGORIES, expenseCategoryLabel } from '@/types/transaction';
 import { ManualExpense } from '@/types';
+import { Order, REFUND_CATEGORIES, refundCategoryLabel } from '@/types/order';
 import { RefundListItem } from '@/services/orderService';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { formatDateTime } from '@/utils/format/dateUtil';
@@ -21,6 +23,7 @@ import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
+import Input from '@/components/ui/Input';
 
 const InlineSpinner: React.FC<{ className?: string }> = ({ className }) => (
   <Box layoutClassName={`h-3.5 w-3.5 animate-spin rounded-full border-2 border-t-transparent ${className ?? 'border-slate-300'}`} />
@@ -30,6 +33,8 @@ interface OutReconcilePanelProps {
   transactions: Transaction[];      // giao dịch tiền RA (transferType='out')
   refunds: RefundListItem[];        // toàn bộ phiếu hoàn
   manualExpenses: ManualExpense[];  // chi phí thủ công (để đối soát tiền ra ↔ chi phí)
+  orders: Order[];                  // để tạo phiếu hoàn cho 1 đơn theo hạng mục
+  onCreateRefund: (transactionId: string, orderId: string, amount: number, category: string, reason: string) => Promise<void>;
   onReconcileRefund: (orderId: string, refundId: string, transactionId: string) => Promise<void>;
   onUnreconcileRefund: (orderId: string, refundId: string) => Promise<void>;
   onMarkSettled: (transactionId: string) => Promise<void>;     // đánh dấu "đã kết toán"
@@ -47,6 +52,8 @@ interface OutRowProps {
   linkedExpense?: ManualExpense;
   unlinkedExpenses: ManualExpense[];
   pendingRefunds: RefundListItem[];
+  refundableOrders: Order[];
+  onCreateRefund: (orderId: string, amount: number, category: string, reason: string) => Promise<void>;
   onReconcileRefund: (orderId: string, refundId: string) => Promise<void>;
   onUnreconcileRefund: (orderId: string, refundId: string) => Promise<void>;
   onMarkSettled: () => Promise<void>;
@@ -59,13 +66,18 @@ interface OutRowProps {
 }
 
 const OutRow: React.FC<OutRowProps> = ({
-  transaction: tr, linkedRefund, linkedExpense, unlinkedExpenses, pendingRefunds,
-  onReconcileRefund, onUnreconcileRefund, onMarkSettled, onUnmarkSettled, onSetExpense,
+  transaction: tr, linkedRefund, linkedExpense, unlinkedExpenses, pendingRefunds, refundableOrders,
+  onCreateRefund, onReconcileRefund, onUnreconcileRefund, onMarkSettled, onUnmarkSettled, onSetExpense,
   onLinkExpense, onUnlinkExpense, onCreateExpense, formatDate,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [pickExpId, setPickExpId] = useState('');
+  // Form tạo phiếu hoàn cho đơn theo hạng mục (số tiền mặc định = số GD).
+  const [crOrderId, setCrOrderId] = useState('');
+  const [crCategory, setCrCategory] = useState('overcollected_cod');
+  const [crAmount, setCrAmount] = useState(String(tr.transferAmount));
+  const [crReason, setCrReason] = useState('');
 
   const refundSug = useMemo(() => {
     const exact = pendingRefunds.filter(r => r.amount === tr.transferAmount);
@@ -87,7 +99,7 @@ const OutRow: React.FC<OutRowProps> = ({
         <Box layoutClassName="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 dark:bg-emerald-900/20">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
           <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-emerald-600 dark:text-emerald-300">
-            Hoàn tiền · {linkedRefund.orderNumber || '—'}
+            Hoàn tiền · {linkedRefund.orderNumber || '—'} · {refundCategoryLabel(linkedRefund.category)}
           </Typography>
         </Box>
       );
@@ -188,6 +200,76 @@ const OutRow: React.FC<OutRowProps> = ({
 
       {expanded && !isLinked && !linkedExpense && (
         <Box layoutClassName="border-t border-slate-100 dark:border-slate-700">
+          {/* Hoàn tiền cho 1 đơn theo HẠNG MỤC (tạo phiếu hoàn + khớp GD này luôn) */}
+          <Box layoutClassName="space-y-2 border-b border-slate-100 bg-emerald-50/40 px-4 py-3 dark:border-slate-700 dark:bg-emerald-900/10">
+            <Typography size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-emerald-700 dark:text-emerald-300">
+              Hoàn tiền cho đơn (theo hạng mục)
+            </Typography>
+            <Box layoutClassName="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Select
+                value={crOrderId}
+                disabled={!!busyId}
+                onChange={(e) => setCrOrderId(e.target.value)}
+              >
+                <option value="">— Chọn đơn hàng —</option>
+                {refundableOrders.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {(o.orderNumber || o.id).toString()}
+                    {o.customer?.name ? ` · ${o.customer.name}` : ''} · {formatVND(o.total ?? 0)}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                value={crCategory}
+                disabled={!!busyId}
+                onChange={(e) => setCrCategory(e.target.value)}
+              >
+                {REFUND_CATEGORIES.filter((c) => c.value !== 'reduce_qty').map((c) => (
+                  <option key={c.value} value={c.value}>{c.label}</option>
+                ))}
+              </Select>
+              <Input
+                type="text"
+                inputMode="numeric"
+                value={crAmount}
+                disabled={!!busyId}
+                onChange={(e) => setCrAmount(e.target.value.replace(/[^\d]/g, ''))}
+                placeholder="Số tiền hoàn (VND)"
+              />
+              <Input
+                type="text"
+                value={crReason}
+                disabled={!!busyId}
+                onChange={(e) => setCrReason(e.target.value)}
+                placeholder="Ghi chú (tuỳ chọn)"
+              />
+            </Box>
+            <Box layoutClassName="flex items-center justify-between gap-2">
+              <Typography size="xs" variant="muted">
+                Tạo phiếu hoàn cho đơn + khớp luôn giao dịch {formatVND(tr.transferAmount)} này.
+              </Typography>
+              <Button
+                type="button"
+                disabled={!!busyId || !crOrderId || (Number(crAmount) || 0) <= 0}
+                onClick={() => void handleBusy('createRefund', async () => {
+                  await onCreateRefund(crOrderId, Number(crAmount) || 0, crCategory, crReason.trim());
+                  setCrOrderId(''); setCrReason('');
+                })}
+                variant="ghost"
+                disableVariantHover
+                disableVariantTextColor
+                layoutClassName="flex shrink-0 items-center gap-1.5"
+                roundedClassName="rounded-lg"
+                borderClassName="border border-emerald-400 dark:border-emerald-600"
+                backgroundClassName="bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50"
+                sizeClassName="px-3 py-1.5 text-xs"
+                textClassName="font-semibold text-emerald-800 dark:text-emerald-200"
+                stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50">
+                {busyId === 'createRefund' ? <InlineSpinner className="border-emerald-500" /> : <Undo className="h-3.5 w-3.5" />}
+                Tạo & khớp hoàn
+              </Button>
+            </Box>
+          </Box>
           {/* Phân loại chi phí (auto theo nội dung CK; đây là gán/sửa tay backup) */}
           <Box layoutClassName="flex flex-wrap items-center gap-2 px-4 py-3">
             <Typography size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">Chi phí:</Typography>
@@ -332,7 +414,7 @@ const OutRow: React.FC<OutRowProps> = ({
                           )}
                         </Box>
                         <Typography as="div" size="xs" layoutClassName="max-w-sm truncate" textClassName="text-slate-500 dark:text-slate-400">
-                          {formatDateTime(r.createdAt)}{r.reason ? ` · ${r.reason}` : ''}
+                          {refundCategoryLabel(r.category)} · {formatDateTime(r.createdAt)}{r.reason ? ` · ${r.reason}` : ''}
                         </Typography>
                       </Box>
                     </Box>
@@ -393,13 +475,20 @@ const OutRow: React.FC<OutRowProps> = ({
 };
 
 const OutReconcilePanel: React.FC<OutReconcilePanelProps> = ({
-  transactions, refunds, manualExpenses,
-  onReconcileRefund, onUnreconcileRefund, onMarkSettled, onUnmarkSettled, onSetExpense,
+  transactions, refunds, manualExpenses, orders,
+  onCreateRefund, onReconcileRefund, onUnreconcileRefund, onMarkSettled, onUnmarkSettled, onSetExpense,
   onLinkExpense, onUnlinkExpense, onCreateExpense, formatDate,
 }) => {
   const pendingRefunds = useMemo(
     () => refunds.filter(r => !r.reconciled && !r.transactionId),
     [refunds],
+  );
+  // Đơn có thể hoàn = đã nhận tiền (paidAmount>0), mới→cũ; giới hạn để dropdown gọn.
+  const refundableOrders = useMemo(
+    () => orders
+      .filter(o => (Number(o.paidAmount) || 0) > 0)
+      .slice(0, 300),
+    [orders],
   );
   const refundByTxId = useMemo(() => {
     const m = new Map<string, RefundListItem>();
@@ -435,6 +524,8 @@ const OutReconcilePanel: React.FC<OutReconcilePanelProps> = ({
       linkedExpense={expenseByTxId.get(tr.id)}
       unlinkedExpenses={unlinkedExpenses}
       pendingRefunds={pendingRefunds}
+      refundableOrders={refundableOrders}
+      onCreateRefund={(orderId, amount, category, reason) => onCreateRefund(tr.id, orderId, amount, category, reason)}
       onReconcileRefund={(orderId, refundId) => onReconcileRefund(orderId, refundId, tr.id)}
       onUnreconcileRefund={onUnreconcileRefund}
       onMarkSettled={() => onMarkSettled(tr.id)}

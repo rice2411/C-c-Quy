@@ -19,7 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { qk } from '@/hooks/queryKeys';
 import { useOrders } from '@/hooks/useOrders';
 import { useTransactions, useTransactionMutations } from '@/hooks/queries/useTransactionsQuery';
-import { fetchAllRefunds, reconcileRefund, unreconcileRefund, RefundListItem } from '@/services/orderService';
+import { fetchAllRefunds, reconcileRefund, unreconcileRefund, createRefund, RefundListItem } from '@/services/orderService';
 import {
   markTransactionSettled,
   setTransactionExpense,
@@ -201,6 +201,20 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
       await refreshAfterReconcile();
     } catch (err: any) {
       toast.error(err?.message || t('reconcile.errGeneric') || 'Đối soát thất bại');
+      throw err;
+    }
+  };
+
+  // Tạo phiếu hoàn cho 1 đơn theo hạng mục TỪ giao dịch tiền ra + khớp luôn GD.
+  const handleCreateRefundOut = async (
+    transactionId: string, orderId: string, amount: number, category: string, reason: string,
+  ) => {
+    try {
+      await createRefund(orderId, { amount, category, reason: reason || undefined, transactionId });
+      toast.success('Đã tạo phiếu hoàn + khớp giao dịch');
+      await refreshAfterReconcile();
+    } catch (err: any) {
+      toast.error(err?.message || 'Tạo phiếu hoàn thất bại');
       throw err;
     }
   };
@@ -711,6 +725,8 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
                   transactions={outUnmatched}
                   refunds={refunds}
                   manualExpenses={manualExpenses}
+                  orders={orders}
+                  onCreateRefund={handleCreateRefundOut}
                   onReconcileRefund={handleReconcileOut}
                   onUnreconcileRefund={handleUnreconcileOut}
                   onMarkSettled={handleMarkSettled}
@@ -730,6 +746,8 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
           transactions={outTransactions}
           refunds={refunds}
           manualExpenses={manualExpenses}
+          orders={orders}
+          onCreateRefund={handleCreateRefundOut}
           onReconcileRefund={handleReconcileOut}
           onUnreconcileRefund={handleUnreconcileOut}
           onMarkSettled={handleMarkSettled}

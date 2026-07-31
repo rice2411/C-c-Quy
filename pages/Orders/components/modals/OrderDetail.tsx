@@ -38,7 +38,7 @@ import { fetchTransactionsByOrderNumber, fetchOutUnlinkedTransactions } from '@/
 import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor, groupFlavors, sizeCountsLabel, sizeImage, sizeCount } from '@/types';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
 import { UserRole } from '@/types/user';
-import { orderAddressFallbackKey, surchargeTagLabel, reconcileMethodLabel } from '@/types/order';
+import { orderAddressFallbackKey, surchargeTagLabel, reconcileMethodLabel, refundCategoryLabel } from '@/types/order';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { allocateSurcharge, generateQRCodeImage, getOrderTotal } from '@/utils/order/orderUtils';
@@ -1773,6 +1773,16 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                 {formatVND(rf.amount)}
                               </Typography>
                             </Box>
+                            {rf.category ? (
+                              <Box layoutClassName="mt-1">
+                                <Badge size="sm" layoutClassName="px-2 py-0.5 text-[10px] font-semibold"
+                                  borderClassName="border-amber-200 dark:border-amber-700"
+                                  backgroundClassName="bg-amber-100/70 dark:bg-amber-900/30"
+                                  textClassName="text-amber-700 dark:text-amber-300">
+                                  {refundCategoryLabel(rf.category)}
+                                </Badge>
+                              </Box>
+                            ) : null}
                             {rf.reason ? (
                               <Typography size="xs" variant="muted" layoutClassName="mt-1">
                                 {t('refund.reasonLabel')}: {rf.reason}
