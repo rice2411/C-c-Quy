@@ -78,8 +78,9 @@ const InventoryPage: React.FC = () => {
       </Box>
 
       <Typography as="p" size="xs" variant="muted">
-        Số lượng = tổng đã <b>nhập</b> theo phiếu từ mốc {data?.from?.slice(0, 10) || from} (trước đó coi = 0).
-        Phần trừ tiêu thụ theo đơn (công thức) sẽ bổ sung sau.
+        <b>SL nhập</b> = tổng đã nhập theo phiếu từ mốc {data?.from?.slice(0, 10) || from} (trước đó coi = 0).
+        <b> Còn lại</b> chỉ tính cho vật liệu map được ra đơn (hiện: hộp giấy tốt nghiệp = SL nhập − số SP tốt nghiệp đã bán);
+        vật liệu chưa có công thức để "—". Còn lại âm = còn phiếu nhập chưa vào sổ.
       </Typography>
 
       {/* KPI */}
@@ -123,6 +124,8 @@ const InventoryPage: React.FC = () => {
               <TableRow>
                 <TableHeaderCell>Vật liệu</TableHeaderCell>
                 <TableHeaderCell layoutClassName="text-right">SL nhập</TableHeaderCell>
+                <TableHeaderCell layoutClassName="text-right">Đã dùng</TableHeaderCell>
+                <TableHeaderCell layoutClassName="text-right">Còn lại</TableHeaderCell>
                 <TableHeaderCell>ĐVT</TableHeaderCell>
                 <TableHeaderCell layoutClassName="text-right">Số lần</TableHeaderCell>
                 <TableHeaderCell layoutClassName="text-right">Tiền nhập</TableHeaderCell>
@@ -134,6 +137,19 @@ const InventoryPage: React.FC = () => {
                 <TableRow key={it.key}>
                   <TableCell textClassName="font-medium text-slate-800 dark:text-slate-100">{it.name}</TableCell>
                   <TableCell layoutClassName="text-right" textClassName="font-semibold tabular-nums">{it.qtyIn}</TableCell>
+                  <TableCell layoutClassName="text-right" textClassName="tabular-nums text-slate-500 dark:text-slate-400">{it.used === null ? '—' : it.used}</TableCell>
+                  <TableCell
+                    layoutClassName="text-right"
+                    textClassName={
+                      it.remaining === null
+                        ? 'tabular-nums text-slate-400 dark:text-slate-500'
+                        : it.remaining < 0
+                          ? 'font-bold tabular-nums text-rose-600 dark:text-rose-400'
+                          : 'font-bold tabular-nums text-emerald-600 dark:text-emerald-400'
+                    }
+                  >
+                    {it.remaining === null ? '—' : it.remaining}
+                  </TableCell>
                   <TableCell textClassName="text-slate-500 dark:text-slate-400">{it.unit || '—'}</TableCell>
                   <TableCell layoutClassName="text-right" textClassName="tabular-nums text-slate-500 dark:text-slate-400">{it.receiptCount}</TableCell>
                   <TableCell layoutClassName="text-right" textClassName="tabular-nums text-slate-700 dark:text-slate-200">{formatVND(it.amountIn)}</TableCell>

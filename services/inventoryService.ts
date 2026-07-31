@@ -9,6 +9,9 @@ export interface InventoryItem {
   amountIn: number; // VND
   receiptCount: number; // số lần nhập
   lastDate: string; // ISO yyyy-mm-dd
+  computable: boolean; // có tính được còn lại (map ra đơn) không
+  used: number | null; // đã dùng (chỉ khi computable)
+  remaining: number | null; // còn lại = nhập − dùng (chỉ khi computable)
 }
 
 /** Tổng hợp tồn kho từ 1 mốc (mặc định 13/7). */
@@ -17,6 +20,7 @@ export interface InventoryOverview {
   materialCount: number;
   totalQtyLines: number;
   totalAmount: number; // VND
+  boxUsed: number; // số hộp giấy tốt nghiệp đã dùng (theo đơn)
   items: InventoryItem[];
 }
 
@@ -34,6 +38,7 @@ export const fetchInventory = async (from?: string): Promise<InventoryOverview> 
     materialCount: num(d.materialCount),
     totalQtyLines: num(d.totalQtyLines),
     totalAmount: num(d.totalAmount),
+    boxUsed: num(d.boxUsed),
     items: arr(d.items).map((x) => ({
       key: String(x.key ?? ''),
       name: String(x.name ?? ''),
@@ -42,6 +47,9 @@ export const fetchInventory = async (from?: string): Promise<InventoryOverview> 
       amountIn: num(x.amountIn),
       receiptCount: num(x.receiptCount),
       lastDate: String(x.lastDate ?? ''),
+      computable: x.computable === true,
+      used: x.used === null || x.used === undefined ? null : num(x.used),
+      remaining: x.remaining === null || x.remaining === undefined ? null : num(x.remaining),
     })),
   };
 };
