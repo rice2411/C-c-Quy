@@ -8,7 +8,6 @@ import Spinner from "./components/ui/Spinner";
 const DashboardPage = lazy(() => import("./pages/Dashboard/index"));
 const OrdersPage = lazy(() => import("./pages/Orders/index"));
 const AnalyticsPage = lazy(() => import("./pages/Analytics/index"));
-const MaterialStockPage = lazy(() => import("./pages/Inventory/index"));
 const TxOverviewPage = lazy(() => import("./pages/Transactions/OverviewPage"));
 const TxHistoryPage = lazy(() => import("./pages/Transactions/HistoryPage"));
 const TxReconciliationPage = lazy(() => import("./pages/Transactions/ReconciliationPage"));
@@ -86,14 +85,6 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/analytics")?.roles}>
             <AnalyticsPage />
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="material-stock"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/material-stock")?.roles}>
-            <MaterialStockPage />
           </RoleBasedRoute>
         }
       />

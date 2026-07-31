@@ -8,6 +8,7 @@ import BillImportMaterialsTab from '@/pages/StockReceipts/BillImportMaterialsTab
 import BillImportModal from '@/pages/StockReceipts/BillImportModal';
 import { normalizeSearchText } from '@/utils/format/stringUtil';
 import MergeSuggestionsPanel from './components/MergeSuggestionsPanel';
+import InventorySection from './components/InventorySection';
 
 const MaterialsPage: React.FC = () => {
   const { t } = useLanguage();
@@ -53,6 +54,8 @@ const MaterialsPage: React.FC = () => {
 
   return (
     <Box layoutClassName="space-y-6 animate-fade-in">
+      <InventorySection />
+
       <BillImportMaterialsTab
         materialSearch={materialSearch}
         onMaterialSearchChange={setMaterialSearch}

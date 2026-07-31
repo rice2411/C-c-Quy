@@ -75,13 +75,6 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/material-stock",
-    labelKey: "nav.materialStock",
-    icon: Boxes,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  },
-  {
-    type: "page",
     path: "/finance/overview",
     labelKey: "nav.txOverview",
     icon: LayoutDashboard,
