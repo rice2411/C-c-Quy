@@ -229,17 +229,24 @@ export interface TrackingRow {
   status?: string;
   name?: string;
   phone?: string;
+  /** Mã khách hàng SPX = order_number của mình (khớp chắc hơn SĐT). */
+  orderRef?: string;
+  /** Thời gian tạo mã (để chọn mã mới nhất khi 1 đơn có nhiều mã). */
+  createTime?: string;
 }
 
 export interface TrackingSyncResult {
-  matched: { tracking: string; link?: string; status?: string; orderNumber: string; orderCustomer: string; receiverName?: string; hadTracking: boolean }[];
+  matched: { tracking: string; link?: string; status?: string; orderNumber: string; orderCustomer: string; receiverName?: string; hadTracking: boolean; replaced?: boolean }[];
   unmatched: { tracking: string; receiverName?: string; phone?: string }[];
-  /** Đơn khớp nhưng ĐÃ CÓ mã vận đơn → bỏ qua, không ghi đè. */
-  skipped: { tracking: string; orderNumber: string; orderCustomer: string; receiverName?: string; existingTracking: string }[];
+  /** Đơn khớp nhưng ĐÃ CÓ mã vận đơn active khác → bỏ qua, không ghi đè. */
+  skipped: { tracking: string; orderNumber: string; orderCustomer: string; receiverName?: string; existingTracking: string; sameTracking?: boolean }[];
+  /** Đơn đang giữ mã ĐÃ HUỶ, chưa có mã mới → đánh dấu 'Đã hủy', chờ tạo lại. */
+  cancelled: { orderNumber: string; orderCustomer: string; receiverName?: string; cancelledTracking: string }[];
   applied: boolean;
   matchedCount: number;
   unmatchedCount: number;
   skippedCount: number;
+  cancelledCount: number;
 }
 
 /** Đồng bộ vận đơn từ file 3PL. apply=false → preview match; true → ghi vào đơn. */

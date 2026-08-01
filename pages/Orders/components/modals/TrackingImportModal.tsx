@@ -104,17 +104,22 @@ const TrackingImportModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) =>
     const cStatus = findCol(header, 'Tracking Status');
     const cName = findCol(header, 'Receiver Name');
     const cPhone = findCol(header, 'Receiver Phone Number');
+    const cRef = findCol(header, 'Customer Reference No.'); // = mã đơn ORD-xxxxx
+    const cCreate = findCol(header, 'Create Time');
     const parsed: TrackingRow[] = [];
     for (let i = hIdx + 1; i < grid.length; i++) {
       const r = grid[i];
       const tracking = String(r[cTrack] ?? '').trim();
       if (!tracking || tracking.toLowerCase().includes('mã vận đơn')) continue;
+      const ref = cRef >= 0 ? String(r[cRef] ?? '').trim() : '';
       parsed.push({
         tracking,
         link: cLink >= 0 ? String(r[cLink] ?? '').trim() : undefined,
         status: cStatus >= 0 ? String(r[cStatus] ?? '').trim() : undefined,
         name: cName >= 0 ? String(r[cName] ?? '').trim() : undefined,
         phone: cPhone >= 0 ? String(r[cPhone] ?? '').trim() : undefined,
+        orderRef: ref && ref !== '-' ? ref : undefined,
+        createTime: cCreate >= 0 ? String(r[cCreate] ?? '').trim() : undefined,
       });
     }
     if (parsed.length === 0) throw new Error('Không đọc được dòng vận đơn nào.');
@@ -162,7 +167,8 @@ const TrackingImportModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) =>
     setBusy(true);
     try {
       const res = await syncOrderTracking(trackRows, true);
-      toast.success(`Đã đồng bộ ${res.matchedCount} vận đơn vào đơn hàng`);
+      const extra = (res.cancelledCount ?? 0) > 0 ? ` · ${res.cancelledCount} mã huỷ` : '';
+      toast.success(`Đã đồng bộ ${res.matchedCount} vận đơn${extra}`);
       onApplied();
       handleClose();
     } catch (err) {
@@ -245,6 +251,11 @@ const TrackingImportModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) =>
               <Typography as="span" size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold" textClassName="text-amber-600 dark:text-amber-400">
                 <Copy className="h-4 w-4" /> Đã có vận đơn {trackPreview.skippedCount}
               </Typography>
+              {(trackPreview.cancelledCount ?? 0) > 0 ? (
+                <Typography as="span" size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold" textClassName="text-orange-600 dark:text-orange-400">
+                  <XCircle className="h-4 w-4" /> Mã bị huỷ {trackPreview.cancelledCount}
+                </Typography>
+              ) : null}
               <Typography as="span" size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold" textClassName="text-rose-500 dark:text-rose-400">
                 <XCircle className="h-4 w-4" /> Không khớp {trackPreview.unmatchedCount}
               </Typography>
@@ -261,12 +272,33 @@ const TrackingImportModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) =>
                   <Box layoutClassName="min-w-0 flex-1">
                     <Typography as="p" size="sm" layoutClassName="truncate font-semibold" textClassName="text-slate-700 dark:text-slate-200">
                       {m.orderNumber} · {m.orderCustomer}
+                      {m.replaced ? (
+                        <Typography as="span" size="xs" layoutClassName="ml-1.5 rounded px-1.5 py-0.5 font-semibold" backgroundClassName="bg-orange-100 dark:bg-orange-900/40" textClassName="text-orange-700 dark:text-orange-300">thay mã cũ đã huỷ</Typography>
+                      ) : null}
                     </Typography>
                     <Typography as="span" size="xs" variant="muted">
                       {m.tracking}{m.status ? ` · ${m.status}` : ''}
                     </Typography>
                   </Box>
                   <Truck className="h-4 w-4 shrink-0 text-emerald-500" />
+                </Box>
+              ))}
+              {(trackPreview.cancelled ?? []).map((c, i) => (
+                <Box
+                  key={`c-${i}`}
+                  layoutClassName="flex items-center justify-between gap-3 rounded-lg px-3 py-2"
+                  borderClassName="border border-orange-100 dark:border-orange-900/40"
+                  backgroundClassName="bg-orange-50/60 dark:bg-orange-900/15"
+                >
+                  <Box layoutClassName="min-w-0 flex-1">
+                    <Typography as="p" size="sm" layoutClassName="truncate" textClassName="text-orange-700 dark:text-orange-300">
+                      {c.orderNumber} · {c.orderCustomer}
+                    </Typography>
+                    <Typography as="span" size="xs" variant="muted">
+                      mã {c.cancelledTracking} đã huỷ · chờ tạo lại
+                    </Typography>
+                  </Box>
+                  <XCircle className="h-4 w-4 shrink-0 text-orange-400" />
                 </Box>
               ))}
               {trackPreview.skipped.map((s, i) => (
