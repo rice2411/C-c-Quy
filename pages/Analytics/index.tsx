@@ -186,6 +186,54 @@ const AnalyticsPage: React.FC = () => {
             <KpiCard icon={<Truck className="h-4 w-4" />} label="Ship tỉnh" value={`${k?.shipProvinceOrders ?? 0} đơn`} sub={`${shipProvincePct}% tổng đơn`} />
           </Box>
 
+          {/* SƠ ĐỒ: thời gian giao TB theo tỉnh/thành (dựa mã vận đơn SPX) */}
+          <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+            <Box layoutClassName="flex flex-wrap items-center justify-between gap-2">
+              <Typography size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold">
+                <Truck className="h-4 w-4 text-cyan-500" /> Thời gian giao TB theo tỉnh/thành
+              </Typography>
+              <Typography as="span" size="xs" variant="muted">nhận → giao xong (SPX), tỉnh giao lâu lên đầu</Typography>
+            </Box>
+            {(() => {
+              const rows = data.shipByProvince;
+              const withData = rows.filter((r) => r.avgDays !== null);
+              const noData = rows.filter((r) => r.avgDays === null);
+              const maxAvg = Math.max(1, ...withData.map((r) => r.avgDays ?? 0));
+              if (withData.length === 0) {
+                return (
+                  <Typography as="p" size="xs" variant="muted">
+                    Chưa có mốc giao nào. Vào <b>Đơn hàng → Làm mới vận đơn</b> để đồng bộ, rồi mở lại.
+                  </Typography>
+                );
+              }
+              return (
+                <Box layoutClassName="space-y-2">
+                  {withData.map((r) => {
+                    const d = r.avgDays ?? 0;
+                    const pct = Math.max(6, Math.round((d / maxAvg) * 100));
+                    const barColor = d >= 4 ? 'bg-rose-400 dark:bg-rose-500' : d >= 2.5 ? 'bg-amber-400 dark:bg-amber-500' : 'bg-emerald-400 dark:bg-emerald-500';
+                    return (
+                      <Box key={r.province} layoutClassName="flex items-center gap-2">
+                        <Typography as="span" size="xs" layoutClassName="w-28 shrink-0 truncate font-medium" textClassName="text-slate-700 dark:text-slate-200">{r.province}</Typography>
+                        <Box layoutClassName="relative h-5 min-w-0 flex-1 overflow-hidden rounded" backgroundClassName="bg-slate-100 dark:bg-slate-700/50">
+                          <Box layoutClassName={`h-full rounded ${barColor}`} style={{ width: `${pct}%` }} />
+                        </Box>
+                        <Typography as="span" size="xs" layoutClassName="w-24 shrink-0 text-right tabular-nums" textClassName="text-slate-600 dark:text-slate-300">
+                          {d} ngày · {r.delivered}/{r.orders} đơn
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                  {noData.length > 0 ? (
+                    <Typography as="p" size="xs" variant="muted" layoutClassName="pt-1">
+                      Chưa có mốc giao: {noData.map((r) => `${r.province} (${r.orders})`).join(', ')}
+                    </Typography>
+                  ) : null}
+                </Box>
+              );
+            })()}
+          </Card>
+
           <Box layoutClassName="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {/* Doanh thu theo tháng */}
             <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">

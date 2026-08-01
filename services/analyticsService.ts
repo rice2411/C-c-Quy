@@ -25,6 +25,8 @@ export interface AnalyticsOverview {
     maxDays: number;
     orders: { orderNumber: string; shippedDate: string; deliveredDate: string; days: number }[];
   };
+  /** Đơn tỉnh gộp theo tỉnh/thành: số đơn, số đã giao, TB ngày giao (null nếu chưa có mốc). */
+  shipByProvince: { province: string; orders: number; delivered: number; avgDays: number | null }[];
   generatedAt: string;
 }
 
@@ -76,6 +78,12 @@ export const fetchAnalyticsOverview = async (): Promise<AnalyticsOverview> => {
         days: num(x.days),
       })),
     },
+    shipByProvince: arr(d.shipByProvince).map((x) => ({
+      province: String(x.province ?? ''),
+      orders: num(x.orders),
+      delivered: num(x.delivered),
+      avgDays: x.avg_days === null || x.avg_days === undefined ? null : num(x.avg_days),
+    })),
     generatedAt: String(d.generatedAt ?? ''),
   };
 };
