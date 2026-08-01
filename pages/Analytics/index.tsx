@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Sparkles, TrendingUp, Truck, Package, Wallet, AlertTriangle, Lightbulb } from 'lucide-react';
+import { Sparkles, TrendingUp, Truck, Package, Wallet, AlertTriangle, Lightbulb, Users, Clock, MapPin, Coins, BarChart3 } from 'lucide-react';
 import {
   AnalyticsOverview,
   AnalyticsInsight,
@@ -326,6 +326,155 @@ const AnalyticsPage: React.FC = () => {
               </Box>
             )}
           </Card>
+
+          {/* P&L theo tháng */}
+          <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+            <Typography size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold">
+              <Coins className="h-4 w-4 text-emerald-500" /> Lãi/lỗ theo tháng (doanh thu − NVL − chi phí − hoàn)
+            </Typography>
+            <Box layoutClassName="overflow-x-auto">
+              <Box layoutClassName="min-w-[560px] space-y-1">
+                <Box layoutClassName="grid grid-cols-6 gap-2 border-b border-slate-100 pb-1 dark:border-slate-700">
+                  {['Tháng', 'Doanh thu', 'NVL', 'Chi phí', 'Hoàn', 'Lãi'].map((h, i) => (
+                    <Typography key={h} as="span" size="xs" layoutClassName={`font-bold uppercase ${i === 0 ? '' : 'text-right'}`} variant="muted">{h}</Typography>
+                  ))}
+                </Box>
+                {data.pnlMonthly.slice().reverse().map((m) => {
+                  const profit = m.revenue - m.material - m.opex - m.refund;
+                  return (
+                    <Box key={m.month} layoutClassName="grid grid-cols-6 gap-2 py-0.5">
+                      <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{m.month}</Typography>
+                      <Typography as="span" size="xs" layoutClassName="text-right tabular-nums" textClassName="text-slate-600 dark:text-slate-300">{formatVND(m.revenue)}</Typography>
+                      <Typography as="span" size="xs" layoutClassName="text-right tabular-nums" textClassName="text-slate-500 dark:text-slate-400">{formatVND(m.material)}</Typography>
+                      <Typography as="span" size="xs" layoutClassName="text-right tabular-nums" textClassName="text-slate-500 dark:text-slate-400">{formatVND(m.opex)}</Typography>
+                      <Typography as="span" size="xs" layoutClassName="text-right tabular-nums" textClassName="text-slate-500 dark:text-slate-400">{m.refund ? formatVND(m.refund) : '—'}</Typography>
+                      <Typography as="span" size="xs" layoutClassName="text-right font-semibold tabular-nums" textClassName={profit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}>{formatVND(profit)}</Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+            <Typography as="p" size="xs" variant="muted">NVL đã loại sơn/dụng cụ. Chi phí (OPEX) chỉ có từ khi có dữ liệu SePay — tháng cũ hiển thị thấp là do thiếu dữ liệu, không phải lãi thật.</Typography>
+          </Card>
+
+          <Box layoutClassName="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {/* Công nợ */}
+            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+              <Box layoutClassName="flex flex-wrap items-center justify-between gap-2">
+                <Typography size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" /> Công nợ ({data.receivables.count} đơn)
+                </Typography>
+                <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-rose-600 dark:text-rose-400">Còn thu {formatVND(data.receivables.remaining)}</Typography>
+              </Box>
+              <Box layoutClassName="flex flex-wrap gap-2">
+                {[['≤7 ngày', data.receivables.aging.d0_7], ['8–14', data.receivables.aging.d8_14], ['15–30', data.receivables.aging.d15_30], ['>30', data.receivables.aging.d30p]].map(([lbl, n]) => (
+                  <Typography key={String(lbl)} as="span" size="xs" layoutClassName="rounded-full px-2 py-0.5 font-medium" backgroundClassName="bg-slate-100 dark:bg-slate-700" textClassName="text-slate-600 dark:text-slate-300">{lbl}: {n as number}</Typography>
+                ))}
+              </Box>
+              <Box layoutClassName="max-h-60 space-y-1 overflow-y-auto">
+                {data.receivables.orders.map((o) => (
+                  <Box key={o.orderNumber} layoutClassName="flex items-center justify-between gap-3 rounded-md px-2.5 py-1.5" backgroundClassName="bg-slate-50 dark:bg-slate-800/40">
+                    <Box layoutClassName="min-w-0 flex-1">
+                      <Typography as="p" size="sm" layoutClassName="truncate font-medium" textClassName="text-slate-800 dark:text-slate-100">{o.orderNumber} · {o.customerName}</Typography>
+                      <Typography as="span" size="xs" variant="muted">Đã {formatVND(o.paidAmount)}/{formatVND(o.total)} · {o.ageDays} ngày</Typography>
+                    </Box>
+                    <Typography as="span" size="sm" layoutClassName="shrink-0 font-semibold" textClassName="text-rose-600 dark:text-rose-400">{formatVND(o.remaining)}</Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Card>
+
+            {/* Khách hàng */}
+            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+              <Typography size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold">
+                <Users className="h-4 w-4 text-primary-500" /> Khách hàng
+              </Typography>
+              <Box layoutClassName="flex flex-wrap gap-2">
+                <Typography as="span" size="xs" layoutClassName="rounded-full px-2 py-0.5 font-medium" backgroundClassName="bg-primary-50 dark:bg-primary-900/30" textClassName="text-primary-700 dark:text-primary-300">Tổng {data.customers.total}</Typography>
+                <Typography as="span" size="xs" layoutClassName="rounded-full px-2 py-0.5 font-medium" backgroundClassName="bg-emerald-50 dark:bg-emerald-950/40" textClassName="text-emerald-700 dark:text-emerald-300">Quay lại {data.customers.returning}</Typography>
+                <Typography as="span" size="xs" layoutClassName="rounded-full px-2 py-0.5 font-medium" backgroundClassName="bg-slate-100 dark:bg-slate-700" textClassName="text-slate-600 dark:text-slate-300">Mới {data.customers.newCount}</Typography>
+              </Box>
+              <Box layoutClassName="max-h-60 space-y-1 overflow-y-auto">
+                {data.customers.top.map((c, i) => (
+                  <Box key={`${c.name}-${i}`} layoutClassName="flex items-center justify-between gap-3 rounded-md px-2.5 py-1.5" backgroundClassName="bg-slate-50 dark:bg-slate-800/40">
+                    <Typography as="p" size="sm" layoutClassName="min-w-0 flex-1 truncate font-medium" textClassName="text-slate-800 dark:text-slate-100">{c.name} <Typography as="span" size="xs" variant="muted">· {c.orders} đơn</Typography></Typography>
+                    <Typography as="span" size="sm" layoutClassName="shrink-0 font-semibold" textClassName="text-emerald-600 dark:text-emerald-400">{formatVND(c.revenue)}</Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Card>
+
+            {/* Giao SPX */}
+            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+              <Typography size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold">
+                <Clock className="h-4 w-4 text-cyan-500" /> Vận hành giao SPX
+              </Typography>
+              <Box layoutClassName="flex flex-wrap gap-1.5">
+                {data.shipOps.trackingStatus.map((s) => (
+                  <Typography key={s.status} as="span" size="xs" layoutClassName="rounded-full px-2 py-0.5 font-medium" backgroundClassName="bg-slate-100 dark:bg-slate-700" textClassName="text-slate-600 dark:text-slate-300">{s.status}: {s.n}</Typography>
+                ))}
+              </Box>
+              <Box layoutClassName="space-y-1">
+                <Typography as="p" size="xs" variant="muted" layoutClassName="font-semibold uppercase tracking-wide">Thời gian giao (đã giao)</Typography>
+                {([['≤1 ngày', data.shipOps.histogram.d1], ['2 ngày', data.shipOps.histogram.d2], ['3 ngày', data.shipOps.histogram.d3], ['4 ngày', data.shipOps.histogram.d4], ['5+ ngày', data.shipOps.histogram.d5p]] as [string, number][]).map(([lbl, n]) => {
+                  const maxH = Math.max(1, data.shipOps.histogram.d1, data.shipOps.histogram.d2, data.shipOps.histogram.d3, data.shipOps.histogram.d4, data.shipOps.histogram.d5p);
+                  return (
+                    <Box key={lbl} layoutClassName="flex items-center gap-2">
+                      <Typography as="span" size="xs" layoutClassName="w-16 shrink-0" textClassName="text-slate-500 dark:text-slate-400">{lbl}</Typography>
+                      <Box layoutClassName="relative h-4 min-w-0 flex-1 overflow-hidden rounded" backgroundClassName="bg-slate-100 dark:bg-slate-700/50">
+                        <Box layoutClassName="h-full rounded bg-cyan-400 dark:bg-cyan-500" style={{ width: `${Math.round((n / maxH) * 100)}%` }} />
+                      </Box>
+                      <Typography as="span" size="xs" layoutClassName="w-6 shrink-0 text-right tabular-nums" textClassName="text-slate-600 dark:text-slate-300">{n}</Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+              {data.shipOps.stuck.length > 0 ? (
+                <Box layoutClassName="space-y-1">
+                  <Typography as="p" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-rose-600 dark:text-rose-400">Đơn kẹt (chưa giao ≥4 ngày)</Typography>
+                  {data.shipOps.stuck.map((o) => (
+                    <Typography key={o.orderNumber} as="p" size="xs" variant="muted">{o.orderNumber} · {o.customerName} — {o.ageDays} ngày</Typography>
+                  ))}
+                </Box>
+              ) : null}
+            </Card>
+
+            {/* Doanh thu theo tỉnh */}
+            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+              <Typography size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold">
+                <MapPin className="h-4 w-4 text-violet-500" /> Doanh thu theo tỉnh (ship)
+              </Typography>
+              <Box layoutClassName="max-h-60 space-y-1.5 overflow-y-auto">
+                {(() => {
+                  const maxRev = Math.max(1, ...data.provinceSales.map((p) => p.revenue));
+                  return data.provinceSales.map((p) => (
+                    <Box key={p.province} layoutClassName="flex items-center gap-2">
+                      <Typography as="span" size="xs" layoutClassName="w-24 shrink-0 truncate font-medium" textClassName="text-slate-700 dark:text-slate-200">{p.province}</Typography>
+                      <Box layoutClassName="relative h-4 min-w-0 flex-1 overflow-hidden rounded" backgroundClassName="bg-slate-100 dark:bg-slate-700/50">
+                        <Box layoutClassName="h-full rounded bg-violet-400 dark:bg-violet-500" style={{ width: `${Math.max(4, Math.round((p.revenue / maxRev) * 100))}%` }} />
+                      </Box>
+                      <Typography as="span" size="xs" layoutClassName="w-28 shrink-0 text-right tabular-nums" textClassName="text-slate-600 dark:text-slate-300">{formatVND(p.revenue)} · {p.orders}đ</Typography>
+                    </Box>
+                  ));
+                })()}
+              </Box>
+            </Card>
+
+            {/* Cộng tác viên */}
+            <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3 lg:col-span-2">
+              <Typography size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold">
+                <BarChart3 className="h-4 w-4 text-primary-500" /> Cộng tác viên (theo người tạo đơn)
+              </Typography>
+              <Box layoutClassName="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                {data.collaborators.map((c) => (
+                  <Box key={c.name} layoutClassName="flex items-center justify-between gap-3 rounded-md px-2.5 py-1.5" backgroundClassName="bg-slate-50 dark:bg-slate-800/40">
+                    <Typography as="p" size="sm" layoutClassName="min-w-0 flex-1 truncate font-medium" textClassName="text-slate-800 dark:text-slate-100">{c.name} <Typography as="span" size="xs" variant="muted">· {c.orders} đơn</Typography></Typography>
+                    <Typography as="span" size="sm" layoutClassName="shrink-0 font-semibold" textClassName="text-emerald-600 dark:text-emerald-400">{formatVND(c.revenue)}</Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Card>
+          </Box>
 
           {/* AI insight */}
           {insight ? (

@@ -27,6 +27,29 @@ export interface AnalyticsOverview {
   };
   /** Đơn tỉnh gộp theo tỉnh/thành: số đơn, số đã giao, TB ngày giao (null nếu chưa có mốc). */
   shipByProvince: { province: string; orders: number; delivered: number; avgDays: number | null }[];
+  /** Doanh thu theo tỉnh (ship tỉnh). */
+  provinceSales: { province: string; orders: number; revenue: number; aov: number; shipAvg: number }[];
+  /** Khách hàng: mới vs quay lại + top khách. */
+  customers: {
+    total: number; returning: number; newCount: number;
+    top: { name: string; orders: number; revenue: number; lastOrder: string }[];
+  };
+  /** Công nợ: đơn chưa thu đủ + tuổi nợ + danh sách. */
+  receivables: {
+    count: number; remaining: number;
+    aging: { d0_7: number; d8_14: number; d15_30: number; d30p: number };
+    orders: { orderNumber: string; customerName: string; total: number; paidAmount: number; remaining: number; ageDays: number; paymentStatus: string }[];
+  };
+  /** Vận hành giao SPX: trạng thái + histogram + đơn kẹt. */
+  shipOps: {
+    trackingStatus: { status: string; n: number }[];
+    histogram: { d1: number; d2: number; d3: number; d4: number; d5p: number };
+    stuck: { orderNumber: string; customerName: string; shippedDate: string; ageDays: number }[];
+  };
+  /** Cộng tác viên: đơn + doanh thu theo người tạo. */
+  collaborators: { name: string; orders: number; revenue: number }[];
+  /** P&L theo tháng: doanh thu − NVL − OPEX − hoàn = lãi. */
+  pnlMonthly: { month: string; revenue: number; refund: number; material: number; opex: number }[];
   generatedAt: string;
 }
 
@@ -83,6 +106,43 @@ export const fetchAnalyticsOverview = async (): Promise<AnalyticsOverview> => {
       orders: num(x.orders),
       delivered: num(x.delivered),
       avgDays: x.avg_days === null || x.avg_days === undefined ? null : num(x.avg_days),
+    })),
+    provinceSales: arr(d.provinceSales).map((x) => ({
+      province: String(x.province ?? ''), orders: num(x.orders), revenue: num(x.revenue),
+      aov: num(x.aov), shipAvg: num(x.ship_avg),
+    })),
+    customers: {
+      total: num(d.customers?.total), returning: num(d.customers?.returning), newCount: num(d.customers?.newCount),
+      top: arr(d.customers?.top).map((x) => ({
+        name: String(x.name ?? ''), orders: num(x.orders), revenue: num(x.revenue), lastOrder: String(x.last_order ?? ''),
+      })),
+    },
+    receivables: {
+      count: num(d.receivables?.count), remaining: num(d.receivables?.remaining),
+      aging: {
+        d0_7: num(d.receivables?.aging?.d0_7), d8_14: num(d.receivables?.aging?.d8_14),
+        d15_30: num(d.receivables?.aging?.d15_30), d30p: num(d.receivables?.aging?.d30p),
+      },
+      orders: arr(d.receivables?.orders).map((x) => ({
+        orderNumber: String(x.order_number ?? ''), customerName: String(x.customer_name ?? ''),
+        total: num(x.total), paidAmount: num(x.paid_amount), remaining: num(x.remaining),
+        ageDays: num(x.age_days), paymentStatus: String(x.payment_status ?? ''),
+      })),
+    },
+    shipOps: {
+      trackingStatus: arr(d.shipOps?.trackingStatus).map((x) => ({ status: String(x.status ?? ''), n: num(x.n) })),
+      histogram: {
+        d1: num(d.shipOps?.histogram?.d1), d2: num(d.shipOps?.histogram?.d2), d3: num(d.shipOps?.histogram?.d3),
+        d4: num(d.shipOps?.histogram?.d4), d5p: num(d.shipOps?.histogram?.d5p),
+      },
+      stuck: arr(d.shipOps?.stuck).map((x) => ({
+        orderNumber: String(x.order_number ?? ''), customerName: String(x.customer_name ?? ''),
+        shippedDate: String(x.shipped_date ?? ''), ageDays: num(x.age_days),
+      })),
+    },
+    collaborators: arr(d.collaborators).map((x) => ({ name: String(x.name ?? ''), orders: num(x.orders), revenue: num(x.revenue) })),
+    pnlMonthly: arr(d.pnlMonthly).map((x) => ({
+      month: String(x.month ?? ''), revenue: num(x.revenue), refund: num(x.refund), material: num(x.material), opex: num(x.opex),
     })),
     generatedAt: String(d.generatedAt ?? ''),
   };
