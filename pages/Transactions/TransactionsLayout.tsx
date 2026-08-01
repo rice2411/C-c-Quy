@@ -25,17 +25,23 @@ interface TransactionsLayoutProps {
 const TransactionsLayout: React.FC<TransactionsLayoutProps> = ({ children }) => {
   const [state, setState] = useState<Saved>(loadSaved);
 
-  const persist = (next: Saved) => {
-    setState(next);
-    try { localStorage.setItem(LS_KEY, JSON.stringify(next)); } catch { /* bỏ qua */ }
+  // Functional update: DateRangePicker.handleApply gọi onFromChange rồi onToChange
+  // LIÊN TIẾP; nếu merge từ `state` (stale closure) thì lần sau ghi đè lần trước
+  // (bug: chọn 1/7–31/7 ra 1/8–31/7). Dùng updater để merge trên state mới nhất.
+  const persist = (updater: (prev: Saved) => Saved) => {
+    setState((prev) => {
+      const next = updater(prev);
+      try { localStorage.setItem(LS_KEY, JSON.stringify(next)); } catch { /* bỏ qua */ }
+      return next;
+    });
   };
 
   const applyPreset = (p: DatePreset) => {
     if (p !== 'custom') {
       const r = computePresetRange(p);
-      persist({ fromDate: r.from, toDate: r.to, preset: p });
+      persist(() => ({ fromDate: r.from, toDate: r.to, preset: p }));
     } else {
-      persist({ ...state, preset: 'custom' });
+      persist((prev) => ({ ...prev, preset: 'custom' }));
     }
   };
 
@@ -46,8 +52,8 @@ const TransactionsLayout: React.FC<TransactionsLayoutProps> = ({ children }) => 
         toDate={state.toDate}
         preset={state.preset}
         onApplyPreset={applyPreset}
-        onFromChange={(v) => persist({ ...state, fromDate: v, preset: 'custom' })}
-        onToChange={(v) => persist({ ...state, toDate: v, preset: 'custom' })}
+        onFromChange={(v) => persist((prev) => ({ ...prev, fromDate: v, preset: 'custom' }))}
+        onToChange={(v) => persist((prev) => ({ ...prev, toDate: v, preset: 'custom' }))}
       />
       <Box layoutClassName="flex-1 overflow-y-auto">
         {children({ fromDate: state.fromDate, toDate: state.toDate })}
