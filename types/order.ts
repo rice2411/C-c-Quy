@@ -72,6 +72,18 @@ export const orderAddressFallbackKey = (dt?: DeliveryType): string => {
   return 'deliveryType.noAddress';
 };
 
+/** Đơn vị vận chuyển của đơn: SPX (Shopee Express) hay Cúc Quý tự giao. */
+export type OrderCarrier = 'SPX' | 'CUCQUY';
+
+/**
+ * Suy ra đơn vị vận chuyển: ship tỉnh hoặc có mã vận đơn SPX → giao qua Shopee Express;
+ * còn lại (giao nội thành / khách tới lấy / tự giao) → Cúc Quý.
+ */
+export const orderCarrier = (order: Order): OrderCarrier =>
+  order.deliveryType === DeliveryType.SHIP_PROVINCE || /^SPX/i.test(order.trackingNumber ?? '')
+    ? 'SPX'
+    : 'CUCQUY';
+
 export interface OrderFieldChange {
   field: string;
   label?: string;

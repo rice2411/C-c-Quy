@@ -23,6 +23,7 @@ import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import OrderItemsMini from '@/pages/Orders/components/OrderItemsMini';
+import CarrierBadge from '@/pages/Orders/components/CarrierBadge';
 
 interface OrderListMobileProps {
   orders: Order[];
@@ -115,11 +116,12 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                     <Typography
                       as="div"
                       size="base"
-                      layoutClassName="truncate text-[16px] font-bold leading-tight"
+                      layoutClassName="min-w-0 truncate text-[16px] font-bold leading-tight"
                       textClassName="text-slate-900 dark:text-slate-50"
                     >
                       {order.customer?.name || '—'}
                     </Typography>
+                    <CarrierBadge order={order} />
                   </Box>
                   {order.customer?.phone ? (
                     <a

@@ -33,6 +33,7 @@ import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import OrderItemsMini from '@/pages/Orders/components/OrderItemsMini';
+import CarrierBadge from '@/pages/Orders/components/CarrierBadge';
 
 interface OrderListDesktopProps {
   orders: Order[];
@@ -138,11 +139,12 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                       <Typography
                         as="span"
                         size="base"
-                        layoutClassName="truncate text-[16px] font-bold"
+                        layoutClassName="min-w-0 truncate text-[16px] font-bold"
                         textClassName="text-slate-900 dark:text-slate-50"
                       >
                         {order.customer?.name || '—'}
                       </Typography>
+                      <CarrierBadge order={order} />
                     </Box>
                     {order.customer?.phone ? (
                       <Box layoutClassName="mt-1 flex items-center gap-1.5">
