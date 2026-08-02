@@ -22,7 +22,7 @@ const CarrierBadge: React.FC<CarrierBadgeProps> = ({ order }) => {
       backgroundClassName={isSpx ? 'bg-[#ee4d2d]' : 'bg-primary-600 dark:bg-primary-500'}
       textClassName="text-white"
     >
-      {isSpx ? 'Shopee' : 'Cúc Quý'}
+      {isSpx ? 'Shopee' : 'Cúc Quy'}
     </Badge>
   );
 };
