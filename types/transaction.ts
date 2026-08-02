@@ -57,6 +57,14 @@ export const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; cost?:
 export const expenseCategoryLabel = (c?: string | null): string =>
   EXPENSE_CATEGORIES.find((x) => x.value === c)?.label ?? (c ? 'Khác' : '—');
 
+/**
+ * Nhãn tag phân loại cho tiền RA (giống mã đơn của tiền vào).
+ * Khác expenseCategoryLabel: giữ nguyên chuỗi free-text (vd "Kết toán SePay (nội bộ)")
+ * thay vì gộp về "Khác", và trả '' khi chưa phân loại.
+ */
+export const expenseCategoryTag = (c?: string | null): string =>
+  c && c.trim() ? (EXPENSE_CATEGORIES.find((x) => x.value === c)?.label ?? c) : '';
+
 /** Category này có tính vào chi phí quán không (khớp expense_category_is_cost ở BE). */
 export const expenseCategoryIsCost = (c?: string | null): boolean =>
   !!c && c !== 'personal' && c !== 'owner' && c !== 'internal';

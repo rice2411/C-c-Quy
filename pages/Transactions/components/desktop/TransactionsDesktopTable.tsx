@@ -1,12 +1,14 @@
 import React from 'react';
 import { Calendar, Building2, CreditCard, TrendingUp, ArrowDownLeft } from 'lucide-react';
 import { Transaction } from '@/types';
+import { expenseCategoryTag } from '@/types/transaction';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@/components/ui/Table';
+import ExpenseTag from '../ExpenseTag';
 
 interface TransactionsDesktopTableProps {
   transactions: Transaction[];
@@ -39,7 +41,7 @@ const TransactionsDesktopTable: React.FC<TransactionsDesktopTableProps> = ({
               <TableHeaderCell layoutClassName="px-5 py-3.5">Ngày GD</TableHeaderCell>
               <TableHeaderCell layoutClassName="px-5 py-3.5">Số tiền</TableHeaderCell>
               <TableHeaderCell layoutClassName="px-5 py-3.5">Nội dung</TableHeaderCell>
-              <TableHeaderCell layoutClassName="px-5 py-3.5">Mã đơn</TableHeaderCell>
+              <TableHeaderCell layoutClassName="px-5 py-3.5">Mã đơn / Loại</TableHeaderCell>
               <TableHeaderCell layoutClassName="px-5 py-3.5">SePay ID</TableHeaderCell>
               <TableHeaderCell layoutClassName="px-5 py-3.5">Ngân hàng</TableHeaderCell>
               <TableHeaderCell layoutClassName="px-5 py-3.5">Tài khoản</TableHeaderCell>
@@ -105,7 +107,7 @@ const TransactionsDesktopTable: React.FC<TransactionsDesktopTableProps> = ({
                   </Typography>
                 </TableCell>
 
-                {/* Order ref */}
+                {/* Order ref (tiền vào) / Tag phân loại chi phí (tiền ra) */}
                 <TableCell layoutClassName="px-5 py-3.5">
                   {tr.orderNumber ? (
                     <Badge
@@ -117,6 +119,8 @@ const TransactionsDesktopTable: React.FC<TransactionsDesktopTableProps> = ({
                     >
                       {tr.orderNumber}
                     </Badge>
+                  ) : tr.transferType === 'out' && expenseCategoryTag(tr.expenseCategory) ? (
+                    <ExpenseTag transaction={tr} />
                   ) : (
                     <Typography as="span" size="xs" variant="muted">—</Typography>
                   )}

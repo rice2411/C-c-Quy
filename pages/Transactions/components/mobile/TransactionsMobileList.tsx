@@ -5,6 +5,7 @@ import { formatVND } from '@/utils/format/currencyUtil';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
+import ExpenseTag from '../ExpenseTag';
 
 interface TransactionsMobileListProps {
   transactions: Transaction[];
@@ -68,6 +69,7 @@ const TransactionsMobileList: React.FC<TransactionsMobileListProps> = ({
                   {tr.orderNumber}
                 </Badge>
               )}
+              {tr.transferType === 'out' && <ExpenseTag transaction={tr} />}
               {tr.sepayId ? (
                 <Typography
                   as="div"
