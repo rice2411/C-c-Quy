@@ -12,6 +12,7 @@ export interface TableSectionProps extends React.HTMLAttributes<HTMLTableSection
 }
 
 export interface TableRowProps extends React.HTMLAttributes<HTMLTableRowElement> {
+  backgroundClassName?: string;
   borderClassName?: string;
   hoverClassName?: string;
   layoutClassName?: string;
@@ -114,12 +115,13 @@ const TableBody = React.forwardRef<HTMLTableSectionElement, TableSectionProps>(
 
 const TableRow = React.forwardRef<HTMLTableRowElement, TableRowProps>(
   (
-    { borderClassName, hoverClassName, layoutClassName, stateClassName, textClassName, className, children, ...props },
+    { backgroundClassName, borderClassName, hoverClassName, layoutClassName, stateClassName, textClassName, className, children, ...props },
     ref,
   ) => {
     const classes = twMerge(
       [
         layoutClassName ?? '',
+        backgroundClassName ?? '',
         borderClassName ?? '',
         textClassName ?? '',
         hoverClassName ?? '',

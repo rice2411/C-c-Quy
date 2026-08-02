@@ -1,20 +1,27 @@
 import React from 'react';
 import { twMerge } from 'tailwind-merge';
 
-type TypographySize = 'inherit' | 'xs' | 'sm' | 'base' | 'lg';
+type TypographySize = 'inherit' | 'xs' | 'sm' | 'base' | 'lg' | 'xl';
 type TypographyTone = 'default' | 'muted' | 'strong';
 type TypographyVariant = 'primary' | 'secondary' | 'muted' | 'danger' | 'success';
 type TypographyRounded = 'none' | 'sm' | 'md' | 'full';
 
-export interface TypographyProps extends React.HTMLAttributes<HTMLParagraphElement> {
+export interface TypographyProps extends React.HTMLAttributes<HTMLElement> {
   size?: TypographySize;
   variant?: TypographyVariant;
   rounded?: TypographyRounded;
   tone?: TypographyTone;
-  as?: 'p' | 'span';
+  as?: 'p' | 'span' | 'div';
   layoutClassName?: string;
+  sizeClassName?: string;
   textClassName?: string;
+  backgroundClassName?: string;
+  borderClassName?: string;
+  roundedClassName?: string;
+  shadowClassName?: string;
   stateClassName?: string;
+  hoverClassName?: string;
+  focusClassName?: string;
 }
 
 const sizeClasses: Record<TypographySize, string> = {
@@ -22,7 +29,8 @@ const sizeClasses: Record<TypographySize, string> = {
   xs: 'text-xs',
   sm: 'text-sm',
   base: 'text-base',
-  lg: 'text-lg'
+  lg: 'text-lg',
+  xl: 'text-xl'
 };
 
 const toneClasses: Record<TypographyTone, string> = {
@@ -46,8 +54,30 @@ const roundedClasses: Record<TypographyRounded, string> = {
   full: 'rounded-full px-2 py-0.5'
 };
 
-const Typography = React.forwardRef<HTMLParagraphElement, TypographyProps>(
-  ({ size, variant, rounded = 'none', tone, as = 'p', layoutClassName, textClassName, stateClassName, className, children, ...props }, ref) => {
+const Typography = React.forwardRef<HTMLElement, TypographyProps>(
+  (
+    {
+      size,
+      variant,
+      rounded = 'none',
+      tone,
+      as = 'p',
+      layoutClassName,
+      sizeClassName,
+      textClassName,
+      backgroundClassName,
+      borderClassName,
+      roundedClassName,
+      shadowClassName,
+      stateClassName,
+      hoverClassName,
+      focusClassName,
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
     const resolvedSize = size ?? (as === 'span' ? 'inherit' : 'base');
     const resolvedColorClass = variant
       ? variantClasses[variant]
@@ -57,21 +87,30 @@ const Typography = React.forwardRef<HTMLParagraphElement, TypographyProps>(
           ? ''
           : toneClasses.default;
     const classes = twMerge(
-      [sizeClasses[resolvedSize], resolvedColorClass, roundedClasses[rounded], layoutClassName ?? '', textClassName ?? '', stateClassName ?? '', className ?? '']
+      [
+        sizeClasses[resolvedSize],
+        resolvedColorClass,
+        roundedClasses[rounded],
+        layoutClassName ?? '',
+        sizeClassName ?? '',
+        textClassName ?? '',
+        backgroundClassName ?? '',
+        borderClassName ?? '',
+        roundedClassName ?? '',
+        shadowClassName ?? '',
+        stateClassName ?? '',
+        hoverClassName ?? '',
+        focusClassName ?? '',
+        className ?? ''
+      ]
         .filter(Boolean)
         .join(' ')
     );
-    if (as === 'span') {
-      return (
-        <span className={classes} {...(props as React.HTMLAttributes<HTMLSpanElement>)}>
-          {children}
-        </span>
-      );
-    }
+    const Tag = as as React.ElementType;
     return (
-      <p ref={ref} className={classes} {...props}>
+      <Tag ref={ref} className={classes} {...props}>
         {children}
-      </p>
+      </Tag>
     );
   }
 );

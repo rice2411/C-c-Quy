@@ -62,7 +62,7 @@ const formatDateShort = (iso?: string) => {
 };
 
 const MiniMetric: React.FC<{
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   label: string;
   value: string;
   sub?: string;

@@ -7,6 +7,7 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   size?: BadgeSize;
   layoutClassName?: string;
   borderClassName?: string;
+  roundedClassName?: string;
   backgroundClassName?: string;
   textClassName?: string;
 }
@@ -18,7 +19,7 @@ const sizeClasses: Record<BadgeSize, string> = {
 
 const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
   (
-    { size = 'md', layoutClassName, borderClassName, backgroundClassName, textClassName, className, children, ...props },
+    { size = 'md', layoutClassName, borderClassName, roundedClassName, backgroundClassName, textClassName, className, children, ...props },
     ref
   ) => {
     const classes = twMerge(
@@ -27,6 +28,7 @@ const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
         sizeClasses[size],
         layoutClassName ?? '',
         borderClassName ?? '',
+        roundedClassName ?? '',
         backgroundClassName ?? '',
         textClassName ?? '',
         className ?? ''

@@ -8,6 +8,8 @@ export interface DonutDatum {
   label: string;
   value: number;
   color: string;
+  // Cho phép recharts <Pie data> (yêu cầu object dạng record) nhận DonutDatum.
+  [extra: string]: string | number | undefined;
 }
 
 interface DonutTooltipProps {

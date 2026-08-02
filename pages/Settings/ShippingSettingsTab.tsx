@@ -17,7 +17,7 @@ import OriginAddressPicker from '@/components/OriginAddressPicker';
 
 const ShippingSettingsTab: React.FC = () => {
   const { config, loading, saving, save } = useShippingConfig();
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const [draft, setDraft] = useState<ShippingConfiguration>(config);
 
   useEffect(() => { setDraft(config); }, [config]);
@@ -52,7 +52,7 @@ const ShippingSettingsTab: React.FC = () => {
     const sortedTiers = [...draft.tiers].sort((a, b) => a.maxKm - b.maxKm);
     const next: ShippingConfiguration = { ...draft, tiers: sortedTiers };
     try {
-      await save(next, user?.uid ?? null);
+      await save(next, currentUser?.uid ?? null);
       toast.success('Đã lưu cấu hình phí ship');
     } catch (err: any) {
       toast.error(err?.message || 'Lỗi khi lưu');
@@ -175,7 +175,7 @@ const ShippingSettingsTab: React.FC = () => {
                   <IconButton
                     type="button"
                     onClick={() => removeTier(idx)}
-                    aria-label="Xoá tier"
+                    label="Xoá tier"
                     textClassName="text-red-500 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />

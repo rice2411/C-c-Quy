@@ -12,6 +12,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   shadowClassName?: string;
   stateClassName?: string;
   hoverClassName?: string;
+  textClassName?: string;
 }
 
 const paddingClasses: Record<CardPadding, string> = {
@@ -32,6 +33,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       shadowClassName,
       stateClassName,
       hoverClassName,
+      textClassName,
       className,
       children,
       ...props
@@ -49,6 +51,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
         shadowClassName ?? '',
         stateClassName ?? '',
         hoverClassName ?? '',
+        textClassName ?? '',
         className ?? ''
       ]
         .filter(Boolean)

@@ -286,7 +286,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ initialData, onSave, onCancel
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-slate-400">
-                    <Image layoutClassName="w-12 h-12" />
+                    <Image className="w-12 h-12" />
                   </div>
                 )}
                 {isUploading && (

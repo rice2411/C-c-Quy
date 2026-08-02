@@ -132,8 +132,8 @@ const SerpApiMapsTestPage: React.FC = () => {
     try {
       const r = await getDirections(null, { startCoords: `${origin.lat},${origin.lng}`, endCoords: `${dest.lat},${dest.lng}`, travelMode: 6 });
       const first = r.directions?.[0];
-      setDrivingDistance(first?.distance ?? null);
-      setDrivingDuration(first?.duration ?? null);
+      setDrivingDistance(first?.distance != null ? String(first.distance) : null);
+      setDrivingDuration(first?.duration != null ? String(first.duration) : null);
       if (!first) setDrivingError('Khong tim thay duong di');
     } catch (err: any) { setDrivingError(err?.message || String(err)); }
     finally { setDrivingLoading(false); }

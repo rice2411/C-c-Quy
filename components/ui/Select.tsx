@@ -4,10 +4,11 @@ import { twMerge } from 'tailwind-merge';
 
 type SelectSize = 'sm' | 'md';
 
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
   size?: SelectSize;
   error?: boolean;
   fullWidth?: boolean;
+  layoutClassName?: string;
   backgroundClassName?: string;
   borderClassName?: string;
   focusClassName?: string;
@@ -29,6 +30,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       fullWidth = false,
       className,
       children,
+      layoutClassName,
       backgroundClassName,
       borderClassName,
       focusClassName,
@@ -46,6 +48,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         'block w-full min-w-0 box-border max-w-full appearance-none rounded-lg border bg-slate-50 pl-3 pr-9 text-slate-900 outline-none transition-colors focus:ring-2 focus:ring-primary-500 dark:bg-slate-700 dark:text-white',
         error ? 'border-red-500 dark:border-red-500' : 'border-slate-200 dark:border-slate-600',
         sizeClasses[size],
+        layoutClassName ?? '',
         borderClassName ?? '',
         focusClassName ?? '',
         backgroundClassName ?? '',

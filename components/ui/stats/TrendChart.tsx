@@ -11,7 +11,9 @@ export interface TrendSeries {
 }
 
 interface TrendChartProps {
-  data: Array<Record<string, unknown>>;
+  // Mảng điểm dữ liệu bất kỳ (chỉ forward cho recharts) — nhận mọi model
+  // domain như RevenuePoint[] mà không cần index signature.
+  data: object[];
   xKey: string;
   series: TrendSeries[];
   type?: 'area' | 'line';

@@ -3,6 +3,8 @@ import { twMerge } from 'tailwind-merge';
 
 export interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   layoutClassName?: string;
+  borderClassName?: string;
+  roundedClassName?: string;
   /** Tắt hiệu ứng mờ dần khi ảnh tải xong (mặc định bật). */
   disableFade?: boolean;
 }
@@ -13,7 +15,7 @@ export interface ImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
  * kẹt ở opacity-0, và ảnh lỗi (onError) để không vô hình mãi.
  */
 const Image = React.forwardRef<HTMLImageElement, ImageProps>(
-  ({ layoutClassName, className, disableFade, loading, decoding, onLoad, onError, ...props }, ref) => {
+  ({ layoutClassName, borderClassName, roundedClassName, className, disableFade, loading, decoding, onLoad, onError, ...props }, ref) => {
     const [loaded, setLoaded] = React.useState(false);
 
     // Callback ref: ảnh trong cache có thể đã complete trước khi onLoad gắn.
@@ -31,6 +33,8 @@ const Image = React.forwardRef<HTMLImageElement, ImageProps>(
         !disableFade ? 'transition-opacity duration-300' : '',
         !disableFade && !loaded ? 'opacity-0' : 'opacity-100',
         layoutClassName ?? '',
+        borderClassName ?? '',
+        roundedClassName ?? '',
         className ?? '',
       ]
         .filter(Boolean)

@@ -3,16 +3,20 @@ import { twMerge } from 'tailwind-merge';
 
 type InputSize = 'sm' | 'md';
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   size?: InputSize;
+  /** Input đã luôn `w-full`; prop giữ để tương thích call-site (no-op). */
+  fullWidth?: boolean;
   error?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  layoutClassName?: string;
   containerClassName?: string;
   leftIconClassName?: string;
   rightIconClassName?: string;
   backgroundClassName?: string;
   borderClassName?: string;
+  roundedClassName?: string;
   focusClassName?: string;
   sizeClassName?: string;
   shadowClassName?: string;
@@ -29,15 +33,18 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
     {
       size = 'md',
+      fullWidth: _fullWidth,
       error = false,
       leftIcon,
       rightIcon,
       className,
+      layoutClassName,
       containerClassName,
       leftIconClassName,
       rightIconClassName,
       backgroundClassName,
       borderClassName,
+      roundedClassName,
       focusClassName,
       sizeClassName,
       shadowClassName,
@@ -57,7 +64,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         leftIcon ? 'pl-9' : 'pl-3',
         rightIcon ? 'pr-9' : 'pr-3',
         sizeClasses[size],
+        layoutClassName ?? '',
         borderClassName ?? '',
+        roundedClassName ?? '',
         focusClassName ?? '',
         backgroundClassName ?? '',
         textClassName ?? '',
