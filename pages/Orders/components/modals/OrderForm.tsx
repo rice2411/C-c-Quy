@@ -141,7 +141,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(PaymentStatus.UNPAID);
   const [depositAmount, setDepositAmount] = useState(0);   // tiền cọc thoả thuận
   const [paidAmount, setPaidAmount] = useState(0);          // đã nhận (từ BE, read-only)
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.BANKING); // mặc định: chuyển khoản
   const [deliveryDate, setDeliveryDate] = useState<string>('');
   const [deliveryTime, setDeliveryTime] = useState<string>('');
   const [isDeliveryTimeEnabled, setIsDeliveryTimeEnabled] = useState<boolean>(false);
@@ -202,7 +202,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPaymentStatus(initialData.paymentStatus || PaymentStatus.UNPAID);
       setDepositAmount(initialData.depositAmount || 0);
       setPaidAmount(initialData.paidAmount || 0);
-      setPaymentMethod(initialData.paymentMethod || PaymentMethod.CASH);
+      setPaymentMethod(initialData.paymentMethod || PaymentMethod.BANKING);
       setDeliveryType(initialData.deliveryType || DeliveryType.SHIP);
       setTrackingNumber(initialData.trackingNumber || '');
       setShippingCost(initialData.shippingCost || 0);
@@ -278,7 +278,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPaymentStatus(PaymentStatus.UNPAID);
       setDepositAmount(0);
       setPaidAmount(0);
-      setPaymentMethod(PaymentMethod.CASH);
+      setPaymentMethod(PaymentMethod.BANKING); // mặc định: chuyển khoản
       setDeliveryType(DeliveryType.SHIP);
       setTrackingNumber('');
       setItems([]);
