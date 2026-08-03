@@ -23,6 +23,7 @@ import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 import Checkbox from '@/components/ui/Checkbox';
 import EmptyState from '@/components/ui/EmptyState';
 import Field from '@/components/ui/Field';
@@ -62,6 +63,25 @@ export interface FormItem {
   /** Option gói đã chọn (nhãn) — SP có packagingOptions; phí cộng vào giá bậc. */
   packagingOption?: string;
 }
+
+/**
+ * Khung "thẻ" bọc mỗi nhóm trong form tạo đơn (giao diện card hiện đại): bo góc,
+ * viền nhẹ, nền trắng nổi trên nền xám của panel, shadow mỏng. Nội dung bên trong
+ * (các sub-section) tự có tiêu đề riêng nên card KHÔNG thêm title (tránh trùng).
+ */
+const Section: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Card
+    padding="md"
+    layoutClassName="min-w-0 overflow-x-hidden"
+    backgroundClassName="bg-white dark:bg-slate-800"
+    borderClassName="border border-slate-200 dark:border-slate-700"
+    roundedClassName="rounded-xl"
+    shadowClassName="shadow-sm"
+  >
+    {children}
+  </Card>
+);
+
 const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCancel }) => {
   const { t } = useLanguage();
   const { currentUser, userData } = useAuth();
@@ -774,7 +794,17 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   };
 
   const footer = (
-    <Box layoutClassName="flex justify-end gap-3">
+    <Box layoutClassName="flex items-center justify-between gap-3">
+      {/* Tổng đơn luôn thấy ở footer dính khi cuộn form */}
+      <Box layoutClassName="min-w-0">
+        <Typography as="span" size="xs" textClassName="text-slate-500 dark:text-slate-400">
+          {t('form.total') || 'Tổng đơn'}
+        </Typography>
+        <Typography as="div" layoutClassName="text-lg font-bold leading-tight tabular-nums" textClassName="text-slate-900 dark:text-white">
+          {formatVND(total)}
+        </Typography>
+      </Box>
+      <Box layoutClassName="flex shrink-0 gap-3">
       <Button
         type="button"
         onClick={onCancel}
@@ -812,6 +842,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       >
         {isSubmitting ? t('form.saving') : t('form.save')}
       </Button>
+      </Box>
     </Box>
   );
 
@@ -825,7 +856,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         footer={footer}
       >
         <form onSubmit={handleSubmit} className="min-w-0">
-          <Box layoutClassName="space-y-6 p-4 sm:p-6 min-w-0 overflow-x-hidden">
+          <Box layoutClassName="space-y-4 p-4 sm:p-5 min-w-0 overflow-x-hidden" backgroundClassName="bg-slate-50 dark:bg-slate-900">
             {error ? (
               <Box
                 layoutClassName="flex items-center gap-2 rounded-lg p-3 text-sm"
@@ -837,34 +868,40 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               </Box>
             ) : null}
 
-            <Field label={t('detail.orderId')} htmlFor="order-form-order-number">
-              <Box layoutClassName="relative">
-                <Input
-                  id="order-form-order-number"
-                  type="text"
-                  value={loadingOrderNumber ? 'Generating...' : orderNumber}
-                  disabled
-                  readOnly
-                  leftIcon={<Hash />}
-                  leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
-                  backgroundClassName="bg-slate-100 dark:bg-slate-700/50"
-                  textClassName="font-mono text-slate-500 dark:text-slate-400"
-                  stateClassName="cursor-not-allowed"
-                />
-                {loadingOrderNumber ? (
-                  <Box layoutClassName="absolute right-3 top-2.5">
-                    <Spinner size="sm" textClassName="text-primary-500" />
+            <Section>
+              <Box layoutClassName="space-y-4">
+                <Field label={t('detail.orderId')} htmlFor="order-form-order-number">
+                  <Box layoutClassName="relative">
+                    <Input
+                      id="order-form-order-number"
+                      type="text"
+                      value={loadingOrderNumber ? 'Generating...' : orderNumber}
+                      disabled
+                      readOnly
+                      leftIcon={<Hash />}
+                      leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
+                      backgroundClassName="bg-slate-100 dark:bg-slate-700/50"
+                      textClassName="font-mono text-slate-500 dark:text-slate-400"
+                      stateClassName="cursor-not-allowed"
+                    />
+                    {loadingOrderNumber ? (
+                      <Box layoutClassName="absolute right-3 top-2.5">
+                        <Spinner size="sm" textClassName="text-primary-500" />
+                      </Box>
+                    ) : null}
                   </Box>
-                ) : null}
+                </Field>
+
+                <Checkbox
+                  checked={isTest}
+                  onChange={(e) => setIsTest(e.target.checked)}
+                  label="Đơn hàng test"
+                />
               </Box>
-            </Field>
+            </Section>
 
-            <Checkbox
-              checked={isTest}
-              onChange={(e) => setIsTest(e.target.checked)}
-              label="Đơn hàng test"
-            />
-
+            <Section>
+              <Box layoutClassName="space-y-4">
             <OrderFormCustomerSection
               customerName={customerName} setCustomerName={setCustomerName}
               phone={phone} setPhone={setPhone}
@@ -927,8 +964,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
                 </Box>
               </Field>
             </Box>
-            <Box borderClassName="border-t border-slate-100 dark:border-slate-700" />
+              </Box>
+            </Section>
 
+            <Section>
             <OrderFormItemsSection
               items={items}
               onAddItem={handleAddItem}
@@ -943,8 +982,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               recentlyAddedId={recentlyAddedId}
             />
 
-            <Box borderClassName="border-t border-slate-100 dark:border-slate-700" />
+            </Section>
 
+            <Section>
             <OrderFormDecorationSection
               surcharges={surcharges}
               surchargeTags={activeSurchargeTags}
@@ -952,12 +992,13 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               onChange={setSurcharges}
             />
 
-            <Box borderClassName="border-t border-slate-100 dark:border-slate-700" />
+            </Section>
 
+            <Section>
             <OrderFormDiscountSection discounts={discounts} onChange={setDiscounts} />
+            </Section>
 
-            <Box borderClassName="border-t border-slate-100 dark:border-slate-700" />
-
+            <Section>
             {/* ─── Khuyến mãi ─── */}
             <Box layoutClassName="space-y-2">
               <Box layoutClassName="flex items-center gap-1.5">
@@ -1045,8 +1086,9 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
                 <Typography key={i} as="p" size="xs" variant="danger">✗ {er}</Typography>
               ))}
             </Box>
+            </Section>
 
-            <Box borderClassName="border-t border-slate-100 dark:border-slate-700" />
+            <Section>
             <OrderFormStatusSection
               status={status}
               setStatus={setStatus}
@@ -1064,6 +1106,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               setPaidAmount={setPaidAmount}
               orderId={initialData?.id}
             />
+            </Section>
           </Box>
         </form>
       </BaseSlidePanel>
