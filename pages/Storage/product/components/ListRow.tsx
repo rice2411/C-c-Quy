@@ -31,7 +31,7 @@ const ListRow: React.FC<ProductCardCommonProps> = ({
       <TableCell layoutClassName="p-2">
         <div className="flex items-center gap-2">
           {product.image ? (
-            <img src={product.image} alt="" className="h-10 w-10 shrink-0 rounded object-cover" />
+            <img src={product.image} alt="" loading="lazy" decoding="async" className="h-10 w-10 shrink-0 rounded object-cover" />
           ) : (
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-slate-100 dark:bg-slate-700">
               <ImageIcon className="h-5 w-5 text-slate-400" />

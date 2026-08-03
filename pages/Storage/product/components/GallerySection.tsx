@@ -68,6 +68,8 @@ const GallerySection: React.FC<GallerySectionProps> = ({
             <img
               src={image}
               alt="Ảnh chính"
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover"
               onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/200x200?text=Err'; }}
             />
@@ -84,6 +86,8 @@ const GallerySection: React.FC<GallerySectionProps> = ({
             <img
               src={src}
               alt={`Gallery ${idx + 1}`}
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = 'https://placehold.co/200x200?text=Err';

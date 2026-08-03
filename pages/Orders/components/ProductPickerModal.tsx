@@ -263,6 +263,8 @@ const ProductPickerModal: React.FC<ProductPickerModalProps> = ({
                           <img
                             src={p.image}
                             alt={p.name}
+                            loading="lazy"
+                            decoding="async"
                             className="h-full w-full object-cover transition-transform group-hover:scale-105"
                           />
                         ) : (

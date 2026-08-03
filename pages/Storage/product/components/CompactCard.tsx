@@ -40,7 +40,7 @@ const CompactCard: React.FC<CompactCardProps> = ({ product, metric, selected, on
       </div>
       <div className="relative aspect-square bg-slate-100 dark:bg-slate-900">
         {product.image ? (
-          <img src={product.image} alt="" className="h-full w-full object-cover" />
+          <img src={product.image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full items-center justify-center">
             <ImageIcon className="h-8 w-8 text-slate-300" />

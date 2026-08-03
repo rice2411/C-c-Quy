@@ -87,6 +87,8 @@ const GridCard: React.FC<ProductCardCommonProps> = ({
           <img
             src={product.image}
             alt={product.name}
+            loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover transition-transform group-hover:scale-105"
           />
         ) : (

@@ -261,6 +261,8 @@ const ProductSearchBar: React.FC<ProductSearchBarProps> = ({
                           <img
                             src={p.image}
                             alt={p.name}
+                            loading="lazy"
+                            decoding="async"
                             className="h-10 w-10 shrink-0 rounded-md object-cover"
                           />
                         ) : (
