@@ -38,19 +38,19 @@ export const useNotificationLog = (query: NotificationLogQuery) => {
 /** Hộp thư in-app + số chưa đọc — tự làm mới 20s. */
 export const useNotificationInbox = () => {
   const { currentUser } = useAuth();
+  // 20s interval đã đủ; RQ mặc định KHÔNG poll khi tab ẩn (refetchIntervalInBackground=false).
+  // Bỏ refetchOnWindowFocus (gây double-fetch mỗi lần alt-tab quay lại).
   const inbox = useQuery({
     queryKey: qk.notifications.inbox,
     queryFn: () => fetchNotificationInbox(20),
     enabled: !!currentUser,
     refetchInterval: 20000,
-    refetchOnWindowFocus: true,
   });
   const unread = useQuery({
     queryKey: qk.notifications.unread,
     queryFn: fetchUnreadCount,
     enabled: !!currentUser,
     refetchInterval: 20000,
-    refetchOnWindowFocus: true,
   });
   return {
     items: (inbox.data ?? []) as AppNotification[],

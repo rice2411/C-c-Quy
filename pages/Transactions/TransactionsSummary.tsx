@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowDownLeft, TrendingUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -7,8 +7,12 @@ import { formatVND } from '@/utils/format/currencyUtil';
 import StatsBanner from '@/components/ui/StatsBanner';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
+
+// Số dòng render mỗi "trang" — chặn render nghìn dòng cùng lúc (bảng GD không phân trang BE).
+const PAGE_SIZE = 100;
 import TransactionsDesktopTable from './components/desktop/TransactionsDesktopTable';
 import TransactionsMobileList from './components/mobile/TransactionsMobileList';
 import TransactionDetailModal from './components/TransactionDetailModal';
@@ -28,13 +32,13 @@ const TransactionsSummary: React.FC<{ fromDate: string; toDate: string }> = ({ f
     if (error) toast.error(t('transactions.loadError') || 'Không tải được giao dịch');
   }, [error, t]);
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = useCallback((dateStr: string) => {
     try {
       return new Date(dateStr).toLocaleDateString('vi-VN', {
         day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
       });
     } catch { return dateStr; }
-  };
+  }, []);
 
   const filtered = useMemo(() => {
     let list = transactions;
@@ -68,7 +72,12 @@ const TransactionsSummary: React.FC<{ fromDate: string; toDate: string }> = ({ f
     [filtered],
   );
 
-  const handleClick = (tr: Transaction) => { setSelected(tr); setDetailOpen(true); };
+  // Render tối đa `visibleCount` dòng; đổi bộ lọc → reset về trang đầu.
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [fromDate, toDate, searchTerm]);
+  const visible = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+
+  const handleClick = useCallback((tr: Transaction) => { setSelected(tr); setDetailOpen(true); }, []);
 
   if (loading) {
     return <Box layoutClassName="flex flex-1 items-center justify-center py-16"><Spinner size="lg" textClassName="text-primary-500" /></Box>;
@@ -97,8 +106,19 @@ const TransactionsSummary: React.FC<{ fromDate: string; toDate: string }> = ({ f
         </Box>
       ) : (
         <>
-          <TransactionsMobileList transactions={filtered} formatDate={formatDate} onTransactionClick={handleClick} />
-          <TransactionsDesktopTable transactions={filtered} formatDate={formatDate} onTransactionClick={handleClick} />
+          <TransactionsMobileList transactions={visible} formatDate={formatDate} onTransactionClick={handleClick} />
+          <TransactionsDesktopTable transactions={visible} formatDate={formatDate} onTransactionClick={handleClick} />
+          {filtered.length > visibleCount && (
+            <Box layoutClassName="flex justify-center pt-1">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+              >
+                Xem thêm ({filtered.length - visibleCount})
+              </Button>
+            </Box>
+          )}
         </>
       )}
 

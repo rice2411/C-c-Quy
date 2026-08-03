@@ -112,4 +112,5 @@ const TransactionsMobileList: React.FC<TransactionsMobileListProps> = ({
   );
 };
 
-export default TransactionsMobileList;
+// memo → không re-render danh sách khi state cha đổi (mở modal chi tiết) mà props không đổi.
+export default React.memo(TransactionsMobileList);

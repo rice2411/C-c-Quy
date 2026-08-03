@@ -26,7 +26,9 @@ const classify = (ms: number | null, reachable: boolean): { level: PingLevel; la
   return { level: 'bad', label: 'Không ổn định' };
 };
 
-export const useSystemPing = (intervalMs = 10000): SystemPing => {
+// 20s: đủ tươi cho chấm trạng thái navbar, giảm nửa lượng ping nền so với 10s.
+// (RQ mặc định KHÔNG poll khi tab ẩn → nền tab khác không tốn request.)
+export const useSystemPing = (intervalMs = 20000): SystemPing => {
   const { currentUser } = useAuth();
   const q = useQuery({
     queryKey: ['system', 'ping'],

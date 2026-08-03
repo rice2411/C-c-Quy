@@ -175,4 +175,5 @@ const TransactionsDesktopTable: React.FC<TransactionsDesktopTableProps> = ({
   );
 };
 
-export default TransactionsDesktopTable;
+// memo → không re-render bảng khi state cha đổi (mở modal chi tiết) mà props không đổi.
+export default React.memo(TransactionsDesktopTable);
