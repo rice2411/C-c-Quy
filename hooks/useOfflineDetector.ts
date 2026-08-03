@@ -35,45 +35,15 @@ export const useOfflineDetector = (): boolean => {
       window.location.href = '/offline.html';
     };
 
-    // Add event listeners
+    // Add event listeners — `online`/`offline` là event-driven, đủ để phát hiện.
+    // (Bỏ setInterval 3s cũ: navigator.onLine đã được các event này cover, poll chỉ tốn wake-up thừa.)
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-
-    // Periodic check to ensure detection even if events don't fire
-    const checkInterval = setInterval(async () => {
-      if (navigator.onLine) {
-        try {
-          setIsOffline((prev) => {
-            if (prev) {
-              return false;
-            }
-            return prev;
-          });
-        } catch (error) {
-          setIsOffline((prev) => {
-            if (!prev) {
-              window.location.href = '/offline.html';
-              return true;
-            }
-            return prev;
-          });
-        }
-      } else {
-        setIsOffline((prev) => {
-          if (!prev) {
-            window.location.href = '/offline.html';
-            return true;
-          }
-          return prev;
-        });
-      }
-    }, 3000); // Check every 3 seconds
 
     // Cleanup
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      clearInterval(checkInterval);
     };
   }, []); // Empty dependency array - only run once on mount
 

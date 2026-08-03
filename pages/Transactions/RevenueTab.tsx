@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { Download, Receipt } from 'lucide-react';
-import * as XLSX from 'xlsx-js-style';
 import toast from 'react-hot-toast';
 import { useOrders } from '@/hooks/useOrders';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -51,8 +50,10 @@ const RevenueTab: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, 
 
   const total = useMemo(() => view.reduce((s, o) => s + (o.total ?? 0), 0), [view]);
 
-  const exportExcel = () => {
+  const exportExcel = async () => {
     if (view.length === 0) { toast.error('Không có đơn để xuất'); return; }
+    // Nạp XLSX (~849KB) theo yêu cầu — chỉ tải khi user bấm xuất.
+    const XLSX = await import('xlsx-js-style');
     const rows = view.map(o => ({
       'Mã đơn': o.orderNumber ?? o.id,
       'Ngày giao': fmtDate(o.deliveryDate),

@@ -69,6 +69,9 @@
 
     <link rel="icon" type="image/svg+xml" href="/icon-v4.svg" />
     <!-- Tailwind nay đã cài build-time (postcss/vite); CSS nạp qua import './styles.css' trong index.tsx -->
+    <!-- preconnect → mở sẵn kết nối tới CDN font, rút ngắn thời gian nạp stylesheet (render-blocking) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 antialiased transition-colors duration-200">

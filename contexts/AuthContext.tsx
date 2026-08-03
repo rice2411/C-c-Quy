@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import {
   saveUserToLocalStorage,
   getUserFromLocalStorage,
@@ -56,21 +56,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   /** Áp dụng phiên sau khi đăng nhập Google (token đã lưu trước đó). */
-  const applyLogin = (data: UserData) => {
+  const applyLogin = useCallback((data: UserData) => {
     saveUserToLocalStorage(data);
     addAccountToHistory(data);
     setUserData(data);
     setCurrentUser(toCurrentUser(data));
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     clearSsoToken();
     saveUserToLocalStorage(null);
     setUserData(null);
     setCurrentUser(null);
-  };
+  }, []);
 
-  const value: AuthContextType = { currentUser, userData, loading, applyLogin, logout };
+  // Memo value → consumer không re-render khi provider render lại vì lý do không liên quan.
+  const value: AuthContextType = useMemo(
+    () => ({ currentUser, userData, loading, applyLogin, logout }),
+    [currentUser, userData, loading, applyLogin, logout]
+  );
 
   return (
     <AuthContext.Provider value={value}>

@@ -15,7 +15,7 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import { Order } from '@/types';
 import { UserRole } from '@/types/user';
-import { exportOrdersToExcel, ExportColumn, getOrderTotal } from '@/utils/order/orderUtils';
+import { ExportColumn, getOrderTotal } from '@/utils/order/orderUtils';
 import { parseDateValue } from '@/utils/format/dateUtil';
 import toast from 'react-hot-toast';
 
@@ -218,11 +218,13 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
     });
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!canExportOrders) {
       toast.error('Only admin or super admin can export orders');
       return;
     }
+    // Nạp XLSX (~849KB) theo yêu cầu — chỉ tải khi user thật sự bấm xuất.
+    const { exportOrdersToExcel } = await import('@/utils/order/orderExcelExport');
     exportOrdersToExcel(filteredOrders, activeColumns, headerColor);
     onClose();
   };

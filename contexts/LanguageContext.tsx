@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { translations } from '@/i18n/translations';
 
 type Language = 'en' | 'vi';
@@ -21,15 +21,15 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, []);
 
-  const handleSetLanguage = (lang: Language) => {
+  const handleSetLanguage = useCallback((lang: Language) => {
     setLanguage(lang);
     localStorage.setItem('language', lang);
-  };
+  }, []);
 
-  const t = (path: string): string => {
+  const t = useCallback((path: string): string => {
     const keys = path.split('.');
     let current: any = translations[language];
-    
+
     for (const key of keys) {
       if (current[key] === undefined) {
         console.warn(`Translation missing for key: ${path} in language: ${language}`);
@@ -37,12 +37,18 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       }
       current = current[key];
     }
-    
+
     return current as string;
-  };
+  }, [language]);
+
+  // Memo value → consumer (gần như mọi component) không re-render khi provider render lại vì lý do khác.
+  const value = useMemo(
+    () => ({ language, setLanguage: handleSetLanguage, t }),
+    [language, handleSetLanguage, t]
+  );
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );

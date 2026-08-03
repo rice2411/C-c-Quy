@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import * as XLSX from 'xlsx-js-style';
 import { CheckCircle2, Copy, FileSpreadsheet, Truck, Upload, Wallet, XCircle } from 'lucide-react';
 import {
   syncOrderTracking, TrackingRow, TrackingSyncResult,
@@ -66,6 +65,8 @@ const TrackingImportModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) =>
     setFileName(file.name);
     setBusy(true);
     try {
+      // Nạp XLSX (~849KB) theo yêu cầu — chỉ tải khi user thật sự chọn file.
+      const XLSX = await import('xlsx-js-style');
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];

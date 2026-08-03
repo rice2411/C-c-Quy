@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
-import { toBlob } from 'html-to-image';
 import {
   BadgeCheck,
   Banknote,
@@ -295,6 +294,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
       );
       // Ảnh đã inline data: nên không cần cacheBust nữa.
       const opts = { pixelRatio: 2, backgroundColor: '#ffffff' } as const;
+      // Nạp html-to-image theo yêu cầu — chỉ tải khi user chụp thẻ gửi khách.
+      const { toBlob } = await import('html-to-image');
       // html-to-image hay miss ảnh ở lần chụp đầu (nhất là mobile) → warm-up rồi chụp thật.
       await toBlob(node, opts);
       const blob = await toBlob(node, opts);
