@@ -196,39 +196,35 @@ const AnalyticsPage: React.FC = () => {
             </Box>
             {(() => {
               const rows = data.shipByProvince;
-              const withData = rows.filter((r) => r.avgDays !== null);
-              const noData = rows.filter((r) => r.avgDays === null);
-              const maxAvg = Math.max(1, ...withData.map((r) => r.avgDays ?? 0));
-              if (withData.length === 0) {
+              if (rows.length === 0) {
                 return (
                   <Typography as="p" size="xs" variant="muted">
-                    Chưa có mốc giao nào. Vào <b>Đơn hàng → Làm mới vận đơn</b> để đồng bộ, rồi mở lại.
+                    Chưa có đơn ship tỉnh nào. Vào <b>Đơn hàng → Làm mới vận đơn</b> để đồng bộ mốc SPX, rồi mở lại.
                   </Typography>
                 );
               }
+              // Liệt kê HẾT các tỉnh/thành thành dòng riêng. Tỉnh đã có mốc giao → có bar +
+              // số ngày TB; tỉnh chưa có mốc → dòng "— · N đơn" (BE đã xếp xuống cuối).
+              const maxAvg = Math.max(1, ...rows.map((r) => r.avgDays ?? 0));
               return (
                 <Box layoutClassName="space-y-2">
-                  {withData.map((r) => {
+                  {rows.map((r) => {
+                    const has = r.avgDays !== null;
                     const d = r.avgDays ?? 0;
-                    const pct = Math.max(6, Math.round((d / maxAvg) * 100));
+                    const pct = has ? Math.max(6, Math.round((d / maxAvg) * 100)) : 0;
                     const barColor = d >= 4 ? 'bg-rose-400 dark:bg-rose-500' : d >= 2.5 ? 'bg-amber-400 dark:bg-amber-500' : 'bg-emerald-400 dark:bg-emerald-500';
                     return (
                       <Box key={r.province} layoutClassName="flex items-center gap-2">
                         <Typography as="span" size="xs" layoutClassName="w-28 shrink-0 truncate font-medium" textClassName="text-slate-700 dark:text-slate-200">{r.province}</Typography>
                         <Box layoutClassName="relative h-5 min-w-0 flex-1 overflow-hidden rounded" backgroundClassName="bg-slate-100 dark:bg-slate-700/50">
-                          <Box layoutClassName={`h-full rounded ${barColor}`} style={{ width: `${pct}%` }} />
+                          {has ? <Box layoutClassName={`h-full rounded ${barColor}`} style={{ width: `${pct}%` }} /> : null}
                         </Box>
-                        <Typography as="span" size="xs" layoutClassName="w-24 shrink-0 text-right tabular-nums" textClassName="text-slate-600 dark:text-slate-300">
-                          {d} ngày · {r.delivered}/{r.orders} đơn
+                        <Typography as="span" size="xs" layoutClassName="w-28 shrink-0 text-right tabular-nums" textClassName={has ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}>
+                          {has ? `${d} ngày · ${r.delivered}/${r.orders} đơn` : `— · ${r.orders} đơn`}
                         </Typography>
                       </Box>
                     );
                   })}
-                  {noData.length > 0 ? (
-                    <Typography as="p" size="xs" variant="muted" layoutClassName="pt-1">
-                      Chưa có mốc giao: {noData.map((r) => `${r.province} (${r.orders})`).join(', ')}
-                    </Typography>
-                  ) : null}
                 </Box>
               );
             })()}
