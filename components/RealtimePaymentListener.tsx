@@ -4,7 +4,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { qk } from '@/hooks/queryKeys';
 import {
-  createAuthedSocket,
   isSocketEnabled,
   SOCKET_EVENTS,
   type OrderPaidEvent,
@@ -37,34 +36,46 @@ const RealtimePaymentListener: React.FC = () => {
       return;
     }
 
-    const socket = createAuthedSocket(() => Promise.resolve(getSsoToken()));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let socket: any = null;
+    let cancelled = false;
 
-    socket.on(SOCKET_EVENTS.ORDER_PAID, (e: OrderPaidEvent) => {
-      const amount = (e?.amount || 0).toLocaleString('vi-VN');
-      playNotificationSound();
-      toast.success(`💰 Đơn ${e?.orderNumber} đã thanh toán ${amount}đ`, {
-        duration: 6000,
+    // Dynamic import → socket.io-client KHÔNG nằm trong bundle shell, chỉ tải khi
+    // Owner/Admin đã đăng nhập (đúng đối tượng cần realtime thanh toán).
+    import('@/services/socket/connect').then(({ createAuthedSocket }) => {
+      if (cancelled) return;
+      socket = createAuthedSocket(() => Promise.resolve(getSsoToken()));
+
+      socket.on(SOCKET_EVENTS.ORDER_PAID, (e: OrderPaidEvent) => {
+        const amount = (e?.amount || 0).toLocaleString('vi-VN');
+        playNotificationSound();
+        toast.success(`💰 Đơn ${e?.orderNumber} đã thanh toán ${amount}đ`, {
+          duration: 6000,
+        });
+
+        // Cập nhật trạng thái ngay trong cache (khỏi refresh): set đơn khớp = PAID...
+        if (e?.orderNumber) {
+          queryClient.setQueryData<Order[]>(qk.orders.all, (old) =>
+            Array.isArray(old)
+              ? old.map((o) =>
+                  o.orderNumber === e.orderNumber
+                    ? { ...o, paymentStatus: PaymentStatus.PAID }
+                    : o,
+                )
+              : old,
+          );
+        }
+        // ...rồi refetch để đồng bộ các field server tính (sepayId, updatedAt...).
+        queryClient.invalidateQueries({ queryKey: qk.orders.all });
       });
-
-      // Cập nhật trạng thái ngay trong cache (khỏi refresh): set đơn khớp = PAID...
-      if (e?.orderNumber) {
-        queryClient.setQueryData<Order[]>(qk.orders.all, (old) =>
-          Array.isArray(old)
-            ? old.map((o) =>
-                o.orderNumber === e.orderNumber
-                  ? { ...o, paymentStatus: PaymentStatus.PAID }
-                  : o,
-              )
-            : old,
-        );
-      }
-      // ...rồi refetch để đồng bộ các field server tính (sepayId, updatedAt...).
-      queryClient.invalidateQueries({ queryKey: qk.orders.all });
     });
 
     return () => {
-      socket.off(SOCKET_EVENTS.ORDER_PAID);
-      socket.disconnect();
+      cancelled = true;
+      if (socket) {
+        socket.off(SOCKET_EVENTS.ORDER_PAID);
+        socket.disconnect();
+      }
     };
   }, [currentUser, role, queryClient]);
 
