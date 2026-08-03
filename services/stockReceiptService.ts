@@ -65,6 +65,14 @@ export async function saveStockReceiptDraft(input: {
 }
 
 /** Cập nhật thông tin NCC → PATCH /stock-receipts/suppliers/:id. */
+/** Xoá 1 phiếu nhập (BE cascade lines + tài sản/chi phí liên kết + recompute tổng). */
+export async function deleteStockReceipt(
+  receiptId: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  const res = await apiClient.delete<{ ok: boolean; reason?: string }>(`${BASE}/${receiptId}`);
+  return res.data;
+}
+
 export async function updateSupplier(
   id: string,
   patch: Partial<SupplierContactInfo> & { name?: string },

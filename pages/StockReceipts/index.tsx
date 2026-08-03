@@ -115,6 +115,8 @@ const StockReceiptsPage: React.FC = () => {
   const [entryMode, setEntryMode] = useState<'ocr' | 'manual'>('ocr');
   const [detailReceiptId, setDetailReceiptId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  // Đang SỬA phiếu nào (null = tạo mới). Khi lưu ở chế độ sửa: tạo bản mới rồi xoá bản cũ id này.
+  const [editingReceiptId, setEditingReceiptId] = useState<string | null>(null);
   const [receiptSearch, setReceiptSearch] = useState('');
 
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
@@ -126,7 +128,7 @@ const StockReceiptsPage: React.FC = () => {
   const suppliersQuery = useImportedSuppliers();
   const materialsQuery = useImportedMaterials();
   const detailQuery = useStockReceiptDetail(detailReceiptId);
-  const { saveDraft } = useStockReceiptMutations();
+  const { saveDraft, deleteReceipt } = useStockReceiptMutations();
 
   const receiptRows = receiptsQuery.receipts;
   const supplierRows = suppliersQuery.suppliers;
@@ -228,6 +230,7 @@ const StockReceiptsPage: React.FC = () => {
   // Mở form nhập THỦ CÔNG: phiếu trống, KHÔNG chạy OCR.
   const handleStartManual = useCallback(() => {
     resetAndClosePreview();
+    setEditingReceiptId(null); // nhập mới, không phải sửa
     setEntryMode('manual');
     setDraftStructured(buildEmptyStructured());
     setImportModalOpen(true);
@@ -367,7 +370,19 @@ const StockReceiptsPage: React.FC = () => {
         targetSupplierId: selectedSupplierId,
         supplierContact,
       });
-      toast.success(t('billImport.saved'));
+      // Chế độ SỬA: đã tạo bản mới → xoá bản cũ (thay thế). Xoá lỗi → cảnh báo, không chặn.
+      if (editingReceiptId) {
+        try {
+          await deleteReceipt(editingReceiptId);
+        } catch (delErr) {
+          console.error(delErr);
+          toast.error('Đã lưu bản mới nhưng xoá phiếu cũ lỗi — kiểm tra lại danh sách phiếu.');
+        }
+        setEditingReceiptId(null);
+        toast.success('Đã cập nhật phiếu nhập.');
+      } else {
+        toast.success(t('billImport.saved'));
+      }
       setImportModalOpen(false);
       setEntryMode('ocr');
       resetAndClosePreview();
@@ -399,6 +414,44 @@ const StockReceiptsPage: React.FC = () => {
     setDetailOpen(false);
     setDetailReceiptId(null);
   }, []);
+
+  // SỬA phiếu: nạp dữ liệu phiếu đang xem vào form nhập thủ công (prefill), đánh dấu
+  // editingReceiptId. Khi Lưu → tạo bản mới rồi xoá bản cũ (xem handleSaveDraft).
+  const handleEditReceipt = useCallback(() => {
+    const d = receiptDetail;
+    if (!d) return;
+    const structured: StockReceiptStructured = {
+      supplierName: d.supplierNameRaw ?? null,
+      supplierPhone: null,
+      supplierAddress: null,
+      invoiceNumber: d.invoiceNumber ?? null,
+      storeOrBranch: d.storeOrBranch ?? null,
+      receiptDate: d.receiptDate ?? null,
+      receiptTime: null,
+      lineItems: (d.lineItems ?? []).map((l) => ({ ...l })),
+      productLineCount: d.productLineCount,
+      subtotal: d.subtotal,
+      tax: d.tax,
+      shippingFee: d.shippingFee,
+      discount: d.discount,
+      totalAmount: d.totalAmount,
+      currency: d.currency || 'VND',
+      paymentMethod: d.paymentMethod ?? null,
+      notes: d.notes ?? null,
+    };
+    setEditingReceiptId(d.id);
+    setDraftStructured(structured);
+    setSelectedSupplierId(null); // create tự khớp NCC theo tên
+    setSupplierContact(EMPTY_CONTACT);
+    setValidation(null);
+    setOcrText('');
+    setUploadedImageBase64(null);
+    setUploadedImageMimeType(null);
+    setPreviewUrl(null);
+    setEntryMode('manual');
+    setDetailOpen(false);
+    setImportModalOpen(true);
+  }, [receiptDetail]);
 
   const updateDraftField = <K extends keyof StockReceiptStructured>(key: K, value: StockReceiptStructured[K]) => {
     setDraftStructured((prev) => (prev ? { ...prev, [key]: value } : prev));
@@ -440,6 +493,7 @@ const StockReceiptsPage: React.FC = () => {
   const closeImportModal = useCallback(() => {
     setImportModalOpen(false);
     setEntryMode('ocr');
+    setEditingReceiptId(null); // huỷ → không còn ở chế độ sửa
     resetAndClosePreview();
   }, [resetAndClosePreview]);
 
@@ -477,7 +531,7 @@ const StockReceiptsPage: React.FC = () => {
       <BillImportModal
         open={importModalOpen}
         onClose={closeImportModal}
-        title={entryMode === 'manual' ? 'Nhập phiếu thủ công' : 'Nhập bill mới'}
+        title={editingReceiptId ? 'Sửa phiếu nhập' : entryMode === 'manual' ? 'Nhập phiếu thủ công' : 'Nhập bill mới'}
       >
         <BillImportEntryTab
           isManual={entryMode === 'manual'}
@@ -508,6 +562,7 @@ const StockReceiptsPage: React.FC = () => {
         detailLoading={detailLoading}
         receiptDetail={receiptDetail}
         onClose={closeReceiptDetail}
+        onEdit={handleEditReceipt}
       />
     </Box>
   );

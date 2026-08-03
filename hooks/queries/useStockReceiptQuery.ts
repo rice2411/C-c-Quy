@@ -28,6 +28,7 @@ import {
   fetchMaterialPriceOptions,
   fetchStockReceiptDetail,
   fetchStockReceiptSummaries,
+  deleteStockReceipt,
   mergeMaterials,
   mergeSuppliers,
   saveStockReceiptDraft,
@@ -254,6 +255,7 @@ export interface UseStockReceiptMutationsResult {
   updateMaterialInfo: (args: UpdateMaterialArgs) => Promise<void>;
   mergeSuppliersInto: (args: MergeArgs) => Promise<void>;
   mergeMaterialsInto: (args: MergeArgs) => Promise<void>;
+  deleteReceipt: (receiptId: string) => Promise<{ ok: boolean; reason?: string }>;
 }
 
 export const useStockReceiptMutations = (): UseStockReceiptMutationsResult => {
@@ -316,11 +318,20 @@ export const useStockReceiptMutations = (): UseStockReceiptMutationsResult => {
     },
   });
 
+  const deleteReceiptMutation = useMutation({
+    mutationFn: (receiptId: string) => deleteStockReceipt(receiptId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: qk.stockReceipt.summaries });
+      invalidateMasters();
+    },
+  });
+
   return {
     saveDraft: (args) => saveDraftMutation.mutateAsync(args),
     updateSupplierInfo: (args) => updateSupplierMutation.mutateAsync(args),
     updateMaterialInfo: (args) => updateMaterialMutation.mutateAsync(args),
     mergeSuppliersInto: (args) => mergeSuppliersMutation.mutateAsync(args),
     mergeMaterialsInto: (args) => mergeMaterialsMutation.mutateAsync(args),
+    deleteReceipt: (receiptId) => deleteReceiptMutation.mutateAsync(receiptId),
   };
 };

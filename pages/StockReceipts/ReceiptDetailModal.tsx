@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { FileText, Minus, Package, Plus, X } from 'lucide-react';
+import { FileText, Minus, Package, Pencil, Plus, X } from 'lucide-react';
 import type { SavedStockReceiptDetail } from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
@@ -25,6 +25,8 @@ export interface ReceiptDetailModalProps {
   detailLoading: boolean;
   receiptDetail: SavedStockReceiptDetail | null;
   onClose: () => void;
+  /** Bấm "Sửa" → mở form nhập với dữ liệu phiếu này (prefill). */
+  onEdit?: () => void;
 }
 
 const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
@@ -32,6 +34,7 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
   detailLoading,
   receiptDetail,
   onClose,
+  onEdit,
 }) => {
   const { t } = useLanguage();
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
@@ -85,15 +88,28 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
           <Typography size="sm" layoutClassName="font-semibold">
             Chi tiết bill
           </Typography>
-          <Button
-            type="button"
-            sizeClassName="text-sm"
-            textClassName="font-medium text-slate-500 dark:text-slate-300"
-            hoverClassName="hover:text-slate-700 dark:hover:text-white"
-            onClick={onClose}
-           variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
-            Đóng
-          </Button>
+          <Box layoutClassName="flex items-center gap-2">
+            {onEdit && receiptDetail && !receiptDetail.reconciled ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                leftIcon={<Pencil className="h-3.5 w-3.5" />}
+                onClick={onEdit}
+              >
+                Sửa
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              sizeClassName="text-sm"
+              textClassName="font-medium text-slate-500 dark:text-slate-300"
+              hoverClassName="hover:text-slate-700 dark:hover:text-white"
+              onClick={onClose}
+             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
+              Đóng
+            </Button>
+          </Box>
         </Box>
 
         {detailLoading ? (
