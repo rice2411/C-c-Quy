@@ -14,6 +14,7 @@ import {
   Wallet,
   BookOpen,
   UserCog,
+  IdCard,
   Bell,
   Activity,
   ShieldCheck,
@@ -191,6 +192,13 @@ export const routes: RouteConfig[] = [
     labelKey: "nav.users",
     icon: UserCog,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN], // Chỉ admin mới quản lý users
+  },
+  {
+    type: "page",
+    path: "/employees",
+    labelKey: "nav.employees",
+    icon: IdCard,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
     type: "page",

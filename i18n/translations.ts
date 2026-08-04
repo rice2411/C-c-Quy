@@ -23,6 +23,7 @@ export const translations = {
       materials: "Materials",
       customers: "Customers",
       users: "User Management",
+      employees: "Employees",
       requestLogs: "Request Logs",
       systemGroup: "System",
       systemTraffic: "Traffic",
@@ -440,7 +441,8 @@ export const translations = {
       role: {
         superAdmin: "Super Admin",
         admin: "Admin",
-        colaborator: "Colaborator"
+        colaborator: "Colaborator",
+        staff: "Staff"
       },
       filter: {
         all: "All Status"
@@ -775,6 +777,7 @@ export const translations = {
       materials: "Nguyên vật liệu",
       customers: "Khách hàng",
       users: "Quản lý người dùng",
+      employees: "Nhân viên",
       requestLogs: "Nhật ký Request",
       systemGroup: "Hệ thống",
       systemTraffic: "Lưu lượng",
@@ -1192,7 +1195,8 @@ export const translations = {
       role: {
         superAdmin: "Super Admin",
         admin: "Admin",
-        colaborator: "Cộng tác viên"
+        colaborator: "Cộng tác viên",
+        staff: "Nhân viên"
       },
       filter: {
         all: "Tất cả trạng thái"

@@ -162,6 +162,7 @@ const UserCard: React.FC<UserCardProps> = ({
             >
               <option value={UserRole.ADMIN}>{t('users.role.admin')}</option>
               <option value={UserRole.COLABORATOR}>{t('users.role.colaborator')}</option>
+              <option value={UserRole.STAFF}>{t('users.role.staff')}</option>
             </Select>
             <IconButton
               type="button"

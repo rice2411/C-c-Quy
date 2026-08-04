@@ -26,6 +26,7 @@ const CostOpexPage = lazy(() => import("./pages/CostHub/OpexTab"));
 const SuppliersPage = lazy(() => import("./pages/Suppliers/index"));
 const CustomersPage = lazy(() => import("./pages/Customers/index"));
 const UsersPage = lazy(() => import("./pages/Users/index"));
+const EmployeesPage = lazy(() => import("./pages/Employees/index"));
 const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
 const SystemLogsPage = lazy(() => import("./pages/System/Requests/index"));
 const SystemErrorsPage = lazy(() => import("./pages/System/Errors/index"));
@@ -208,6 +209,14 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/users")?.roles}>
             <UsersPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="employees"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/employees")?.roles}>
+            <EmployeesPage />
           </RoleBasedRoute>
         }
       />

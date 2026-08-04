@@ -22,6 +22,9 @@ export const qk = {
   customers: {
     all: ['customers'] as const,
   },
+  employees: {
+    all: ['employees'] as const,
+  },
   products: {
     all: ['products'] as const,
     versions: (productId: string) => ['products', 'versions', productId] as const,
