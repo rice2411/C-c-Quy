@@ -12,7 +12,7 @@ import {
   Wallet,
   Undo,
 } from 'lucide-react';
-import { Transaction, EXPENSE_CATEGORIES, expenseCategoryLabel, expenseCategoryIsCost } from '@/types/transaction';
+import { Transaction, EXPENSE_CATEGORIES, expenseCategoryLabel } from '@/types/transaction';
 import { ManualExpense } from '@/types';
 import { Order, REFUND_CATEGORIES, refundCategoryLabel } from '@/types/order';
 import { RefundListItem } from '@/services/orderService';
@@ -560,14 +560,14 @@ const OutReconcilePanel: React.FC<OutReconcilePanelProps> = ({
 
   // Đã xử lý = gắn phiếu hoàn / gắn chi phí tay / kết toán / đã đánh "không tính chi phí".
   // GD đã khớp = gắn hoàn tiền / khoản chi, hoặc đã settled / loại khỏi chi phí, HOẶC
-  // đã phân loại là category "không tính" (personal/owner/internal — chi phí cá nhân,
-  // rút vốn, nội bộ) → không phải chi phí cần đối soát nữa.
+  // ĐÃ PHÂN LOẠI (gán bất kỳ category chi phí nào — cá nhân, ship, khác, NVL...).
+  // Phân loại = đã xử lý; chỉ GD CHƯA phân loại mới nằm ở "Chưa khớp".
   const isMatched = (tr: Transaction) =>
     refundByTxId.has(tr.id) ||
     expenseByTxId.has(tr.id) ||
     !!tr.settledOut ||
     !!tr.costExcluded ||
-    (!!tr.expenseCategory && !expenseCategoryIsCost(tr.expenseCategory));
+    !!(tr.expenseCategory && tr.expenseCategory.trim());
   const unmatched = transactions.filter(tr => !isMatched(tr));
   const matched = transactions.filter(isMatched);
 
