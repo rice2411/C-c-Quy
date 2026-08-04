@@ -34,13 +34,15 @@ export const StatusBadge: React.FC<{ status: UserStatus }> = ({ status }) => {
 export const RoleBadge: React.FC<{ role: UserRole }> = ({ role }) => {
   const { t } = useLanguage();
   
-  const badges = {
+  const badges: Record<UserRole, { background: string; text: string; label: string }> = {
     super_admin: { background: 'bg-purple-100 dark:bg-purple-900/20', text: 'text-purple-800 dark:text-purple-400', label: t('users.role.superAdmin') },
     admin: { background: 'bg-blue-100 dark:bg-blue-900/20', text: 'text-blue-800 dark:text-blue-400', label: t('users.role.admin') },
-    colaborator: { background: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-800 dark:text-slate-300', label: t('users.role.colaborator') }
+    colaborator: { background: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-800 dark:text-slate-300', label: t('users.role.colaborator') },
+    staff: { background: 'bg-teal-100 dark:bg-teal-900/20', text: 'text-teal-800 dark:text-teal-400', label: t('users.role.staff') },
   };
-  
-  const badge = badges[role];
+
+  // Fallback an toàn nếu role lạ (tránh crash trang như bug role 'staff' trước đây).
+  const badge = badges[role] ?? badges.colaborator;
   
   return (
     <Badge
