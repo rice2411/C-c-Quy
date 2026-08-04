@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { setSsoToken, clearSsoToken } from '@/services/auth/ssoToken';
-import { getUserByEmail } from '@/services/userService';
+import { syncCurrentUser } from '@/services/userService';
 import { UserStatus } from '@/types/user';
 import Box from '@/components/ui/Box';
 import Spinner from '@/components/ui/Spinner';
@@ -14,17 +14,6 @@ import toast from 'react-hot-toast';
  * RiceService → 302 về `/auth/callback?token=<SSO JWT>`. Trang này lưu token,
  * đọc email từ JWT → lấy hồ sơ (role/status) từ BE → áp phiên → về trang chủ.
  */
-
-/** Giải mã payload JWT (base64url) chỉ để đọc email — KHÔNG dùng để tin cậy quyền. */
-const decodeJwtEmail = (token: string): string => {
-  try {
-    const part = token.split('.')[1] || '';
-    const payload = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/'))) as { email?: string };
-    return payload.email || '';
-  } catch {
-    return '';
-  }
-};
 
 const AuthCallbackPage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,11 +34,12 @@ const AuthCallbackPage: React.FC = () => {
       }
       setSsoToken(token);
       try {
-        const email = decodeJwtEmail(token);
-        const data = email ? await getUserByEmail(email) : null;
+        // Sync: upsert user theo token. User MỚI → BE tạo record status 'pending'
+        // (để admin thấy trong QL người dùng + duyệt). User cũ → trả hồ sơ hiện tại.
+        const data = await syncCurrentUser();
         if (!data) {
           clearSsoToken();
-          toast.error('Tài khoản chưa được cấp quyền. Liên hệ quản trị viên.');
+          toast.error('Đăng nhập thất bại: không tạo được hồ sơ. Thử lại hoặc liên hệ quản trị viên.');
           navigate('/login', { replace: true });
           return;
         }

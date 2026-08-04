@@ -19,6 +19,22 @@ export const getUserByEmail = async (email: string | null): Promise<UserData | n
 };
 
 /**
+ * Đồng bộ user đang đăng nhập lên BE (POST /users/sync — endpoint PUBLIC, BE lấy
+ * uid/email từ SSO token). User MỚI → BE tạo record status 'pending' (để admin
+ * thấy + duyệt). User cũ → cập nhật last_login. Trả hồ sơ (kèm status/role).
+ * Gọi ngay sau khi có token ở AuthCallback.
+ */
+export const syncCurrentUser = async (): Promise<UserData | null> => {
+  try {
+    const res = await apiClient.post('/users/sync', {});
+    return (res.data as UserData) ?? null;
+  } catch (error) {
+    console.error('Error syncing current user:', error);
+    return null;
+  }
+};
+
+/**
  * Kiểm tra xem user với UID đã tồn tại chưa (qua BE)
  * @param uid - UID của user cần kiểm tra
  * @returns UserData nếu tồn tại, null nếu không
