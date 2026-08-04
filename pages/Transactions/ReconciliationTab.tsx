@@ -447,10 +447,23 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     refunds.forEach(r => { if (r.transactionId) s.add(r.transactionId); });
     return s;
   }, [refunds]);
-  // Chưa khớp = chưa gắn phiếu hoàn, chưa kết toán, chưa đánh "không tính chi phí".
+  // Tập đưa vào panel Tiền ra (gồm cả đã xử lý để panel nhóm 2 phần): chưa gắn phiếu
+  // hoàn, chưa kết toán, chưa đánh "không tính".
   const outUnmatched = useMemo(
     () => outTransactions.filter(tr => !refundLinkedTxIds.has(tr.id) && !tr.settledOut && !tr.costExcluded),
     [outTransactions, refundLinkedTxIds],
+  );
+  // GD tiền ra đã LINK khoản chi tay (đã xử lý).
+  const expenseLinkedTxIds = useMemo(() => {
+    const s = new Set<string>();
+    manualExpenses.forEach(e => { if (e.transactionId) s.add(e.transactionId); });
+    return s;
+  }, [manualExpenses]);
+  // "Chưa khớp" THỰC SỰ = GD tiền ra MỒ CÔI: chưa gán tag (category), chưa link khoản chi
+  // (và đã loại phiếu hoàn/kết toán/không-tính ở outUnmatched). Dùng cho SỐ ĐẾM.
+  const outReallyUnmatched = useMemo(
+    () => outUnmatched.filter(tr => !expenseLinkedTxIds.has(tr.id) && !(tr.expenseCategory && tr.expenseCategory.trim())),
+    [outUnmatched, expenseLinkedTxIds],
   );
 
   const validTransactions = useMemo(() => baseFiltered.filter(tr => tr.orderNumber && tr.orderNumber.trim() !== ''), [baseFiltered]);
@@ -519,7 +532,7 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
   const subTabs: { key: TabKey; label: string; count: number; icon: React.ReactNode }[] = [
     { key: 'all', label: 'Tất cả', count: dateSearchFiltered.length, icon: <ArrowRightLeft className="h-3.5 w-3.5" /> },
     { key: 'valid', label: 'Hợp lệ', count: validTransactions.length, icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
-    { key: 'invalid', label: 'Chưa khớp', count: pendingInvalidCount + outUnmatched.length, icon: <AlertTriangle className="h-3.5 w-3.5" /> },
+    { key: 'invalid', label: 'Chưa khớp', count: pendingInvalidCount + outReallyUnmatched.length, icon: <AlertTriangle className="h-3.5 w-3.5" /> },
     { key: 'external', label: 'Ngoài HT', count: externalTransactions.length, icon: <XCircle className="h-3.5 w-3.5" /> },
     { key: 'out', label: 'Tiền ra', count: outTransactions.length, icon: <ArrowDownLeft className="h-3.5 w-3.5" /> },
   ];
