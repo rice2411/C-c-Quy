@@ -7,7 +7,6 @@ import Spinner from "./components/ui/Spinner";
 // Lazy-load từng trang → mỗi trang là 1 chunk JS riêng, chỉ tải khi vào (giảm bundle đầu).
 const DashboardPage = lazy(() => import("./pages/Dashboard/index"));
 const OrdersPage = lazy(() => import("./pages/Orders/index"));
-const AnalyticsPage = lazy(() => import("./pages/Analytics/index"));
 const TxOverviewPage = lazy(() => import("./pages/Transactions/OverviewPage"));
 const TxHistoryPage = lazy(() => import("./pages/Transactions/HistoryPage"));
 const TxReconciliationPage = lazy(() => import("./pages/Transactions/ReconciliationPage"));
@@ -78,14 +77,6 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/orders")?.roles}>
             <OrdersPage />
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="analytics"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/analytics")?.roles}>
-            <AnalyticsPage />
           </RoleBasedRoute>
         }
       />
