@@ -1,6 +1,6 @@
 import { apiClient } from '@/services/api/client';
 
-/** Số liệu tổng hợp cho trang Phân tích (khớp stored function analytics_overview). */
+/** Số liệu tổng hợp cho trang Phân tích — GỘP từ các endpoint analytics theo domain. */
 export interface AnalyticsOverview {
   kpi: {
     orders: number;
@@ -64,14 +64,30 @@ export interface AnalyticsInsight {
   actions?: string[];
 }
 
-const num = (v: unknown): number => (typeof v === 'number' ? v : Number(v) || 0);
+/** Kỳ phân tích: from/to là ISO date (YYYY-MM-DD). Bỏ trống = toàn bộ lịch sử. */
+export interface AnalyticsRange {
+  from?: string;
+  to?: string;
+}
 
-/** Lấy số liệu tổng hợp (rule-based, không AI). Type-guard mọi field. */
-export const fetchAnalyticsOverview = async (): Promise<AnalyticsOverview> => {
-  const res = await apiClient.get('/analytics/overview');
-  const d = (res.data ?? {}) as Record<string, any>;
+const num = (v: unknown): number => (typeof v === 'number' ? v : Number(v) || 0);
+const arr = (x: unknown): any[] => (Array.isArray(x) ? x : []);
+
+/** Chỉ đính kèm from/to khi có giá trị → endpoint tự hiểu "toàn bộ" khi thiếu. */
+const rangeParams = (range?: AnalyticsRange): Record<string, string> => {
+  const p: Record<string, string> = {};
+  if (range?.from) p.from = range.from;
+  if (range?.to) p.to = range.to;
+  return p;
+};
+
+// ── Type-guard từng lát dữ liệu (coi mọi field là untrusted) ──────────────
+
+const parseOrders = (d: Record<string, any>): Pick<
+  AnalyticsOverview,
+  'kpi' | 'deliveryType' | 'byMonth' | 'byDow' | 'statusBreakdown' | 'paymentBreakdown' | 'shipDuration' | 'shipByProvince' | 'provinceSales' | 'shipOps'
+> => {
   const k = (d.kpi ?? {}) as Record<string, unknown>;
-  const arr = (x: unknown): any[] => (Array.isArray(x) ? x : []);
   return {
     kpi: {
       orders: num(k.orders),
@@ -88,7 +104,6 @@ export const fetchAnalyticsOverview = async (): Promise<AnalyticsOverview> => {
     byDow: arr(d.byDow).map((x) => ({ dow: num(x.dow), orders: num(x.orders), revenue: num(x.revenue) })),
     statusBreakdown: arr(d.statusBreakdown).map((x) => ({ status: String(x.status ?? ''), orders: num(x.orders) })),
     paymentBreakdown: arr(d.paymentBreakdown).map((x) => ({ status: String(x.status ?? ''), orders: num(x.orders) })),
-    topProducts: arr(d.topProducts).map((x) => ({ name: String(x.name ?? ''), qty: num(x.qty), revenue: num(x.revenue) })),
     shipDuration: {
       count: num(d.shipDuration?.count),
       avgDays: num(d.shipDuration?.avgDays),
@@ -111,24 +126,6 @@ export const fetchAnalyticsOverview = async (): Promise<AnalyticsOverview> => {
       province: String(x.province ?? ''), orders: num(x.orders), revenue: num(x.revenue),
       aov: num(x.aov), shipAvg: num(x.ship_avg),
     })),
-    customers: {
-      total: num(d.customers?.total), returning: num(d.customers?.returning), newCount: num(d.customers?.newCount),
-      top: arr(d.customers?.top).map((x) => ({
-        name: String(x.name ?? ''), orders: num(x.orders), revenue: num(x.revenue), lastOrder: String(x.last_order ?? ''),
-      })),
-    },
-    receivables: {
-      count: num(d.receivables?.count), remaining: num(d.receivables?.remaining),
-      aging: {
-        d0_7: num(d.receivables?.aging?.d0_7), d8_14: num(d.receivables?.aging?.d8_14),
-        d15_30: num(d.receivables?.aging?.d15_30), d30p: num(d.receivables?.aging?.d30p),
-      },
-      orders: arr(d.receivables?.orders).map((x) => ({
-        orderNumber: String(x.order_number ?? ''), customerName: String(x.customer_name ?? ''),
-        total: num(x.total), paidAmount: num(x.paid_amount), remaining: num(x.remaining),
-        ageDays: num(x.age_days), paymentStatus: String(x.payment_status ?? ''),
-      })),
-    },
     shipOps: {
       trackingStatus: arr(d.shipOps?.trackingStatus).map((x) => ({ status: String(x.status ?? ''), n: num(x.n) })),
       histogram: {
@@ -140,11 +137,65 @@ export const fetchAnalyticsOverview = async (): Promise<AnalyticsOverview> => {
         shippedDate: String(x.shipped_date ?? ''), ageDays: num(x.age_days),
       })),
     },
-    collaborators: arr(d.collaborators).map((x) => ({ name: String(x.name ?? ''), orders: num(x.orders), revenue: num(x.revenue) })),
-    pnlMonthly: arr(d.pnlMonthly).map((x) => ({
-      month: String(x.month ?? ''), revenue: num(x.revenue), refund: num(x.refund), material: num(x.material), opex: num(x.opex),
+  };
+};
+
+const parseProducts = (d: Record<string, any>): Pick<AnalyticsOverview, 'topProducts'> => ({
+  topProducts: arr(d.topProducts).map((x) => ({ name: String(x.name ?? ''), qty: num(x.qty), revenue: num(x.revenue) })),
+});
+
+const parseCustomers = (d: Record<string, any>): Pick<AnalyticsOverview, 'customers' | 'receivables'> => ({
+  customers: {
+    total: num(d.customers?.total), returning: num(d.customers?.returning), newCount: num(d.customers?.newCount),
+    top: arr(d.customers?.top).map((x) => ({
+      name: String(x.name ?? ''), orders: num(x.orders), revenue: num(x.revenue), lastOrder: String(x.last_order ?? ''),
     })),
-    generatedAt: String(d.generatedAt ?? ''),
+  },
+  receivables: {
+    count: num(d.receivables?.count), remaining: num(d.receivables?.remaining),
+    aging: {
+      d0_7: num(d.receivables?.aging?.d0_7), d8_14: num(d.receivables?.aging?.d8_14),
+      d15_30: num(d.receivables?.aging?.d15_30), d30p: num(d.receivables?.aging?.d30p),
+    },
+    orders: arr(d.receivables?.orders).map((x) => ({
+      orderNumber: String(x.order_number ?? ''), customerName: String(x.customer_name ?? ''),
+      total: num(x.total), paidAmount: num(x.paid_amount), remaining: num(x.remaining),
+      ageDays: num(x.age_days), paymentStatus: String(x.payment_status ?? ''),
+    })),
+  },
+});
+
+const parseCommission = (d: Record<string, any>): Pick<AnalyticsOverview, 'collaborators'> => ({
+  collaborators: arr(d.collaborators).map((x) => ({ name: String(x.name ?? ''), orders: num(x.orders), revenue: num(x.revenue) })),
+});
+
+const parseRevenue = (d: Record<string, any>): Pick<AnalyticsOverview, 'pnlMonthly'> => ({
+  pnlMonthly: arr(d.pnlMonthly).map((x) => ({
+    month: String(x.month ?? ''), revenue: num(x.revenue), refund: num(x.refund), material: num(x.material), opex: num(x.opex),
+  })),
+});
+
+/**
+ * Lấy số liệu tổng hợp (rule-based, không AI) — gọi SONG SONG 5 endpoint analytics
+ * theo domain rồi gộp lại thành 1 AnalyticsOverview. Type-guard mọi field.
+ */
+export const fetchAnalyticsOverview = async (range?: AnalyticsRange): Promise<AnalyticsOverview> => {
+  const params = rangeParams(range);
+  const get = (path: string) => apiClient.get(path, { params }).then((r) => (r.data ?? {}) as Record<string, any>);
+  const [orders, products, customers, commission, revenue] = await Promise.all([
+    get('/orders/analytics'),
+    get('/products/analytics'),
+    get('/customers/analytics'),
+    get('/commission/analytics'),
+    get('/revenue/analytics'),
+  ]);
+  return {
+    ...parseOrders(orders),
+    ...parseProducts(products),
+    ...parseCustomers(customers),
+    ...parseCommission(commission),
+    ...parseRevenue(revenue),
+    generatedAt: String(orders.generatedAt ?? ''),
   };
 };
 

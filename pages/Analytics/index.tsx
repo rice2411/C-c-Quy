@@ -4,6 +4,7 @@ import { Sparkles, TrendingUp, Truck, Package, Wallet, AlertTriangle, Lightbulb,
 import {
   AnalyticsOverview,
   AnalyticsInsight,
+  AnalyticsRange,
   fetchAnalyticsOverview,
   fetchAnalyticsInsight,
 } from '@/services/analyticsService';
@@ -13,9 +14,32 @@ import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import Button from '@/components/ui/Button';
+import Select from '@/components/ui/Select';
 import Spinner from '@/components/ui/Spinner';
 import TrendChart from '@/components/ui/stats/TrendChart';
 import DonutChart from '@/components/ui/stats/DonutChart';
+
+/** Kỳ phân tích: preset → khoảng from/to (YYYY-MM-DD, giờ máy). 'all' = toàn bộ. */
+type RangePreset = 'all' | '30d' | '90d' | '6m' | 'ytd';
+const RANGE_OPTIONS: { value: RangePreset; label: string }[] = [
+  { value: 'all', label: 'Toàn bộ' },
+  { value: '30d', label: '30 ngày' },
+  { value: '90d', label: '90 ngày' },
+  { value: '6m', label: '6 tháng' },
+  { value: 'ytd', label: 'Từ đầu năm' },
+];
+const fmtDate = (d: Date): string =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const computeRange = (preset: RangePreset): AnalyticsRange => {
+  if (preset === 'all') return {};
+  const to = new Date();
+  const from = new Date();
+  if (preset === '30d') from.setDate(from.getDate() - 29);
+  else if (preset === '90d') from.setDate(from.getDate() - 89);
+  else if (preset === '6m') from.setMonth(from.getMonth() - 6);
+  else if (preset === 'ytd') { from.setMonth(0); from.setDate(1); }
+  return { from: fmtDate(from), to: fmtDate(to) };
+};
 
 const PALETTE = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#06b6d4', '#8b5cf6', '#ec4899'];
 const DELIVERY_LABEL: Record<string, string> = {
@@ -92,15 +116,19 @@ const InsightBlock: React.FC<{ icon: React.ReactNode; title: string; items?: str
 const AnalyticsPage: React.FC = () => {
   const [data, setData] = useState<AnalyticsOverview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [preset, setPreset] = useState<RangePreset>('all');
   const [insight, setInsight] = useState<AnalyticsInsight | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
 
   useEffect(() => {
     let alive = true;
+    setLoading(true);
+    // Đổi kỳ → chạy lại AI cho khớp số liệu mới; xoá nhận định cũ.
+    setInsight(null);
     (async () => {
       try {
-        const d = await fetchAnalyticsOverview();
+        const d = await fetchAnalyticsOverview(computeRange(preset));
         if (alive) setData(d);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Không tải được số liệu phân tích');
@@ -111,7 +139,7 @@ const AnalyticsPage: React.FC = () => {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [preset]);
 
   const peakMonth = useMemo(() => {
     if (!data?.byMonth.length) return null;
@@ -152,6 +180,19 @@ const AnalyticsPage: React.FC = () => {
         <Heading level={1} layoutClassName="flex items-center gap-2" textClassName="text-xl font-bold">
           <TrendingUp className="h-5 w-5 text-primary-500" /> Phân tích kinh doanh
         </Heading>
+        <Box layoutClassName="flex flex-wrap items-center gap-2">
+        <Select
+          size="sm"
+          value={preset}
+          onChange={(e) => setPreset(e.target.value as RangePreset)}
+          disabled={loading}
+          layoutClassName="w-auto"
+          aria-label="Chọn kỳ phân tích"
+        >
+          {RANGE_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </Select>
         <Button
           type="button"
           onClick={() => void runAi()}
@@ -168,6 +209,7 @@ const AnalyticsPage: React.FC = () => {
         >
           {aiLoading ? 'AI đang phân tích…' : 'Phân tích bằng AI'}
         </Button>
+        </Box>
       </Box>
 
       {loading ? (
