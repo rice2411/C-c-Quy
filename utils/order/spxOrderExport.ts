@@ -33,7 +33,7 @@ export const codRemaining = (o: Order): number =>
 
 /**
  * 1 dòng đơn theo đúng thứ tự cột template SPX. Số tiền (Giá tiền/Giá trị đơn/COD) đều = phần
- * THU HỘ còn lại (đã trừ cọc); đơn không COD dùng tổng. Cột A = số nhóm bưu gửi; Mã KH = mã đơn shop.
+ * THU HỘ còn lại (đã trừ cọc); đơn không COD dùng tổng. Cột A = MÃ ĐƠN HÀNG (mã đơn shop); Mã KH = SĐT.
  * - mode 'new' (2 cấp): D=Tỉnh, E=Quận/Huyện — sheet "Tạo đơn (địa chỉ mới)" (29 cột).
  * - mode 'old' (3 cấp): D=Tỉnh, E=Quận/Huyện, F=Xã/Phường — sheet "Tạo đơn (địa chỉ cũ)" (30 cột).
  */
@@ -52,7 +52,7 @@ const buildRow = (
   const detailAddress = [o.customer.address, o.customer.city].filter(Boolean).join(', ');
   const name = o.customer.name || '';
   const phone = String(o.customer.phone || '');
-  const custRef = o.orderNumber || o.id; // Mã khách hàng = tham chiếu shop
+  const orderCode = o.orderNumber || String(seq); // Cột A: MÃ ĐƠN HÀNG (mã đơn shop, thay STT)
   const st = resolved?.state ?? '';
   const city = resolved?.city ?? '';
   const ward = resolved?.ward ?? '';
@@ -60,7 +60,7 @@ const buildRow = (
   if (mode === 'old') {
     // 3 cấp — khớp cột sheet "Tạo đơn (địa chỉ cũ)"/example (A..AD, 30 cột).
     return [
-      seq,            // A Mã đơn (số nhóm bưu gửi)
+      orderCode,      // A Mã đơn hàng (mã đơn shop, thay STT)
       name,           // B Tên
       phone,          // C SĐT
       st,             // D Tỉnh
@@ -76,7 +76,7 @@ const buildRow = (
       '',             // N Chiều dài
       '',             // O Chiều cao
       '',             // P Chiều rộng
-      custRef,        // Q Mã khách hàng
+      phone,          // Q Mã khách hàng = SĐT
       money,          // R Giá trị đơn hàng
       'N',            // S Giao hàng một phần
       'N',            // T Cho phép thử
@@ -96,7 +96,7 @@ const buildRow = (
   // 2 cấp — sheet "Tạo đơn (địa chỉ mới)" (A..AC, 29 cột). Hệ MỚI: D=Tỉnh, E=Phường/Xã (KHÔNG Quận).
   const province = resolved?.province ?? '';
   return [
-    seq,            // A Mã đơn (số nhóm bưu gửi)
+    orderCode,      // A Mã đơn hàng (mã đơn shop, thay STT)
     name,           // B Tên
     phone,          // C SĐT
     province,       // D Tỉnh (hệ mới, vd "Thành phố Hồ Chí Minh")
@@ -111,7 +111,7 @@ const buildRow = (
     '',             // M Chiều dài
     '',             // N Chiều rộng
     '',             // O Chiều cao
-    custRef,        // P Mã khách hàng
+    phone,          // P Mã khách hàng = SĐT
     money,          // Q Giá trị đơn hàng
     'N',            // R Giao hàng một phần
     'N',            // S Cho phép thử
