@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom';
 import { Copy, ExternalLink, Image as ImageIcon, TrendingDown, TrendingUp } from 'lucide-react';
 import type { Product } from '@/types';
 import { calcMargin, marginColor } from '@/utils/product/productMargin';
-import { getStockStatus } from '@/utils/product/stockStatus';
 import type { ProductSalesMetric } from '@/pages/Storage/product/productStats';
 import Card from '@/components/ui/Card';
 import Checkbox from '@/components/ui/Checkbox';
@@ -34,7 +33,6 @@ const GridCard: React.FC<ProductCardCommonProps> = ({
 }) => {
   const m = calcMargin(product);
   const marg = marginColor(m);
-  const stock = getStockStatus(product);
 
   return (
     <Card
@@ -131,15 +129,6 @@ const GridCard: React.FC<ProductCardCommonProps> = ({
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
           {metric && metric.unitsSold > 0 ? (
             <span className="text-slate-500 dark:text-slate-400">📈 {metric.unitsSold} sp · 30d</span>
-          ) : null}
-          {stock.kind !== 'none' ? (
-            <span
-              className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold"
-              style={{ backgroundColor: stock.color + '22', color: stock.color }}
-              title={stock.kind === 'out' ? 'Hết hàng' : stock.kind === 'low' ? 'Sắp hết' : 'Còn hàng'}
-            >
-              {stock.kind === 'out' ? '⚠ HẾT' : stock.kind === 'low' ? '⚠' : '✓'} {stock.label}
-            </span>
           ) : null}
         </div>
       </div>

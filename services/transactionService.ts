@@ -1,10 +1,107 @@
 import { apiClient } from '@/services/api/client';
-import { Transaction, ExpenseRule } from '@/types';
+import {
+  Transaction,
+  ExpenseRule,
+  LedgerResult,
+  LedgerSummary,
+  LedgerFilters,
+  LedgerStatus,
+  LedgerTransaction,
+  LedgerSeriesPoint,
+} from '@/types';
 
 /** Danh sách giao dịch (BE sắp theo ngày giảm dần). */
 export const fetchTransactions = async (): Promise<Transaction[]> => {
   const res = await apiClient.get<Transaction[]>('/transactions');
   return res.data;
+};
+
+const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+
+const LEDGER_STATUSES: LedgerStatus[] = [
+  'matched', 'external', 'unmatched', 'refund', 'settled', 'excluded', 'expense',
+];
+
+/** Chuẩn hoá 1 dòng sổ trả từ API — coi mọi field untrusted (data-safety). */
+const mapLedgerItem = (r: Record<string, unknown>): LedgerTransaction => ({
+  id: str(r.id),
+  accountNumber: str(r.accountNumber),
+  accumulated: num(r.accumulated),
+  code: typeof r.code === 'string' ? r.code : null,
+  content: str(r.content),
+  createdAt: str(r.createdAt),
+  description: str(r.description),
+  gateway: str(r.gateway),
+  orderNumber: str(r.orderNumber),
+  receivedAt: str(r.receivedAt),
+  referenceCode: str(r.referenceCode),
+  sepayId: num(r.sepayId),
+  subAccount: str(r.subAccount),
+  transactionDate: str(r.transactionDate),
+  transferType: r.transferType === 'out' ? 'out' : 'in',
+  transferAmount: num(r.transferAmount),
+  isExternal: r.isExternal === true,
+  settledOut: r.settledOut === true,
+  expenseCategory: typeof r.expenseCategory === 'string' ? r.expenseCategory : null,
+  costExcluded: r.costExcluded === true,
+  needsReview: r.needsReview === true,
+  reviewNote: typeof r.reviewNote === 'string' ? r.reviewNote : null,
+  status: LEDGER_STATUSES.includes(r.status as LedgerStatus) ? (r.status as LedgerStatus) : 'unmatched',
+});
+
+/** Sổ giao dịch thống nhất: list phân trang + total + summary (thu+chi 1 sổ). */
+export const fetchLedger = async (filters: LedgerFilters): Promise<LedgerResult> => {
+  const res = await apiClient.get<{ items?: unknown[]; total?: unknown; summary?: Record<string, unknown> }>(
+    '/transactions/ledger',
+    {
+      params: {
+        from: filters.from || undefined,
+        to: filters.to || undefined,
+        type: filters.type || undefined,
+        status: filters.status || undefined,
+        category: filters.category || undefined,
+        gateway: filters.gateway || undefined,
+        search: filters.search || undefined,
+        limit: filters.limit,
+        offset: filters.offset,
+      },
+    },
+  );
+  const d = res.data ?? {};
+  const s = (d.summary ?? {}) as Record<string, unknown>;
+  const summary: LedgerSummary = {
+    totalIn: num(s.totalIn),
+    totalOut: num(s.totalOut),
+    net: num(s.net),
+    count: num(s.count),
+    inCount: num(s.inCount),
+    outCount: num(s.outCount),
+    reconciledCount: num(s.reconciledCount),
+    unreconciledCount: num(s.unreconciledCount),
+    reconciledPct: num(s.reconciledPct),
+  };
+  return {
+    items: Array.isArray(d.items) ? d.items.map((it) => mapLedgerItem((it ?? {}) as Record<string, unknown>)) : [],
+    total: num(d.total),
+    summary,
+  };
+};
+
+/** Chuỗi thu/chi theo ngày trong kỳ (biểu đồ sổ). */
+export const fetchLedgerSeries = async (
+  fromISO: string,
+  toISO: string,
+): Promise<LedgerSeriesPoint[]> => {
+  const res = await apiClient.get<unknown[]>('/transactions/ledger/series', {
+    params: { from: fromISO || undefined, to: toISO || undefined },
+  });
+  return Array.isArray(res.data)
+    ? res.data.map((raw) => {
+        const p = (raw ?? {}) as Record<string, unknown>;
+        return { day: str(p.day), in: num(p.in), out: num(p.out) };
+      })
+    : [];
 };
 
 /** Set tay phân loại chi phí cho 1 giao dịch (category + cờ loại khỏi chi phí). */

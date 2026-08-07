@@ -8,6 +8,7 @@ function toEmployee(r: any): Employee {
   return {
     id: typeof r?.id === 'string' ? r.id : '',
     name: typeof r?.name === 'string' ? r.name : '',
+    email: typeof r?.email === 'string' ? r.email : null,
     position: typeof r?.position === 'string' ? r.position : null,
     phone: typeof r?.phone === 'string' ? r.phone : null,
     startDate: typeof r?.startDate === 'string' ? r.startDate : null,
@@ -26,6 +27,7 @@ export async function fetchEmployees(): Promise<Employee[]> {
 
 export type EmployeeInput = {
   name: string;
+  email?: string | null;
   position?: string | null;
   phone?: string | null;
   startDate?: string | null;

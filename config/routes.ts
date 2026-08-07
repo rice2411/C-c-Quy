@@ -25,6 +25,7 @@ import {
   AlertTriangle,
   HeartPulse,
   Building2,
+  Clock,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { ScreenVisibilityMap } from "@/types";
@@ -83,16 +84,9 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/finance/history",
-    labelKey: "nav.txHistory",
+    path: "/finance/ledger",
+    labelKey: "nav.txLedger",
     icon: Coins,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  },
-  {
-    type: "page",
-    path: "/finance/reconciliation",
-    labelKey: "nav.txReconciliation",
-    icon: Wallet,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -199,6 +193,13 @@ export const routes: RouteConfig[] = [
     labelKey: "nav.employees",
     icon: IdCard,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/attendance",
+    labelKey: "nav.attendance",
+    icon: Clock,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.STAFF],
   },
   {
     type: "page",
@@ -370,8 +371,7 @@ export const navGroups: NavGroupConfig[] = [
     icon: Wallet,
     childPaths: [
       "/finance/overview",
-      "/finance/history",
-      "/finance/reconciliation",
+      "/finance/ledger",
     ],
   },
   {

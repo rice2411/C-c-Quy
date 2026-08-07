@@ -32,7 +32,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { qk } from '@/hooks/queryKeys';
-import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund, fetchTrackingTimeline } from '@/services/orderService';
+import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund, fetchTrackingTimeline, fetchOrder } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber, fetchOutUnlinkedTransactions } from '@/services/transactionService';
 import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor, groupFlavors, sizeCountsLabel, sizeImage, sizeCount } from '@/types';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
@@ -66,6 +66,10 @@ interface OrderDetailProps {
   onDelete?: () => void;
   canDelete?: boolean;
   onUpdateOrder?: (id: string, data: Partial<Order>) => Promise<void>;
+  /** Đổi trạng thái — đường nhẹ/nhanh (optimistic). Dùng cho patch chỉ có status. */
+  onChangeStatus?: (id: string, status: string) => Promise<void>;
+  /** Patch field nhanh (paymentStatus/paymentMethod/deliveryType) — đường nhẹ (optimistic). */
+  onPatchFields?: (id: string, patch: Record<string, unknown>) => Promise<void>;
 }
 
 const OrderDetail: React.FC<OrderDetailProps> = ({
@@ -77,6 +81,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   onDelete,
   canDelete = false,
   onUpdateOrder,
+  onChangeStatus,
+  onPatchFields,
 }) => {
   const { t } = useLanguage();
   const { products } = useProducts();
@@ -127,6 +133,21 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   React.useEffect(() => {
     setLocalOrder(order);
   }, [order]);
+
+  // List trả bản NHẸ (thiếu history/refunds/decorations/appliedPromotions/giftItems).
+  // Khi mở/đổi đơn → fetch bản ĐẦY ĐỦ để hydrate (render bản nhẹ ngay, fill full sau).
+  React.useEffect(() => {
+    if (!isOpen || !order?.id) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const full = await fetchOrder(order.id);
+        if (!cancelled && full) setLocalOrder(full);
+      } catch { /* lỗi → giữ bản nhẹ */ }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, order?.id, order?.updatedAt]);
 
   // Khi trạng thái thanh toán / sepayId của đơn đổi (vd sau khi ghi nhận thanh
   // toán) → refetch transactions để cập nhật "Lịch sử nhận tiền" như cũ.
@@ -504,6 +525,20 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     if (!canEdit || !currentOrder?.id || !onUpdateOrder) return;
     setLoading(true);
     try {
+      // Đường NHẸ/NHANH (optimistic, không gửi cả đơn) cho các field đơn giản:
+      const keys = Object.keys(patch);
+      // status → hàm chuyên (order_update_status).
+      if (onChangeStatus && keys.length === 1 && keys[0] === 'status' && patch.status) {
+        await onChangeStatus(currentOrder.id, patch.status as string);
+        setIsStatusOpen(false);
+        return;
+      }
+      // paymentStatus/paymentMethod/deliveryType → order_patch_fields.
+      const LIGHT_FIELDS = ['paymentStatus', 'paymentMethod', 'deliveryType'];
+      if (onPatchFields && keys.length > 0 && keys.every((k) => LIGHT_FIELDS.includes(k))) {
+        await onPatchFields(currentOrder.id, patch as Record<string, unknown>);
+        return;
+      }
       await onUpdateOrder(currentOrder.id, { ...currentOrder, ...patch });
       // KHONG can setLocalOrder optimistic nua — parent da auto-sync selectedOrder
       // qua useEffect khi orders list refresh, va useEffect([order]) cua component

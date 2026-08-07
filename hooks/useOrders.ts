@@ -7,6 +7,8 @@ import {
   fetchOrders,
   addOrder,
   updateOrder,
+  updateOrderStatus,
+  patchOrderFields,
   deleteOrder,
   type OrderUpdateEditor,
 } from '@/services/orderService';
@@ -33,6 +35,10 @@ export interface UseOrdersResult {
   createNewOrder: (data: any) => Promise<void>;
   modifyOrder: (id: string, data: any) => Promise<void>;
   removeOrder: (id: string) => Promise<void>;
+  /** Đổi trạng thái đơn — đường nhẹ/nhanh (optimistic). */
+  changeStatus: (id: string, status: string) => Promise<void>;
+  /** Patch field nhanh (paymentStatus/paymentMethod/deliveryType) — đường nhẹ (optimistic). */
+  patchFields: (id: string, patch: Record<string, any>) => Promise<void>;
 }
 
 export const useOrders = (): UseOrdersResult => {
@@ -72,6 +78,41 @@ export const useOrders = (): UseOrdersResult => {
     mutationFn: (id: string) => deleteOrder(id, buildEditor()),
     onSuccess: invalidate,
   });
+  // Đổi trạng thái: OPTIMISTIC (cập nhật cache ngay) + endpoint nhẹ → UI phản hồi tức thì,
+  // refetch nền ở onSettled (không chặn). Zalo fire-and-forget trong service.
+  const changeStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      updateOrderStatus(id, status, buildEditor()),
+    onMutate: async ({ id, status }) => {
+      await queryClient.cancelQueries({ queryKey: qk.orders.all });
+      const prev = queryClient.getQueryData<Order[]>(qk.orders.all);
+      queryClient.setQueryData<Order[]>(qk.orders.all, (old) =>
+        (old ?? []).map((o) => (o.id === id ? { ...o, status: status as Order['status'] } : o)),
+      );
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(qk.orders.all, ctx.prev);
+    },
+    onSettled: () => invalidate(),
+  });
+  // Patch field nhanh (paymentStatus/paymentMethod/deliveryType): optimistic + endpoint nhẹ.
+  const patchFieldsMutation = useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Record<string, any> }) =>
+      patchOrderFields(id, patch, buildEditor()),
+    onMutate: async ({ id, patch }) => {
+      await queryClient.cancelQueries({ queryKey: qk.orders.all });
+      const prev = queryClient.getQueryData<Order[]>(qk.orders.all);
+      queryClient.setQueryData<Order[]>(qk.orders.all, (old) =>
+        (old ?? []).map((o) => (o.id === id ? { ...o, ...patch } : o)),
+      );
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) queryClient.setQueryData(qk.orders.all, ctx.prev);
+    },
+    onSettled: () => invalidate(),
+  });
 
   const refreshOrders = useCallback(async () => {
     await query.refetch();
@@ -98,6 +139,20 @@ export const useOrders = (): UseOrdersResult => {
     [deleteMutation],
   );
 
+  const changeStatus = useCallback(
+    async (id: string, status: string) => {
+      await changeStatusMutation.mutateAsync({ id, status });
+    },
+    [changeStatusMutation],
+  );
+
+  const patchFields = useCallback(
+    async (id: string, patch: Record<string, any>) => {
+      await patchFieldsMutation.mutateAsync({ id, patch });
+    },
+    [patchFieldsMutation],
+  );
+
   return {
     orders: query.data ?? [],
     loading: query.isLoading,
@@ -105,5 +160,7 @@ export const useOrders = (): UseOrdersResult => {
     createNewOrder,
     modifyOrder,
     removeOrder,
+    changeStatus,
+    patchFields,
   };
 };

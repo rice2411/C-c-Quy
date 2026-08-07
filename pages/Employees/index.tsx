@@ -35,6 +35,7 @@ import BaseSlidePanel from '@/components/BaseSlidePanel';
 
 interface FormState {
   name: string;
+  email: string;
   position: string;
   phone: string;
   startDate: string;
@@ -45,6 +46,7 @@ interface FormState {
 
 const EMPTY_FORM: FormState = {
   name: '',
+  email: '',
   position: '',
   phone: '',
   startDate: '',
@@ -86,6 +88,7 @@ const EmployeesPage: React.FC = () => {
     setEditingId(e.id);
     setForm({
       name: e.name ?? '',
+      email: e.email ?? '',
       position: e.position ?? '',
       phone: e.phone ?? '',
       startDate: e.startDate ?? '',
@@ -108,6 +111,7 @@ const EmployeesPage: React.FC = () => {
     try {
       const payload = {
         name: form.name.trim(),
+        email: form.email.trim() || null,
         position: form.position.trim() || null,
         phone: form.phone.trim() || null,
         startDate: form.startDate || null,
@@ -281,6 +285,15 @@ const EmployeesPage: React.FC = () => {
         <Box layoutClassName="space-y-4 p-4 sm:p-6">
           <Field label="Họ tên" required htmlFor="emp-name">
             <Input id="emp-name" value={form.name} onChange={(e) => setField('name', e.target.value)} placeholder="Nguyễn Văn A" />
+          </Field>
+          <Field label="Email đăng nhập (để chấm công)" htmlFor="emp-email">
+            <Input
+              id="emp-email"
+              type="email"
+              value={form.email}
+              onChange={(e) => setField('email', e.target.value)}
+              placeholder="nhanvien@gmail.com — email Google dùng đăng nhập"
+            />
           </Field>
           <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Chức vụ" htmlFor="emp-position">

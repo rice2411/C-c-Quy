@@ -11,7 +11,7 @@ import DashboardRangeControl from '@/pages/Dashboard/components/DashboardRangeCo
 import DashboardAlerts from '@/pages/Dashboard/components/DashboardAlerts';
 import DashboardToday from '@/pages/Dashboard/components/DashboardToday';
 import DashboardGoalProgress from '@/pages/Dashboard/components/DashboardGoalProgress';
-import DashboardMetrics from '@/pages/Dashboard/components/DashboardMetrics';
+import DashboardKpiCockpit from '@/pages/Dashboard/components/DashboardKpiCockpit';
 import DashboardChart from '@/pages/Dashboard/components/DashboardChart';
 import DashboardProfit from '@/pages/Dashboard/components/DashboardProfit';
 import DashboardOrderStatus from '@/pages/Dashboard/components/DashboardOrderStatus';
@@ -86,41 +86,6 @@ const DashboardPage: React.FC = () => {
     return { startDate: start, endDate: end, prevStartDate: prevStart, prevEndDate: prevEnd };
   }, [referenceDate, timeRange]);
 
-  const isCurrentPeriod = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return endDate.getTime() >= today.getTime() && startDate.getTime() <= today.getTime();
-  }, [startDate, endDate]);
-
-  const metrics = useMemo(() => {
-    // Mốc doanh thu: ưu tiên deliveryDate (ngày giao thực tế), fallback createdAt
-    const currentOrders = orders.filter(o => {
-      const d = getOrderRevenueDate(o);
-      return d != null && d >= startDate && d <= endDate;
-    }).filter(o => o.paymentStatus === PaymentStatus.PAID && o.status === OrderStatus.DELIVERED);
-
-    const prevOrders = orders.filter(o => {
-      const d = getOrderRevenueDate(o);
-      return d != null && d >= prevStartDate && d <= prevEndDate;
-    }).filter(o => o.paymentStatus === PaymentStatus.PAID && o.status === OrderStatus.DELIVERED);
-
-    const currentRevenue = currentOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
-    const prevRevenue = prevOrders.reduce((sum, o) => sum + getOrderTotal(o), 0);
-    const revenueChange = prevRevenue === 0 ? (currentRevenue > 0 ? 100 : 0) : ((currentRevenue - prevRevenue) / prevRevenue) * 100;
-
-    // Đơn hoàn tất (PAID + DELIVERED) trong kỳ — KPI thứ 4
-    const completedCount = currentOrders.length;
-    const prevCompleted = prevOrders.length;
-    const completedChange = prevCompleted === 0 ? (completedCount > 0 ? 100 : 0) : ((completedCount - prevCompleted) / prevCompleted) * 100;
-
-    return {
-      revenue: currentRevenue,
-      revenueChange,
-      completedCount,
-      completedChange,
-    };
-  }, [orders, startDate, endDate, prevStartDate, prevEndDate]);
-
   const { currentRangeLabel, prevRangeLabel } = useMemo(() => {
     const locale = language === 'vi' ? 'vi-VN' : 'en-US';
 
@@ -163,19 +128,6 @@ const DashboardPage: React.FC = () => {
     today.setHours(0, 0, 0, 0);
     return endDate.getTime() >= today.getTime();
   }, [endDate]);
-
-  const totalOrders = orders.length;
-  const pendingOrders = orders.filter(o => o.status === OrderStatus.PENDING).length;
-
-  const { newOrdersToday } = useMemo(() => {
-    const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayOrders = orders.filter(o => {
-      const d = new Date(o.createdAt.toDate());
-      return d >= startOfDay;
-    });
-    return { newOrdersToday: todayOrders.length };
-  }, [orders]);
 
   const chartData = useMemo(() => {
     const dataMap = new Map<string, number>();
@@ -256,16 +208,13 @@ const DashboardPage: React.FC = () => {
         />
       </Box>
 
-      {/* HÀNG 4 THẺ KPI */}
-      <DashboardMetrics
-        metrics={metrics}
-        totalOrders={totalOrders}
-        newOrdersToday={newOrdersToday}
-        pendingOrders={pendingOrders}
-        timeRange={timeRange}
-        currentRangeLabel={currentRangeLabel}
-        prevRangeLabel={prevRangeLabel}
-        isCurrentPeriod={isCurrentPeriod}
+      {/* BUỒNG LÁI KPI ĐIỀU HÀNH — số lấy từ revenue_report (nhất quán với Tài chính) */}
+      <DashboardKpiCockpit
+        fromISO={toLocalYMD(startDate)}
+        toISO={toLocalYMD(endDate)}
+        prevFromISO={toLocalYMD(prevStartDate)}
+        prevToISO={toLocalYMD(prevEndDate)}
+        compareText={`vs ${prevRangeLabel}`}
       />
 
       {/* DẢI 1 — Biểu đồ (2/3) + Giao dịch gần đây (1/3) */}

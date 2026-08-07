@@ -9,8 +9,7 @@ const DashboardPage = lazy(() => import("./pages/Dashboard/index"));
 const OrdersPage = lazy(() => import("./pages/Orders/index"));
 const ShippingPage = lazy(() => import("./pages/Shipping/index"));
 const TxOverviewPage = lazy(() => import("./pages/Transactions/OverviewPage"));
-const TxHistoryPage = lazy(() => import("./pages/Transactions/HistoryPage"));
-const TxReconciliationPage = lazy(() => import("./pages/Transactions/ReconciliationPage"));
+const TxLedgerPage = lazy(() => import("./pages/Transactions/LedgerPage"));
 const PromotionsPage = lazy(() => import("./pages/Promotions/index"));
 const CommissionPage = lazy(() => import("./pages/Commission/index"));
 const CommissionSettingsPage = lazy(() => import("./pages/Commission/SettingsPage"));
@@ -27,6 +26,7 @@ const SuppliersPage = lazy(() => import("./pages/Suppliers/index"));
 const CustomersPage = lazy(() => import("./pages/Customers/index"));
 const UsersPage = lazy(() => import("./pages/Users/index"));
 const EmployeesPage = lazy(() => import("./pages/Employees/index"));
+const AttendancePage = lazy(() => import("./pages/Attendance/index"));
 const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
 const SystemLogsPage = lazy(() => import("./pages/System/Requests/index"));
 const SystemErrorsPage = lazy(() => import("./pages/System/Errors/index"));
@@ -89,7 +89,7 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      {/* Tài chính — 3 sub-screen riêng (nhóm menu "Tài chính") */}
+      {/* Tài chính — 2 sub-screen: Tổng quan (P&L) + Sổ giao dịch (gộp Lịch sử + Đối soát) */}
       <Route
         path="finance/overview"
         element={
@@ -99,27 +99,21 @@ const AppRoutes: React.FC = () => (
         }
       />
       <Route
-        path="finance/history"
+        path="finance/ledger"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/history")?.roles}>
-            <TxHistoryPage />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/ledger")?.roles}>
+            <TxLedgerPage />
           </RoleBasedRoute>
         }
       />
-      <Route
-        path="finance/reconciliation"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/finance/reconciliation")?.roles}>
-            <TxReconciliationPage />
-          </RoleBasedRoute>
-        }
-      />
-      {/* Back-compat redirect các path cũ */}
+      {/* Back-compat redirect các path cũ → Sổ giao dịch mới */}
       <Route path="finance" element={<Navigate to="/finance/overview" replace />} />
-      <Route path="finance/transactions" element={<Navigate to="/finance/history" replace />} />
+      <Route path="finance/history" element={<Navigate to="/finance/ledger" replace />} />
+      <Route path="finance/reconciliation" element={<Navigate to="/finance/ledger" replace />} />
+      <Route path="finance/transactions" element={<Navigate to="/finance/ledger" replace />} />
       <Route path="revenue" element={<Navigate to="/finance/overview" replace />} />
-      <Route path="finance/cashflow" element={<Navigate to="/finance/history" replace />} />
-      <Route path="transactions" element={<Navigate to="/finance/history" replace />} />
+      <Route path="finance/cashflow" element={<Navigate to="/finance/ledger" replace />} />
+      <Route path="transactions" element={<Navigate to="/finance/ledger" replace />} />
       <Route
         path="promotions"
         element={
@@ -217,6 +211,14 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/employees")?.roles}>
             <EmployeesPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="attendance"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/attendance")?.roles}>
+            <AttendancePage />
           </RoleBasedRoute>
         }
       />

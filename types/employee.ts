@@ -4,6 +4,7 @@ export type EmployeeStatus = 'active' | 'inactive';
 export interface Employee {
   id: string;
   name: string;
+  email?: string | null; // email tài khoản đăng nhập (SSO) để chấm công; null = chưa gắn
   position?: string | null; // chức vụ
   phone?: string | null;
   startDate?: string | null; // ISO yyyy-mm-dd (ngày vào làm)

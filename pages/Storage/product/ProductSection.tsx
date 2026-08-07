@@ -50,7 +50,6 @@ import { computeProductMetrics, type ProductSalesMetric } from '@/pages/Storage/
 import CsvImportModal from '@/pages/Storage/product/CsvImportModal';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import { calcMargin, marginColor } from '@/utils/product/productMargin';
-import { getStockStatus } from '@/utils/product/stockStatus';
 import { exportProductsCSV } from '@/utils/product/csvExport';
 import InlinePriceEditor from '@/pages/Storage/product/components/InlinePriceEditor';
 import StatusChip from '@/pages/Storage/product/components/StatusChip';

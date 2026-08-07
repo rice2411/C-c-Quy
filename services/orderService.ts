@@ -25,6 +25,15 @@ export const fetchOrders = async (): Promise<Order[]> => {
   }
 };
 
+/**
+ * 1 đơn ĐẦY ĐỦ theo id (GET /orders/:id). List trả bản NHẸ (bỏ history/refunds/
+ * decorations/appliedPromotions/giftItems); màn chi tiết/sửa gọi cái này để lấy đủ.
+ */
+export const fetchOrder = async (id: string): Promise<Order | null> => {
+  const res = await apiClient.get(`/orders/${id}`);
+  return (res.data as Order) ?? null;
+};
+
 /** Sinh so don ke tiep (BE: GET /orders/next-number → { orderNumber }). */
 export const getNextOrderNumber = async (): Promise<string> => {
   try {
@@ -53,19 +62,18 @@ export const addOrder = async (orderData: Order): Promise<void> => {
     throw error;
   }
 
-  // ── Phan Zalo: chay sau khi tao don thanh cong ──
-  try {
-    const createdByUid =
-      (orderData.createdBy as string | undefined) ??
-      (created?.createdBy as string | undefined);
-    const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
-      "create",
-      createdByUid,
-    );
-    await sendNewOrderZaloNotifications(created, zaloGroupIds);
-  } catch (notifErr) {
-    console.error("New order Zalo notify error (ignored):", notifErr);
-  }
+  // ── Zalo: FIRE-AND-FORGET (không chặn caller) ──
+  void (async () => {
+    try {
+      const createdByUid =
+        (orderData.createdBy as string | undefined) ??
+        (created?.createdBy as string | undefined);
+      const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent("create", createdByUid);
+      await sendNewOrderZaloNotifications(created, zaloGroupIds);
+    } catch (notifErr) {
+      console.error("New order Zalo notify error (ignored):", notifErr);
+    }
+  })();
 };
 
 export interface OrderUpdateEditor {
@@ -98,40 +106,126 @@ export const updateOrder = async (
     throw error;
   }
 
-  // ── Phan Zalo update: chay sau khi BE cap nhat thanh cong ──
+  // ── Zalo update: FIRE-AND-FORGET (không chặn caller) ──
   const changes: any[] = Array.isArray(updated?.changes) ? updated.changes : [];
   const prevOrder = updated?.prevOrder;
   if (changes.length > 0) {
-    try {
-      const uidShort = editor?.uid ? "User-" + editor.uid.slice(0, 6) : null;
-      const editorName =
-        editor?.displayName || editor?.email || uidShort || "Unknown";
-      const changedFieldIds = changes.map((c: any) => c.field).filter(Boolean);
-      const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
-        "update",
-        (prevOrder?.createdBy as string | undefined) ??
-          (updated?.createdByUid as string | undefined) ??
-          editor?.uid,
-        changedFieldIds,
-      );
-      const orderForMsg = { ...updated, id: orderId };
-      const { diffOrderItems } = await import("@/utils/order/itemsDiff");
-      const itemsDiff = diffOrderItems(
-        prevOrder?.items as any,
-        updated?.items as any,
-      );
-      await sendOrderUpdateNotification(
-        orderForMsg,
-        changes,
-        { name: editorName, uid: editor?.uid },
-        zaloGroupIds,
-        itemsDiff,
-        prevOrder, // prevOrder de hien thi snapshot "DON CU"
-      );
-    } catch (notifErr) {
-      console.error("Update Zalo notify error (ignored):", notifErr);
-    }
+    void (async () => {
+      try {
+        const uidShort = editor?.uid ? "User-" + editor.uid.slice(0, 6) : null;
+        const editorName = editor?.displayName || editor?.email || uidShort || "Unknown";
+        const changedFieldIds = changes.map((c: any) => c.field).filter(Boolean);
+        const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
+          "update",
+          (prevOrder?.createdBy as string | undefined) ??
+            (updated?.createdByUid as string | undefined) ??
+            editor?.uid,
+          changedFieldIds,
+        );
+        const orderForMsg = { ...updated, id: orderId };
+        const { diffOrderItems } = await import("@/utils/order/itemsDiff");
+        const itemsDiff = diffOrderItems(prevOrder?.items as any, updated?.items as any);
+        await sendOrderUpdateNotification(
+          orderForMsg,
+          changes,
+          { name: editorName, uid: editor?.uid },
+          zaloGroupIds,
+          itemsDiff,
+          prevOrder,
+        );
+      } catch (notifErr) {
+        console.error("Update Zalo notify error (ignored):", notifErr);
+      }
+    })();
   }
+};
+
+/**
+ * Đổi TRẠNG THÁI đơn — đường NHẸ & NHANH (PATCH /orders/:id/status, chỉ gửi { status }).
+ * BE dùng order_update_status (không tính lại KM / ghi lại items). Zalo gửi
+ * FIRE-AND-FORGET (KHÔNG await) → UI không phải chờ mạng Zalo. Trả order đã cập nhật.
+ */
+export const updateOrderStatus = async (
+  orderId: string,
+  status: string,
+  editor?: OrderUpdateEditor,
+): Promise<any> => {
+  const res = await apiClient.patch(`/orders/${orderId}/status`, { status });
+  const updated = res.data;
+
+  // Zalo: chạy nền, không chặn caller (khác updateOrder cũ await Zalo).
+  const changes: any[] = Array.isArray(updated?.changes) ? updated.changes : [];
+  const prevOrder = updated?.prevOrder;
+  if (changes.length > 0) {
+    void (async () => {
+      try {
+        const uidShort = editor?.uid ? 'User-' + editor.uid.slice(0, 6) : null;
+        const editorName = editor?.displayName || editor?.email || uidShort || 'Unknown';
+        const changedFieldIds = changes.map((c: any) => c.field).filter(Boolean);
+        const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
+          'update',
+          (prevOrder?.createdBy as string | undefined) ??
+            (updated?.createdByUid as string | undefined) ??
+            editor?.uid,
+          changedFieldIds,
+        );
+        await sendOrderUpdateNotification(
+          { ...updated, id: orderId },
+          changes,
+          { name: editorName, uid: editor?.uid },
+          zaloGroupIds,
+          undefined,
+          prevOrder,
+        );
+      } catch (notifErr) {
+        console.error('Status Zalo notify error (ignored):', notifErr);
+      }
+    })();
+  }
+  return updated;
+};
+
+/**
+ * Patch NHẸ field nhanh (paymentStatus/paymentMethod/deliveryType) — PATCH /orders/:id/fields.
+ * BE dùng order_patch_fields (chỉ đụng field gửi lên). Zalo FIRE-AND-FORGET.
+ */
+export const patchOrderFields = async (
+  orderId: string,
+  patch: Record<string, any>,
+  editor?: OrderUpdateEditor,
+): Promise<any> => {
+  const res = await apiClient.patch(`/orders/${orderId}/fields`, patch);
+  const updated = res.data;
+
+  const changes: any[] = Array.isArray(updated?.changes) ? updated.changes : [];
+  const prevOrder = updated?.prevOrder;
+  if (changes.length > 0) {
+    void (async () => {
+      try {
+        const uidShort = editor?.uid ? 'User-' + editor.uid.slice(0, 6) : null;
+        const editorName = editor?.displayName || editor?.email || uidShort || 'Unknown';
+        const changedFieldIds = changes.map((c: any) => c.field).filter(Boolean);
+        const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
+          'update',
+          (prevOrder?.createdBy as string | undefined) ??
+            (updated?.createdByUid as string | undefined) ??
+            editor?.uid,
+          changedFieldIds,
+        );
+        await sendOrderUpdateNotification(
+          { ...updated, id: orderId },
+          changes,
+          { name: editorName, uid: editor?.uid },
+          zaloGroupIds,
+          undefined,
+          prevOrder,
+        );
+      } catch (notifErr) {
+        console.error('Patch Zalo notify error (ignored):', notifErr);
+      }
+    })();
+  }
+  return updated;
 };
 
 /* ───────────────── Đối soát phiếu hoàn ↔ giao dịch SePay (#186) ───────────────── */
@@ -375,24 +469,25 @@ export const deleteOrder = async (
     throw error;
   }
 
-  // ── Phan Zalo delete: dung snapshot prevOrder BE tra ve ──
+  // ── Zalo delete: FIRE-AND-FORGET (không chặn caller) ──
   const existing = deleted?.prevOrder;
   if (existing) {
-    try {
-      const uidShort = editor?.uid ? "User-" + editor.uid.slice(0, 6) : null;
-      const editorName =
-        editor?.displayName || editor?.email || uidShort || "Unknown";
-      const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
-        "delete",
-        (existing.createdBy as string | undefined) ?? editor?.uid,
-      );
-      await sendOrderDeleteNotification(
-        { ...existing, id: orderId },
-        { name: editorName, uid: editor?.uid },
-        zaloGroupIds,
-      );
-    } catch (notifErr) {
-      console.error("Delete Zalo notify error (ignored):", notifErr);
-    }
+    void (async () => {
+      try {
+        const uidShort = editor?.uid ? "User-" + editor.uid.slice(0, 6) : null;
+        const editorName = editor?.displayName || editor?.email || uidShort || "Unknown";
+        const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent(
+          "delete",
+          (existing.createdBy as string | undefined) ?? editor?.uid,
+        );
+        await sendOrderDeleteNotification(
+          { ...existing, id: orderId },
+          { name: editorName, uid: editor?.uid },
+          zaloGroupIds,
+        );
+      } catch (notifErr) {
+        console.error("Delete Zalo notify error (ignored):", notifErr);
+      }
+    })();
   }
 };

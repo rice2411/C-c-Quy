@@ -25,6 +25,12 @@ export const qk = {
   employees: {
     all: ['employees'] as const,
   },
+  attendance: {
+    me: ['attendance', 'me'] as const,
+    overview: ['attendance', 'overview'] as const,
+    networks: ['attendance', 'networks'] as const,
+    history: (params: unknown) => ['attendance', 'history', params] as const,
+  },
   products: {
     all: ['products'] as const,
     versions: (productId: string) => ['products', 'versions', productId] as const,
@@ -53,6 +59,7 @@ export const qk = {
   transactions: {
     all: ['transactions'] as const,
     byOrderNumber: (orderNumber: string) => ['transactions', 'by-order', orderNumber] as const,
+    ledger: (params: unknown) => ['transactions', 'ledger', params] as const,
   },
   revenue: {
     report: (params: unknown) => ['revenue', 'report', params] as const,
@@ -90,6 +97,7 @@ export const qk = {
     suppliers: ['stock-receipt', 'suppliers'] as const,
     materials: ['stock-receipt', 'materials'] as const,
     materialPriceOptions: ['stock-receipt', 'material-price-options'] as const,
+    stockEstimate: ['stock-receipt', 'material-stock-estimate'] as const,
     materialMergeSuggestions: (threshold: number) =>
       ['stock-receipt', 'material-merge-suggestions', threshold] as const,
     summaries: ['stock-receipt', 'summaries'] as const,

@@ -75,3 +75,80 @@ export interface ExpenseRule {
   keyword: string;
   category: ExpenseCategory | string;
 }
+
+/* ─────────────────── Sổ giao dịch thống nhất (Ledger) ─────────────────── */
+
+/**
+ * Trạng thái thống nhất 1 giao dịch — BE derive sẵn (transaction_ledger_status),
+ * FE KHÔNG tự ghép từ các cờ rời rạc nữa.
+ *   Tiền vào: matched | external | unmatched
+ *   Tiền ra:  refund | settled | excluded | expense | unmatched
+ */
+export type LedgerStatus =
+  | 'matched' | 'external' | 'unmatched'
+  | 'refund' | 'settled' | 'excluded' | 'expense';
+
+/** 1 dòng sổ = Transaction + trạng thái derive. */
+export type LedgerTransaction = Transaction & { status: LedgerStatus };
+
+/** Tổng kết kỳ (server tính) — thu/chi/số dư ổn định khi đổi tab loại/trạng thái. */
+export interface LedgerSummary {
+  totalIn: number;
+  totalOut: number;
+  net: number;
+  count: number;
+  inCount: number;
+  outCount: number;
+  reconciledCount: number;
+  unreconciledCount: number;
+  reconciledPct: number;
+}
+
+export interface LedgerResult {
+  items: LedgerTransaction[];
+  total: number;
+  summary: LedgerSummary;
+}
+
+/** 1 điểm chuỗi thu/chi theo ngày (biểu đồ sổ). */
+export interface LedgerSeriesPoint {
+  day: string; // yyyy-mm-dd
+  in: number;
+  out: number;
+}
+
+/** Bộ lọc sổ (gửi lên BE). */
+export interface LedgerFilters {
+  from?: string;
+  to?: string;
+  type?: 'in' | 'out' | '';
+  status?: LedgerStatus | '';
+  category?: string;
+  gateway?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+type Tone = 'emerald' | 'amber' | 'rose' | 'violet' | 'blue' | 'slate';
+
+/** Nhãn + tone hiển thị badge cho từng trạng thái sổ. */
+export const LEDGER_STATUS_META: Record<LedgerStatus, { label: string; tone: Tone }> = {
+  matched: { label: 'Khớp đơn', tone: 'emerald' },
+  external: { label: 'Ngoài hệ thống', tone: 'slate' },
+  unmatched: { label: 'Chưa khớp', tone: 'amber' },
+  refund: { label: 'Hoàn tiền', tone: 'violet' },
+  settled: { label: 'Kết toán', tone: 'blue' },
+  excluded: { label: 'Không tính', tone: 'slate' },
+  expense: { label: 'Chi phí', tone: 'amber' },
+};
+
+/** Class badge theo tone (light + dark). */
+export const LEDGER_TONE_CLASS: Record<Tone, { bg: string; text: string; border: string }> = {
+  emerald: { bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-300', border: 'border border-emerald-200 dark:border-emerald-700' },
+  amber: { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-700 dark:text-amber-300', border: 'border border-amber-200 dark:border-amber-700' },
+  rose: { bg: 'bg-rose-50 dark:bg-rose-900/20', text: 'text-rose-700 dark:text-rose-300', border: 'border border-rose-200 dark:border-rose-700' },
+  violet: { bg: 'bg-violet-50 dark:bg-violet-900/20', text: 'text-violet-700 dark:text-violet-300', border: 'border border-violet-200 dark:border-violet-700' },
+  blue: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-300', border: 'border border-blue-200 dark:border-blue-700' },
+  slate: { bg: 'bg-slate-100 dark:bg-slate-700/40', text: 'text-slate-600 dark:text-slate-300', border: 'border border-slate-200 dark:border-slate-600' },
+};

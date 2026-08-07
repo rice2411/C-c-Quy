@@ -7,13 +7,15 @@
  * - Sau mutation (markExternal/linkOrder) invalidate `qk.transactions.all`.
  * - KHÔNG nuốt lỗi: caller (component) bắt error / dùng `error` để toast.
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Transaction } from '@/types';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { Transaction, LedgerFilters, LedgerResult, LedgerSeriesPoint } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { qk } from '@/hooks/queryKeys';
 import {
   fetchTransactions,
   fetchTransactionsByOrderNumber,
+  fetchLedger,
+  fetchLedgerSeries,
   linkTransactionOrder,
   markTransactionExternal,
   reconcileTransactionsPreview,
@@ -46,6 +48,58 @@ export const useTransactions = (): UseTransactionsResult => {
     error: query.error,
     refetch: () => query.refetch(),
   };
+};
+
+/* ───────────────────────── Ledger (sổ giao dịch) ─────────────────────── */
+export interface UseLedgerResult {
+  data: LedgerResult;
+  loading: boolean;
+  isFetching: boolean;
+  error: Error | null;
+  refetch: () => Promise<unknown>;
+}
+
+const EMPTY_LEDGER: LedgerResult = {
+  items: [],
+  total: 0,
+  summary: {
+    totalIn: 0, totalOut: 0, net: 0, count: 0, inCount: 0, outCount: 0,
+    reconciledCount: 0, unreconciledCount: 0, reconciledPct: 100,
+  },
+};
+
+/**
+ * Sổ giao dịch thống nhất — list phân trang + summary server-side.
+ * placeholderData=keepPreviousData: khi đổi trang/filter, giữ data cũ hiển thị
+ * (không nháy loading) tới khi trang mới về.
+ */
+export const useLedger = (filters: LedgerFilters): UseLedgerResult => {
+  const { currentUser } = useAuth();
+  const query = useQuery({
+    queryKey: qk.transactions.ledger(filters),
+    queryFn: () => fetchLedger(filters),
+    enabled: !!currentUser,
+    placeholderData: keepPreviousData,
+  });
+  return {
+    data: query.data ?? EMPTY_LEDGER,
+    loading: query.isLoading,
+    isFetching: query.isFetching,
+    error: query.error,
+    refetch: () => query.refetch(),
+  };
+};
+
+/** Chuỗi thu/chi theo ngày (biểu đồ sổ) — cùng kỳ với ledger. */
+export const useLedgerSeries = (from: string, to: string): { series: LedgerSeriesPoint[]; loading: boolean } => {
+  const { currentUser } = useAuth();
+  const query = useQuery({
+    queryKey: qk.transactions.ledger({ series: true, from, to }),
+    queryFn: () => fetchLedgerSeries(from, to),
+    enabled: !!currentUser,
+    placeholderData: keepPreviousData,
+  });
+  return { series: query.data ?? [], loading: query.isLoading };
 };
 
 export interface UseTransactionsByOrderResult {

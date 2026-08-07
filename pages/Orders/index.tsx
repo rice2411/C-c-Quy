@@ -6,7 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/hooks/useOrders';
 import { Order } from '@/types';
 import { UserRole } from '@/types/user';
-import { ORDER_EDIT_DENIED, refreshOrderTracking } from '@/services/orderService';
+import { ORDER_EDIT_DENIED, refreshOrderTracking, fetchOrder } from '@/services/orderService';
 import { userCanEditOrder } from '@/utils/order/orderUtils';
 import ConfirmModal from '@/components/ConfirmModal';
 import Box from '@/components/ui/Box';
@@ -22,7 +22,7 @@ import OrdersStats from '@/pages/Orders/components/OrdersStats';
 
 const OrdersPage: React.FC = () => {
   const { userData } = useAuth();
-  const { orders, createNewOrder, modifyOrder, removeOrder, refreshOrders } = useOrders();
+  const { orders, createNewOrder, modifyOrder, removeOrder, refreshOrders, changeStatus, patchFields } = useOrders();
   const { t } = useLanguage();
   const canPermanentDelete = userData?.role === UserRole.SUPER_ADMIN;
   const canExportOrders =
@@ -70,12 +70,19 @@ const OrdersPage: React.FC = () => {
     setIsOrderFormOpen(true);
   };
 
-  const handleEditOrder = (order: Order) => {
+  const handleEditOrder = async (order: Order) => {
     if (!userCanEditOrder(userData, order)) {
       toast.error(t('orders.editDeniedCollaborator'));
       return;
     }
-    setEditingOrder(order);
+    // List trả bản NHẸ (thiếu decorations/giftItems/appliedPromotions). Sửa đơn phải có
+    // dữ liệu ĐẦY ĐỦ, nếu không lúc lưu (order_update full) sẽ ghi đè mất → fetch full trước.
+    let full: Order = order;
+    try {
+      const fetched = await fetchOrder(order.id);
+      if (fetched) full = fetched;
+    } catch { /* lỗi → dùng bản đang có */ }
+    setEditingOrder(full);
     setSelectedOrder(null);
     setIsOrderFormOpen(true);
   };
@@ -302,6 +309,8 @@ const OrdersPage: React.FC = () => {
         onDelete={() => selectedOrder && handleDeleteClick(selectedOrder.id)}
         canDelete={canPermanentDelete}
         onUpdateOrder={modifyOrder}
+        onChangeStatus={changeStatus}
+        onPatchFields={patchFields}
       />
 
       <OrderForm
