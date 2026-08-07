@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Pencil, Plus, Trash2, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useEmployees, useEmployeeMutations } from '@/hooks/queries/useEmployeesQuery';
+import { useUsers } from '@/hooks/queries/useUsersQuery';
 import {
   Employee,
   EMPLOYEE_STATUSES,
@@ -58,6 +59,7 @@ const EMPTY_FORM: FormState = {
 const EmployeesPage: React.FC = () => {
   const { employees, loading, error } = useEmployees();
   const { createEmployee, updateEmployee, deleteEmployee } = useEmployeeMutations();
+  const { users } = useUsers();
 
   const [search, setSearch] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
@@ -77,6 +79,32 @@ const EmployeesPage: React.FC = () => {
   }, [employees, search]);
 
   const activeCount = useMemo(() => employees.filter((e) => e.status === 'active').length, [employees]);
+
+  // Tài khoản đã đăng nhập (users) — chọn để gắn cho hồ sơ NV thay vì gõ tay email.
+  const accountOptions = useMemo(
+    () =>
+      users
+        .filter((u) => u.email)
+        .map((u) => ({
+          email: u.email as string,
+          name: (u.customName || u.displayName || u.email) as string,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'vi')),
+    [users],
+  );
+  const accountNameByEmail = useMemo(() => {
+    const m = new Map<string, string>();
+    accountOptions.forEach((a) => m.set(a.email.toLowerCase(), a.name));
+    return m;
+  }, [accountOptions]);
+  // Email đã gắn cho NV KHÁC (để cảnh báo trùng) — trừ NV đang sửa.
+  const linkedEmails = useMemo(() => {
+    const s = new Set<string>();
+    employees.forEach((e) => {
+      if (e.email && e.id !== editingId) s.add(e.email.toLowerCase());
+    });
+    return s;
+  }, [employees, editingId]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -101,6 +129,14 @@ const EmployeesPage: React.FC = () => {
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  // Chọn tài khoản đăng nhập → điền email; nếu chưa có tên thì lấy tên từ tài khoản.
+  const pickAccount = (email: string) =>
+    setForm((prev) => ({
+      ...prev,
+      email,
+      name: prev.name.trim() ? prev.name : accountNameByEmail.get(email.toLowerCase()) ?? prev.name,
+    }));
 
   const handleSave = async () => {
     if (!form.name.trim()) {
@@ -286,15 +322,30 @@ const EmployeesPage: React.FC = () => {
           <Field label="Họ tên" required htmlFor="emp-name">
             <Input id="emp-name" value={form.name} onChange={(e) => setField('name', e.target.value)} placeholder="Nguyễn Văn A" />
           </Field>
-          <Field label="Email đăng nhập (để chấm công)" htmlFor="emp-email">
-            <Input
-              id="emp-email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setField('email', e.target.value)}
-              placeholder="nhanvien@gmail.com — email Google dùng đăng nhập"
-            />
+          <Field label="Tài khoản đăng nhập (để chấm công)" htmlFor="emp-account">
+            <Select id="emp-account" value={form.email} onChange={(e) => pickAccount(e.target.value)} fullWidth>
+              <option value="">— Không gắn tài khoản —</option>
+              {form.email &&
+                !accountOptions.some((a) => a.email.toLowerCase() === form.email.toLowerCase()) && (
+                  <option value={form.email}>{form.email} (không có trong danh sách đăng nhập)</option>
+                )}
+              {accountOptions.map((a) => (
+                <option key={a.email} value={a.email}>
+                  {a.name} · {a.email}
+                  {linkedEmails.has(a.email.toLowerCase()) ? ' — đã gắn NV khác' : ''}
+                </option>
+              ))}
+            </Select>
           </Field>
+          {form.email && linkedEmails.has(form.email.toLowerCase()) ? (
+            <Typography size="xs" variant="danger">
+              Email này đã gắn cho nhân viên khác — mỗi tài khoản chỉ nên gắn 1 hồ sơ.
+            </Typography>
+          ) : (
+            <Typography size="xs" textClassName="text-slate-400 dark:text-slate-500">
+              Chọn từ tài khoản đã đăng nhập hệ thống. Chưa thấy? Nhờ nhân viên đăng nhập Google 1 lần rồi mở lại.
+            </Typography>
+          )}
           <Box layoutClassName="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Chức vụ" htmlFor="emp-position">
               <Input id="emp-position" value={form.position} onChange={(e) => setField('position', e.target.value)} placeholder="Thợ bánh, bán hàng…" />
