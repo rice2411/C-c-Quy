@@ -20,7 +20,7 @@ interface LedgerFilterBarProps {
 }
 
 const IN_STATUSES: LedgerStatus[] = ['matched', 'shopee', 'external', 'unmatched'];
-const OUT_STATUSES: LedgerStatus[] = ['refund', 'settled', 'expense', 'excluded', 'unmatched'];
+const OUT_STATUSES: LedgerStatus[] = ['refund', 'settled', 'expense', 'stock', 'excluded', 'unmatched'];
 
 /** Toolbar lọc sổ: tìm kiếm + loại (thu/chi) + trạng thái + danh mục + ngân hàng. */
 const LedgerFilterBar: React.FC<LedgerFilterBarProps> = ({

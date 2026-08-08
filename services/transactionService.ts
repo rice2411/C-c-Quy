@@ -20,7 +20,7 @@ const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v)
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 
 const LEDGER_STATUSES: LedgerStatus[] = [
-  'matched', 'shopee', 'external', 'unmatched', 'refund', 'settled', 'excluded', 'expense',
+  'matched', 'shopee', 'external', 'unmatched', 'refund', 'settled', 'excluded', 'expense', 'stock',
 ];
 
 /** Chuẩn hoá 1 dòng sổ trả từ API — coi mọi field untrusted (data-safety). */

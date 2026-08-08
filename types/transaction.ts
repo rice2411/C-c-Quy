@@ -50,7 +50,7 @@ export const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; cost?:
   { value: 'packaging', label: 'Bao bì/Hộp' },
   { value: 'other', label: 'Khác' },
   { value: 'personal', label: 'Cá nhân (không tính)', cost: false },
-  { value: 'owner', label: 'Rút vốn (không tính)', cost: false },
+  { value: 'owner', label: 'Rút vốn/Rút lời (không tính)', cost: false },
   { value: 'internal', label: 'Nội bộ/Nạp ví (không tính)', cost: false },
 ];
 
@@ -82,11 +82,11 @@ export interface ExpenseRule {
  * Trạng thái thống nhất 1 giao dịch — BE derive sẵn (transaction_ledger_status),
  * FE KHÔNG tự ghép từ các cờ rời rạc nữa.
  *   Tiền vào: matched | shopee | external | unmatched
- *   Tiền ra:  refund | settled | excluded | expense | unmatched
+ *   Tiền ra:  refund | settled | excluded | expense | stock | unmatched
  */
 export type LedgerStatus =
   | 'matched' | 'shopee' | 'external' | 'unmatched'
-  | 'refund' | 'settled' | 'excluded' | 'expense';
+  | 'refund' | 'settled' | 'excluded' | 'expense' | 'stock';
 
 /** 1 dòng sổ = Transaction + trạng thái derive. */
 export type LedgerTransaction = Transaction & { status: LedgerStatus };
@@ -130,7 +130,7 @@ export interface LedgerFilters {
   offset?: number;
 }
 
-type Tone = 'emerald' | 'amber' | 'rose' | 'violet' | 'blue' | 'slate' | 'orange';
+type Tone = 'emerald' | 'amber' | 'rose' | 'violet' | 'blue' | 'slate' | 'orange' | 'teal';
 
 /** Nhãn + tone hiển thị badge cho từng trạng thái sổ. */
 export const LEDGER_STATUS_META: Record<LedgerStatus, { label: string; tone: Tone }> = {
@@ -142,6 +142,7 @@ export const LEDGER_STATUS_META: Record<LedgerStatus, { label: string; tone: Ton
   settled: { label: 'Kết toán', tone: 'blue' },
   excluded: { label: 'Không tính', tone: 'slate' },
   expense: { label: 'Chi phí', tone: 'amber' },
+  stock: { label: 'Đã gắn phiếu', tone: 'teal' },
 };
 
 /** Class badge theo tone (light + dark). */
@@ -153,4 +154,5 @@ export const LEDGER_TONE_CLASS: Record<Tone, { bg: string; text: string; border:
   blue: { bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-700 dark:text-blue-300', border: 'border border-blue-200 dark:border-blue-700' },
   slate: { bg: 'bg-slate-100 dark:bg-slate-700/40', text: 'text-slate-600 dark:text-slate-300', border: 'border border-slate-200 dark:border-slate-600' },
   orange: { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-700 dark:text-orange-300', border: 'border border-orange-200 dark:border-orange-700' },
+  teal: { bg: 'bg-teal-50 dark:bg-teal-900/20', text: 'text-teal-700 dark:text-teal-300', border: 'border border-teal-200 dark:border-teal-700' },
 };

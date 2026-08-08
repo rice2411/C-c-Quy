@@ -210,6 +210,8 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
                 }, 'Đã gỡ đối soát (về chưa khớp).')}>
                 Gỡ đối soát (về chưa khớp)
               </Button>
+            ) : tx.status === 'stock' ? (
+              <Typography size="xs" variant="muted">Đã gắn phiếu nhập — gỡ/đổi phiếu ở trang Nhập kho.</Typography>
             ) : (
               <Typography size="xs" variant="muted">Trạng thái này không cần đối soát tay ở đây.</Typography>
             )}
