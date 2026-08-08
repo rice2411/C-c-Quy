@@ -47,6 +47,9 @@ const fmtDate = (v?: string | null): string => {
     : d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
+const pairKey = (m: { receiptId: string; transactionId: string }): string =>
+  `${m.receiptId}|${m.transactionId}`;
+
 const dayMs = 86400000;
 const dateGap = (a?: string | null, b?: string | null): number => {
   if (!a || !b) return 9999;
@@ -63,7 +66,7 @@ const ReceiptReconcileModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) 
   const [preview, setPreview] = useState<ReceiptReconcilePreview | null>(null);
   const [receipts, setReceipts] = useState<ReconcileReceiptItem[]>([]);
   const [txns, setTxns] = useState<UnlinkedOutTxn[]>([]);
-  // auto tab: các receiptId đang chọn để áp
+  // auto tab: các cặp đang chọn (key = receiptId|transactionId) để áp
   const [picked, setPicked] = useState<Set<string>>(new Set());
   // manual tab
   const [selectedReceiptId, setSelectedReceiptId] = useState<string | null>(null);
@@ -74,14 +77,15 @@ const ReceiptReconcileModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) 
     setLoading(true);
     try {
       const [pv, rc, tx] = await Promise.all([
-        stockReceiptReconcilePreview(3),
+        stockReceiptReconcilePreview(),
         fetchReceiptsForReconcile(),
         fetchUnlinkedOutTxns(),
       ]);
       setPreview(pv);
       setReceipts(rc);
       setTxns(tx);
-      setPicked(new Set(pv.matched.map((m) => m.receiptId))); // mặc định chọn hết
+      // mặc định chỉ tick sẵn cặp 1-1 (an toàn); cặp mập mờ để user tự chọn.
+      setPicked(new Set(pv.matched.filter((m) => m.txCand === 1 && m.receiptCand === 1).map(pairKey)));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Không tải được dữ liệu đối soát.');
     } finally {
@@ -101,15 +105,26 @@ const ReceiptReconcileModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) 
 
   const matched = preview?.matched ?? [];
   const pickedPairs = useMemo(
-    () => matched.filter((m) => picked.has(m.receiptId)),
+    () => matched.filter((m) => picked.has(pairKey(m))),
     [matched, picked],
   );
 
+  // Chọn/bỏ 1 cặp. Khi chọn → tự bỏ mọi cặp khác dùng CHUNG GD hoặc CHUNG phiếu (tránh gắn trùng).
   const togglePick = (m: ReceiptReconcileMatch) =>
     setPicked((prev) => {
+      const key = pairKey(m);
       const next = new Set(prev);
-      if (next.has(m.receiptId)) next.delete(m.receiptId);
-      else next.add(m.receiptId);
+      if (next.has(key)) {
+        next.delete(key);
+        return next;
+      }
+      for (const other of matched) {
+        const ok = pairKey(other);
+        if (ok !== key && (other.transactionId === m.transactionId || other.receiptId === m.receiptId)) {
+          next.delete(ok);
+        }
+      }
+      next.add(key);
       return next;
     });
 
@@ -239,23 +254,30 @@ const ReceiptReconcileModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) 
         <Box layoutClassName="space-y-4 pt-4">
           <Box layoutClassName="flex flex-wrap items-center gap-2">
             <Badge size="sm" backgroundClassName="bg-emerald-100 dark:bg-emerald-900/30" textClassName="font-semibold text-emerald-700 dark:text-emerald-300">
-              {matched.length} khớp 1-1
+              {preview?.uniqueCount ?? 0} cặp 1-1
             </Badge>
             <Badge size="sm" backgroundClassName="bg-amber-100 dark:bg-amber-900/30" textClassName="font-semibold text-amber-700 dark:text-amber-300">
-              {preview?.skippedAmbiguous ?? 0} mơ hồ
+              {preview?.ambiguousCount ?? 0} nhiều ứng viên
             </Badge>
             <Badge size="sm" backgroundClassName="bg-slate-100 dark:bg-slate-700" textClassName="font-semibold text-slate-600 dark:text-slate-300">
               {preview?.totalUnlinkedReceipt ?? 0} phiếu chưa gắn
             </Badge>
           </Box>
+          <Typography size="xs" variant="muted">
+            Gợi ý theo SỐ TIỀN bằng nhau. Cặp 1-1 đã tick sẵn; cặp "nhiều ứng viên" hãy tự chọn đúng phiếu (chọn 1 cặp sẽ tự bỏ cặp khác cùng giao dịch/phiếu).
+          </Typography>
 
           {matched.length > 0 ? (
             <Box layoutClassName="max-h-[52vh] space-y-2 overflow-y-auto">
               {matched.map((m) => {
-                const on = picked.has(m.receiptId);
+                const on = picked.has(pairKey(m));
+                const ambiguous = m.txCand > 1 || m.receiptCand > 1;
+                const gapLabel =
+                  m.dateGap === null ? 'thiếu ngày' : m.dateGap === 0 ? 'cùng ngày' : `lệch ${m.dateGap}n`;
+                const gapWarn = m.dateGap === null || (m.dateGap ?? 0) > 31;
                 return (
                   <Box
-                    key={m.receiptId}
+                    key={pairKey(m)}
                     role="button"
                     tabIndex={0}
                     onClick={() => togglePick(m)}
@@ -279,7 +301,12 @@ const ReceiptReconcileModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) 
                         {fmtDate(m.transactionDate)} · {m.gateway || 'GD'} · {m.description || '—'}
                       </Typography>
                     </Box>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-500" />
+                    <Box layoutClassName="flex shrink-0 flex-col items-center gap-1">
+                      <ArrowRight className="h-4 w-4 text-slate-300 dark:text-slate-500" />
+                      <Typography as="span" size="xs" textClassName={gapWarn ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'}>
+                        {gapLabel}
+                      </Typography>
+                    </Box>
                     <Box layoutClassName="min-w-0 flex-1 text-right">
                       <Typography as="p" size="sm" layoutClassName="truncate font-semibold" textClassName="text-primary-600 dark:text-primary-400">
                         {m.supplier || 'Phiếu nhập'}
@@ -287,6 +314,11 @@ const ReceiptReconcileModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) 
                       <Typography as="p" size="xs" layoutClassName="truncate" textClassName="text-slate-400 dark:text-slate-500">
                         {fmtDate(m.receiptDate)}{m.invoiceNumber ? ` · ${m.invoiceNumber}` : ''}
                       </Typography>
+                      {ambiguous ? (
+                        <Badge size="sm" layoutClassName="mt-0.5 inline-flex" backgroundClassName="bg-amber-100 dark:bg-amber-900/30" textClassName="text-amber-700 dark:text-amber-300">
+                          nhiều ứng viên
+                        </Badge>
+                      ) : null}
                     </Box>
                   </Box>
                 );
@@ -295,7 +327,7 @@ const ReceiptReconcileModal: React.FC<Props> = ({ isOpen, onClose, onApplied }) 
           ) : (
             <EmptyState
               icon={<CheckCircle2 className="h-6 w-6" />}
-              title="Không có cặp nào khớp tự động. Thử tab Khớp tay."
+              title="Không có phiếu nào trùng số tiền với giao dịch tiền ra. Thử tab Khớp tay."
             />
           )}
         </Box>

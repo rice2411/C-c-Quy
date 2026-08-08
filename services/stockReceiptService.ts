@@ -326,6 +326,9 @@ export interface ReceiptReconcileMatch {
   amount: number;
   transactionDate: string | null;
   receiptDate: string | null;
+  dateGap: number | null; // số ngày lệch (null nếu thiếu ngày)
+  txCand: number; // số phiếu cùng số tiền GD này khớp
+  receiptCand: number; // số GD cùng số tiền phiếu này khớp
   gateway: string | null;
   supplier: string | null;
   invoiceNumber: string | null;
@@ -334,8 +337,8 @@ export interface ReceiptReconcileMatch {
 
 export interface ReceiptReconcilePreview {
   matched: ReceiptReconcileMatch[];
-  skippedAmbiguous: number;
-  skippedNoMatch: number;
+  uniqueCount: number; // số cặp 1-1 (an toàn tự chọn)
+  ambiguousCount: number; // số cặp có nhiều ứng viên
   totalUnlinkedTx: number;
   totalUnlinkedReceipt: number;
 }
@@ -356,6 +359,9 @@ function toMatch(r: any): ReceiptReconcileMatch {
     amount: numOr0(r?.amount),
     transactionDate: strOrNull(r?.transactionDate),
     receiptDate: strOrNull(r?.receiptDate),
+    dateGap: typeof r?.dateGap === 'number' ? r.dateGap : null,
+    txCand: numOr0(r?.txCand),
+    receiptCand: numOr0(r?.receiptCand),
     gateway: strOrNull(r?.gateway),
     supplier: strOrNull(r?.supplier),
     invoiceNumber: strOrNull(r?.invoiceNumber),
@@ -363,16 +369,19 @@ function toMatch(r: any): ReceiptReconcileMatch {
   };
 }
 
-/** Gợi ý cặp khớp tự động — POST /stock-receipts/reconcile/preview. */
+/**
+ * Gợi ý cặp khớp theo SỐ TIỀN bằng nhau — POST /stock-receipts/reconcile/preview.
+ * windowDays=0 (mặc định): chỉ khớp số tiền, không giới hạn ngày (ngày chỉ để sắp + hiển thị).
+ */
 export async function stockReceiptReconcilePreview(
-  windowDays = 3,
+  windowDays = 0,
 ): Promise<ReceiptReconcilePreview> {
   const res = await apiClient.post<any>(`${BASE}/reconcile/preview`, { windowDays });
   const d = res.data ?? {};
   return {
     matched: Array.isArray(d.matched) ? d.matched.map(toMatch) : [],
-    skippedAmbiguous: numOr0(d.skippedAmbiguous),
-    skippedNoMatch: numOr0(d.skippedNoMatch),
+    uniqueCount: numOr0(d.uniqueCount),
+    ambiguousCount: numOr0(d.ambiguousCount),
     totalUnlinkedTx: numOr0(d.totalUnlinkedTx),
     totalUnlinkedReceipt: numOr0(d.totalUnlinkedReceipt),
   };
