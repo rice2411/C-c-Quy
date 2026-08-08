@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronsUpDown, FileText, Plus, ReceiptText, TrendingUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronsUpDown, FileText, GitCompareArrows, Plus, ReceiptText, TrendingUp } from 'lucide-react';
+import ReceiptReconcileModal from './ReceiptReconcileModal';
 import type { SavedStockReceiptSummary } from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
 import Badge from '@/components/ui/Badge';
@@ -57,6 +58,8 @@ export interface BillImportReceiptListTabProps {
   onRowClick: (receiptId: string) => void;
   /** Mở modal chọn nguồn nhập phiếu (dropzone / chụp / tải / thủ công). */
   onStartImport?: () => void;
+  /** Gọi sau khi đối soát thay đổi (để parent refetch danh sách phiếu). */
+  onReconciled?: () => void;
 }
 
 const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
@@ -65,6 +68,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
   filteredReceipts,
   onRowClick,
   onStartImport,
+  onReconciled,
 }) => {
   const { t } = useLanguage();
 
@@ -72,6 +76,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [period, setPeriod] = useState<DatePeriod>('all');
+  const [reconcileOpen, setReconcileOpen] = useState(false);
 
   // (2a) memo: lọc kỳ — ngày phiếu = receiptDate || createdAt (dùng filterByPeriod như NCC).
   // Bọc mỗi phiếu thành { row, lastReceiptDate } để tái dùng helper rồi map ngược về row gốc.
@@ -159,6 +164,18 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
         onPeriodChange={(v) => setPeriod(v as DatePeriod)}
         actions={
           <>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setReconcileOpen(true)}
+              leftIcon={<GitCompareArrows />}
+              iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+              sizeClassName="px-4 py-2"
+              roundedClassName="rounded-xl"
+              layoutClassName="inline-flex items-center gap-1.5"
+            >
+              Đối soát
+            </Button>
             {onStartImport ? (
               <Button
                 type="button"
@@ -377,6 +394,12 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
             </Box>
           </>
         )}
+
+      <ReceiptReconcileModal
+        isOpen={reconcileOpen}
+        onClose={() => setReconcileOpen(false)}
+        onApplied={onReconciled}
+      />
     </Box>
   );
 };

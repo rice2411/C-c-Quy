@@ -314,3 +314,88 @@ export async function reconcileReceipt(receiptId: string, transactionId: string)
 export async function unreconcileReceipt(receiptId: string): Promise<void> {
   await apiClient.post(`${BASE}/${receiptId}/unreconcile`);
 }
+
+// -------- Auto-suggest khớp phiếu nhập ↔ tiền ra --------
+const numOr0 = (v: unknown): number => (typeof v === 'number' ? v : 0);
+const strOrNull = (v: unknown): string | null => (typeof v === 'string' ? v : null);
+
+/** 1 cặp gợi ý khớp (tiền ra ↔ phiếu nhập). */
+export interface ReceiptReconcileMatch {
+  transactionId: string;
+  receiptId: string;
+  amount: number;
+  transactionDate: string | null;
+  receiptDate: string | null;
+  gateway: string | null;
+  supplier: string | null;
+  invoiceNumber: string | null;
+  description: string | null;
+}
+
+export interface ReceiptReconcilePreview {
+  matched: ReceiptReconcileMatch[];
+  skippedAmbiguous: number;
+  skippedNoMatch: number;
+  totalUnlinkedTx: number;
+  totalUnlinkedReceipt: number;
+}
+
+/** 1 GD tiền ra chưa gắn phiếu (khớp tay). */
+export interface UnlinkedOutTxn {
+  id: string;
+  amount: number;
+  transactionDate: string | null;
+  gateway: string | null;
+  content: string | null;
+}
+
+function toMatch(r: any): ReceiptReconcileMatch {
+  return {
+    transactionId: strOrNull(r?.transactionId) ?? '',
+    receiptId: strOrNull(r?.receiptId) ?? '',
+    amount: numOr0(r?.amount),
+    transactionDate: strOrNull(r?.transactionDate),
+    receiptDate: strOrNull(r?.receiptDate),
+    gateway: strOrNull(r?.gateway),
+    supplier: strOrNull(r?.supplier),
+    invoiceNumber: strOrNull(r?.invoiceNumber),
+    description: strOrNull(r?.description),
+  };
+}
+
+/** Gợi ý cặp khớp tự động — POST /stock-receipts/reconcile/preview. */
+export async function stockReceiptReconcilePreview(
+  windowDays = 3,
+): Promise<ReceiptReconcilePreview> {
+  const res = await apiClient.post<any>(`${BASE}/reconcile/preview`, { windowDays });
+  const d = res.data ?? {};
+  return {
+    matched: Array.isArray(d.matched) ? d.matched.map(toMatch) : [],
+    skippedAmbiguous: numOr0(d.skippedAmbiguous),
+    skippedNoMatch: numOr0(d.skippedNoMatch),
+    totalUnlinkedTx: numOr0(d.totalUnlinkedTx),
+    totalUnlinkedReceipt: numOr0(d.totalUnlinkedReceipt),
+  };
+}
+
+/** Áp danh sách cặp đã chọn — POST /stock-receipts/reconcile/apply. */
+export async function stockReceiptReconcileApply(
+  pairs: { receiptId: string; transactionId: string }[],
+): Promise<{ applied: number; skipped: number }> {
+  const res = await apiClient.post<any>(`${BASE}/reconcile/apply`, { pairs });
+  return { applied: numOr0(res.data?.applied), skipped: numOr0(res.data?.skipped) };
+}
+
+/** GD tiền ra chưa gắn phiếu — GET /stock-receipts/unlinked-out-txns. */
+export async function fetchUnlinkedOutTxns(): Promise<UnlinkedOutTxn[]> {
+  const res = await apiClient.get<any[]>(`${BASE}/unlinked-out-txns`);
+  return Array.isArray(res.data)
+    ? res.data.map((r) => ({
+        id: strOrNull(r?.id) ?? '',
+        amount: numOr0(r?.amount),
+        transactionDate: strOrNull(r?.transactionDate),
+        gateway: strOrNull(r?.gateway),
+        content: strOrNull(r?.content),
+      }))
+    : [];
+}
