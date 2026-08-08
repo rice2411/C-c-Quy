@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type {
@@ -24,6 +24,8 @@ import BillImportReceiptListTab from '@/pages/StockReceipts/BillImportReceiptLis
 import ReceiptDetailModal from '@/pages/StockReceipts/ReceiptDetailModal';
 import BillImportModal from '@/pages/StockReceipts/BillImportModal';
 import BillImportSourceModal from '@/pages/StockReceipts/BillImportSourceModal';
+import BillImportQueueModal from '@/pages/StockReceipts/BillImportQueueModal';
+import { isAutoSavable, billDedupKey, type BillJob } from '@/pages/StockReceipts/billQueue';
 import type { UiProgressStage } from '@/pages/StockReceipts/constants';
 import { fileToBase64NoPrefix } from '@/utils/io/fileUtil';
 import { formatImportedAt } from '@/utils/format/dateUtil';
@@ -65,6 +67,29 @@ const autoMatchMaterials = (
             : li.unitPrice,
       };
     }),
+  };
+};
+
+/**
+ * Chuẩn hoá structured trước khi lưu: tự tính totalAmount (lineSum + tax − discount) nếu
+ * chưa có, và productLineCount cho phiếu thủ công. Dùng chung cho lưu đơn + lưu hàng loạt.
+ */
+const buildStructuredForSave = (
+  draft: StockReceiptStructured,
+  isManual: boolean,
+): StockReceiptStructured => {
+  const hasExplicitTotal = typeof draft.totalAmount === 'number';
+  const lineSum = (draft.lineItems || []).reduce(
+    (s, l) => s + (typeof l.lineTotal === 'number' ? l.lineTotal : 0),
+    0,
+  );
+  const taxV = typeof draft.tax === 'number' ? draft.tax : 0;
+  const discountV = typeof draft.discount === 'number' ? draft.discount : 0;
+  const validLineCount = (draft.lineItems || []).filter((l) => (l.name ?? '').trim() !== '').length;
+  return {
+    ...draft,
+    totalAmount: hasExplicitTotal ? draft.totalAmount : lineSum + taxV - discountV,
+    productLineCount: isManual ? validLineCount : draft.productLineCount,
   };
 };
 
@@ -121,6 +146,14 @@ const StockReceiptsPage: React.FC = () => {
 
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [supplierContact, setSupplierContact] = useState<SupplierContactInfo>(EMPTY_CONTACT);
+
+  // Hàng đợi nhập bill HÀNG LOẠT.
+  const [queue, setQueue] = useState<BillJob[]>([]);
+  const [queueOpen, setQueueOpen] = useState(false);
+  const [reviewingJobId, setReviewingJobId] = useState<string | null>(null);
+  const filesRef = useRef<Map<string, File>>(new Map());
+  const savedKeysRef = useRef<Set<string>>(new Set());
+  const jobSeqRef = useRef(0);
 
   // Data qua React Query (epic #58 — P8). queryFn gọi thẳng stockReceiptService.
   // supplierRows vẫn cần cho EntryTab (supplierList) + SupplierPicker.
@@ -339,26 +372,7 @@ const StockReceiptsPage: React.FC = () => {
     }
     setSavingDraft(true);
     try {
-      // Tổng tiền: nếu user/OCR đã nhập totalAmount (typeof number) thì GIỮ NGUYÊN,
-      // chỉ tự tính lineSum + tax - discount khi totalAmount null/undefined.
-      const hasExplicitTotal = typeof draftStructured.totalAmount === 'number';
-      const lineSum = (draftStructured.lineItems || []).reduce(
-        (s, l) => s + (typeof l.lineTotal === 'number' ? l.lineTotal : 0),
-        0,
-      );
-      const taxV = typeof draftStructured.tax === 'number' ? draftStructured.tax : 0;
-      const discountV =
-        typeof draftStructured.discount === 'number' ? draftStructured.discount : 0;
-      const validLineCount = (draftStructured.lineItems || []).filter(
-        (l) => (l.name ?? '').trim() !== '',
-      ).length;
-      const structuredForSave: StockReceiptStructured = {
-        ...draftStructured,
-        totalAmount: hasExplicitTotal
-          ? draftStructured.totalAmount
-          : lineSum + taxV - discountV,
-        productLineCount: isManual ? validLineCount : draftStructured.productLineCount,
-      };
+      const structuredForSave = buildStructuredForSave(draftStructured, isManual);
       await saveDraft({
         structured: structuredForSave,
         validation: validation ?? MANUAL_VALIDATION,
@@ -383,6 +397,13 @@ const StockReceiptsPage: React.FC = () => {
       } else {
         toast.success(t('billImport.saved'));
       }
+      // Nếu đang review 1 bill trong hàng đợi → đánh dấu đã lưu + nhớ khoá chống trùng lô.
+      if (reviewingJobId) {
+        const k = billDedupKey(draftStructured);
+        if (k) savedKeysRef.current.add(k);
+        patchJob(reviewingJobId, { status: 'saved' });
+        setReviewingJobId(null);
+      }
       setImportModalOpen(false);
       setEntryMode('ocr');
       resetAndClosePreview();
@@ -404,6 +425,148 @@ const StockReceiptsPage: React.FC = () => {
       setSavingDraft(false);
     }
   };
+
+  // ─────────────── Nhập bill HÀNG LOẠT (hàng đợi) ───────────────
+  const patchJob = useCallback((id: string, patch: Partial<BillJob>) => {
+    setQueue((prev) => prev.map((j) => (j.id === id ? { ...j, ...patch } : j)));
+  }, []);
+
+  /** Tự lưu 1 bill (bill tin cậy cao). Chống trùng trong lô + bắt DUPLICATE_BILL từ BE. */
+  const saveJobToServer = useCallback(
+    async (job: BillJob) => {
+      const s = job.structured;
+      if (!s) { patchJob(job.id, { status: 'error', error: 'Thiếu dữ liệu' }); return; }
+      const key = billDedupKey(s);
+      if (key && savedKeysRef.current.has(key)) { patchJob(job.id, { status: 'duplicate' }); return; }
+      patchJob(job.id, { status: 'saving' });
+      try {
+        await saveDraft({
+          structured: buildStructuredForSave(s, false),
+          validation: job.validation ?? MANUAL_VALIDATION,
+          ocrText: job.ocrText,
+          source: 'ocr',
+          receiptImageBase64: job.imageBase64,
+          receiptImageMimeType: job.imageMimeType,
+          createdByUid: currentUser?.uid ?? null,
+          targetSupplierId: job.supplierId,
+          supplierContact: job.supplierContact,
+        });
+        if (key) savedKeysRef.current.add(key);
+        patchJob(job.id, { status: 'saved' });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.startsWith('DUPLICATE_BILL:')) patchJob(job.id, { status: 'duplicate', existingId: msg.split(':')[1] });
+        else patchJob(job.id, { status: 'error', error: msg === 'TOO_MANY_LINES' ? 'Quá nhiều dòng (>240)' : msg });
+      }
+    },
+    [saveDraft, currentUser, patchJob],
+  );
+
+  /** OCR 1 bill → auto-match NCC/NVL → tự lưu nếu tin cậy cao, else để review. */
+  const processOneJob = useCallback(
+    async (job: BillJob) => {
+      const file = filesRef.current.get(job.id);
+      if (!file) return;
+      patchJob(job.id, { status: 'ocr', progressStage: 'prepare', error: undefined });
+      try {
+        const b64 = await fileToBase64NoPrefix(file);
+        const result = await runBillImportPipeline(b64, {
+          onProgress: (stage) => patchJob(job.id, { progressStage: stage }),
+        });
+        const supMatch = bestMaterialMatch(result.structured.supplierName ?? '', supplierRows, 0.7);
+        const structured = autoMatchMaterials(
+          { ...result.structured, supplierName: supMatch ? supMatch.item.name : result.structured.supplierName },
+          materialRows,
+        );
+        const supplierContactVal: SupplierContactInfo = supMatch
+          ? {
+              phone: supMatch.item.phone ?? result.structured.supplierPhone ?? null,
+              address: supMatch.item.address ?? result.structured.supplierAddress ?? null,
+              contactPerson: supMatch.item.contactPerson ?? null,
+              email: supMatch.item.email ?? null,
+              taxCode: supMatch.item.taxCode ?? null,
+              category: supMatch.item.category ?? null,
+              channel: supMatch.item.channel,
+              notes: supMatch.item.notes ?? null,
+            }
+          : { phone: result.structured.supplierPhone ?? null, address: result.structured.supplierAddress ?? null };
+        const base: Partial<BillJob> = {
+          structured,
+          validation: result.validation,
+          ocrText: result.ocrText,
+          imageBase64: b64,
+          imageMimeType: file.type || null,
+          supplierId: supMatch ? supMatch.item.id : null,
+          supplierContact: supplierContactVal,
+          confidence: result.validation.confidence ?? 0,
+          progressStage: null,
+        };
+        if (isAutoSavable(structured, result.validation)) {
+          patchJob(job.id, { ...base, status: 'saving' });
+          await saveJobToServer({ ...job, ...base } as BillJob);
+        } else {
+          patchJob(job.id, { ...base, status: 'review' });
+        }
+      } catch (e) {
+        patchJob(job.id, { status: 'error', progressStage: null, error: e instanceof Error ? e.message : String(e) });
+      }
+    },
+    [supplierRows, materialRows, patchJob, saveJobToServer],
+  );
+
+  /** Chọn NHIỀU ảnh → tạo hàng đợi + xử lý song song (tối đa 3). */
+  const handleImagesSelected = useCallback(
+    (files: File[]) => {
+      const imgs = files.filter((f) => f.type.startsWith('image/'));
+      if (imgs.length === 0) { toast.error(t('billImport.invalidFile')); return; }
+      setSourceModalOpen(false);
+      savedKeysRef.current = new Set();
+      const jobs: BillJob[] = imgs.map((f) => {
+        const id = `job_${Date.now()}_${jobSeqRef.current++}`;
+        filesRef.current.set(id, f);
+        return {
+          id, fileName: f.name || 'bill', previewUrl: URL.createObjectURL(f),
+          status: 'pending', progressStage: null, structured: null, validation: null,
+          ocrText: '', imageBase64: null, imageMimeType: f.type || null,
+          supplierId: null, supplierContact: EMPTY_CONTACT, confidence: 0,
+        };
+      });
+      setQueue(jobs);
+      setQueueOpen(true);
+      void (async () => {
+        const CONC = 3;
+        let idx = 0;
+        const worker = async (): Promise<void> => {
+          while (idx < jobs.length) {
+            const j = jobs[idx++];
+            await processOneJob(j);
+          }
+        };
+        await Promise.all(Array.from({ length: Math.min(CONC, jobs.length) }, () => worker()));
+      })();
+    },
+    [t, processOneJob],
+  );
+
+  /** Mở form review cho 1 bill trong hàng đợi (dùng lại form nhập 1 bill). */
+  const reviewJob = useCallback((job: BillJob) => {
+    const file = filesRef.current.get(job.id);
+    const url = file ? URL.createObjectURL(file) : job.previewUrl; // URL riêng, revoke không ảnh hưởng thumbnail hàng đợi
+    setReviewingJobId(job.id);
+    setEntryMode('ocr');
+    setEditingReceiptId(null);
+    setDraftStructured(job.structured);
+    setValidation(job.validation);
+    setOcrText(job.ocrText);
+    setUploadedImageBase64(job.imageBase64);
+    setUploadedImageMimeType(job.imageMimeType);
+    setPreviewUrl(url);
+    setSelectedSupplierId(job.supplierId);
+    setSupplierContact(job.supplierContact);
+    setImportModalOpen(true);
+  }, []);
+
+  const retryJob = useCallback((job: BillJob) => { void processOneJob(job); }, [processOneJob]);
 
   const openReceiptDetail = useCallback((receiptId: string) => {
     setDetailReceiptId(receiptId);
@@ -494,6 +657,7 @@ const StockReceiptsPage: React.FC = () => {
     setImportModalOpen(false);
     setEntryMode('ocr');
     setEditingReceiptId(null); // huỷ → không còn ở chế độ sửa
+    setReviewingJobId(null); // huỷ review 1 bill hàng đợi → job vẫn ở trạng thái "cần xem"
     resetAndClosePreview();
   }, [resetAndClosePreview]);
 
@@ -525,7 +689,16 @@ const StockReceiptsPage: React.FC = () => {
         open={sourceModalOpen}
         onClose={() => setSourceModalOpen(false)}
         onImageSelected={handleSourceImage}
+        onImagesSelected={handleImagesSelected}
         onStartManual={handleSourceManual}
+      />
+
+      <BillImportQueueModal
+        open={queueOpen}
+        onClose={() => setQueueOpen(false)}
+        jobs={queue}
+        onReview={reviewJob}
+        onRetry={retryJob}
       />
 
       <BillImportModal

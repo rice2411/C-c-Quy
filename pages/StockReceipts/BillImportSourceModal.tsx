@@ -10,8 +10,10 @@ import { useLanguage } from '@/contexts/LanguageContext';
 export interface BillImportSourceModalProps {
   open: boolean;
   onClose: () => void;
-  /** Ảnh bill được chọn (kéo-thả / dán / tải lên / chụp) → chạy OCR. */
+  /** Ảnh bill được chọn (1 ảnh: kéo-thả / dán / tải lên / chụp) → chạy OCR đơn. */
   onImageSelected: (file: File) => void;
+  /** NHIỀU ảnh bill cùng lúc → hàng đợi nhập hàng loạt. */
+  onImagesSelected?: (files: File[]) => void;
   /** Mở form nhập phiếu THỦ CÔNG (không OCR). */
   onStartManual: () => void;
 }
@@ -25,6 +27,7 @@ const BillImportSourceModal: React.FC<BillImportSourceModalProps> = ({
   open,
   onClose,
   onImageSelected,
+  onImagesSelected,
   onStartManual,
 }) => {
   const { t } = useLanguage();
@@ -32,17 +35,18 @@ const BillImportSourceModal: React.FC<BillImportSourceModalProps> = ({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
-  // Nhận 1 file ảnh từ mọi nguồn → validate rồi bắn ra ngoài.
-  const acceptImage = useCallback(
-    (file: File | undefined | null) => {
-      if (!file) return;
-      if (!file.type.startsWith('image/')) {
+  // Nhận 1..n file ảnh từ mọi nguồn → validate; 1 ảnh chạy OCR đơn, nhiều ảnh vào hàng đợi.
+  const acceptImages = useCallback(
+    (files: (File | undefined | null)[]) => {
+      const imgs = files.filter((f): f is File => !!f && f.type.startsWith('image/'));
+      if (imgs.length === 0) {
         toast.error(t('billImport.invalidFile'));
         return;
       }
-      onImageSelected(file);
+      if (imgs.length > 1 && onImagesSelected) onImagesSelected(imgs);
+      else onImageSelected(imgs[0]);
     },
-    [onImageSelected, t],
+    [onImageSelected, onImagesSelected, t],
   );
 
   // Dán ảnh (Ctrl/⌘+V) khi modal đang mở. Clipboard không có ảnh → bỏ qua.
@@ -51,28 +55,27 @@ const BillImportSourceModal: React.FC<BillImportSourceModalProps> = ({
     const onPaste = (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
       if (!items) return;
-      const imageItem = Array.from(items).find(
-        (it) => it.kind === 'file' && it.type.startsWith('image/'),
-      );
-      const file = imageItem?.getAsFile();
-      if (!file) return;
+      const files = Array.from(items)
+        .filter((it) => it.kind === 'file' && it.type.startsWith('image/'))
+        .map((it) => it.getAsFile());
+      if (files.length === 0) return;
       e.preventDefault();
-      acceptImage(file);
+      acceptImages(files);
     };
     window.addEventListener('paste', onPaste);
     return () => window.removeEventListener('paste', onPaste);
-  }, [open, acceptImage]);
+  }, [open, acceptImages]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files ?? []);
     e.target.value = '';
-    acceptImage(file);
+    acceptImages(files);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragActive(false);
-    acceptImage(e.dataTransfer.files?.[0]);
+    acceptImages(Array.from(e.dataTransfer.files ?? []));
   };
 
   const openFilePicker = () => fileInputRef.current?.click();
@@ -86,6 +89,7 @@ const BillImportSourceModal: React.FC<BillImportSourceModalProps> = ({
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          multiple
           style={{ display: 'none' }}
           onChange={handleInputChange}
         />
