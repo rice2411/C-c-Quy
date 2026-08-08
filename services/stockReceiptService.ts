@@ -395,6 +395,47 @@ export async function stockReceiptReconcileApply(
   return { applied: numOr0(res.data?.applied), skipped: numOr0(res.data?.skipped) };
 }
 
+/** Phiếu đã có trong hệ thống (kết quả kiểm trùng). */
+export interface DuplicateReceiptInfo {
+  id: string;
+  supplierName: string | null;
+  receiptDate: string | null;
+  totalAmount: number | null;
+  createdAt: string | null;
+}
+
+const toIsoLoose = (v: unknown): string | null => {
+  if (typeof v === 'string') return v;
+  if (v && typeof v === 'object') {
+    const a = v as { toDate?: () => Date };
+    try { if (typeof a.toDate === 'function') return a.toDate().toISOString(); } catch { /* ignore */ }
+  }
+  return null;
+};
+
+/** Kiểm tra bill đang up đã có trong hệ thống chưa — POST /stock-receipts/find-duplicate. */
+export async function findDuplicateReceipt(input: {
+  structured: unknown;
+  ocrText: string;
+  targetSupplierId?: string | null;
+}): Promise<{ duplicate: boolean; receipt: DuplicateReceiptInfo | null }> {
+  const res = await apiClient.post<any>(`${BASE}/find-duplicate`, input);
+  const d = res.data ?? {};
+  const r = d.receipt;
+  return {
+    duplicate: Boolean(d.duplicate),
+    receipt: r
+      ? {
+          id: strOrNull(r.id) ?? '',
+          supplierName: strOrNull(r.supplierName),
+          receiptDate: strOrNull(r.receiptDate),
+          totalAmount: typeof r.totalAmount === 'number' ? r.totalAmount : null,
+          createdAt: toIsoLoose(r.createdAt),
+        }
+      : null,
+  };
+}
+
 /** GD tiền ra chưa gắn phiếu — GET /stock-receipts/unlinked-out-txns. */
 export async function fetchUnlinkedOutTxns(): Promise<UnlinkedOutTxn[]> {
   const res = await apiClient.get<any[]>(`${BASE}/unlinked-out-txns`);

@@ -17,8 +17,12 @@ import {
   useStockReceiptSummaries,
 } from '@/hooks/queries/useStockReceiptQuery';
 import { runBillImportPipeline } from '@/services/billReceiptPipeline';
+import { findDuplicateReceipt, type DuplicateReceiptInfo } from '@/services/stockReceiptService';
 import { useAuth } from '@/contexts/AuthContext';
+import { formatVND } from '@/utils/format/currencyUtil';
 import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
+import Typography from '@/components/ui/Typography';
 import BillImportEntryTab from '@/pages/StockReceipts/BillImportEntryTab';
 import BillImportReceiptListTab from '@/pages/StockReceipts/BillImportReceiptListTab';
 import ReceiptDetailModal from '@/pages/StockReceipts/ReceiptDetailModal';
@@ -154,6 +158,8 @@ const StockReceiptsPage: React.FC = () => {
   const filesRef = useRef<Map<string, File>>(new Map());
   const savedKeysRef = useRef<Set<string>>(new Set());
   const jobSeqRef = useRef(0);
+  // Bill (single) đang up có thể đã có trong hệ thống.
+  const [duplicateInfo, setDuplicateInfo] = useState<DuplicateReceiptInfo | null>(null);
 
   // Data qua React Query (epic #58 — P8). queryFn gọi thẳng stockReceiptService.
   // supplierRows vẫn cần cho EntryTab (supplierList) + SupplierPicker.
@@ -177,6 +183,7 @@ const StockReceiptsPage: React.FC = () => {
     setUploadedImageMimeType(null);
     setSelectedSupplierId(null);
     setSupplierContact(EMPTY_CONTACT);
+    setDuplicateInfo(null);
   }, []);
 
   const resetAndClosePreview = useCallback(() => {
@@ -233,6 +240,20 @@ const StockReceiptsPage: React.FC = () => {
             phone: result.structured.supplierPhone ?? null,
             address: result.structured.supplierAddress ?? null,
           });
+        }
+        // Kiểm tra bill này đã có trong hệ thống chưa (theo NCC + ngày + tổng + OCR).
+        try {
+          const dup = await findDuplicateReceipt({
+            structured: buildStructuredForSave(
+              { ...result.structured, supplierName: supMatch ? supMatch.item.name : result.structured.supplierName },
+              false,
+            ),
+            ocrText: result.ocrText,
+            targetSupplierId: supMatch ? supMatch.item.id : null,
+          });
+          setDuplicateInfo(dup.duplicate ? dup.receipt : null);
+        } catch {
+          /* không chặn nếu kiểm trùng lỗi */
         }
         toast.success(t('billImport.done'));
       } catch (e) {
@@ -501,6 +522,20 @@ const StockReceiptsPage: React.FC = () => {
           confidence: result.validation.confidence ?? 0,
           progressStage: null,
         };
+        // Đã có trong hệ thống? → đánh dấu trùng, KHÔNG tự lưu/không cần review.
+        try {
+          const dup = await findDuplicateReceipt({
+            structured: buildStructuredForSave(structured, false),
+            ocrText: result.ocrText,
+            targetSupplierId: supMatch ? supMatch.item.id : null,
+          });
+          if (dup.duplicate) {
+            patchJob(job.id, { ...base, status: 'duplicate', existingId: dup.receipt?.id });
+            return;
+          }
+        } catch {
+          /* không chặn nếu kiểm trùng lỗi */
+        }
         if (isAutoSavable(structured, result.validation)) {
           patchJob(job.id, { ...base, status: 'saving' });
           await saveJobToServer({ ...job, ...base } as BillJob);
@@ -567,6 +602,26 @@ const StockReceiptsPage: React.FC = () => {
   }, []);
 
   const retryJob = useCallback((job: BillJob) => { void processOneJob(job); }, [processOneJob]);
+
+  /** Lưu TẤT CẢ bill đang ở trạng thái "cần xem" (áp toàn bộ, không sửa tay từng cái). */
+  const saveAllReview = useCallback(async () => {
+    const targets = queue.filter((j) => j.status === 'review');
+    for (const j of targets) {
+      // eslint-disable-next-line no-await-in-loop
+      await saveJobToServer(j);
+    }
+  }, [queue, saveJobToServer]);
+
+  /** Xem phiếu đã có trong hệ thống (khi bill trùng). */
+  const viewExistingReceipt = useCallback(
+    (job: BillJob) => {
+      if (!job.existingId) return;
+      setQueueOpen(false);
+      setDetailReceiptId(job.existingId);
+      setDetailOpen(true);
+    },
+    [],
+  );
 
   const openReceiptDetail = useCallback((receiptId: string) => {
     setDetailReceiptId(receiptId);
@@ -699,6 +754,8 @@ const StockReceiptsPage: React.FC = () => {
         jobs={queue}
         onReview={reviewJob}
         onRetry={retryJob}
+        onSaveAll={saveAllReview}
+        onViewExisting={viewExistingReceipt}
       />
 
       <BillImportModal
@@ -706,6 +763,36 @@ const StockReceiptsPage: React.FC = () => {
         onClose={closeImportModal}
         title={editingReceiptId ? 'Sửa phiếu nhập' : entryMode === 'manual' ? 'Nhập phiếu thủ công' : 'Nhập bill mới'}
       >
+        {duplicateInfo && (
+          <Box
+            layoutClassName="mb-3 flex flex-wrap items-center justify-between gap-2 p-3"
+            roundedClassName="rounded-xl"
+            borderClassName="border border-amber-300 dark:border-amber-800/60"
+            backgroundClassName="bg-amber-50 dark:bg-amber-900/20"
+          >
+            <Typography size="sm" textClassName="text-amber-800 dark:text-amber-200">
+              ⚠️ Bill này có thể ĐÃ CÓ trong hệ thống
+              {duplicateInfo.supplierName ? ` — ${duplicateInfo.supplierName}` : ''}
+              {duplicateInfo.receiptDate ? ` · ${duplicateInfo.receiptDate}` : ''}
+              {typeof duplicateInfo.totalAmount === 'number' ? ` · ${formatVND(duplicateInfo.totalAmount)}` : ''}
+              {duplicateInfo.createdAt ? ` (nhập ${formatImportedAt(duplicateInfo.createdAt)})` : ''}.
+            </Typography>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                const id = duplicateInfo.id;
+                setImportModalOpen(false);
+                resetAndClosePreview();
+                setDetailReceiptId(id);
+                setDetailOpen(true);
+              }}
+            >
+              Xem phiếu cũ
+            </Button>
+          </Box>
+        )}
         <BillImportEntryTab
           isManual={entryMode === 'manual'}
           busy={busy}

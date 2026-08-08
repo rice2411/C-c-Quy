@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { AlertTriangle, CheckCircle2, Copy, Loader2, Pencil, RotateCcw } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { AlertTriangle, CheckCircle2, Copy, Eye, Loader2, Pencil, RotateCcw, Save } from 'lucide-react';
 import { formatVND } from '@/utils/format/currencyUtil';
 import BaseModal from '@/components/BaseModal';
 import Box from '@/components/ui/Box';
@@ -15,6 +15,10 @@ interface Props {
   jobs: BillJob[];
   onReview: (job: BillJob) => void;
   onRetry: (job: BillJob) => void;
+  /** Lưu TẤT CẢ bill "cần xem" một lượt (áp toàn bộ). */
+  onSaveAll: () => Promise<void>;
+  /** Xem phiếu đã có trong hệ thống (bill trùng). */
+  onViewExisting: (job: BillJob) => void;
 }
 
 const STAGE_LABEL: Record<string, string> = {
@@ -31,7 +35,12 @@ const STATUS_META: Record<BillJobStatus, { label: string; bg: string; text: stri
   error: { label: 'Lỗi', bg: 'bg-rose-100 dark:bg-rose-900/30', text: 'text-rose-700 dark:text-rose-300' },
 };
 
-const BillImportQueueModal: React.FC<Props> = ({ open, onClose, jobs, onReview, onRetry }) => {
+const BillImportQueueModal: React.FC<Props> = ({ open, onClose, jobs, onReview, onRetry, onSaveAll, onViewExisting }) => {
+  const [savingAll, setSavingAll] = useState(false);
+  const handleSaveAll = async () => {
+    setSavingAll(true);
+    try { await onSaveAll(); } finally { setSavingAll(false); }
+  };
   const counts = useMemo(() => {
     const c = { processing: 0, saved: 0, review: 0, duplicate: 0, error: 0 };
     jobs.forEach((j) => {
@@ -49,11 +58,27 @@ const BillImportQueueModal: React.FC<Props> = ({ open, onClose, jobs, onReview, 
   const footer = (
     <Box layoutClassName="flex items-center justify-between gap-2">
       <Typography size="xs" variant="muted">
-        {done ? 'Đã xử lý xong.' : `Đang xử lý ${counts.processing}…`} Bill "Cần xem" hãy bấm sửa để lưu.
+        {done ? 'Đã xử lý xong.' : `Đang xử lý ${counts.processing}…`}
+        {counts.review > 0 ? ` ${counts.review} bill cần xem.` : ''}
       </Typography>
-      <Button type="button" variant="primary" sizeClassName="px-4 py-2 text-sm" onClick={onClose}>
-        {done ? 'Xong' : 'Đóng'}
-      </Button>
+      <Box layoutClassName="flex items-center gap-2">
+        {counts.review > 0 && (
+          <Button
+            type="button"
+            variant="primary"
+            sizeClassName="px-4 py-2 text-sm"
+            layoutClassName="inline-flex items-center gap-1.5"
+            disabled={savingAll || counts.processing > 0}
+            leftIcon={savingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            onClick={handleSaveAll}
+          >
+            {savingAll ? 'Đang lưu…' : `Lưu tất cả (${counts.review})`}
+          </Button>
+        )}
+        <Button type="button" variant="secondary" sizeClassName="px-4 py-2 text-sm" onClick={onClose}>
+          {done ? 'Xong' : 'Đóng'}
+        </Button>
+      </Box>
     </Box>
   );
 
@@ -132,6 +157,11 @@ const BillImportQueueModal: React.FC<Props> = ({ open, onClose, jobs, onReview, 
                   {j.status === 'error' && (
                     <Button type="button" variant="secondary" size="sm" leftIcon={<RotateCcw className="h-3.5 w-3.5" />} onClick={() => onRetry(j)}>
                       Thử lại
+                    </Button>
+                  )}
+                  {j.status === 'duplicate' && j.existingId && (
+                    <Button type="button" variant="secondary" size="sm" leftIcon={<Eye className="h-3.5 w-3.5" />} onClick={() => onViewExisting(j)}>
+                      Xem
                     </Button>
                   )}
                 </Box>
