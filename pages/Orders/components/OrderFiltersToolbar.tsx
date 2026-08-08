@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, Clock, Filter, Truck, Wallet } from 'lucide-react';
+import { AlertTriangle, Clock, Filter, MapPin, Truck, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Box from '@/components/ui/Box';
 import Heading from '@/components/ui/Heading';
@@ -10,6 +10,7 @@ export interface QuickPillState {
   unpaid: boolean;
   today: boolean;
   overdue: boolean;
+  province: boolean;
 }
 
 export type OrderSortKey =
@@ -28,6 +29,7 @@ interface OrderFiltersToolbarProps {
   onToggleUnpaid?: () => void;
   onToggleToday?: () => void;
   onToggleOverdue?: () => void;
+  onToggleProvince?: () => void;
   sortKey?: OrderSortKey;
   onSortChange?: (k: OrderSortKey) => void;
   onClearAll?: () => void;
@@ -37,7 +39,7 @@ interface OrderFiltersToolbarProps {
 
 const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
   searchTerm, onSearchChange, onOpenAdvanced, activeFiltersCount = 0,
-  quickPills, onTogglePending, onToggleUnpaid, onToggleToday, onToggleOverdue,
+  quickPills, onTogglePending, onToggleUnpaid, onToggleToday, onToggleOverdue, onToggleProvince,
   sortKey, onSortChange, onClearAll, actions,
 }) => {
   const { t } = useLanguage();
@@ -56,6 +58,7 @@ const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
     { id: 'today',    label: 'Ship hôm nay',    active: !!quickPills?.today,    onClick: onToggleToday ?? (() => {}),    icon: Truck },
     { id: 'overdue',  label: 'Quá hạn',         active: !!quickPills?.overdue,  onClick: onToggleOverdue ?? (() => {}),  icon: AlertTriangle },
     { id: 'unpaid',   label: 'Chưa thanh toán', active: !!quickPills?.unpaid,   onClick: onToggleUnpaid ?? (() => {}),   icon: Wallet },
+    { id: 'province', label: 'Đơn tỉnh',        active: !!quickPills?.province, onClick: onToggleProvince ?? (() => {}), icon: MapPin },
   ];
   return (
     <Box

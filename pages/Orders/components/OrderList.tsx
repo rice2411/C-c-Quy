@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { qk } from '@/hooks/queryKeys';
 import { Order } from '@/types';
+import { DeliveryType } from '@/types/enums';
 import { getAllUsers } from '@/services/userService';
 import { parseDateValue } from '@/utils/format/dateUtil';
 import { buildDeliveryBadge } from '@/utils/order/deliveryDateBadge';
@@ -45,6 +46,8 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
   const [hideCompleted, setHideCompleted] = useState<boolean>(false);
   // Synthetic filter: đơn quá hạn = deliveryDate < today AND status in {PENDING, PROCESSING}
   const [isOverdueFilter, setIsOverdueFilter] = useState<boolean>(false);
+  // Filter đơn tỉnh: deliveryType = SHIP_PROVINCE (hoặc đơn cũ đã có mã vận đơn).
+  const [isProvinceFilter, setIsProvinceFilter] = useState<boolean>(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
   // Danh sách người tạo (cho filter) — lấy users qua React Query rồi derive.
@@ -161,6 +164,12 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
           }
         }
 
+        // Đơn tỉnh: ship đi tỉnh (SHIP_PROVINCE) hoặc đơn cũ đã có mã vận đơn 3PL.
+        const matchesProvince =
+          !isProvinceFilter ||
+          order.deliveryType === DeliveryType.SHIP_PROVINCE ||
+          !!order.trackingNumber;
+
         const matchesPaymentStatus =
           paymentStatusFilter === 'All' || order.paymentStatus === paymentStatusFilter;
         const matchesPaymentMethod =
@@ -198,6 +207,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
           matchesOverdue &&
           matchesProduct &&
           matchesDate &&
+          matchesProvince &&
           matchesPaymentStatus &&
           matchesPaymentMethod &&
           matchesCreator &&
@@ -279,6 +289,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
     dateFrom,
     dateTo,
     dateType,
+    isProvinceFilter,
   ]);
 
   useEffect(() => {
@@ -296,6 +307,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
     dateFrom,
     dateTo,
     dateType,
+    isProvinceFilter,
   ]);
 
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
@@ -327,6 +339,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
     today:
       dateType === 'deliveryDate' && dateFrom === todayStr && dateTo === todayStr,
     overdue: isOverdueFilter,
+    province: isProvinceFilter,
   };
 
   const togglePill_pending = () => setHideCompleted((p) => !p);
@@ -344,6 +357,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
     }
   };
   const togglePill_overdue = () => setIsOverdueFilter((p) => !p);
+  const togglePill_province = () => setIsProvinceFilter((p) => !p);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Active filter chips — list các filter đang bật để render chip bar có thể × bỏ
@@ -424,6 +438,13 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
         onClear: () => setIsOverdueFilter(false),
       });
     }
+    if (isProvinceFilter) {
+      chips.push({
+        key: 'province',
+        label: 'Đơn tỉnh',
+        onClear: () => setIsProvinceFilter(false),
+      });
+    }
     return chips;
   }, [
     searchTerm,
@@ -438,6 +459,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
     selectedMonth,
     hideCompleted,
     isOverdueFilter,
+    isProvinceFilter,
   ]);
 
   const activeFiltersCount = activeChips.length;
@@ -488,6 +510,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
         onToggleUnpaid={togglePill_unpaid}
         onToggleToday={togglePill_today}
         onToggleOverdue={togglePill_overdue}
+        onToggleProvince={togglePill_province}
         sortKey={`${String(sortField)}-${sortDirection}` as any}
         onSortChange={(k) => {
           const [field, dir] = k.split('-');
@@ -507,6 +530,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
           setDateType('orderDate');
           setHideCompleted(false);
           setIsOverdueFilter(false);
+          setIsProvinceFilter(false);
         }}
       />
 
