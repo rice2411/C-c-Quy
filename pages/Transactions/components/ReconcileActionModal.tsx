@@ -1,14 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Link2, Link2Off, Loader2, PackageOpen, ReceiptText, ShoppingBag } from 'lucide-react';
+import { Link2, Link2Off, PackageOpen, ReceiptText, RotateCcw, ShoppingBag, ShoppingCart, Tag } from 'lucide-react';
 import { LedgerTransaction } from '@/types';
-import { expenseCategoryLabel, LEDGER_STATUS_META } from '@/types/transaction';
+import {
+  EXPENSE_CATEGORIES,
+  expenseCategoryIsCost,
+  expenseCategoryLabel,
+  LEDGER_STATUS_META,
+} from '@/types/transaction';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { useOrders } from '@/hooks/useOrders';
 import { reconcileOrderTransaction } from '@/services/orderService';
 import {
   linkTransactionExpense,
   linkTransactionOrder,
+  markTransactionShopee,
+  setTransactionExpense,
   unlinkTransactionExpense,
 } from '@/services/transactionService';
 import {
@@ -53,6 +60,8 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
   const out = tx?.transferType === 'out';
   const amt = tx?.transferAmount ?? 0;
   const unmatched = tx?.status === 'unmatched';
+  // Nội dung CK gợi ý là tiền Shopee đổ về → nhấn mạnh nút đánh dấu.
+  const looksShopee = !!tx && !out && (tx.content || '').toLowerCase().includes('shopee');
 
   useEffect(() => {
     if (!isOpen || !tx || !out || !unmatched) return;
@@ -154,18 +163,33 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
     </Box>
   );
 
+  // Nút đánh dấu Shopee thanh toán cho tiền VÀO (chưa khớp).
+  const shopeeMark = (
+    <Button
+      type="button"
+      fullWidth
+      variant={looksShopee ? 'primary' : 'secondary'}
+      disabled={busy !== null}
+      leftIcon={<ShoppingCart className="h-4 w-4" />}
+      onClick={() => run('shopee', () => markTransactionShopee(tx.id, true), 'Đã đánh dấu Shopee thanh toán.')}
+    >
+      Đánh dấu Shopee thanh toán
+    </Button>
+  );
+
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Đối soát giao dịch" size="lg">
       <Box layoutClassName="space-y-4">
         {header}
 
-        {/* Đã đối soát → cho gỡ (đơn / chi phí) */}
+        {/* Đã đối soát → cho gỡ / đổi phân loại */}
         {!unmatched ? (
           <Box layoutClassName="space-y-3">
             <Box layoutClassName="rounded-lg border p-3" borderClassName="border-slate-200 dark:border-slate-700" backgroundClassName="bg-slate-50 dark:bg-slate-800/60">
               <Typography size="sm" textClassName="text-slate-600 dark:text-slate-300">
                 Giao dịch này đã ở trạng thái <Typography as="span" layoutClassName="font-semibold" textClassName="text-slate-800 dark:text-slate-100">{statusMeta?.label ?? tx.status}</Typography>
-                {tx.orderNumber ? <> · đơn <Typography as="span" layoutClassName="font-mono font-semibold" textClassName="text-primary-600 dark:text-primary-400">{tx.orderNumber}</Typography></> : null}.
+                {tx.orderNumber ? <> · đơn <Typography as="span" layoutClassName="font-mono font-semibold" textClassName="text-primary-600 dark:text-primary-400">{tx.orderNumber}</Typography></> : null}
+                {tx.expenseCategory && tx.expenseCategory !== 'shopee' ? <> · <Typography as="span" layoutClassName="font-semibold" textClassName="text-slate-800 dark:text-slate-100">{expenseCategoryLabel(tx.expenseCategory)}</Typography></> : null}.
               </Typography>
             </Box>
             {tx.status === 'matched' ? (
@@ -173,10 +197,18 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
                 onClick={() => run('unlink', () => linkTransactionOrder(tx.id, ''), 'Đã gỡ khớp đơn.')}>
                 Gỡ khớp đơn
               </Button>
-            ) : tx.status === 'expense' ? (
+            ) : tx.status === 'shopee' ? (
               <Button type="button" variant="secondary" fullWidth disabled={busy !== null} leftIcon={<Link2Off className="h-4 w-4" />}
-                onClick={() => run('unlink', () => unlinkTransactionExpense(tx.id), 'Đã gỡ khớp chi phí.')}>
-                Gỡ khớp chi phí
+                onClick={() => run('unshopee', () => markTransactionShopee(tx.id, false), 'Đã gỡ đánh dấu Shopee.')}>
+                Gỡ đánh dấu Shopee
+              </Button>
+            ) : tx.status === 'expense' || tx.status === 'excluded' ? (
+              <Button type="button" variant="secondary" fullWidth disabled={busy !== null} leftIcon={<RotateCcw className="h-4 w-4" />}
+                onClick={() => run('reset', async () => {
+                  await unlinkTransactionExpense(tx.id).catch(() => undefined);
+                  await setTransactionExpense(tx.id, null, false);
+                }, 'Đã gỡ đối soát (về chưa khớp).')}>
+                Gỡ đối soát (về chưa khớp)
               </Button>
             ) : (
               <Typography size="xs" variant="muted">Trạng thái này không cần đối soát tay ở đây.</Typography>
@@ -185,37 +217,85 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
         ) : loading ? (
           <Box layoutClassName="flex items-center justify-center py-12"><Spinner size="lg" textClassName="text-primary-500" /></Box>
         ) : !out ? (
-          // ---- TIỀN VÀO → đơn hàng ----
-          <Box layoutClassName="space-y-2">
-            <Box layoutClassName="flex items-center justify-between">
+          // ---- TIỀN VÀO → Shopee thanh toán + đơn hàng ----
+          <Box layoutClassName="space-y-3">
+            <Box layoutClassName="space-y-1.5">
               <Typography size="xs" layoutClassName="flex items-center gap-1.5 font-semibold uppercase" textClassName="text-slate-500 dark:text-slate-400">
-                <ShoppingBag className="h-3.5 w-3.5" /> Đơn hàng chưa thanh toán
+                <ShoppingCart className="h-3.5 w-3.5" /> Nguồn ngoài đơn
               </Typography>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setShowAll((s) => !s)}>
-                {showAll ? 'Chỉ đúng số tiền' : 'Hiện tất cả'}
-              </Button>
+              {shopeeMark}
+              {looksShopee ? (
+                <Typography size="xs" variant="muted">Nội dung CK có chữ “shopee” — đã tự nhận là Shopee thanh toán.</Typography>
+              ) : null}
             </Box>
-            <Box layoutClassName="max-h-[46vh] space-y-1.5 overflow-y-auto">
-              {orderCands.length === 0 ? (
-                <EmptyState title={showAll ? 'Không có đơn chưa thanh toán.' : 'Không có đơn trùng số tiền. Bấm "Hiện tất cả".'} />
-              ) : (
-                orderCands.map((o) =>
-                  row(
-                    o.id,
-                    <Typography as="span" size="sm" layoutClassName="font-mono font-semibold" textClassName="text-primary-700 dark:text-primary-300">
-                      {o.orderNumber || o.id}
-                    </Typography>,
-                    <>{formatVND(o.total)} · {o.paymentStatus}</>,
-                    () => run(o.id, () => reconcileOrderTransaction(o.id, tx.id), `Đã khớp GD với đơn ${o.orderNumber || ''}.`),
-                    o.total === amt || o.depositAmount === amt,
-                  ),
-                )
-              )}
+
+            <Box layoutClassName="space-y-2">
+              <Box layoutClassName="flex items-center justify-between">
+                <Typography size="xs" layoutClassName="flex items-center gap-1.5 font-semibold uppercase" textClassName="text-slate-500 dark:text-slate-400">
+                  <ShoppingBag className="h-3.5 w-3.5" /> Đơn hàng chưa thanh toán
+                </Typography>
+                <Button type="button" variant="ghost" size="sm" onClick={() => setShowAll((s) => !s)}>
+                  {showAll ? 'Chỉ đúng số tiền' : 'Hiện tất cả'}
+                </Button>
+              </Box>
+              <Box layoutClassName="max-h-[40vh] space-y-1.5 overflow-y-auto">
+                {orderCands.length === 0 ? (
+                  <EmptyState title={showAll ? 'Không có đơn chưa thanh toán.' : 'Không có đơn trùng số tiền. Bấm "Hiện tất cả".'} />
+                ) : (
+                  orderCands.map((o) =>
+                    row(
+                      o.id,
+                      <Typography as="span" size="sm" layoutClassName="font-mono font-semibold" textClassName="text-primary-700 dark:text-primary-300">
+                        {o.orderNumber || o.id}
+                      </Typography>,
+                      <>{formatVND(o.total)} · {o.paymentStatus}</>,
+                      () => run(o.id, () => reconcileOrderTransaction(o.id, tx.id), `Đã khớp GD với đơn ${o.orderNumber || ''}.`),
+                      o.total === amt || o.depositAmount === amt,
+                    ),
+                  )
+                )}
+              </Box>
             </Box>
           </Box>
         ) : (
-          // ---- TIỀN RA → phiếu nhập + chi phí ----
+          // ---- TIỀN RA → phân loại nhanh + phiếu nhập + chi phí ----
           <Box layoutClassName="space-y-4">
+            {/* Phân loại nhanh: gán thẳng category, không cần phiếu/khoản chi có sẵn */}
+            <Box layoutClassName="space-y-2">
+              <Typography size="xs" layoutClassName="flex items-center gap-1.5 font-semibold uppercase" textClassName="text-slate-500 dark:text-slate-400">
+                <Tag className="h-3.5 w-3.5" /> Phân loại nhanh (không cần phiếu/khoản chi)
+              </Typography>
+              <Box layoutClassName="flex flex-wrap gap-1.5">
+                {EXPENSE_CATEGORIES.map((c) => {
+                  const isCost = expenseCategoryIsCost(c.value);
+                  return (
+                    <Button
+                      key={c.value}
+                      type="button"
+                      variant="ghost"
+                      disableVariantHover
+                      disableVariantTextColor
+                      disabled={busy !== null}
+                      roundedClassName="rounded-full"
+                      sizeClassName="px-3 py-1.5 text-xs"
+                      layoutClassName="inline-flex items-center gap-1"
+                      borderClassName={isCost ? 'border border-slate-200 dark:border-slate-600' : 'border border-amber-200 dark:border-amber-700'}
+                      backgroundClassName={isCost ? 'bg-white dark:bg-slate-800' : 'bg-amber-50 dark:bg-amber-900/20'}
+                      textClassName={isCost ? 'font-medium text-slate-600 dark:text-slate-300' : 'font-semibold text-amber-700 dark:text-amber-300'}
+                      hoverClassName={isCost ? 'hover:bg-slate-50 dark:hover:bg-slate-700' : 'hover:bg-amber-100 dark:hover:bg-amber-900/30'}
+                      stateClassName="transition-colors disabled:opacity-50"
+                      onClick={() => run(`cat-${c.value}`, () => setTransactionExpense(tx.id, c.value, !isCost), `Đã phân loại: ${c.label}.`)}
+                    >
+                      {c.label}
+                    </Button>
+                  );
+                })}
+              </Box>
+              <Typography size="xs" variant="muted">
+                Chọn “Cá nhân / Rút vốn / Nội bộ” cho khoản không khớp bill — sẽ không tính vào chi phí quán.
+              </Typography>
+            </Box>
+
             <Box layoutClassName="flex justify-end">
               <Button type="button" variant="ghost" size="sm" onClick={() => setShowAll((s) => !s)}>
                 {showAll ? 'Chỉ đúng số tiền' : 'Hiện tất cả'}

@@ -20,7 +20,7 @@ const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v)
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 
 const LEDGER_STATUSES: LedgerStatus[] = [
-  'matched', 'external', 'unmatched', 'refund', 'settled', 'excluded', 'expense',
+  'matched', 'shopee', 'external', 'unmatched', 'refund', 'settled', 'excluded', 'expense',
 ];
 
 /** Chuẩn hoá 1 dòng sổ trả từ API — coi mọi field untrusted (data-safety). */
@@ -111,6 +111,18 @@ export const setTransactionExpense = async (
   excluded: boolean,
 ): Promise<void> => {
   await apiClient.patch(`/transactions/${transactionId}/expense`, { category, excluded });
+};
+
+/**
+ * Đánh dấu / gỡ đánh dấu 1 giao dịch TIỀN VÀO là "Shopee thanh toán".
+ * Tái dùng cột expense_category (value 'shopee') — BE derive status 'shopee'.
+ * Gỡ: set null (nếu nội dung CK vẫn chứa "shopee" thì BE tự nhận lại — auto-detect).
+ */
+export const markTransactionShopee = async (
+  transactionId: string,
+  isShopee: boolean,
+): Promise<void> => {
+  await setTransactionExpense(transactionId, isShopee ? 'shopee' : null, false);
 };
 
 /** Danh sách rule phân loại chi phí (nội dung CK → category). */
