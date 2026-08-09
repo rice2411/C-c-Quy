@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { MapPin, Plus, Trash2, Wifi } from 'lucide-react';
+import { MapPin, Plus, ScanFace, Trash2, Wifi } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { UserRole } from '@/types/user';
+import FaceEnrollModal from '@/pages/Attendance/components/FaceEnrollModal';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
@@ -36,6 +39,8 @@ const fmtTime = (iso?: string | null): string =>
   iso ? new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '—';
 
 const ManageTab: React.FC = () => {
+  const { userData } = useAuth();
+  const isSuperAdmin = userData?.role === UserRole.SUPER_ADMIN;
   const { networks, loading: netLoading } = useNetworks(true);
   const { rows: overview, loading: ovLoading } = useAttendanceOverview(true);
   const { upsertNetwork, deleteNetwork, clearFace } = useNetworkMutations();
@@ -43,6 +48,8 @@ const ManageTab: React.FC = () => {
   const [label, setLabel] = useState('');
   const [ipCidr, setIpCidr] = useState('');
   const [savingNet, setSavingNet] = useState(false);
+  // Modal đăng ký khuôn mặt cho 1 NV (chỉ super_admin).
+  const [enroll, setEnroll] = useState<{ employeeId: string; name: string } | null>(null);
 
   const [empFilter, setEmpFilter] = useState('');
   const [from, setFrom] = useState('');
@@ -233,11 +240,24 @@ const ManageTab: React.FC = () => {
                       <Typography as="span" size="sm" textClassName="text-rose-600 dark:text-rose-400">{fmtTime(r.todayOut)}</Typography>
                     </TableCell>
                     <TableCell layoutClassName="whitespace-nowrap px-4 py-3 text-right">
-                      {r.faceCount > 0 && (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => removeFace(r.employeeId, r.name)}>
-                          Xoá khuôn mặt
-                        </Button>
-                      )}
+                      <Box layoutClassName="inline-flex items-center gap-1">
+                        {isSuperAdmin && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            leftIcon={<ScanFace className="h-3.5 w-3.5" />}
+                            onClick={() => setEnroll({ employeeId: r.employeeId, name: r.name })}
+                          >
+                            {r.faceCount > 0 ? 'Đăng ký lại' : 'Đăng ký mặt'}
+                          </Button>
+                        )}
+                        {r.faceCount > 0 && (
+                          <Button type="button" variant="ghost" size="sm" onClick={() => removeFace(r.employeeId, r.name)}>
+                            Xoá
+                          </Button>
+                        )}
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -323,6 +343,13 @@ const ManageTab: React.FC = () => {
           )}
         </Box>
       </Card>
+
+      <FaceEnrollModal
+        isOpen={!!enroll}
+        onClose={() => setEnroll(null)}
+        employee={enroll}
+        onDone={() => setEnroll(null)}
+      />
     </Box>
   );
 };

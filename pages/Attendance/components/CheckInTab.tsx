@@ -1,14 +1,6 @@
 import React, { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import {
-  AlertTriangle,
-  LogIn,
-  LogOut,
-  ScanFace,
-  ShieldCheck,
-  UserPlus,
-  Wifi,
-} from 'lucide-react';
+import { AlertTriangle, LogIn, LogOut, ScanFace, Wifi } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -22,11 +14,11 @@ import { useAttendanceMe, useAttendanceActions } from '@/hooks/queries/useAttend
 const fmt = (iso?: string | null): string =>
   iso ? new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '—';
 
-type BusyMode = 'in' | 'out' | 'register' | null;
+type BusyMode = 'in' | 'out' | null;
 
 const CheckInTab: React.FC = () => {
   const { me, loading, refetch } = useAttendanceMe();
-  const { registerFace, check } = useAttendanceActions();
+  const { check } = useAttendanceActions();
   const camRef = useRef<CameraCaptureHandle>(null);
   const [busy, setBusy] = useState<BusyMode>(null);
 
@@ -72,15 +64,10 @@ const CheckInTab: React.FC = () => {
     }
     setBusy(mode);
     try {
-      if (mode === 'register') {
-        const r = await registerFace(blob, { reset: hasFace });
-        toast.success(`Đã đăng ký khuôn mặt (${r.faceCount} mẫu).`);
-      } else {
-        const r = await check(blob, mode);
-        toast.success(
-          `${mode === 'in' ? 'Đã chấm VÀO ca' : 'Đã chấm TAN ca'} lúc ${fmt(r.record.checkedAt)}.`,
-        );
-      }
+      const r = await check(blob, mode);
+      toast.success(
+        `${mode === 'in' ? 'Đã chấm VÀO ca' : 'Đã chấm TAN ca'} lúc ${fmt(r.record.checkedAt)}.`,
+      );
       await refetch();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Thao tác thất bại.');
@@ -143,67 +130,48 @@ const CheckInTab: React.FC = () => {
               : 'Nhờ quản lý thêm IP mạng quán trong mục Quản lý.'}
           </Typography>
         </Box>
+      ) : !hasFace ? (
+        // Chưa được đăng ký khuôn mặt → KHÔNG tự đăng ký, KHÔNG hiện camera.
+        <Box
+          layoutClassName="flex flex-col items-center gap-3 p-5 text-center"
+          roundedClassName="rounded-xl"
+          borderClassName="border border-amber-200 dark:border-amber-800/50"
+          backgroundClassName="bg-amber-50 dark:bg-amber-900/20"
+        >
+          <ScanFace className="h-8 w-8 text-amber-500" />
+          <Typography size="sm" layoutClassName="font-semibold" textClassName="text-amber-700 dark:text-amber-300">
+            Bạn chưa được đăng ký khuôn mặt
+          </Typography>
+          <Typography size="xs" textClassName="text-amber-700/80 dark:text-amber-300/80">
+            Nhờ quản lý (super admin) đăng ký khuôn mặt cho bạn tại máy quản lý, sau đó mới chấm công được.
+          </Typography>
+        </Box>
       ) : (
         <>
-          {/* Camera — chỉ bật khi đã ở đúng mạng quán */}
+          {/* Camera — chỉ bật khi đã ở đúng mạng quán + đã đăng ký khuôn mặt */}
           <CameraCapture ref={camRef} />
-
-          {/* Hành động */}
-          {!hasFace ? (
-            <Box layoutClassName="flex flex-col gap-2">
-              <Box
-                layoutClassName="flex items-center gap-2 px-3 py-2"
-                roundedClassName="rounded-lg"
-                backgroundClassName="bg-sky-50 dark:bg-sky-900/20"
-              >
-                <UserPlus className="h-4 w-4 text-sky-500" />
-                <Typography size="xs" textClassName="text-sky-700 dark:text-sky-300">
-                  Lần đầu chấm công: đăng ký khuôn mặt của bạn trước.
-                </Typography>
-              </Box>
-              <Button
-                type="button"
-                variant="primary"
-                fullWidth
-                disabled={busy !== null}
-                leftIcon={<ScanFace className="h-4 w-4" />}
-                onClick={() => run('register')}
-              >
-                {busy === 'register' ? 'Đang đăng ký…' : 'Đăng ký khuôn mặt'}
-              </Button>
-            </Box>
-          ) : (
-            <Box layoutClassName="flex flex-col gap-3">
-              <Box layoutClassName="grid grid-cols-2 gap-3">
-                <Button
-                  type="button"
-                  variant="primary"
-                  fullWidth
-                  disabled={busy !== null}
-                  leftIcon={<LogIn className="h-4 w-4" />}
-                  onClick={() => run('in')}
-                >
-                  {busy === 'in' ? 'Đang chấm…' : 'Vào ca'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  fullWidth
-                  disabled={busy !== null}
-                  leftIcon={<LogOut className="h-4 w-4" />}
-                  onClick={() => run('out')}
-                >
-                  {busy === 'out' ? 'Đang chấm…' : 'Tan ca'}
-                </Button>
-              </Box>
-              <Box layoutClassName="flex items-center justify-center gap-2">
-                <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
-                <Button type="button" variant="ghost" size="sm" disabled={busy !== null} onClick={() => run('register')}>
-                  {busy === 'register' ? 'Đang cập nhật…' : 'Đăng ký lại khuôn mặt'}
-                </Button>
-              </Box>
-            </Box>
-          )}
+          <Box layoutClassName="grid grid-cols-2 gap-3">
+            <Button
+              type="button"
+              variant="primary"
+              fullWidth
+              disabled={busy !== null}
+              leftIcon={<LogIn className="h-4 w-4" />}
+              onClick={() => run('in')}
+            >
+              {busy === 'in' ? 'Đang chấm…' : 'Vào ca'}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              disabled={busy !== null}
+              leftIcon={<LogOut className="h-4 w-4" />}
+              onClick={() => run('out')}
+            >
+              {busy === 'out' ? 'Đang chấm…' : 'Tan ca'}
+            </Button>
+          </Box>
         </>
       )}
     </Box>
