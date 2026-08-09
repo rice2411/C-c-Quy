@@ -67,6 +67,9 @@ export default defineConfig(({ mode }) => {
             /\.[a-zA-Z0-9]+$/,
             /^\/api\//,
           ],
+          // KHÔNG precache face-api (~1.3MB) + model khuôn mặt — chỉ super_admin dùng lúc
+          // đăng ký mặt; để nạp theo yêu cầu, tránh bắt mọi user tải dư khi cài PWA.
+          globIgnores: ['**/face-api*.js', 'models/face/**'],
         },
         devOptions: {
           // Tắt PWA Service Worker trong dev — SW cache có thể intercept request

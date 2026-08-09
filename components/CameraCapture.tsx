@@ -16,12 +16,18 @@ export interface CameraCaptureHandle {
    * opts.stamp: các dòng chữ đóng dấu vào GÓC DƯỚI ảnh (vd tên, loại, ngày giờ).
    */
   capture: (opts?: { stamp?: string[] }) => Promise<Blob | null>;
+  /** Phần tử <video> đang chạy (để chạy detect pose realtime), null nếu chưa sẵn sàng. */
+  getVideo: () => HTMLVideoElement | null;
 }
 
 interface CameraCaptureProps {
   onReady?: (ready: boolean) => void;
   /** class chiều cao vùng video (mặc định aspect vuông). */
   heightClassName?: string;
+  /** Hiệu ứng vạch quét + 4 góc mặc định (kiểu ngân hàng). Tắt khi muốn overlay riêng. */
+  showScanEffect?: boolean;
+  /** Lớp phủ tuỳ biến vẽ đè lên video (vd vòng hướng dẫn pose khi đăng ký). */
+  overlay?: React.ReactNode;
 }
 
 /**
@@ -31,7 +37,7 @@ interface CameraCaptureProps {
  * Chụp qua ref: const r = useRef<CameraCaptureHandle>(null); await r.current?.capture().
  */
 const CameraCapture = forwardRef<CameraCaptureHandle, CameraCaptureProps>(
-  ({ onReady, heightClassName = 'aspect-[4/3]' }, ref) => {
+  ({ onReady, heightClassName = 'aspect-[4/3]', showScanEffect = true, overlay }, ref) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -118,6 +124,7 @@ const CameraCapture = forwardRef<CameraCaptureHandle, CameraCaptureProps>(
           canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.9),
         );
       },
+      getVideo: () => (ready ? videoRef.current : null),
     }));
 
     if (error) {
@@ -161,7 +168,7 @@ const CameraCapture = forwardRef<CameraCaptureHandle, CameraCaptureProps>(
         />
         {/* Hiệu ứng quét khuôn mặt kiểu app ngân hàng: khung 4 góc + vạch quét chạy dọc */}
         <style>{`@keyframes cqScanLine{0%,100%{top:6%;opacity:.35}50%{top:90%;opacity:1}}`}</style>
-        {ready && (
+        {ready && showScanEffect && (
           <Box layoutClassName="pointer-events-none absolute inset-0 flex items-center justify-center">
             <Box layoutClassName="relative h-2/3 w-2/3">
               <Box layoutClassName="absolute left-0 top-0 h-7 w-7" borderClassName="border-l-2 border-t-2 border-emerald-400" roundedClassName="rounded-tl-xl" />
@@ -175,6 +182,10 @@ const CameraCapture = forwardRef<CameraCaptureHandle, CameraCaptureProps>(
               />
             </Box>
           </Box>
+        )}
+        {/* Lớp phủ tuỳ biến (vd vòng hướng dẫn pose lúc đăng ký) */}
+        {ready && overlay && (
+          <Box layoutClassName="pointer-events-none absolute inset-0">{overlay}</Box>
         )}
         {!ready && (
           <Box
