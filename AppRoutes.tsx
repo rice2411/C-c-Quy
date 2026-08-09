@@ -27,6 +27,7 @@ const CustomersPage = lazy(() => import("./pages/Customers/index"));
 const UsersPage = lazy(() => import("./pages/Users/index"));
 const EmployeesPage = lazy(() => import("./pages/Employees/index"));
 const AttendancePage = lazy(() => import("./pages/Attendance/index"));
+const AttendanceManagePage = lazy(() => import("./pages/Attendance/ManagePage"));
 const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
 const SystemLogsPage = lazy(() => import("./pages/System/Requests/index"));
 const SystemErrorsPage = lazy(() => import("./pages/System/Errors/index"));
@@ -219,6 +220,14 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/attendance")?.roles}>
             <AttendancePage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="attendance/manage"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/attendance/manage")?.roles}>
+            <AttendanceManagePage />
           </RoleBasedRoute>
         }
       />

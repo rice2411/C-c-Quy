@@ -1,25 +1,25 @@
 import React from 'react';
-import { Clock } from 'lucide-react';
+import { UserCheck } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Heading from '@/components/ui/Heading';
-import CheckInTab from './components/CheckInTab';
+import ManageTab from './components/ManageTab';
 
-/** Màn CHẤM CÔNG (Vào ca / Tan ca) cho nhân viên. Quản lý mặt/IP/lịch sử ở màn riêng /attendance/manage. */
-const AttendancePage: React.FC = () => {
+/** Màn QUẢN LÝ CHẤM CÔNG (admin/super_admin): cấu hình IP quán, đăng ký khuôn mặt, tổng quan + lịch sử. */
+const AttendanceManagePage: React.FC = () => {
   return (
     <Box layoutClassName="flex h-full flex-col gap-4 p-4 sm:p-6">
       <Box layoutClassName="flex items-center gap-2">
-        <Clock className="h-5 w-5 text-primary-500" />
+        <UserCheck className="h-5 w-5 text-primary-500" />
         <Heading level={1} textClassName="text-lg font-bold text-slate-900 dark:text-white">
-          Chấm công
+          Quản lý chấm công
         </Heading>
       </Box>
 
       <Box layoutClassName="flex-1 overflow-y-auto">
-        <CheckInTab />
+        <ManageTab />
       </Box>
     </Box>
   );
 };
 
-export default AttendancePage;
+export default AttendanceManagePage;

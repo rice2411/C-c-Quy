@@ -26,6 +26,7 @@ import {
   HeartPulse,
   Building2,
   Clock,
+  UserCheck,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { ScreenVisibilityMap } from "@/types";
@@ -199,7 +200,15 @@ export const routes: RouteConfig[] = [
     path: "/attendance",
     labelKey: "nav.attendance",
     icon: Clock,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.STAFF],
+    // Màn chấm công dành cho người vào/tan ca — super_admin KHÔNG cần chấm công.
+    roles: [UserRole.ADMIN, UserRole.STAFF],
+  },
+  {
+    type: "page",
+    path: "/attendance/manage",
+    labelKey: "nav.attendanceManage",
+    icon: UserCheck,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
     type: "page",
