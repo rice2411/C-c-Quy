@@ -57,7 +57,16 @@ const CheckInTab: React.FC = () => {
   const ipConfigured = me.ip.configured;
 
   const run = async (mode: Exclude<BusyMode, null>) => {
-    const blob = await camRef.current?.capture();
+    // Đóng dấu tên + loại chấm công + ngày giờ vào góc ảnh trước khi gửi lưu.
+    const stamp = [
+      me?.employee?.name ?? '',
+      mode === 'in' ? 'VÀO CA' : 'TAN CA',
+      new Date().toLocaleString('vi-VN', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+      }),
+    ];
+    const blob = await camRef.current?.capture({ stamp });
     if (!blob) {
       toast.error('Camera chưa sẵn sàng. Đợi camera bật rồi thử lại.');
       return;

@@ -11,8 +11,11 @@ import Button from '@/components/ui/Button';
 import Typography from '@/components/ui/Typography';
 
 export interface CameraCaptureHandle {
-  /** Chụp khung hình hiện tại → JPEG Blob (null nếu camera chưa sẵn sàng). */
-  capture: () => Promise<Blob | null>;
+  /**
+   * Chụp khung hình hiện tại → JPEG Blob (null nếu camera chưa sẵn sàng).
+   * opts.stamp: các dòng chữ đóng dấu vào GÓC DƯỚI ảnh (vd tên, loại, ngày giờ).
+   */
+  capture: (opts?: { stamp?: string[] }) => Promise<Blob | null>;
 }
 
 interface CameraCaptureProps {
@@ -85,7 +88,7 @@ const CameraCapture = forwardRef<CameraCaptureHandle, CameraCaptureProps>(
     }, [attempt]);
 
     useImperativeHandle(ref, () => ({
-      capture: async () => {
+      capture: async (opts) => {
         const video = videoRef.current;
         if (!video || !ready || !video.videoWidth) return null;
         const canvas = document.createElement('canvas');
@@ -94,6 +97,23 @@ const CameraCapture = forwardRef<CameraCaptureHandle, CameraCaptureProps>(
         const ctx = canvas.getContext('2d');
         if (!ctx) return null;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Đóng dấu ngày-giờ / loại chấm công vào GÓC DƯỚI ảnh (như app chấm công/ngân hàng).
+        const lines = opts?.stamp?.filter((l) => l && l.trim());
+        if (lines && lines.length) {
+          const pad = Math.round(canvas.width * 0.025);
+          const fs = Math.max(14, Math.round(canvas.width * 0.04));
+          const lineH = Math.round(fs * 1.35);
+          const boxH = lineH * lines.length + pad;
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
+          ctx.fillRect(0, canvas.height - boxH, canvas.width, boxH);
+          ctx.font = `600 ${fs}px system-ui, -apple-system, sans-serif`;
+          ctx.textBaseline = 'top';
+          ctx.fillStyle = '#ffffff';
+          lines.forEach((t, i) =>
+            ctx.fillText(t, pad, canvas.height - boxH + Math.round(pad / 2) + i * lineH),
+          );
+        }
         return new Promise<Blob | null>((resolve) =>
           canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.9),
         );
