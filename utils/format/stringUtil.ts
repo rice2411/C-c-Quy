@@ -1,6 +1,21 @@
-/** Chuẩn hoá chuỗi để so khớp tìm kiếm (lowercase, trim). */
-export const normalizeSearchText = (value: string | null | undefined): string =>
-  (value || '').trim().toLowerCase();
+/**
+ * Chuẩn hoá chuỗi để so khớp tìm kiếm (lowercase, trim). Chịu được MỌI kiểu:
+ * chuỗi thường, null/undefined, và Timestamp-like (apiClient revive field ISO thành
+ * object có .toDate()) — trước đây gọi `.trim()` trên object → crash search.
+ */
+export const normalizeSearchText = (value: unknown): string => {
+  if (value == null) return '';
+  if (typeof value === 'string') return value.trim().toLowerCase();
+  const tsLike = value as { toDate?: () => Date };
+  if (typeof tsLike.toDate === 'function') {
+    try {
+      return tsLike.toDate().toISOString().toLowerCase();
+    } catch {
+      /* rơi xuống String() bên dưới */
+    }
+  }
+  return String(value).trim().toLowerCase();
+};
 
 /** Bỏ dấu tiếng Việt + đ→d, lowercase, gom token — dùng cho so khớp gần đúng. */
 const stripDiacritics = (value: string | null | undefined): string =>
