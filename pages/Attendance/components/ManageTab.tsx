@@ -117,8 +117,8 @@ const ManageTab: React.FC = () => {
         </Box>
         <Typography size="xs" layoutClassName="mb-3" textClassName="text-slate-500 dark:text-slate-400">
           Chỉ chấm công được khi thiết bị dùng IP nằm trong danh sách này. Mở wifi quán rồi bấm
-          "IP hiện tại" — với IPv6 hệ thống tự lấy DẢI /56 (vì mỗi máy một IPv6 khác nhau), IPv4 lấy /32.
-          Nếu quán có cả IPv4 lẫn IPv6, thêm cả hai. Mạng nhà mạng đổi dải thì bấm lấy lại.
+          "IP hiện tại" — với IPv6 hệ thống tự lấy DẢI /48 (khối nhà mạng cấp, bắt mọi địa chỉ IPv6
+          của quán dù đổi liên tục), IPv4 lấy /32. Nên thêm CẢ IPv6 lẫn IPv4. Router restart đổi dải thì bấm lấy lại.
         </Typography>
         <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
           <Field label="Nhãn" htmlFor="net-label">
