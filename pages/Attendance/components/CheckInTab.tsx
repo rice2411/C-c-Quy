@@ -1,5 +1,4 @@
-import React, { useRef, useState } from 'react';
-import toast from 'react-hot-toast';
+import React, { useState } from 'react';
 import { LogIn, LogOut, RefreshCw, ScanFace, Wifi, WifiOff } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
@@ -8,20 +7,16 @@ import Typography from '@/components/ui/Typography';
 import Heading from '@/components/ui/Heading';
 import Spinner from '@/components/ui/Spinner';
 import Badge from '@/components/ui/Badge';
-import CameraCapture, { CameraCaptureHandle } from '@/components/CameraCapture';
-import { useAttendanceMe, useAttendanceActions } from '@/hooks/queries/useAttendanceQuery';
-import { SHIFTS, shiftLabel, shiftTime } from '@/types/attendance';
+import { useAttendanceMe } from '@/hooks/queries/useAttendanceQuery';
+import { AttendanceKind, SHIFTS, shiftLabel, shiftTime } from '@/types/attendance';
+import CheckInCameraModal from './CheckInCameraModal';
 
 const fmt = (iso?: string | null): string =>
   iso ? new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '—';
 
-type BusyMode = 'in' | 'out' | null;
-
 const CheckInTab: React.FC = () => {
   const { me, loading, refetch } = useAttendanceMe();
-  const { check } = useAttendanceActions();
-  const camRef = useRef<CameraCaptureHandle>(null);
-  const [busy, setBusy] = useState<BusyMode>(null);
+  const [camOpen, setCamOpen] = useState(false);
 
   if (loading) {
     return (
@@ -59,42 +54,11 @@ const CheckInTab: React.FC = () => {
 
   // Hành động kế tiếp + ca sắp chấm (BE derive; fallback theo lastKind nếu API cũ).
   const status = me.status;
-  const nextKind: Exclude<BusyMode, null> =
+  const nextKind: AttendanceKind =
     status?.nextKind ?? (status?.lastKind === 'in' ? 'out' : 'in');
   const isCheckedIn = nextKind === 'out';
   const curShift = status?.currentShift ?? null;
   const todayShifts = status?.todayShifts ?? [];
-
-  const run = async (mode: Exclude<BusyMode, null>) => {
-    // Đóng dấu tên + loại + ca + ngày giờ vào góc ảnh trước khi gửi lưu.
-    const shiftTxt = curShift ? ` · ${shiftLabel(curShift)}` : '';
-    const stamp = [
-      me?.employee?.name ?? '',
-      `${mode === 'in' ? 'VÀO CA' : 'TAN CA'}${shiftTxt}`,
-      new Date().toLocaleString('vi-VN', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit', second: '2-digit',
-      }),
-    ];
-    const blob = await camRef.current?.capture({ stamp });
-    if (!blob) {
-      toast.error('Camera chưa sẵn sàng. Đợi camera bật rồi thử lại.');
-      return;
-    }
-    setBusy(mode);
-    try {
-      const r = await check(blob, mode);
-      const caTxt = r.record.shift ? ` ${shiftLabel(r.record.shift)}` : '';
-      toast.success(
-        `${mode === 'in' ? 'Đã chấm VÀO' : 'Đã chấm TAN'}${caTxt} lúc ${fmt(r.record.checkedAt)}.`,
-      );
-      await refetch();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Thao tác thất bại.');
-    } finally {
-      setBusy(null);
-    }
-  };
 
   // Ở MẠNG NGOÀI (hoặc quán chưa cấu hình) → TRANG LỖI toàn màn, KHÔNG header/badge/camera.
   if (!ipOk) {
@@ -244,8 +208,6 @@ const CheckInTab: React.FC = () => {
         </Box>
       ) : (
         <>
-          {/* Camera vuông cho mặt — chỉ bật khi ở đúng mạng + đã đăng ký */}
-          <CameraCapture ref={camRef} heightClassName="aspect-square" />
           {curShift && (
             <Box layoutClassName="flex items-center justify-center gap-1.5">
               <Typography as="span" size="xs" variant="muted">
@@ -256,47 +218,37 @@ const CheckInTab: React.FC = () => {
               </Typography>
             </Box>
           )}
-          <Typography size="xs" variant="muted" layoutClassName="text-center">
+          {/* Bấm → mở modal camera riêng (camera chỉ bật trong modal). 1 nút theo trạng thái. */}
+          <Button
+            type="button"
+            variant={isCheckedIn ? undefined : 'primary'}
+            fullWidth
+            sizeClassName="px-4 py-4 text-base"
+            layoutClassName="inline-flex items-center justify-center gap-2"
+            roundedClassName="rounded-xl"
+            backgroundClassName={isCheckedIn ? 'bg-rose-600 hover:bg-rose-700' : undefined}
+            textClassName={isCheckedIn ? 'font-semibold text-white' : undefined}
+            borderClassName={isCheckedIn ? 'border border-transparent' : undefined}
+            disableVariantHover={isCheckedIn}
+            disableVariantTextColor={isCheckedIn}
+            leftIcon={isCheckedIn ? <LogOut className="h-5 w-5" /> : <LogIn className="h-5 w-5" />}
+            onClick={() => setCamOpen(true)}
+          >
             {isCheckedIn
-              ? 'Đưa mặt vào khung rồi bấm Tan ca để kết thúc ca.'
-              : 'Đưa mặt vào khung rồi bấm Vào ca để bắt đầu ca.'}
-          </Typography>
-          {/* Mỗi lúc chỉ 1 nút theo trạng thái: chưa vào ca → Vào ca; đã vào ca → Tan ca. */}
-          {isCheckedIn ? (
-            <Button
-              type="button"
-              fullWidth
-              disabled={busy !== null}
-              sizeClassName="px-4 py-4 text-base"
-              layoutClassName="inline-flex items-center justify-center gap-2"
-              roundedClassName="rounded-xl"
-              backgroundClassName="bg-rose-600 hover:bg-rose-700"
-              textClassName="font-semibold text-white"
-              borderClassName="border border-transparent"
-              disableVariantHover
-              disableVariantTextColor
-              leftIcon={<LogOut className="h-5 w-5" />}
-              onClick={() => run('out')}
-            >
-              {busy === 'out' ? 'Đang chấm…' : `Tan ${curShift ? shiftLabel(curShift) : 'ca'}`}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="primary"
-              fullWidth
-              disabled={busy !== null}
-              sizeClassName="px-4 py-4 text-base"
-              layoutClassName="inline-flex items-center justify-center gap-2"
-              roundedClassName="rounded-xl"
-              leftIcon={<LogIn className="h-5 w-5" />}
-              onClick={() => run('in')}
-            >
-              {busy === 'in' ? 'Đang chấm…' : `Vào ${curShift ? shiftLabel(curShift) : 'ca'}`}
-            </Button>
-          )}
+              ? `Tan ${curShift ? shiftLabel(curShift) : 'ca'}`
+              : `Vào ${curShift ? shiftLabel(curShift) : 'ca'}`}
+          </Button>
         </>
       )}
+
+      <CheckInCameraModal
+        isOpen={camOpen}
+        onClose={() => setCamOpen(false)}
+        mode={nextKind}
+        shift={curShift}
+        employeeName={me.employee.name}
+        onSuccess={refetch}
+      />
     </Box>
   );
 };
