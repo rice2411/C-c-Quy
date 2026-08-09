@@ -1,4 +1,4 @@
-import { Order, OrderFieldChange } from "@/types";
+import { Order, OrderFieldChange, MIX_FLAVOR, MIX_LABEL } from "@/types";
 import { parseDateValue } from "../format/dateUtil";
 import { formatVND } from "../format/currencyUtil";
 import { formatItemsDiff } from "@/utils/order/itemsDiff";
@@ -11,7 +11,9 @@ const flavorsDetail = (flavors?: string[]): string => {
   if (!Array.isArray(flavors) || !flavors.length) return '';
   const m = new Map<string, number>();
   flavors.forEach((f) => m.set(f, (m.get(f) || 0) + 1));
-  return Array.from(m.entries()).map(([n, q]) => `${q} ${n}`).join(', ');
+  return Array.from(m.entries())
+    .map(([n, q]) => (n === MIX_FLAVOR ? MIX_LABEL : `${q} ${n}`))
+    .join(', ');
 };
 
 /**
@@ -234,7 +236,7 @@ const deliveryOrderLine = (o: Order): string => {
   );
   const flavors = Array.from(flavorCounts.entries())
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-    .map(([f, c]) => `${c} ${f}`)
+    .map(([f, c]) => (f === MIX_FLAVOR ? MIX_LABEL : `${c} ${f}`))
     .join(', ');
   const note = (o.note || '').trim();
   const name = o.customer?.name?.trim() || '(?)';

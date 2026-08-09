@@ -191,11 +191,24 @@ export const sizeCountsLabel = (sc?: OrderSizeCount[]): string =>
     .map((x) => (x.qty > 1 ? `${x.name} ×${x.qty}` : x.name))
     .join(', ');
 
-/** Gom mảng vị (có lặp) thành [{name, qty}] để hiển thị: vd ['M','M','S'] → [{M,2},{S,1}]. */
+/**
+ * Vị "Mix" — token đánh dấu 1 dòng/phần để BẾP tự phối, KHÔNG chọn vị cụ thể.
+ * Lưu trong mảng `flavors`/`units` như 1 phần tử `MIX_FLAVOR`; hiển thị ra "Mix".
+ */
+export const MIX_FLAVOR = '__MIX__';
+export const MIX_LABEL = 'Mix';
+
+/** 1 dòng/phần đang ở chế độ Mix (mảng vị chứa token mix). */
+export const isMixFlavors = (flavors?: string[]): boolean =>
+  !!flavors && flavors.some((f) => f === MIX_FLAVOR);
+
+/** Gom mảng vị (có lặp) thành [{name, qty}] để hiển thị: vd ['M','M','S'] → [{M,2},{S,1}].
+ *  Token `MIX_FLAVOR` được đổi tên hiển thị thành "Mix" ngay tại đây → mọi chỗ render
+ *  qua groupFlavors tự hiện "Mix" thay vì token thô. */
 export const groupFlavors = (flavors?: string[]): { name: string; qty: number }[] => {
   const m = new Map<string, number>();
   (flavors ?? []).forEach((f) => m.set(f, (m.get(f) || 0) + 1));
-  return Array.from(m.entries()).map(([name, qty]) => ({ name, qty }));
+  return Array.from(m.entries()).map(([name, qty]) => ({ name: name === MIX_FLAVOR ? MIX_LABEL : name, qty }));
 };
 
 /**

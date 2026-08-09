@@ -34,7 +34,7 @@ import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { qk } from '@/hooks/queryKeys';
 import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund, fetchTrackingTimeline, fetchOrder } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber, fetchOutUnlinkedTransactions } from '@/services/transactionService';
-import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor, groupFlavors, sizeCountsLabel, sizeImage, sizeCount } from '@/types';
+import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor, groupFlavors, isMixFlavors, sizeCountsLabel, sizeImage, sizeCount } from '@/types';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
 import { UserRole } from '@/types/user';
 import { orderAddressFallbackKey, surchargeTagLabel, reconcileMethodLabel, refundCategoryLabel } from '@/types/order';
@@ -957,7 +957,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                        const product = products.find((p) => p.id === item.productId);
                        const flavors = item.flavors ?? [];
                        // Sản phẩm tính giá theo vị + nhiều vị → tách mỗi vị 1 dòng item riêng.
-                       if (product && productUsesFlavorPricing(product) && flavors.length > 0) {
+                       // Mix (bếp tự phối) → không tách, rơi xuống dòng mặc định hiện chip "Mix".
+                       if (product && productUsesFlavorPricing(product) && flavors.length > 0 && !isMixFlavors(flavors)) {
                          // Gom vị lặp → mỗi vị 1 dòng, SL = số cái vị đó, giá = giá vị × SL.
                          return groupFlavors(flavors).map(({ name: fl, qty }) => {
                            const variant = product.flavorVariants?.find((v) => v.name === fl);

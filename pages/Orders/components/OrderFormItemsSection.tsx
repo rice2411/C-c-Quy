@@ -1,15 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, DollarSign, Minus, Package, Plus, RotateCcw, Shuffle, Trash2, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor, orderLineImage, sizeCount, sizeCountsPrice, groupFlavors } from '@/types';
+import { Product, productUsesFlavorPricing, flavorSumPrice, flavorImage, flavorVariantColor, orderLineImage, sizeCount, sizeCountsPrice, groupFlavors, isMixFlavors, MIX_FLAVOR } from '@/types';
 import { resolveTierPrice } from '@/types/product';
 import { FormItem } from '@/pages/Orders/components/modals/OrderForm';
 
-/** Mix vị: chọn ngẫu nhiên `count` vị từ `pool` (cho phép trùng) để điền đủ số lượng. */
-const randomFlavors = (count: number, pool: string[]): string[] => {
-  if (pool.length === 0 || count <= 0) return [];
-  return Array.from({ length: count }, () => pool[Math.floor(Math.random() * pool.length)]);
-};
+/** Mix vị = đánh dấu 1 phần/dòng là "Mix" (bếp tự phối), KHÔNG chọn vị cụ thể. */
+const mixUnit = (): string[] => [MIX_FLAVOR];
 
 type SizeEntry = { name: string; qty: number; units?: string[][] };
 
@@ -357,10 +354,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                               <Button
                                 type="button"
                                 onClick={() => {
-                                  const next = scArr.map((s) => {
-                                    const perS = itemProduct ? (sizeCount(itemProduct, s.name) ?? 1) : 1;
-                                    return { ...s, units: (s.units ?? []).map(() => randomFlavors(perS, itemFlavors)) };
-                                  });
+                                  const next = scArr.map((s) => ({ ...s, units: (s.units ?? []).map(() => mixUnit()) }));
                                   commitSizeCounts(item.id, itemProduct, next, onUpdateItem);
                                 }}
                                 variant="ghost"
@@ -385,7 +379,8 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                 const picked = unitFlavors.length;
                                 const uKey = `${item.id}:${entry.name}:${u}`;
                                 const uOpen = openUnit === uKey;
-                                const uFull = picked >= per;
+                                const uMix = isMixFlavors(unitFlavors);
+                                const uFull = uMix || picked >= per;
                                 const uSummary = groupFlavors(unitFlavors).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
                                 const setUnit = (arr: string[]) => {
                                   const next = scArr.map((s) => (s.name === entry.name ? { ...s, units: (s.units ?? []).map((uu, i) => (i === u ? arr : uu)) } : s));
@@ -400,14 +395,14 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                         <Typography as="p" size="xs" layoutClassName="mt-0.5 truncate leading-tight" textClassName={uSummary ? 'text-slate-500 dark:text-slate-400' : 'text-amber-600 dark:text-amber-400'}>{uSummary || 'Chưa chọn vị'}</Typography>
                                       </Box>
                                       <Box layoutClassName="shrink-0 px-2 py-0.5" roundedClassName="rounded-full" backgroundClassName={uFull ? 'bg-emerald-100 dark:bg-emerald-900/40' : 'bg-amber-100 dark:bg-amber-900/40'}>
-                                        <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName={uFull ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}>{uFull ? `${picked}/${per} ✓` : `${picked}/${per}`}</Typography>
+                                        <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName={uFull ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}>{uMix ? 'Mix ✓' : uFull ? `${picked}/${per} ✓` : `${picked}/${per}`}</Typography>
                                       </Box>
                                     </Button>
                                     {uOpen ? (
                                     <Box layoutClassName="flex flex-wrap gap-1 px-2.5 pt-2 pb-2.5" borderClassName="border-t border-slate-100 dark:border-slate-700">
                                       <Button
                                         type="button"
-                                        onClick={() => setUnit(randomFlavors(per, itemFlavors))}
+                                        onClick={() => setUnit(mixUnit())}
                                         variant="ghost"
                                         disableVariantHover
                                         disableVariantTextColor
@@ -428,8 +423,9 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                         const n = unitFlavors.filter((x) => x === fl).length;
                                         const cc = itemProduct ? flavorVariantColor(itemProduct, fl) : '#64748b';
                                         const th = itemProduct ? flavorImage(itemProduct, fl) : undefined;
-                                        const inc = () => { if (picked < per) setUnit([...unitFlavors, fl]); };
-                                        const dec = () => { const a = [...unitFlavors]; const i = a.indexOf(fl); if (i >= 0) { a.splice(i, 1); setUnit(a); } };
+                                        // Chọn vị cụ thể → bỏ trạng thái Mix (bắt đầu từ rổ rỗng nếu đang Mix).
+                                        const inc = () => { const base = uMix ? [] : unitFlavors; if (base.length < per) setUnit([...base, fl]); };
+                                        const dec = () => { if (uMix) return; const a = [...unitFlavors]; const i = a.indexOf(fl); if (i >= 0) { a.splice(i, 1); setUnit(a); } };
                                         return (
                                           <Box key={fl} layoutClassName="inline-flex items-center gap-1 rounded-full py-0.5 pl-1 pr-1.5" borderClassName="border" backgroundClassName="bg-slate-50 dark:bg-slate-700/40" style={{ borderColor: n ? cc : cc + '80' }}>
                                             {th ? (
@@ -444,7 +440,7 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                               <Minus className="h-3 w-3" />
                                             </Button>
                                             <Typography as="span" size="xs" layoutClassName="w-3 text-center font-semibold" textClassName="text-slate-800 dark:text-slate-100">{n}</Typography>
-                                            <Button type="button" onClick={inc} disabled={picked >= per} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-0.5" roundedClassName="rounded-full" borderClassName="border border-transparent" textClassName="text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
+                                            <Button type="button" onClick={inc} disabled={!uMix && picked >= per} aria-label="Thêm" variant="ghost" disableVariantHover disableVariantTextColor sizeClassName="p-0.5" roundedClassName="rounded-full" borderClassName="border border-transparent" textClassName="text-slate-400" hoverClassName="hover:bg-slate-100 dark:hover:bg-slate-700">
                                               <Plus className="h-3 w-3" />
                                             </Button>
                                           </Box>
@@ -464,23 +460,17 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                       <Box layoutClassName="mt-1 flex flex-col gap-1">
                         <Box layoutClassName="flex items-center justify-between gap-2">
                           <Typography as="span" size="xs" variant="muted">
-                            Vị{pickedTotal ? ` (${pickedTotal})` : ''}:
+                            {isMixFlavors(item.flavors) ? 'Vị: Mix (bếp tự phối)' : `Vị${pickedTotal ? ` (${pickedTotal})` : ''}:`}
                           </Typography>
                           <Button
                             type="button"
                             onClick={() => {
-                              const target = Math.max(1, Number(item.quantity) || 1);
-                              const arr = randomFlavors(target, itemFlavors);
-                              onUpdateItem(item.id, 'flavors', arr);
+                              // Mix = đánh dấu bếp tự phối; giữ số lượng, KHÔNG gán vị cụ thể.
+                              onUpdateItem(item.id, 'flavors', [MIX_FLAVOR]);
+                              const q = Math.max(1, Number(item.quantity) || 1);
+                              onUpdateItem(item.id, 'quantity', q);
                               if (itemProduct) {
-                                if (productUsesFlavorPricing(itemProduct)) {
-                                  const sum = flavorSumPrice(itemProduct, arr);
-                                  onUpdateItem(item.id, 'quantity', Math.max(1, arr.length));
-                                  onUpdateItem(item.id, 'unitPrice', arr.length ? Math.round(sum / arr.length) : (itemProduct.price || 0));
-                                } else {
-                                  onUpdateItem(item.id, 'quantity', Math.max(1, arr.length));
-                                }
-                                const im = orderLineImage(itemProduct, { size: item.size, flavors: arr });
+                                const im = orderLineImage(itemProduct, { size: item.size, flavors: [] });
                                 if (im) onUpdateItem(item.id, 'image', im);
                               }
                             }}
@@ -491,12 +481,12 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                             iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
                             sizeClassName="px-2 py-1 text-xs"
                             roundedClassName="rounded-lg"
-                            borderClassName="border border-primary-200 dark:border-primary-700/50"
-                            backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+                            borderClassName={isMixFlavors(item.flavors) ? 'border border-primary-400 dark:border-primary-500' : 'border border-primary-200 dark:border-primary-700/50'}
+                            backgroundClassName={isMixFlavors(item.flavors) ? 'bg-primary-100 dark:bg-primary-900/40' : 'bg-primary-50 dark:bg-primary-900/20'}
                             textClassName="font-medium text-primary-700 dark:text-primary-300"
                             hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-900/30"
                             layoutClassName="inline-flex items-center gap-1"
-                            title="Điền ngẫu nhiên vị theo số lượng"
+                            title="Đánh dấu Mix — bếp tự phối vị"
                           >
                             Mix
                           </Button>
@@ -525,8 +515,10 @@ const OrderFormItemsSection: React.FC<OrderItemsSectionProps> = ({
                                 if (im) onUpdateItem(item.id, 'image', im);
                               }
                             };
-                            const dec = () => { const a = [...(item.flavors ?? [])]; const i = a.indexOf(fl); if (i >= 0) { a.splice(i, 1); apply(a); } };
-                            const inc = () => { if (!isSized || pickedTotal < flavorCap) apply([...(item.flavors ?? []), fl]); };
+                            // Đang Mix mà bấm chọn vị cụ thể → bắt đầu lại từ rổ rỗng (bỏ Mix).
+                            const base = () => (isMixFlavors(item.flavors) ? [] : (item.flavors ?? []));
+                            const dec = () => { if (isMixFlavors(item.flavors)) return; const a = [...(item.flavors ?? [])]; const i = a.indexOf(fl); if (i >= 0) { a.splice(i, 1); apply(a); } };
+                            const inc = () => { if (!isSized || pickedTotal < flavorCap) apply([...base(), fl]); };
                             return (
                               <Box key={fl} layoutClassName="inline-flex items-center gap-1 rounded-full py-0.5 pl-1 pr-1.5" borderClassName="border" backgroundClassName="bg-white dark:bg-slate-800" style={{ borderColor: qty ? cc : cc + '80' }}>
                                 {th ? (

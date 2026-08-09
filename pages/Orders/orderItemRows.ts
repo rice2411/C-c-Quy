@@ -6,7 +6,7 @@
  *  - Còn lại → 1 hàng (ảnh sản phẩm).
  */
 import type { OrderItem, Product } from '@/types';
-import { groupFlavors, productUsesFlavorPricing, flavorImage, sizeImage, sizeCount } from '@/types';
+import { groupFlavors, isMixFlavors, productUsesFlavorPricing, flavorImage, sizeImage, sizeCount } from '@/types';
 
 export interface OrderItemRow {
   key: string;
@@ -26,7 +26,8 @@ export const orderItemsTotalQty = (items: OrderItem[]): number =>
     if (it.sizeCounts && it.sizeCounts.length) {
       return sum + it.sizeCounts.reduce((s, sc) => s + (sc.qty || 0), 0);
     }
-    if (it.flavors && it.flavors.length) return sum + it.flavors.length;
+    // Mix (token, không phải vị cụ thể) → dùng quantity; còn lại mỗi vị 1 cái.
+    if (it.flavors && it.flavors.length && !isMixFlavors(it.flavors)) return sum + it.flavors.length;
     return sum + (it.quantity || 0);
   }, 0);
 
@@ -38,8 +39,8 @@ export const buildOrderItemRows = (items: OrderItem[], products: Product[]): Ord
     // Option gói (Hộp / Gói) → 1 chip meta, hiện ở cả order list + card chia sẻ.
     const packMeta = it.packagingOption ? [it.packagingOption] : [];
 
-    // 1) Tính giá theo vị → mỗi vị 1 hàng (ảnh vị).
-    if (product && productUsesFlavorPricing(product) && flavors.length > 0) {
+    // 1) Tính giá theo vị → mỗi vị 1 hàng (ảnh vị). Mix thì KHÔNG tách (bếp tự phối).
+    if (product && productUsesFlavorPricing(product) && flavors.length > 0 && !isMixFlavors(flavors)) {
       return groupFlavors(flavors).map(({ name: fl, qty }) => ({
         key: `${it.id}-f-${fl}`,
         img: flavorImage(product, fl) || it.image || product.image,
