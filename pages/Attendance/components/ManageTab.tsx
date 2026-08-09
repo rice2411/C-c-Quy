@@ -55,9 +55,9 @@ const ManageTab: React.FC = () => {
 
   const useCurrentIp = async () => {
     try {
-      const ip = await fetchCurrentIp();
-      setIpCidr(ip);
-      toast.success(`IP hiện tại: ${ip}`);
+      const { ip, suggestedCidr } = await fetchCurrentIp();
+      setIpCidr(suggestedCidr || ip);
+      toast.success(`IP: ${ip} → dùng dải ${suggestedCidr || ip}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Không lấy được IP.');
     }
@@ -117,7 +117,8 @@ const ManageTab: React.FC = () => {
         </Box>
         <Typography size="xs" layoutClassName="mb-3" textClassName="text-slate-500 dark:text-slate-400">
           Chỉ chấm công được khi thiết bị dùng IP nằm trong danh sách này. Mở wifi quán rồi bấm
-          "Dùng IP hiện tại" để lấy đúng IP public của quán.
+          "IP hiện tại" — với IPv6 hệ thống tự lấy DẢI /56 (vì mỗi máy một IPv6 khác nhau), IPv4 lấy /32.
+          Nếu quán có cả IPv4 lẫn IPv6, thêm cả hai. Mạng nhà mạng đổi dải thì bấm lấy lại.
         </Typography>
         <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
           <Field label="Nhãn" htmlFor="net-label">

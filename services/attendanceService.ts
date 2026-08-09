@@ -129,10 +129,11 @@ export async function checkAttendance(
 
 // ---- Quản lý (admin) ----
 
-/** IP server nhìn thấy (để admin thêm vào whitelist). */
-export async function fetchCurrentIp(): Promise<string> {
-  const res = await apiClient.get<{ ip: string }>(`${BASE}/current-ip`);
-  return str(res.data?.ip) ?? '';
+/** IP server nhìn thấy + dải gợi ý whitelist (IPv6 → /56, IPv4 → /32). */
+export async function fetchCurrentIp(): Promise<{ ip: string; suggestedCidr: string }> {
+  const res = await apiClient.get<{ ip: string; suggestedCidr?: string }>(`${BASE}/current-ip`);
+  const ip = str(res.data?.ip) ?? '';
+  return { ip, suggestedCidr: str(res.data?.suggestedCidr) || ip };
 }
 
 export async function fetchOverview(): Promise<AttendanceOverviewRow[]> {
