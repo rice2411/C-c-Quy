@@ -119,43 +119,77 @@ const CheckInTab: React.FC = () => {
     );
   }
 
+  const initial = (me.employee.name || '?').trim().charAt(0).toUpperCase();
+
   return (
-    <Box layoutClassName="mx-auto flex w-full max-w-md flex-col gap-4">
-      {/* Chào + trạng thái hôm nay */}
-      <Box layoutClassName="flex items-center justify-between gap-2">
-        <Box>
-          <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">Xin chào</Typography>
-          <Heading level={2} textClassName="text-lg font-bold text-slate-900 dark:text-white">
-            {me.employee.name}
-          </Heading>
-        </Box>
-        <Box layoutClassName="flex flex-col items-end gap-1 text-right">
-          <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">
-            Vào: <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-emerald-600 dark:text-emerald-400">{fmt(me.status?.todayIn)}</Typography>
+    <Box layoutClassName="mx-auto flex w-full max-w-sm flex-col gap-5 py-2">
+      {/* Header: avatar + tên + chip mạng quán */}
+      <Box layoutClassName="flex flex-col items-center gap-2 text-center">
+        <Box
+          layoutClassName="flex h-16 w-16 items-center justify-center"
+          roundedClassName="rounded-full"
+          backgroundClassName="bg-primary-100 dark:bg-primary-900/40"
+        >
+          <Typography as="span" layoutClassName="text-2xl font-bold" textClassName="text-primary-600 dark:text-primary-300">
+            {initial}
           </Typography>
-          <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">
-            Ra: <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-rose-600 dark:text-rose-400">{fmt(me.status?.todayOut)}</Typography>
+        </Box>
+        <Heading level={2} textClassName="text-xl font-bold text-slate-900 dark:text-white">
+          {me.employee.name}
+        </Heading>
+        <Box
+          layoutClassName="inline-flex items-center gap-1.5 px-2.5 py-1"
+          roundedClassName="rounded-full"
+          backgroundClassName="bg-emerald-100 dark:bg-emerald-900/30"
+        >
+          <Wifi className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+          <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-emerald-700 dark:text-emerald-300">
+            Trong mạng quán
           </Typography>
         </Box>
       </Box>
 
-      {/* Đang ở mạng quán (đã đảm bảo ở early-return phía trên) */}
-      <Box
-        layoutClassName="flex items-center gap-2 px-3 py-2"
-        roundedClassName="rounded-lg"
-        backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20"
-      >
-        <Wifi className="h-4 w-4 text-emerald-500" />
-        <Typography size="xs" textClassName="text-emerald-700 dark:text-emerald-300">
-          Bạn đang ở trong mạng của quán — có thể chấm công.
-        </Typography>
+      {/* Trạng thái hôm nay: 2 ô đều nhau */}
+      <Box layoutClassName="grid grid-cols-2 gap-3">
+        <Box
+          layoutClassName="flex flex-col items-center gap-0.5 py-3"
+          roundedClassName="rounded-xl"
+          borderClassName="border border-slate-200 dark:border-slate-700"
+          backgroundClassName="bg-white dark:bg-slate-800"
+        >
+          <Box layoutClassName="flex items-center gap-1">
+            <LogIn className="h-3.5 w-3.5 text-emerald-500" />
+            <Typography as="span" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-500 dark:text-slate-400">
+              Vào ca
+            </Typography>
+          </Box>
+          <Typography as="span" layoutClassName="text-lg font-bold tabular-nums" textClassName="text-emerald-600 dark:text-emerald-400">
+            {fmt(me.status?.todayIn)}
+          </Typography>
+        </Box>
+        <Box
+          layoutClassName="flex flex-col items-center gap-0.5 py-3"
+          roundedClassName="rounded-xl"
+          borderClassName="border border-slate-200 dark:border-slate-700"
+          backgroundClassName="bg-white dark:bg-slate-800"
+        >
+          <Box layoutClassName="flex items-center gap-1">
+            <LogOut className="h-3.5 w-3.5 text-rose-500" />
+            <Typography as="span" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-500 dark:text-slate-400">
+              Tan ca
+            </Typography>
+          </Box>
+          <Typography as="span" layoutClassName="text-lg font-bold tabular-nums" textClassName="text-rose-600 dark:text-rose-400">
+            {fmt(me.status?.todayOut)}
+          </Typography>
+        </Box>
       </Box>
 
       {!hasFace ? (
         // Chưa được đăng ký khuôn mặt → KHÔNG tự đăng ký, KHÔNG hiện camera.
         <Box
           layoutClassName="flex flex-col items-center gap-3 p-5 text-center"
-          roundedClassName="rounded-xl"
+          roundedClassName="rounded-2xl"
           borderClassName="border border-amber-200 dark:border-amber-800/50"
           backgroundClassName="bg-amber-50 dark:bg-amber-900/20"
         >
@@ -169,15 +203,20 @@ const CheckInTab: React.FC = () => {
         </Box>
       ) : (
         <>
-          {/* Camera — chỉ bật khi đã ở đúng mạng quán + đã đăng ký khuôn mặt */}
-          <CameraCapture ref={camRef} />
+          {/* Camera vuông cho mặt — chỉ bật khi ở đúng mạng + đã đăng ký */}
+          <CameraCapture ref={camRef} heightClassName="aspect-square" />
+          <Typography size="xs" variant="muted" layoutClassName="text-center">
+            Đưa mặt vào khung tròn rồi bấm Vào ca / Tan ca.
+          </Typography>
           <Box layoutClassName="grid grid-cols-2 gap-3">
             <Button
               type="button"
               variant="primary"
               fullWidth
               disabled={busy !== null}
-              leftIcon={<LogIn className="h-4 w-4" />}
+              sizeClassName="px-4 py-3.5 text-base"
+              layoutClassName="inline-flex items-center justify-center gap-2"
+              leftIcon={<LogIn className="h-5 w-5" />}
               onClick={() => run('in')}
             >
               {busy === 'in' ? 'Đang chấm…' : 'Vào ca'}
@@ -187,7 +226,9 @@ const CheckInTab: React.FC = () => {
               variant="secondary"
               fullWidth
               disabled={busy !== null}
-              leftIcon={<LogOut className="h-4 w-4" />}
+              sizeClassName="px-4 py-3.5 text-base"
+              layoutClassName="inline-flex items-center justify-center gap-2"
+              leftIcon={<LogOut className="h-5 w-5" />}
               onClick={() => run('out')}
             >
               {busy === 'out' ? 'Đang chấm…' : 'Tan ca'}
