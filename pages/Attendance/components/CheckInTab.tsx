@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import {
+  AlertTriangle,
   LogIn,
   LogOut,
   ScanFace,
@@ -154,6 +155,22 @@ const CheckInTab: React.FC = () => {
         </Box>
       ) : (
         <Box layoutClassName="flex flex-col gap-3">
+          {/* Không ở mạng quán → báo lỗi rõ ngay tại chỗ chấm công, khoá nút. */}
+          {!ipOk && (
+            <Box
+              layoutClassName="flex items-start gap-2 p-3"
+              roundedClassName="rounded-lg"
+              borderClassName="border border-rose-200 dark:border-rose-800/60"
+              backgroundClassName="bg-rose-50 dark:bg-rose-900/20"
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
+              <Typography size="sm" textClassName="text-rose-700 dark:text-rose-300">
+                {ipConfigured
+                  ? `Không chấm công được: bạn KHÔNG ở trong mạng wifi của quán (IP ${me.ip.ip}). Hãy kết nối đúng wifi quán rồi tải lại trang.`
+                  : 'Không chấm công được: quán chưa cấu hình mạng. Nhờ quản lý thêm IP mạng quán trong mục Quản lý.'}
+              </Typography>
+            </Box>
+          )}
           <Box layoutClassName="grid grid-cols-2 gap-3">
             <Button
               type="button"
