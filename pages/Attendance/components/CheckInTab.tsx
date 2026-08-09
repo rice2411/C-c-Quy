@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   UserPlus,
   Wifi,
-  WifiOff,
 } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
@@ -110,96 +109,102 @@ const CheckInTab: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Trạng thái mạng quán */}
-      <Box
-        layoutClassName="flex items-center gap-2 px-3 py-2"
-        roundedClassName="rounded-lg"
-        backgroundClassName={ipOk ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-rose-50 dark:bg-rose-900/20'}
-      >
-        {ipOk ? <Wifi className="h-4 w-4 text-emerald-500" /> : <WifiOff className="h-4 w-4 text-rose-500" />}
-        <Typography size="xs" textClassName={ipOk ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}>
-          {ipOk
-            ? 'Bạn đang ở trong mạng của quán — có thể chấm công.'
-            : ipConfigured
-              ? `Không ở mạng quán (IP ${me.ip.ip}) — không thể chấm công.`
-              : 'Quán chưa cấu hình mạng chấm công. Nhờ quản lý thêm IP.'}
-        </Typography>
-      </Box>
+      {/* Trạng thái mạng quán — banner xanh chỉ hiện khi ĐANG ở mạng quán */}
+      {ipOk && (
+        <Box
+          layoutClassName="flex items-center gap-2 px-3 py-2"
+          roundedClassName="rounded-lg"
+          backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20"
+        >
+          <Wifi className="h-4 w-4 text-emerald-500" />
+          <Typography size="xs" textClassName="text-emerald-700 dark:text-emerald-300">
+            Bạn đang ở trong mạng của quán — có thể chấm công.
+          </Typography>
+        </Box>
+      )}
 
-      {/* Camera */}
-      <CameraCapture ref={camRef} />
-
-      {/* Hành động */}
-      {!hasFace ? (
-        <Box layoutClassName="flex flex-col gap-2">
-          <Box
-            layoutClassName="flex items-center gap-2 px-3 py-2"
-            roundedClassName="rounded-lg"
-            backgroundClassName="bg-sky-50 dark:bg-sky-900/20"
-          >
-            <UserPlus className="h-4 w-4 text-sky-500" />
-            <Typography size="xs" textClassName="text-sky-700 dark:text-sky-300">
-              Lần đầu chấm công: đăng ký khuôn mặt của bạn trước.
-            </Typography>
-          </Box>
-          <Button
-            type="button"
-            variant="primary"
-            fullWidth
-            disabled={busy !== null}
-            leftIcon={<ScanFace className="h-4 w-4" />}
-            onClick={() => run('register')}
-          >
-            {busy === 'register' ? 'Đang đăng ký…' : 'Đăng ký khuôn mặt'}
-          </Button>
+      {/* KHÔNG ở mạng quán → báo lỗi, KHÔNG hiện camera/chấm công */}
+      {!ipOk ? (
+        <Box
+          layoutClassName="flex flex-col items-center gap-3 p-5 text-center"
+          roundedClassName="rounded-xl"
+          borderClassName="border border-rose-200 dark:border-rose-800/60"
+          backgroundClassName="bg-rose-50 dark:bg-rose-900/20"
+        >
+          <AlertTriangle className="h-8 w-8 text-rose-500" />
+          <Typography size="sm" layoutClassName="font-semibold" textClassName="text-rose-700 dark:text-rose-300">
+            {ipConfigured
+              ? 'Bạn KHÔNG ở trong mạng wifi của quán nên không thể chấm công.'
+              : 'Quán chưa cấu hình mạng chấm công.'}
+          </Typography>
+          <Typography size="xs" textClassName="text-rose-600/80 dark:text-rose-300/80">
+            {ipConfigured
+              ? `Hãy kết nối đúng wifi quán rồi tải lại trang. (IP hiện tại: ${me.ip.ip || '—'})`
+              : 'Nhờ quản lý thêm IP mạng quán trong mục Quản lý.'}
+          </Typography>
         </Box>
       ) : (
-        <Box layoutClassName="flex flex-col gap-3">
-          {/* Không ở mạng quán → báo lỗi rõ ngay tại chỗ chấm công, khoá nút. */}
-          {!ipOk && (
-            <Box
-              layoutClassName="flex items-start gap-2 p-3"
-              roundedClassName="rounded-lg"
-              borderClassName="border border-rose-200 dark:border-rose-800/60"
-              backgroundClassName="bg-rose-50 dark:bg-rose-900/20"
-            >
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
-              <Typography size="sm" textClassName="text-rose-700 dark:text-rose-300">
-                {ipConfigured
-                  ? `Không chấm công được: bạn KHÔNG ở trong mạng wifi của quán (IP ${me.ip.ip}). Hãy kết nối đúng wifi quán rồi tải lại trang.`
-                  : 'Không chấm công được: quán chưa cấu hình mạng. Nhờ quản lý thêm IP mạng quán trong mục Quản lý.'}
-              </Typography>
+        <>
+          {/* Camera — chỉ bật khi đã ở đúng mạng quán */}
+          <CameraCapture ref={camRef} />
+
+          {/* Hành động */}
+          {!hasFace ? (
+            <Box layoutClassName="flex flex-col gap-2">
+              <Box
+                layoutClassName="flex items-center gap-2 px-3 py-2"
+                roundedClassName="rounded-lg"
+                backgroundClassName="bg-sky-50 dark:bg-sky-900/20"
+              >
+                <UserPlus className="h-4 w-4 text-sky-500" />
+                <Typography size="xs" textClassName="text-sky-700 dark:text-sky-300">
+                  Lần đầu chấm công: đăng ký khuôn mặt của bạn trước.
+                </Typography>
+              </Box>
+              <Button
+                type="button"
+                variant="primary"
+                fullWidth
+                disabled={busy !== null}
+                leftIcon={<ScanFace className="h-4 w-4" />}
+                onClick={() => run('register')}
+              >
+                {busy === 'register' ? 'Đang đăng ký…' : 'Đăng ký khuôn mặt'}
+              </Button>
+            </Box>
+          ) : (
+            <Box layoutClassName="flex flex-col gap-3">
+              <Box layoutClassName="grid grid-cols-2 gap-3">
+                <Button
+                  type="button"
+                  variant="primary"
+                  fullWidth
+                  disabled={busy !== null}
+                  leftIcon={<LogIn className="h-4 w-4" />}
+                  onClick={() => run('in')}
+                >
+                  {busy === 'in' ? 'Đang chấm…' : 'Vào ca'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  fullWidth
+                  disabled={busy !== null}
+                  leftIcon={<LogOut className="h-4 w-4" />}
+                  onClick={() => run('out')}
+                >
+                  {busy === 'out' ? 'Đang chấm…' : 'Tan ca'}
+                </Button>
+              </Box>
+              <Box layoutClassName="flex items-center justify-center gap-2">
+                <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
+                <Button type="button" variant="ghost" size="sm" disabled={busy !== null} onClick={() => run('register')}>
+                  {busy === 'register' ? 'Đang cập nhật…' : 'Đăng ký lại khuôn mặt'}
+                </Button>
+              </Box>
             </Box>
           )}
-          <Box layoutClassName="grid grid-cols-2 gap-3">
-            <Button
-              type="button"
-              variant="primary"
-              fullWidth
-              disabled={busy !== null || !ipOk}
-              leftIcon={<LogIn className="h-4 w-4" />}
-              onClick={() => run('in')}
-            >
-              {busy === 'in' ? 'Đang chấm…' : 'Vào ca'}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              fullWidth
-              disabled={busy !== null || !ipOk}
-              leftIcon={<LogOut className="h-4 w-4" />}
-              onClick={() => run('out')}
-            >
-              {busy === 'out' ? 'Đang chấm…' : 'Tan ca'}
-            </Button>
-          </Box>
-          <Box layoutClassName="flex items-center justify-center gap-2">
-            <ShieldCheck className="h-3.5 w-3.5 text-slate-400" />
-            <Button type="button" variant="ghost" size="sm" disabled={busy !== null} onClick={() => run('register')}>
-              {busy === 'register' ? 'Đang cập nhật…' : 'Đăng ký lại khuôn mặt'}
-            </Button>
-          </Box>
-        </Box>
+        </>
       )}
     </Box>
   );
