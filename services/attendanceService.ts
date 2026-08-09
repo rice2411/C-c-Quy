@@ -35,12 +35,17 @@ function toIso(v: unknown): string | null {
   return null;
 }
 
+function toShift(v: unknown): AttendanceRecord['shift'] {
+  return v === 'ca1' || v === 'ca2' || v === 'ca3' ? v : null;
+}
+
 function toRecord(r: any): AttendanceRecord {
   return {
     id: str(r?.id) ?? '',
     employeeId: str(r?.employeeId) ?? '',
     employeeName: str(r?.employeeName),
     kind: r?.kind === 'out' ? 'out' : 'in',
+    shift: toShift(r?.shift),
     checkedAt: toIso(r?.checkedAt) ?? '',
     ip: str(r?.ip),
     faceDistance: num(r?.faceDistance),
@@ -81,9 +86,16 @@ export async function fetchMe(): Promise<AttendanceMe> {
           faceCount: num(d.status.faceCount) ?? 0,
           lastKind: d.status.lastKind === 'out' ? 'out' : d.status.lastKind === 'in' ? 'in' : null,
           lastAt: toIso(d.status.lastAt),
+          nextKind: d.status.nextKind === 'out' ? 'out' : 'in',
+          currentShift: toShift(d.status.currentShift),
           todayIn: toIso(d.status.todayIn),
           todayOut: toIso(d.status.todayOut),
           todayCount: num(d.status.todayCount) ?? 0,
+          todayShifts: Array.isArray(d.status.todayShifts)
+            ? d.status.todayShifts
+                .map((s: any) => ({ shift: toShift(s?.shift), in: toIso(s?.in), out: toIso(s?.out) }))
+                .filter((s: any) => s.shift)
+            : [],
         }
       : null,
     ip: {

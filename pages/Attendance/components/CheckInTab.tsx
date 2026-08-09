@@ -10,6 +10,7 @@ import Spinner from '@/components/ui/Spinner';
 import Badge from '@/components/ui/Badge';
 import CameraCapture, { CameraCaptureHandle } from '@/components/CameraCapture';
 import { useAttendanceMe, useAttendanceActions } from '@/hooks/queries/useAttendanceQuery';
+import { SHIFTS, shiftLabel, shiftTime } from '@/types/attendance';
 
 const fmt = (iso?: string | null): string =>
   iso ? new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '—';
@@ -56,11 +57,20 @@ const CheckInTab: React.FC = () => {
   const ipOk = me.ip.allowed;
   const ipConfigured = me.ip.configured;
 
+  // Hành động kế tiếp + ca sắp chấm (BE derive; fallback theo lastKind nếu API cũ).
+  const status = me.status;
+  const nextKind: Exclude<BusyMode, null> =
+    status?.nextKind ?? (status?.lastKind === 'in' ? 'out' : 'in');
+  const isCheckedIn = nextKind === 'out';
+  const curShift = status?.currentShift ?? null;
+  const todayShifts = status?.todayShifts ?? [];
+
   const run = async (mode: Exclude<BusyMode, null>) => {
-    // Đóng dấu tên + loại chấm công + ngày giờ vào góc ảnh trước khi gửi lưu.
+    // Đóng dấu tên + loại + ca + ngày giờ vào góc ảnh trước khi gửi lưu.
+    const shiftTxt = curShift ? ` · ${shiftLabel(curShift)}` : '';
     const stamp = [
       me?.employee?.name ?? '',
-      mode === 'in' ? 'VÀO CA' : 'TAN CA',
+      `${mode === 'in' ? 'VÀO CA' : 'TAN CA'}${shiftTxt}`,
       new Date().toLocaleString('vi-VN', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -74,8 +84,9 @@ const CheckInTab: React.FC = () => {
     setBusy(mode);
     try {
       const r = await check(blob, mode);
+      const caTxt = r.record.shift ? ` ${shiftLabel(r.record.shift)}` : '';
       toast.success(
-        `${mode === 'in' ? 'Đã chấm VÀO ca' : 'Đã chấm TAN ca'} lúc ${fmt(r.record.checkedAt)}.`,
+        `${mode === 'in' ? 'Đã chấm VÀO' : 'Đã chấm TAN'}${caTxt} lúc ${fmt(r.record.checkedAt)}.`,
       );
       await refetch();
     } catch (e) {
@@ -129,8 +140,6 @@ const CheckInTab: React.FC = () => {
   }
 
   const initial = (me.employee.name || '?').trim().charAt(0).toUpperCase();
-  // Đang trong ca nếu lần chấm gần nhất là 'in' → nút kế tiếp là Tan ca; ngược lại Vào ca.
-  const isCheckedIn = me.status?.lastKind === 'in';
 
   return (
     <Box layoutClassName="mx-auto flex w-full max-w-sm flex-col gap-5 py-2">
@@ -160,40 +169,61 @@ const CheckInTab: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Trạng thái hôm nay: 2 ô đều nhau */}
-      <Box layoutClassName="grid grid-cols-2 gap-3">
-        <Box
-          layoutClassName="flex flex-col items-center gap-0.5 py-3"
-          roundedClassName="rounded-xl"
-          borderClassName="border border-slate-200 dark:border-slate-700"
-          backgroundClassName="bg-white dark:bg-slate-800"
-        >
-          <Box layoutClassName="flex items-center gap-1">
-            <LogIn className="h-3.5 w-3.5 text-emerald-500" />
-            <Typography as="span" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-500 dark:text-slate-400">
-              Vào ca
-            </Typography>
-          </Box>
-          <Typography as="span" layoutClassName="text-lg font-bold tabular-nums" textClassName="text-emerald-600 dark:text-emerald-400">
-            {fmt(me.status?.todayIn)}
-          </Typography>
-        </Box>
-        <Box
-          layoutClassName="flex flex-col items-center gap-0.5 py-3"
-          roundedClassName="rounded-xl"
-          borderClassName="border border-slate-200 dark:border-slate-700"
-          backgroundClassName="bg-white dark:bg-slate-800"
-        >
-          <Box layoutClassName="flex items-center gap-1">
-            <LogOut className="h-3.5 w-3.5 text-rose-500" />
-            <Typography as="span" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-500 dark:text-slate-400">
-              Tan ca
-            </Typography>
-          </Box>
-          <Typography as="span" layoutClassName="text-lg font-bold tabular-nums" textClassName="text-rose-600 dark:text-rose-400">
-            {fmt(me.status?.todayOut)}
-          </Typography>
-        </Box>
+      {/* Trạng thái hôm nay theo TỪNG CA (highlight ca sắp chấm) */}
+      <Box layoutClassName="flex flex-col gap-2">
+        {SHIFTS.map((s) => {
+          const rec = todayShifts.find((t) => t.shift === s.value);
+          const active = curShift === s.value;
+          return (
+            <Box
+              key={s.value}
+              layoutClassName="flex items-center justify-between gap-2 px-3 py-2"
+              roundedClassName="rounded-xl"
+              borderClassName={
+                active
+                  ? 'border border-primary-300 dark:border-primary-700'
+                  : 'border border-slate-200 dark:border-slate-700'
+              }
+              backgroundClassName={
+                active ? 'bg-primary-50 dark:bg-primary-900/20' : 'bg-white dark:bg-slate-800'
+              }
+            >
+              <Box layoutClassName="flex flex-col">
+                <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-800 dark:text-slate-100">
+                  {s.label}
+                  {active ? ' · sắp chấm' : ''}
+                </Typography>
+                <Typography as="span" size="xs" textClassName="text-slate-400 dark:text-slate-500">
+                  {s.time}
+                </Typography>
+              </Box>
+              <Box layoutClassName="flex items-center gap-4">
+                <Box layoutClassName="flex flex-col items-end">
+                  <Box layoutClassName="flex items-center gap-1">
+                    <LogIn className="h-3 w-3 text-emerald-500" />
+                    <Typography as="span" size="xs" textClassName="text-slate-400 dark:text-slate-500">
+                      Vào
+                    </Typography>
+                  </Box>
+                  <Typography as="span" size="sm" layoutClassName="font-bold tabular-nums" textClassName="text-emerald-600 dark:text-emerald-400">
+                    {fmt(rec?.in)}
+                  </Typography>
+                </Box>
+                <Box layoutClassName="flex flex-col items-end">
+                  <Box layoutClassName="flex items-center gap-1">
+                    <LogOut className="h-3 w-3 text-rose-500" />
+                    <Typography as="span" size="xs" textClassName="text-slate-400 dark:text-slate-500">
+                      Tan
+                    </Typography>
+                  </Box>
+                  <Typography as="span" size="sm" layoutClassName="font-bold tabular-nums" textClassName="text-rose-600 dark:text-rose-400">
+                    {fmt(rec?.out)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          );
+        })}
       </Box>
 
       {!hasFace ? (
@@ -216,6 +246,16 @@ const CheckInTab: React.FC = () => {
         <>
           {/* Camera vuông cho mặt — chỉ bật khi ở đúng mạng + đã đăng ký */}
           <CameraCapture ref={camRef} heightClassName="aspect-square" />
+          {curShift && (
+            <Box layoutClassName="flex items-center justify-center gap-1.5">
+              <Typography as="span" size="xs" variant="muted">
+                {isCheckedIn ? 'Tan ca:' : 'Vào ca:'}
+              </Typography>
+              <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-primary-600 dark:text-primary-300">
+                {shiftLabel(curShift)} · {shiftTime(curShift)}
+              </Typography>
+            </Box>
+          )}
           <Typography size="xs" variant="muted" layoutClassName="text-center">
             {isCheckedIn
               ? 'Đưa mặt vào khung rồi bấm Tan ca để kết thúc ca.'
@@ -238,7 +278,7 @@ const CheckInTab: React.FC = () => {
               leftIcon={<LogOut className="h-5 w-5" />}
               onClick={() => run('out')}
             >
-              {busy === 'out' ? 'Đang chấm…' : 'Tan ca'}
+              {busy === 'out' ? 'Đang chấm…' : `Tan ${curShift ? shiftLabel(curShift) : 'ca'}`}
             </Button>
           ) : (
             <Button
@@ -252,7 +292,7 @@ const CheckInTab: React.FC = () => {
               leftIcon={<LogIn className="h-5 w-5" />}
               onClick={() => run('in')}
             >
-              {busy === 'in' ? 'Đang chấm…' : 'Vào ca'}
+              {busy === 'in' ? 'Đang chấm…' : `Vào ${curShift ? shiftLabel(curShift) : 'ca'}`}
             </Button>
           )}
         </>

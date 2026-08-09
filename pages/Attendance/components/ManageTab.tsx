@@ -31,7 +31,7 @@ import {
   useNetworks,
 } from '@/hooks/queries/useAttendanceQuery';
 import { fetchCurrentIp } from '@/services/attendanceService';
-import { kindLabel } from '@/types/attendance';
+import { kindLabel, shiftLabel } from '@/types/attendance';
 
 const fmtDateTime = (iso?: string | null): string =>
   iso ? new Date(iso).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
@@ -305,6 +305,7 @@ const ManageTab: React.FC = () => {
                   <TableHeaderCell layoutClassName="px-4 py-3">Thời gian</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3">Nhân viên</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3 text-center">Loại</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="px-4 py-3 text-center">Ca</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3">IP</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3 text-right">Độ khớp</TableHeaderCell>
                 </TableRow>
@@ -327,6 +328,9 @@ const ManageTab: React.FC = () => {
                       >
                         {kindLabel(rec.kind)}
                       </Badge>
+                    </TableCell>
+                    <TableCell layoutClassName="whitespace-nowrap px-4 py-3 text-center">
+                      <Typography as="span" size="sm" textClassName="text-slate-600 dark:text-slate-300">{shiftLabel(rec.shift)}</Typography>
                     </TableCell>
                     <TableCell layoutClassName="whitespace-nowrap px-4 py-3">
                       <Typography as="span" size="xs" layoutClassName="font-mono" textClassName="text-slate-500 dark:text-slate-400">{rec.ip || '—'}</Typography>
