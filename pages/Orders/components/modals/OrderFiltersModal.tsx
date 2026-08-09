@@ -12,6 +12,7 @@ import IconButton from '@/components/ui/IconButton';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Typography from '@/components/ui/Typography';
+import { CARRIER_STATUS_OPTIONS } from '@/pages/Orders/carrierStatus';
 
 export type SortFieldKey = 'date' | 'deliveryDate' | 'total' | 'status' | 'orderNumber';
 
@@ -23,6 +24,8 @@ export interface OrderFiltersState {
   paymentStatusFilter: string;
   paymentMethodFilter: string;
   creatorFilter: string;
+  /** Nhóm trạng thái giao hàng của ĐVVC (All | delivered | delivering | ...) */
+  trackingStatusFilter: string;
   dateFrom: string;
   dateTo: string;
   dateType: 'orderDate' | 'deliveryDate';
@@ -142,6 +145,7 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
       paymentStatusFilter: 'All',
       paymentMethodFilter: 'All',
       creatorFilter: '',
+      trackingStatusFilter: 'All',
       dateFrom: '',
       dateTo: '',
       dateType: 'orderDate',
@@ -366,6 +370,21 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
                   {creatorOptions.map((creator) => (
                     <option key={creator} value={creator}>
                       {creator}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+
+              <Field label="Trạng thái ĐVVC (giao hàng)" htmlFor="order-filters-tracking-status">
+                <Select
+                  id="order-filters-tracking-status"
+                  fullWidth
+                  value={values.trackingStatusFilter}
+                  onChange={(e) => handleChange('trackingStatusFilter', e.target.value)}
+                >
+                  {CARRIER_STATUS_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
                     </option>
                   ))}
                 </Select>

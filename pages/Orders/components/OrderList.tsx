@@ -7,6 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { qk } from '@/hooks/queryKeys';
 import { Order } from '@/types';
 import { DeliveryType } from '@/types/enums';
+import { matchesCarrierStatus, CARRIER_STATUS_OPTIONS } from '@/pages/Orders/carrierStatus';
 import { getAllUsers } from '@/services/userService';
 import { parseDateValue } from '@/utils/format/dateUtil';
 import { buildDeliveryBadge } from '@/utils/order/deliveryDateBadge';
@@ -40,6 +41,8 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('All');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('All');
   const [creatorFilter, setCreatorFilter] = useState('');
+  // Lọc theo nhóm trạng thái giao hàng của ĐVVC (All | delivered | delivering | ...)
+  const [trackingStatusFilter, setTrackingStatusFilter] = useState<string>('All');
   const [dateFrom, setDateFrom] = useState<string>('');
   const [dateTo, setDateTo] = useState<string>('');
   const [dateType, setDateType] = useState<'orderDate' | 'deliveryDate'>('orderDate');
@@ -170,6 +173,13 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
           order.deliveryType === DeliveryType.SHIP_PROVINCE ||
           !!order.trackingNumber;
 
+        // Trạng thái giao hàng của ĐVVC (nhóm theo trackingStatus text thô).
+        const matchesTrackingStatus = matchesCarrierStatus(
+          trackingStatusFilter,
+          order.trackingStatus,
+          order.trackingNumber,
+        );
+
         const matchesPaymentStatus =
           paymentStatusFilter === 'All' || order.paymentStatus === paymentStatusFilter;
         const matchesPaymentMethod =
@@ -208,6 +218,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
           matchesProduct &&
           matchesDate &&
           matchesProvince &&
+          matchesTrackingStatus &&
           matchesPaymentStatus &&
           matchesPaymentMethod &&
           matchesCreator &&
@@ -290,6 +301,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
     dateTo,
     dateType,
     isProvinceFilter,
+    trackingStatusFilter,
   ]);
 
   useEffect(() => {
@@ -308,6 +320,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
     dateTo,
     dateType,
     isProvinceFilter,
+    trackingStatusFilter,
   ]);
 
   const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
@@ -445,6 +458,13 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
         onClear: () => setIsProvinceFilter(false),
       });
     }
+    if (trackingStatusFilter !== 'All') {
+      chips.push({
+        key: 'trackingStatus',
+        label: `ĐVVC: ${CARRIER_STATUS_OPTIONS.find((o) => o.value === trackingStatusFilter)?.label ?? trackingStatusFilter}`,
+        onClear: () => setTrackingStatusFilter('All'),
+      });
+    }
     return chips;
   }, [
     searchTerm,
@@ -460,6 +480,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
     hideCompleted,
     isOverdueFilter,
     isProvinceFilter,
+    trackingStatusFilter,
   ]);
 
   const activeFiltersCount = activeChips.length;
@@ -525,6 +546,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
           setPaymentStatusFilter('All');
           setPaymentMethodFilter('All');
           setCreatorFilter('');
+          setTrackingStatusFilter('All');
           setDateFrom('');
           setDateTo('');
           setDateType('orderDate');
@@ -558,6 +580,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
           paymentStatusFilter,
           paymentMethodFilter,
           creatorFilter,
+          trackingStatusFilter,
           dateFrom,
           dateTo,
           dateType,
@@ -573,6 +596,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
           setPaymentStatusFilter(values.paymentStatusFilter);
           setPaymentMethodFilter(values.paymentMethodFilter);
           setCreatorFilter(values.creatorFilter);
+          setTrackingStatusFilter(values.trackingStatusFilter);
           setDateFrom(values.dateFrom);
           setDateTo(values.dateTo);
           setDateType(values.dateType);
