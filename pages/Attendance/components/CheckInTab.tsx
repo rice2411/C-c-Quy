@@ -120,6 +120,8 @@ const CheckInTab: React.FC = () => {
   }
 
   const initial = (me.employee.name || '?').trim().charAt(0).toUpperCase();
+  // Đang trong ca nếu lần chấm gần nhất là 'in' → nút kế tiếp là Tan ca; ngược lại Vào ca.
+  const isCheckedIn = me.status?.lastKind === 'in';
 
   return (
     <Box layoutClassName="mx-auto flex w-full max-w-sm flex-col gap-5 py-2">
@@ -206,34 +208,44 @@ const CheckInTab: React.FC = () => {
           {/* Camera vuông cho mặt — chỉ bật khi ở đúng mạng + đã đăng ký */}
           <CameraCapture ref={camRef} heightClassName="aspect-square" />
           <Typography size="xs" variant="muted" layoutClassName="text-center">
-            Đưa mặt vào khung tròn rồi bấm Vào ca / Tan ca.
+            {isCheckedIn
+              ? 'Đưa mặt vào khung rồi bấm Tan ca để kết thúc ca.'
+              : 'Đưa mặt vào khung rồi bấm Vào ca để bắt đầu ca.'}
           </Typography>
-          <Box layoutClassName="grid grid-cols-2 gap-3">
+          {/* Mỗi lúc chỉ 1 nút theo trạng thái: chưa vào ca → Vào ca; đã vào ca → Tan ca. */}
+          {isCheckedIn ? (
             <Button
               type="button"
-              variant="primary"
               fullWidth
               disabled={busy !== null}
-              sizeClassName="px-4 py-3.5 text-base"
+              sizeClassName="px-4 py-4 text-base"
               layoutClassName="inline-flex items-center justify-center gap-2"
-              leftIcon={<LogIn className="h-5 w-5" />}
-              onClick={() => run('in')}
-            >
-              {busy === 'in' ? 'Đang chấm…' : 'Vào ca'}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              fullWidth
-              disabled={busy !== null}
-              sizeClassName="px-4 py-3.5 text-base"
-              layoutClassName="inline-flex items-center justify-center gap-2"
+              roundedClassName="rounded-xl"
+              backgroundClassName="bg-rose-600 hover:bg-rose-700"
+              textClassName="font-semibold text-white"
+              borderClassName="border border-transparent"
+              disableVariantHover
+              disableVariantTextColor
               leftIcon={<LogOut className="h-5 w-5" />}
               onClick={() => run('out')}
             >
               {busy === 'out' ? 'Đang chấm…' : 'Tan ca'}
             </Button>
-          </Box>
+          ) : (
+            <Button
+              type="button"
+              variant="primary"
+              fullWidth
+              disabled={busy !== null}
+              sizeClassName="px-4 py-4 text-base"
+              layoutClassName="inline-flex items-center justify-center gap-2"
+              roundedClassName="rounded-xl"
+              leftIcon={<LogIn className="h-5 w-5" />}
+              onClick={() => run('in')}
+            >
+              {busy === 'in' ? 'Đang chấm…' : 'Vào ca'}
+            </Button>
+          )}
         </>
       )}
     </Box>

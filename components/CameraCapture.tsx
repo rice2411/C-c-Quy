@@ -139,14 +139,23 @@ const CameraCapture = forwardRef<CameraCaptureHandle, CameraCaptureProps>(
           muted
           style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }}
         />
-        {/* Khung tròn gợi ý đặt mặt */}
-        <Box layoutClassName="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <Box
-            layoutClassName="h-40 w-40 sm:h-48 sm:w-48"
-            borderClassName="border-2 border-white/70"
-            roundedClassName="rounded-full"
-          />
-        </Box>
+        {/* Hiệu ứng quét khuôn mặt kiểu app ngân hàng: khung 4 góc + vạch quét chạy dọc */}
+        <style>{`@keyframes cqScanLine{0%,100%{top:6%;opacity:.35}50%{top:90%;opacity:1}}`}</style>
+        {ready && (
+          <Box layoutClassName="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <Box layoutClassName="relative h-2/3 w-2/3">
+              <Box layoutClassName="absolute left-0 top-0 h-7 w-7" borderClassName="border-l-2 border-t-2 border-emerald-400" roundedClassName="rounded-tl-xl" />
+              <Box layoutClassName="absolute right-0 top-0 h-7 w-7" borderClassName="border-r-2 border-t-2 border-emerald-400" roundedClassName="rounded-tr-xl" />
+              <Box layoutClassName="absolute bottom-0 left-0 h-7 w-7" borderClassName="border-b-2 border-l-2 border-emerald-400" roundedClassName="rounded-bl-xl" />
+              <Box layoutClassName="absolute bottom-0 right-0 h-7 w-7" borderClassName="border-b-2 border-r-2 border-emerald-400" roundedClassName="rounded-br-xl" />
+              <Box
+                layoutClassName="absolute left-1 right-1 h-0.5"
+                backgroundClassName="bg-gradient-to-r from-transparent via-emerald-400 to-transparent"
+                style={{ animation: 'cqScanLine 2.2s ease-in-out infinite', boxShadow: '0 0 8px 1px rgba(16,185,129,0.7)' }}
+              />
+            </Box>
+          </Box>
+        )}
         {!ready && (
           <Box
             layoutClassName="absolute inset-0 flex items-center justify-center gap-2"
