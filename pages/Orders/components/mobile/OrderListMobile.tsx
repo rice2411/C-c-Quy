@@ -24,6 +24,7 @@ import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import OrderItemsMini from '@/pages/Orders/components/OrderItemsMini';
 import CarrierBadge from '@/pages/Orders/components/CarrierBadge';
+import OrderSoundTestButton from '@/pages/Orders/components/OrderSoundTestButton';
 
 interface OrderListMobileProps {
   orders: Order[];
@@ -284,7 +285,7 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                 ) : null;
               })()}
 
-              <Box layoutClassName="flex items-center justify-end gap-1 px-4 pb-2 pt-1">
+              <Box layoutClassName="flex items-center justify-end gap-2 px-4 pb-2 pt-1">
                 <Typography
                   as="span"
                   size="xs"
@@ -293,6 +294,7 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                 >
                   {order.orderNumber || order.id}
                 </Typography>
+                <OrderSoundTestButton amount={Number(order.total) || 0} />
               </Box>
             </Card>
           );

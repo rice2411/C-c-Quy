@@ -34,6 +34,7 @@ import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import OrderItemsMini from '@/pages/Orders/components/OrderItemsMini';
 import CarrierBadge from '@/pages/Orders/components/CarrierBadge';
+import OrderSoundTestButton from '@/pages/Orders/components/OrderSoundTestButton';
 
 interface OrderListDesktopProps {
   orders: Order[];
@@ -308,9 +309,12 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                     borderClassName="border-l border-slate-100 dark:border-slate-700"
                     backgroundClassName="bg-white/60 dark:bg-slate-900/30"
                   >
-                    <Typography as="span" size="xs" variant="muted">
-                      Tổng tiền
-                    </Typography>
+                    <Box layoutClassName="flex items-center gap-1.5">
+                      <Typography as="span" size="xs" variant="muted">
+                        Tổng tiền
+                      </Typography>
+                      <OrderSoundTestButton amount={Number(order.total) || 0} />
+                    </Box>
                     <Typography
                       as="p"
                       size="xl"
