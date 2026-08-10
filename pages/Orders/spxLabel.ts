@@ -2,17 +2,12 @@ import { Order } from '@/types';
 
 // Endpoint in label hàng loạt của portal SPX. KHÔNG có API chính thức — dùng chính phiên
 // đăng nhập seller trên trình duyệt: mở tab mới tới URL này, cookie SPX tự gửi kèm → SPX
-// trả trang/PDF label để in. (Nếu chưa đăng nhập SPX sẽ báo lỗi "token not found".)
+// trả trang/PDF label để in. (Chưa đăng nhập SPX sẽ báo "token not found".)
+//
+// ⚠️ order_sn KHÔNG phải mã vận đơn (SPXVN...). Portal in theo `order_id` của SPX → phải
+// map từng mã VĐ → order_id qua BE (get_order_info) TRƯỚC rồi mới ghép vào order_sn_list.
 const SPX_LABEL_ENDPOINT =
   'https://spx.vn/shipment/order/logistic/label/batch_get_shipping_label';
-
-/**
- * Chuyển mã vận đơn SPX (vd `SPXVN069008169588`) → `order_sn` mà endpoint in label nhận.
- * Theo phát hiện trên portal SPX: bỏ tiền tố `SPX`, giữ phần còn lại (`VN069008169588`).
- * ⚠️ Nếu SPX yêu cầu dạng khác (mã đầy đủ / chỉ phần số) → sửa DUY NHẤT hàm này.
- */
-export const toSpxOrderSn = (trackingNumber: string): string =>
-  trackingNumber.trim().replace(/^SPX/i, '');
 
 /** Lọc mã vận đơn SPX (không trùng) từ tập đơn đang hiển thị theo filter. */
 export const spxTrackingNumbers = (orders: Order[]): string[] =>
@@ -25,13 +20,13 @@ export const spxTrackingNumbers = (orders: Order[]): string[] =>
   );
 
 /**
- * Dựng URL mở tab in label hàng loạt cho các đơn SPX đang lọc.
- * Trả `null` nếu không có đơn SPX nào (caller báo toast).
+ * Dựng URL in label hàng loạt từ danh sách order_sn (đã map từ mã VĐ ở BE).
+ * Trả `null` nếu rỗng.
  */
-export const buildSpxLabelUrl = (orders: Order[]): string | null => {
-  const tns = spxTrackingNumbers(orders);
-  if (tns.length === 0) return null;
-  // order_sn là chuỗi alphanumeric → encode từng phần rồi nối bằng dấu phẩy thô (SPX cần).
-  const list = tns.map((tn) => encodeURIComponent(toSpxOrderSn(tn))).join(',');
+export const buildSpxLabelUrl = (orderSns: string[]): string | null => {
+  const sns = orderSns.map((s) => s.trim()).filter(Boolean);
+  if (sns.length === 0) return null;
+  // order_sn alphanumeric → encode từng phần rồi nối bằng dấu phẩy thô (SPX cần).
+  const list = sns.map((s) => encodeURIComponent(s)).join(',');
   return `${SPX_LABEL_ENDPOINT}?order_sn_list=${list}`;
 };
