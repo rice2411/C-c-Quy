@@ -8,7 +8,12 @@ import {
   SOCKET_EVENTS,
   type OrderPaidEvent,
 } from '@/services/socket';
-import { playNotificationSound, primeNotificationSound } from '@/utils/sound';
+import {
+  isPaymentSpeakerEnabled,
+  playNotificationSound,
+  primeNotificationSound,
+  speakPaymentAmount,
+} from '@/utils/sound';
 import { getSsoToken } from '@/services/auth/ssoToken';
 import { UserRole } from '@/types/user';
 import { PaymentStatus } from '@/types/enums';
@@ -47,8 +52,11 @@ const RealtimePaymentListener: React.FC = () => {
       socket = createAuthedSocket(() => Promise.resolve(getSsoToken()));
 
       socket.on(SOCKET_EVENTS.ORDER_PAID, (e: OrderPaidEvent) => {
-        const amount = (e?.amount || 0).toLocaleString('vi-VN');
+        const rawAmount = e?.amount || 0;
+        const amount = rawAmount.toLocaleString('vi-VN');
         playNotificationSound();
+        // Loa thanh toán: đọc "Đã nhận ... đồng" (nếu user bật) sau tiếng ting.
+        if (isPaymentSpeakerEnabled()) speakPaymentAmount(rawAmount);
         toast.success(`💰 Đơn ${e?.orderNumber} đã thanh toán ${amount}đ`, {
           duration: 6000,
         });

@@ -701,7 +701,12 @@ export const translations = {
       activated: "Active account updated",
       deleteAccount: "Delete account",
       confirmDelete: "Delete this account?",
-      deleted: "Account deleted"
+      deleted: "Account deleted",
+      speakerTitle: "Payment speaker",
+      speakerDesc: "When a payment is received, a voice reads the amount out loud (like a store payment speaker).",
+      speakerEnable: "Read the amount aloud",
+      speakerTest: "Test speaker",
+      speakerTestToast: "Playing a sample announcement…"
     },
     login: {
       welcome: "Welcome back! Please sign in to continue.",
@@ -1459,7 +1464,12 @@ export const translations = {
       activated: "Đã đổi tài khoản đang dùng",
       deleteAccount: "Xóa tài khoản",
       confirmDelete: "Xóa tài khoản này?",
-      deleted: "Đã xóa tài khoản"
+      deleted: "Đã xóa tài khoản",
+      speakerTitle: "Loa thanh toán",
+      speakerDesc: "Khi có tiền vào, đọc số tiền bằng giọng nói (như loa thanh toán ngoài quán).",
+      speakerEnable: "Đọc số tiền bằng giọng nói",
+      speakerTest: "Test loa",
+      speakerTestToast: "Đang phát thử thông báo…"
     },
     login: {
       welcome: "Chào mừng trở lại! Vui lòng đăng nhập để tiếp tục.",
