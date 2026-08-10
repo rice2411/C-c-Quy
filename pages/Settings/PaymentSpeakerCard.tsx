@@ -3,6 +3,7 @@ import { Volume2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
+  getSpeakerDiagnostics,
   isPaymentSpeakerEnabled,
   playNotificationSound,
   setPaymentSpeakerEnabled,
@@ -34,7 +35,21 @@ const PaymentSpeakerCard: React.FC = () => {
   const handleTest = () => {
     playNotificationSound();
     speakPaymentAmount(DEMO_AMOUNT);
-    toast.success(t('paymentSettings.speakerTestToast'));
+
+    // Chẩn đoán: cho biết chính xác vì sao loa không kêu (để debug tại máy user).
+    const d = getSpeakerDiagnostics();
+    if (!d.supported) {
+      toast.error('Trình duyệt KHÔNG hỗ trợ đọc giọng nói (speechSynthesis).', { duration: 8000 });
+    } else if (d.voiceCount === 0) {
+      toast('⚠️ Không có giọng đọc nào (0 voices) — trình duyệt chặn hoặc chưa cài giọng.', {
+        duration: 8000,
+      });
+    } else {
+      toast.success(
+        `🔊 ${d.voiceCount} giọng · tiếng Việt: ${d.hasVietnamese ? 'CÓ' : 'KHÔNG'} · ${d.langs}`,
+        { duration: 8000 },
+      );
+    }
   };
 
   return (

@@ -186,3 +186,32 @@ export const speakPaymentAmount = (amount: number): void => {
     synth.speak(utter);
   });
 };
+
+export interface SpeakerDiagnostics {
+  /** Trình duyệt có API speechSynthesis không. */
+  supported: boolean;
+  /** Số giọng đọc hiện có. */
+  voiceCount: number;
+  /** Có giọng tiếng Việt không. */
+  hasVietnamese: boolean;
+  /** Danh sách lang của các giọng (rút gọn) — để debug. */
+  langs: string;
+}
+
+/** Soi trạng thái TTS để hiện thông báo giúp chẩn đoán khi loa không kêu. */
+export const getSpeakerDiagnostics = (): SpeakerDiagnostics => {
+  if (
+    typeof window === 'undefined' ||
+    !window.speechSynthesis ||
+    typeof SpeechSynthesisUtterance === 'undefined'
+  ) {
+    return { supported: false, voiceCount: 0, hasVietnamese: false, langs: '' };
+  }
+  const voices = window.speechSynthesis.getVoices();
+  return {
+    supported: true,
+    voiceCount: voices.length,
+    hasVietnamese: voices.some((v) => v.lang?.toLowerCase().startsWith('vi')),
+    langs: Array.from(new Set(voices.map((v) => v.lang))).slice(0, 10).join(', '),
+  };
+};
