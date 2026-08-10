@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Package, PackagePlus, Plus, RefreshCw, Truck } from 'lucide-react';
+import { Download, Package, PackagePlus, Plus, Printer, RefreshCw, Truck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -19,6 +19,7 @@ import OrderDetail from '@/pages/Orders/components/modals/OrderDetail';
 import OrderForm from '@/pages/Orders/components/modals/OrderForm';
 import OrderList from '@/pages/Orders/components/OrderList';
 import OrdersStats from '@/pages/Orders/components/OrdersStats';
+import { buildSpxLabelUrl, spxTrackingNumbers } from '@/pages/Orders/spxLabel';
 
 const OrdersPage: React.FC = () => {
   const { userData } = useAuth();
@@ -31,6 +32,9 @@ const OrdersPage: React.FC = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
   const [isSpxExportOpen, setIsSpxExportOpen] = useState(false);
+
+  // Tập đơn sau filter (OrderList báo lên) — nguồn cho nút "In vận đơn" theo filter hiện tại.
+  const [visibleOrders, setVisibleOrders] = useState<Order[]>([]);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
@@ -148,6 +152,18 @@ const OrdersPage: React.FC = () => {
     }
   };
 
+  // In label SPX cho các đơn ĐANG LỌC: mở tab mới tới portal SPX (cookie phiên tự gửi kèm).
+  const handlePrintSpxLabels = () => {
+    const count = spxTrackingNumbers(visibleOrders).length;
+    const url = buildSpxLabelUrl(visibleOrders);
+    if (!url) {
+      toast.error('Không có đơn SPX nào trong danh sách đang lọc');
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+    toast.success(`Đang mở in ${count} vận đơn SPX (đăng nhập spx.vn nếu được hỏi)`);
+  };
+
   const handleOpenExportModal = () => {
     if (!canExportOrders) {
       toast.error('Only admin or super admin can export orders');
@@ -239,6 +255,26 @@ const OrdersPage: React.FC = () => {
       </Button>
       <Button
         type="button"
+        onClick={handlePrintSpxLabels}
+        variant="secondary"
+        disableVariantHover
+        disableVariantTextColor
+        backgroundClassName="bg-white dark:bg-slate-800"
+        borderClassName="border border-slate-200 dark:border-slate-600"
+        textClassName="font-medium text-slate-700 dark:text-slate-200"
+        roundedClassName="rounded-xl"
+        sizeClassName="px-3 py-2 text-xs"
+        layoutClassName="inline-flex items-center gap-1.5"
+        stateClassName="transition-colors"
+        leftIcon={<Printer />}
+        iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+      >
+        <Typography as="span" size="xs" layoutClassName="hidden sm:inline">
+          In vận đơn
+        </Typography>
+      </Button>
+      <Button
+        type="button"
         onClick={handleCreateNewOrder}
         leftIcon={<Plus />}
         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
@@ -292,6 +328,7 @@ const OrdersPage: React.FC = () => {
           onSelectOrder={handleOrderSelect}
           onDeleteOrder={handleDeleteClick}
           onUpdateOrder={modifyOrder}
+          onVisibleOrdersChange={setVisibleOrders}
           actions={ordersActions}
         />
       )}
