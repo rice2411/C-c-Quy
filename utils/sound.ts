@@ -122,19 +122,42 @@ export const numberToVietnameseWords = (value: number): string => {
   return parts.join(' ').replace(/\s+/g, ' ').trim();
 };
 
-let viVoice: SpeechSynthesisVoice | null = null;
-
-/** Chọn giọng tiếng Việt nếu trình duyệt có (voices nạp bất đồng bộ). */
-const pickVietnameseVoice = (synth: SpeechSynthesis): SpeechSynthesisVoice | null => {
-  if (viVoice) return viVoice;
+/**
+ * Chọn giọng đọc: ưu tiên tiếng Việt, không có thì lấy giọng mặc định (bất kỳ)
+ * để vẫn phát được thành tiếng thay vì im lặng. KHÔNG cache theo biến module vì
+ * danh sách voices có thể đổi giữa các lần gọi.
+ */
+const pickVoice = (synth: SpeechSynthesis): SpeechSynthesisVoice | null => {
   const voices = synth.getVoices();
-  viVoice = voices.find((v) => v.lang?.toLowerCase().startsWith('vi')) || null;
-  return viVoice;
+  if (voices.length === 0) return null;
+  return (
+    voices.find((v) => v.lang?.toLowerCase().startsWith('vi')) ||
+    voices.find((v) => v.default) ||
+    voices[0]
+  );
+};
+
+/** Đợi danh sách voices sẵn sàng (nạp bất đồng bộ ở nhiều trình duyệt). */
+const whenVoicesReady = (synth: SpeechSynthesis, cb: () => void): void => {
+  if (synth.getVoices().length > 0) {
+    cb();
+    return;
+  }
+  let done = false;
+  const fire = () => {
+    if (done) return;
+    done = true;
+    cb();
+  };
+  synth.addEventListener('voiceschanged', fire, { once: true });
+  // Fallback: một số trình duyệt không bắn 'voiceschanged' → vẫn thử sau 400ms.
+  window.setTimeout(fire, 400);
 };
 
 /**
  * Đọc "Đã nhận <số tiền> đồng" bằng giọng nói (Web Speech API) — như loa thanh toán.
- * Không hỗ trợ / bị chặn thì lặng lẽ bỏ qua. Ưu tiên giọng tiếng Việt nếu máy có.
+ * Ưu tiên giọng tiếng Việt; máy không có giọng vi thì đọc bằng giọng mặc định
+ * (nghe hơi ngang nhưng vẫn ra tiếng). Không hỗ trợ thì lặng lẽ bỏ qua.
  */
 export const speakPaymentAmount = (amount: number): void => {
   if (typeof window === 'undefined') return;
@@ -142,27 +165,24 @@ export const speakPaymentAmount = (amount: number): void => {
   if (!synth || typeof SpeechSynthesisUtterance === 'undefined') return;
 
   const sentence = `Đã nhận ${numberToVietnameseWords(amount)} đồng`;
-  const speak = () => {
+
+  whenVoicesReady(synth, () => {
     const utter = new SpeechSynthesisUtterance(sentence);
     utter.lang = 'vi-VN';
-    const voice = pickVietnameseVoice(synth);
+    const voice = pickVoice(synth);
     if (voice) utter.voice = voice;
     utter.rate = 1;
     utter.pitch = 1;
-    synth.cancel(); // huỷ câu đang đọc dở (nhiều đơn dồn) để đọc câu mới nhất
-    synth.speak(utter);
-  };
+    utter.volume = 1;
 
-  // Voices nạp bất đồng bộ: nếu chưa có thì đợi 'voiceschanged' để bắt được giọng vi;
-  // nếu event không bắn (một số trình duyệt) thì vẫn đã đọc ngay bằng giọng mặc định.
-  if (synth.getVoices().length === 0 && !viVoice) {
-    synth.addEventListener(
-      'voiceschanged',
-      () => {
-        if (pickVietnameseVoice(synth)) speak();
-      },
-      { once: true },
-    );
-  }
-  speak();
+    // Chỉ huỷ khi đang đọc dở (tránh bug Chrome: cancel() sát speak() nuốt câu).
+    if (synth.speaking || synth.pending) synth.cancel();
+    // Bug Chrome: engine hay kẹt ở trạng thái paused → resume trước khi đọc.
+    try {
+      synth.resume();
+    } catch {
+      /* noop */
+    }
+    synth.speak(utter);
+  });
 };
