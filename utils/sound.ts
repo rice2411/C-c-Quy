@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '@/services/api/client';
+
 /**
  * Âm "ting ting" báo có đơn vừa thanh toán — synth bằng Web Audio API
  * (khỏi cần file asset, chạy offline). Trình duyệt chặn phát âm trước khi
@@ -154,12 +156,8 @@ const whenVoicesReady = (synth: SpeechSynthesis, cb: () => void): void => {
   window.setTimeout(fire, 400);
 };
 
-/**
- * Đọc "Đã nhận <số tiền> đồng" bằng giọng nói (Web Speech API) — như loa thanh toán.
- * Ưu tiên giọng tiếng Việt; máy không có giọng vi thì đọc bằng giọng mặc định
- * (nghe hơi ngang nhưng vẫn ra tiếng). Không hỗ trợ thì lặng lẽ bỏ qua.
- */
-export const speakPaymentAmount = (amount: number): void => {
+/** Fallback: đọc bằng Web Speech API (giọng máy). Chỉ dùng khi audio BE lỗi. */
+const speakViaSpeechSynthesis = (amount: number): void => {
   if (typeof window === 'undefined') return;
   const synth = window.speechSynthesis;
   if (!synth || typeof SpeechSynthesisUtterance === 'undefined') return;
@@ -175,9 +173,7 @@ export const speakPaymentAmount = (amount: number): void => {
     utter.pitch = 1;
     utter.volume = 1;
 
-    // Chỉ huỷ khi đang đọc dở (tránh bug Chrome: cancel() sát speak() nuốt câu).
     if (synth.speaking || synth.pending) synth.cancel();
-    // Bug Chrome: engine hay kẹt ở trạng thái paused → resume trước khi đọc.
     try {
       synth.resume();
     } catch {
@@ -187,31 +183,29 @@ export const speakPaymentAmount = (amount: number): void => {
   });
 };
 
-export interface SpeakerDiagnostics {
-  /** Trình duyệt có API speechSynthesis không. */
-  supported: boolean;
-  /** Số giọng đọc hiện có. */
-  voiceCount: number;
-  /** Có giọng tiếng Việt không. */
-  hasVietnamese: boolean;
-  /** Danh sách lang của các giọng (rút gọn) — để debug. */
-  langs: string;
-}
+// Giữ tham chiếu để audio không bị GC giữa lúc đang phát.
+let paymentAudio: HTMLAudioElement | null = null;
 
-/** Soi trạng thái TTS để hiện thông báo giúp chẩn đoán khi loa không kêu. */
-export const getSpeakerDiagnostics = (): SpeakerDiagnostics => {
-  if (
-    typeof window === 'undefined' ||
-    !window.speechSynthesis ||
-    typeof SpeechSynthesisUtterance === 'undefined'
-  ) {
-    return { supported: false, voiceCount: 0, hasVietnamese: false, langs: '' };
+/**
+ * Đọc "Đã nhận <số tiền> đồng" — như loa thanh toán.
+ * ƯU TIÊN audio TTS từ BE (`/api/tts/payment`) → chạy được trên MỌI máy/trình
+ * duyệt, KHÔNG phụ thuộc giọng đọc cài sẵn của hệ điều hành. Nếu audio lỗi
+ * (mất mạng / provider lỗi / autoplay chặn) thì mới rơi về Web Speech API.
+ */
+export const speakPaymentAmount = (amount: number): void => {
+  if (typeof window === 'undefined') return;
+  const amt = Math.max(0, Math.floor(Number(amount) || 0));
+
+  if (API_BASE_URL) {
+    try {
+      const audio = new Audio(`${API_BASE_URL}/tts/payment?amount=${amt}`);
+      audio.volume = 1;
+      paymentAudio = audio;
+      audio.play().catch(() => speakViaSpeechSynthesis(amt));
+      return;
+    } catch {
+      /* rơi xuống fallback */
+    }
   }
-  const voices = window.speechSynthesis.getVoices();
-  return {
-    supported: true,
-    voiceCount: voices.length,
-    hasVietnamese: voices.some((v) => v.lang?.toLowerCase().startsWith('vi')),
-    langs: Array.from(new Set(voices.map((v) => v.lang))).slice(0, 10).join(', '),
-  };
+  speakViaSpeechSynthesis(amt);
 };
