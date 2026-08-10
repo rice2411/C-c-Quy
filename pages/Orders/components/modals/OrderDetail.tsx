@@ -31,6 +31,7 @@ import { STATUS_COLORS } from '@/constant/order';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
+import { TEST_PAYMENT_ACCOUNT } from '@/types/paymentConfig';
 import { qk } from '@/hooks/queryKeys';
 import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund, fetchTrackingTimeline, fetchOrder } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber, fetchOutUnlinkedTransactions } from '@/services/transactionService';
@@ -197,11 +198,13 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const qrAmount = isDepositQr ? depositAmt : (remainderAmt > 0 ? remainderAmt : finalTotal);
   // Nội dung CK: mã đơn; cọc → prefix "C".
   const description = `${isDepositQr ? 'C' : ''}${currentOrder.orderNumber}`;
-  // Không có TK active → qrUrl rỗng → section QR ẩn an toàn.
-  const qrUrl = activeAccount ? generateQRCodeImage(currentOrder.orderNumber, qrAmount, activeAccount, isDepositQr) : '';
+  // Đơn TEST → QR trỏ vào TK test (MBBank 0776750418) để test thông luồng; đơn thường → TK active.
+  const qrAccount = currentOrder.isTest ? TEST_PAYMENT_ACCOUNT : activeAccount;
+  // Không có TK (active/test) → qrUrl rỗng → section QR ẩn an toàn.
+  const qrUrl = qrAccount ? generateQRCodeImage(currentOrder.orderNumber, qrAmount, qrAccount, isDepositQr) : '';
   // QR cho card chia sẻ = luôn tổng đơn (không đổi theo toggle cọc).
   const shareDescription = currentOrder.orderNumber;
-  const shareQrUrl = activeAccount ? generateQRCodeImage(currentOrder.orderNumber, finalTotal, activeAccount, false) : '';
+  const shareQrUrl = qrAccount ? generateQRCodeImage(currentOrder.orderNumber, finalTotal, qrAccount, false) : '';
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -219,8 +222,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
   // Đẩy QR (EMV) số tiền `amount` xuống máy POS/ESP32.
   const handlePushPos = async (amount: number) => {
-    if (!activeAccount || amount <= 0) return;
-    const emv = buildOrderEmvQr(currentOrder.orderNumber, amount, activeAccount, isDepositQr);
+    if (!qrAccount || amount <= 0) return;
+    const emv = buildOrderEmvQr(currentOrder.orderNumber, amount, qrAccount, isDepositQr);
     if (!emv) { toast.error(t('pos.qrBuildFailed')); return; }
     setPosBusy(true);
     try {
@@ -1559,7 +1562,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 </Box>
 
                 {/* Payment QR Section — hiển thị khi có URL hợp lệ (config đủ số TK/bank); ẩn nếu thiếu để không vỡ ảnh */}
-                {qrUrl && activeAccount ? (
+                {qrUrl && qrAccount ? (
                   <Box
                     layoutClassName="p-5 animate-fade-in"
                     backgroundClassName="bg-white dark:bg-slate-800"
@@ -1629,18 +1632,18 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                 borderClassName="border border-slate-200 dark:border-slate-700"
                               >
                                   <Typography as="span" size="xs" layoutClassName="uppercase font-medium min-w-[60px]" textClassName="text-slate-500">{t('qr.bank')}</Typography>
-                                  <Typography as="span" size="inherit" layoutClassName="font-bold" textClassName="text-slate-800 dark:text-slate-200">{activeAccount.bankCode}</Typography>
+                                  <Typography as="span" size="inherit" layoutClassName="font-bold" textClassName="text-slate-800 dark:text-slate-200">{qrAccount.bankCode}</Typography>
                               </Box>
                               <Box
                                 layoutClassName="flex justify-between sm:justify-start sm:gap-4 items-center px-3 py-1.5 group cursor-pointer"
                                 backgroundClassName="bg-white dark:bg-slate-800"
                                 roundedClassName="rounded"
                                 borderClassName="border border-slate-200 dark:border-slate-700"
-                                onClick={() => copyToClipboard(activeAccount.accountNumber)}
+                                onClick={() => copyToClipboard(qrAccount.accountNumber)}
                               >
                                   <Typography as="span" size="xs" layoutClassName="uppercase font-medium min-w-[60px]" textClassName="text-slate-500">{t('qr.account')}</Typography>
                                   <Box layoutClassName="flex items-center gap-2">
-                                    <Typography as="span" size="inherit" layoutClassName="font-bold font-mono" textClassName="text-slate-800 dark:text-slate-200">{activeAccount.accountNumber}</Typography>
+                                    <Typography as="span" size="inherit" layoutClassName="font-bold font-mono" textClassName="text-slate-800 dark:text-slate-200">{qrAccount.accountNumber}</Typography>
                                     <Copy className="w-3 h-3 text-slate-400 group-hover:text-blue-500" />
                                   </Box>
                               </Box>
@@ -1651,7 +1654,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                 borderClassName="border border-slate-200 dark:border-slate-700"
                               >
                                   <Typography as="span" size="xs" layoutClassName="uppercase font-medium min-w-[60px]" textClassName="text-slate-500">{t('qr.accountName')}</Typography>
-                                  <Typography as="span" size="inherit" layoutClassName="font-bold uppercase" textClassName="text-slate-800 dark:text-slate-200">{activeAccount.accountHolder}</Typography>
+                                  <Typography as="span" size="inherit" layoutClassName="font-bold uppercase" textClassName="text-slate-800 dark:text-slate-200">{qrAccount.accountHolder}</Typography>
                               </Box>
                               <Box
                                 layoutClassName="flex justify-between sm:justify-start sm:gap-4 items-center px-3 py-1.5"
@@ -2451,9 +2454,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         }
         qrUrl={shareQrUrl}
         description={shareDescription}
-        bankCode={activeAccount?.bankCode}
-        accountNumber={activeAccount?.accountNumber}
-        accountHolder={activeAccount?.accountHolder}
+        bankCode={qrAccount?.bankCode}
+        accountNumber={qrAccount?.accountNumber}
+        accountHolder={qrAccount?.accountHolder}
       />
     </Box>
     </>

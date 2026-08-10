@@ -86,7 +86,8 @@ export interface ExpenseRule {
  */
 export type LedgerStatus =
   | 'matched' | 'shopee' | 'external' | 'unmatched'
-  | 'refund' | 'settled' | 'excluded' | 'expense' | 'stock';
+  | 'refund' | 'settled' | 'excluded' | 'expense' | 'stock'
+  | 'test';
 
 /** 1 dòng sổ = Transaction + trạng thái derive. */
 export type LedgerTransaction = Transaction & { status: LedgerStatus };
@@ -143,6 +144,7 @@ export const LEDGER_STATUS_META: Record<LedgerStatus, { label: string; tone: Ton
   excluded: { label: 'Không tính', tone: 'slate' },
   expense: { label: 'Chi phí', tone: 'amber' },
   stock: { label: 'Đã gắn phiếu', tone: 'teal' },
+  test: { label: 'Giao dịch test', tone: 'rose' },
 };
 
 /** Class badge theo tone (light + dark). */

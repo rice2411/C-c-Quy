@@ -26,6 +26,20 @@ export interface PaymentAccount {
   createdAt?: string;
 }
 
+/**
+ * Tài khoản nhận tiền dành riêng cho ĐƠN TEST (isTest). QR của đơn test trỏ vào
+ * đây thay vì TK thật → tiền vào TK này được BE đánh dấu `is_test` (loại khỏi
+ * doanh thu/đối soát) để test thông luồng thanh toán mà không bẩn sổ.
+ */
+export const TEST_PAYMENT_ACCOUNT: PaymentAccount = {
+  id: '__test__',
+  bankCode: 'MBBank',
+  accountNumber: '0776750418',
+  accountHolder: 'TAI KHOAN TEST',
+  qrTemplate: 'compact',
+  isActive: false,
+};
+
 /** Body khi tạo tài khoản mới (POST). */
 export interface CreatePaymentAccountInput {
   bankCode: string;
