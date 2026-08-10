@@ -4,7 +4,9 @@ import { MapPin, Plus, ScanFace, Trash2, Wifi } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/user';
 import FaceEnrollModal from '@/pages/Attendance/components/FaceEnrollModal';
+import BaseModal from '@/components/BaseModal';
 import Box from '@/components/ui/Box';
+import Image from '@/components/ui/Image';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
@@ -54,6 +56,8 @@ const ManageTab: React.FC = () => {
   const [empFilter, setEmpFilter] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  // Ảnh chấm công đang xem phóng to (đã đóng dấu tên/ca/ngày giờ sẵn từ lúc chụp).
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const historyParams = useMemo(
     () => ({ employeeId: empFilter || undefined, from: from || undefined, to: to || undefined, limit: 200 }),
     [empFilter, from, to],
@@ -302,6 +306,7 @@ const ManageTab: React.FC = () => {
             <Table>
               <TableHead backgroundClassName="bg-slate-50 dark:bg-slate-700/60">
                 <TableRow textClassName="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <TableHeaderCell layoutClassName="px-4 py-3">Ảnh</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3">Thời gian</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3">Nhân viên</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3 text-center">Loại</TableHeaderCell>
@@ -313,6 +318,26 @@ const ManageTab: React.FC = () => {
               <TableBody>
                 {history.items.map((rec) => (
                   <TableRow key={rec.id} borderClassName="border-b border-slate-100 dark:border-slate-700/60 last:border-0">
+                    <TableCell layoutClassName="px-4 py-3">
+                      {rec.imageUrl ? (
+                        <Button
+                          type="button"
+                          aria-label="Xem ảnh chấm công"
+                          variant="ghost"
+                          disableVariantHover
+                          disableVariantTextColor
+                          sizeClassName="p-0"
+                          roundedClassName="rounded-lg"
+                          layoutClassName="flex h-12 w-12 items-center justify-center overflow-hidden"
+                          borderClassName="border border-slate-200 dark:border-slate-600"
+                          onClick={() => setPreviewUrl(rec.imageUrl)}
+                        >
+                          <Image src={rec.imageUrl} alt="Ảnh chấm công" layoutClassName="h-full w-full object-cover" />
+                        </Button>
+                      ) : (
+                        <Typography as="span" size="xs" variant="muted">—</Typography>
+                      )}
+                    </TableCell>
                     <TableCell layoutClassName="whitespace-nowrap px-4 py-3">
                       <Typography as="span" size="sm" textClassName="text-slate-700 dark:text-slate-200">{fmtDateTime(rec.checkedAt)}</Typography>
                     </TableCell>
@@ -354,6 +379,24 @@ const ManageTab: React.FC = () => {
         employee={enroll}
         onDone={() => setEnroll(null)}
       />
+
+      <BaseModal
+        isOpen={!!previewUrl}
+        onClose={() => setPreviewUrl(null)}
+        title="Ảnh chấm công"
+        size="md"
+      >
+        {previewUrl && (
+          <Box layoutClassName="flex items-center justify-center">
+            <Image
+              src={previewUrl}
+              alt="Ảnh chấm công"
+              layoutClassName="max-h-[70vh] w-auto"
+              roundedClassName="rounded-lg"
+            />
+          </Box>
+        )}
+      </BaseModal>
     </Box>
   );
 };
