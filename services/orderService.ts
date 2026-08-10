@@ -375,26 +375,6 @@ export interface CodSyncResult {
   duplicateCount: number;
 }
 
-/**
- * Map mã VĐ SPX → order_sn (order_id) để in label hàng loạt. BE proxy get_order_info (tránh CORS).
- * Chỉ trả các mã map được order_sn; mã lỗi/không phải SPX bị bỏ.
- */
-export const fetchSpxLabelIds = async (
-  tns: string[],
-): Promise<{ tn: string; orderSn: string }[]> => {
-  const res = await apiClient.get('/orders/spx-label-ids', {
-    params: { tns: tns.join(',') },
-  });
-  const data = res.data;
-  if (!Array.isArray(data)) return [];
-  return data
-    .map((r: any) => ({
-      tn: typeof r?.tn === 'string' ? r.tn : '',
-      orderSn: typeof r?.orderSn === 'string' ? r.orderSn : '',
-    }))
-    .filter((r) => r.tn && r.orderSn);
-};
-
 /** Đồng bộ tiền thu hộ (COD) từ file ví SPX. apply=false → preview; true → tạo GD + cộng paid. */
 export const syncOrderCod = async (
   rows: CodRow[],

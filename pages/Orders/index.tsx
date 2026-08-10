@@ -6,7 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/hooks/useOrders';
 import { Order } from '@/types';
 import { UserRole } from '@/types/user';
-import { ORDER_EDIT_DENIED, refreshOrderTracking, fetchOrder, fetchSpxLabelIds } from '@/services/orderService';
+import { ORDER_EDIT_DENIED, refreshOrderTracking, fetchOrder } from '@/services/orderService';
 import { userCanEditOrder } from '@/utils/order/orderUtils';
 import ConfirmModal from '@/components/ConfirmModal';
 import Box from '@/components/ui/Box';
@@ -19,7 +19,7 @@ import OrderDetail from '@/pages/Orders/components/modals/OrderDetail';
 import OrderForm from '@/pages/Orders/components/modals/OrderForm';
 import OrderList from '@/pages/Orders/components/OrderList';
 import OrdersStats from '@/pages/Orders/components/OrdersStats';
-import { buildSpxLabelUrl, spxTrackingNumbers } from '@/pages/Orders/spxLabel';
+import { downloadSpxLabels, spxTrackingNumbers, toSpxOrderSn } from '@/pages/Orders/spxLabel';
 
 const OrdersPage: React.FC = () => {
   const { userData } = useAuth();
@@ -44,7 +44,6 @@ const OrdersPage: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isPrintingSpx, setIsPrintingSpx] = useState(false);
 
   const handleOrderSelect = (order: Order) => {
     setSelectedOrder(order);
@@ -153,40 +152,18 @@ const OrdersPage: React.FC = () => {
     }
   };
 
-  // In label SPX cho các đơn ĐANG LỌC: map mã VĐ → order_id (BE proxy) rồi mở tab portal SPX
-  // (cookie phiên seller tự gửi kèm). Mở tab NGAY trong user-gesture để không bị chặn popup,
-  // điền URL sau khi map xong.
-  const handlePrintSpxLabels = async () => {
-    if (isPrintingSpx) return;
-    const tns = spxTrackingNumbers(visibleOrders);
-    if (tns.length === 0) {
+  // Tải label SPX cho các đơn ĐANG LỌC: mỗi mã VĐ → order_sn (bỏ tiền tố SPX) → tải file
+  // từ portal SPX. Fire trong user-gesture để cookie phiên seller tự gửi kèm.
+  const handlePrintSpxLabels = () => {
+    const orderSns = spxTrackingNumbers(visibleOrders).map(toSpxOrderSn);
+    if (orderSns.length === 0) {
       toast.error('Không có đơn SPX nào trong danh sách đang lọc');
       return;
     }
-    const win = window.open('about:blank', '_blank');
-    setIsPrintingSpx(true);
-    try {
-      const mapped = await fetchSpxLabelIds(tns);
-      const url = buildSpxLabelUrl(mapped.map((m) => m.orderSn));
-      if (!url) {
-        win?.close();
-        toast.error('Không tra được order_id SPX nào (mã có thể sai/hết hạn)');
-        return;
-      }
-      const missing = tns.length - mapped.length;
-      if (win) win.location.href = url;
-      else window.open(url, '_blank');
-      toast.success(
-        `Đang mở in ${mapped.length} vận đơn SPX` +
-          (missing > 0 ? ` (bỏ ${missing} mã không tra được)` : ''),
-      );
-    } catch (e) {
-      console.error(e);
-      win?.close();
-      toast.error('Lỗi tra order_id SPX');
-    } finally {
-      setIsPrintingSpx(false);
-    }
+    downloadSpxLabels(orderSns);
+    toast.success(
+      `Đang tải ${orderSns.length} file label SPX (cho phép tải nhiều file / đăng nhập spx.vn nếu được hỏi)`,
+    );
   };
 
   const handleOpenExportModal = () => {
@@ -281,7 +258,6 @@ const OrdersPage: React.FC = () => {
       <Button
         type="button"
         onClick={handlePrintSpxLabels}
-        disabled={isPrintingSpx}
         variant="secondary"
         disableVariantHover
         disableVariantTextColor
@@ -291,9 +267,9 @@ const OrdersPage: React.FC = () => {
         roundedClassName="rounded-xl"
         sizeClassName="px-3 py-2 text-xs"
         layoutClassName="inline-flex items-center gap-1.5"
-        stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        stateClassName="transition-colors"
         leftIcon={<Printer />}
-        iconClassName={`inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5${isPrintingSpx ? ' [&_svg]:animate-spin' : ''}`}
+        iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
       >
         <Typography as="span" size="xs" layoutClassName="hidden sm:inline">
           In vận đơn
