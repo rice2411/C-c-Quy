@@ -27,16 +27,9 @@ interface OrderListProps {
   onUpdateOrder: (id: string, data: any) => Promise<void>;
   /** Nút action đặt trong toolbar (tạo đơn / export / làm mới). */
   actions?: React.ReactNode;
-  /** Báo lên parent tập đơn SAU khi lọc (theo filter hiện tại) — dùng cho in label SPX. */
-  onVisibleOrdersChange?: (orders: Order[]) => void;
 }
 
-const OrderList: React.FC<OrderListProps> = ({
-  orders,
-  onSelectOrder,
-  actions,
-  onVisibleOrdersChange,
-}) => {
+const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions }) => {
   const { t } = useLanguage();
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -310,11 +303,6 @@ const OrderList: React.FC<OrderListProps> = ({
     isProvinceFilter,
     trackingStatusFilter,
   ]);
-
-  // Đẩy tập đơn sau filter lên parent (nút "In vận đơn" in đúng theo filter hiện tại).
-  useEffect(() => {
-    onVisibleOrdersChange?.(filteredOrders);
-  }, [filteredOrders, onVisibleOrdersChange]);
 
   useEffect(() => {
     setCurrentPage(1);
