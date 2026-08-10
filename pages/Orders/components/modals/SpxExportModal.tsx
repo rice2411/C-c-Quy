@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { PackageCheck } from 'lucide-react';
 import { Order, DeliveryType, OrderStatus } from '@/types';
-import { exportOrdersToSpx, isSpxShippable, codRemaining, ResolvedAddress, SpxAddressMode } from '@/utils/order/spxOrderExport';
+import { exportOrdersToSpx, isSpxShippable, isTrackingCancelled, codRemaining, ResolvedAddress, SpxAddressMode } from '@/utils/order/spxOrderExport';
 import { resolveSpxOldAddresses } from '@/services/orderService';
 import { resolveSpxAddresses } from '@/utils/order/spxAddressMatch';
 import { getOrderTotal } from '@/utils/order/orderUtils';
@@ -95,8 +95,8 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
     <BaseModal isOpen={isOpen} onClose={onClose} title="Xuất file tạo đơn hàng loạt SPX" size="lg">
       <Box layoutClassName="space-y-4">
         <Typography as="p" size="sm" variant="muted">
-          Chỉ xuất đơn <b>ship tỉnh · ĐÃ CỌC · chưa có mã vận đơn</b>. Số tiền COD = <b>còn lại phải thu</b>
-          (tổng đơn − đã cọc) — SPX chỉ thu phần còn thiếu.
+          Chỉ xuất đơn <b>ship tỉnh · ĐÃ CỌC · chưa có mã vận đơn (hoặc mã đã bị huỷ → tạo lại)</b>.
+          Số tiền COD = <b>còn lại phải thu</b> (tổng đơn − đã cọc) — SPX chỉ thu phần còn thiếu.
         </Typography>
 
         <Box
@@ -132,9 +132,22 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
                   backgroundClassName="bg-slate-50 dark:bg-slate-800/40"
                 >
                   <Box layoutClassName="min-w-0 flex-1">
-                    <Typography as="p" size="sm" layoutClassName="truncate font-medium" textClassName="text-slate-800 dark:text-slate-100">
-                      {o.orderNumber} · {o.customer.name}
-                    </Typography>
+                    <Box layoutClassName="flex items-center gap-1.5">
+                      <Typography as="p" size="sm" layoutClassName="truncate font-medium" textClassName="text-slate-800 dark:text-slate-100">
+                        {o.orderNumber} · {o.customer.name}
+                      </Typography>
+                      {isTrackingCancelled(o) && (
+                        <Typography
+                          as="span"
+                          size="xs"
+                          layoutClassName="shrink-0 rounded px-1.5 py-0.5 font-semibold"
+                          backgroundClassName="bg-rose-100 dark:bg-rose-900/30"
+                          textClassName="text-rose-600 dark:text-rose-300"
+                        >
+                          tạo lại · mã cũ đã huỷ
+                        </Typography>
+                      )}
+                    </Box>
                     <Typography as="span" size="xs" variant="muted">
                       Tổng {formatVND(total)} · đã cọc {formatVND(paid)}
                     </Typography>

@@ -16,7 +16,16 @@ export interface ResolvedAddress {
   ward: string;
 }
 
-/** Đơn cần tạo vận đơn SPX: CHỈ giao ship TỈNH, ĐÃ CỌC (đã nhận tiền), chưa có mã vận đơn, chưa huỷ/giao/hoàn. */
+/** Mã vận đơn (ĐVVC) đã bị HUỶ → coi như chưa có mã, cần tạo lại. */
+export const isTrackingCancelled = (o: Order): boolean => {
+  const s = (o.trackingStatus ?? '').trim().toLowerCase();
+  return s.includes('hủy') || s.includes('huỷ') || s.includes('cancel');
+};
+
+/**
+ * Đơn cần tạo vận đơn SPX: CHỈ giao ship TỈNH, ĐÃ CỌC (đã nhận tiền), chưa huỷ/giao/hoàn ở
+ * mức ĐƠN, và (chưa có mã vận đơn HOẶC mã vận đơn đã bị ĐVVC huỷ → cần tạo lại).
+ */
 export const isSpxShippable = (o: Order): boolean => {
   const isShipProvince = o.deliveryType === DeliveryType.SHIP_PROVINCE;
   const deposited = (Number(o.paidAmount) || 0) > 0; // đã cọc/trả một phần
@@ -24,7 +33,7 @@ export const isSpxShippable = (o: Order): boolean => {
     o.status === OrderStatus.CANCELLED ||
     o.status === OrderStatus.DELIVERED ||
     o.status === OrderStatus.RETURNED;
-  return isShipProvince && deposited && !done && !o.trackingNumber;
+  return isShipProvince && deposited && !done && (!o.trackingNumber || isTrackingCancelled(o));
 };
 
 /** COD cần thu = còn lại = total − đã trả (đơn cọc trước + ship COD). */
