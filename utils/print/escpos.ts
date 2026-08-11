@@ -9,16 +9,16 @@ const CUT = [0x1d, 0x56, 0x01]; // GS V 1 : cắt giấy (partial)
 const feed = (n: number) => [0x1b, 0x64, n & 0xff]; // ESC d n : nhả n dòng
 
 /**
- * Canvas (đen/trắng, rộng 384px) → bytes raster ESC/POS (lệnh GS v 0), chia band 128 dòng.
- * Ngưỡng: luminance < 160 → chấm đen. Pixel trong suốt (alpha thấp) coi là trắng.
+ * Đẩy raster ESC/POS (lệnh GS v 0, chia band 128 dòng) của 1 canvas (đen/trắng, rộng 384px)
+ * TRỰC TIẾP vào mảng out. Ngưỡng: luminance < 160 → chấm đen; pixel trong suốt = trắng.
+ * (Đẩy từng byte, KHÔNG spread mảng lớn → bill dài mấy cũng không tràn stack.)
  */
-export function canvasToRaster(canvas: HTMLCanvasElement): number[] {
+function appendRaster(out: number[], canvas: HTMLCanvasElement): void {
   const ctx = canvas.getContext('2d');
-  if (!ctx) return [];
+  if (!ctx) return;
   const w = canvas.width;
   const h = canvas.height;
   const data = ctx.getImageData(0, 0, w, h).data;
-  const out: number[] = [];
   const band = 128;
   for (let y0 = 0; y0 < h; y0 += band) {
     const rows = Math.min(band, h - y0);
@@ -46,18 +46,21 @@ export function canvasToRaster(canvas: HTMLCanvasElement): number[] {
       }
     }
   }
-  return out;
 }
 
 /** Ghép nhiều canvas (bill, phiếu bếp) thành 1 luồng ESC/POS: init → raster+feed+cut từng tờ. */
 export function buildEscpos(canvases: HTMLCanvasElement[]): Uint8Array {
-  const bytes: number[] = [...INIT];
+  const out: number[] = [];
+  const append = (arr: number[]) => {
+    for (let i = 0; i < arr.length; i++) out.push(arr[i]);
+  };
+  append(INIT);
   canvases.forEach((c) => {
-    bytes.push(...canvasToRaster(c));
-    bytes.push(...feed(3));
-    bytes.push(...CUT);
+    appendRaster(out, c);
+    append(feed(3));
+    append(CUT);
   });
-  return Uint8Array.from(bytes);
+  return Uint8Array.from(out);
 }
 
 /** Gửi bytes ESC/POS tới cầu nối in local. Throw nếu agent không chạy / máy in lỗi. */
