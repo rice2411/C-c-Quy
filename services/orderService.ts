@@ -141,6 +141,15 @@ export const updateOrder = async (
 };
 
 /**
+ * Đánh dấu đơn ĐÃ IN BILL cho khách (PATCH /orders/:id/print → order_mark_bill_printed).
+ * BE set bill_printed_at = now(). Trả order đã cập nhật (có billPrintedAt) để cập nhật badge.
+ */
+export const markOrderBillPrinted = async (orderId: string): Promise<Order> => {
+  const res = await apiClient.patch(`/orders/${orderId}/print`);
+  return res.data as Order;
+};
+
+/**
  * Đổi TRẠNG THÁI đơn — đường NHẸ & NHANH (PATCH /orders/:id/status, chỉ gửi { status }).
  * BE dùng order_update_status (không tính lại KM / ghi lại items). Zalo gửi
  * FIRE-AND-FORGET (KHÔNG await) → UI không phải chờ mạng Zalo. Trả order đã cập nhật.

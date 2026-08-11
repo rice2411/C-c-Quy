@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BadgeCheck,
   Banknote,
@@ -33,7 +33,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { TEST_PAYMENT_ACCOUNT } from '@/types/paymentConfig';
 import { qk } from '@/hooks/queryKeys';
-import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund, fetchTrackingTimeline, fetchOrder } from '@/services/orderService';
+import { ORDER_EDIT_DENIED, reconcileRefund, markRefundCash, unreconcileRefund, fetchTrackingTimeline, fetchOrder, markOrderBillPrinted } from '@/services/orderService';
 import { fetchTransactionsByOrderNumber, fetchOutUnlinkedTransactions } from '@/services/transactionService';
 import { DeliveryType, Order, OrderItem, PaymentMethod, OrderStatus, PaymentStatus, Transaction, productUsesFlavorPricing, flavorImage, flavorVariantColor, groupFlavors, isMixFlavors, sizeCountsLabel, sizeImage, sizeCount } from '@/types';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
@@ -44,7 +44,7 @@ import { formatVND } from '@/utils/format/currencyUtil';
 import { allocateSurcharge, generateQRCodeImage, getOrderTotal } from '@/utils/order/orderUtils';
 import { buildOrderEmvQr } from '@/utils/order/vietQrEmv';
 import { pushPosQr, clearPosQr } from '@/services/posService';
-import { Sparkles, MonitorSmartphone, Home } from 'lucide-react';
+import { Sparkles, MonitorSmartphone, Home, Printer } from 'lucide-react';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
@@ -57,6 +57,7 @@ import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 import CancelRefundModal, { type CancelRefundMode, type CancelRefundResult } from '@/pages/Orders/components/modals/CancelRefundModal';
 import ShareableOrderCard from '@/pages/Orders/components/modals/ShareableOrderCard';
+import OrderPrintPortal from '@/pages/Orders/components/print/OrderPrintPortal';
 interface OrderDetailProps {
   isOpen: boolean;
   order: Order | null;
@@ -90,11 +91,13 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const { currentUser, userData } = useAuth();
   const { surchargeTags } = useSurchargeTags();
   const { activeAccount } = usePaymentAccounts();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'details' | 'refund' | 'history' | 'tracking'>('details');
   const [qrMode, setQrMode] = useState<'deposit' | 'remainder'>('deposit');
   const [posBusy, setPosBusy] = useState(false);
   const [qrCopying, setQrCopying] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [crMode, setCrMode] = useState<CancelRefundMode | null>(null);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
@@ -178,6 +181,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const subtotal = currentOrder.items.reduce((sum, item) => sum + calculateLineItemTotal(item), 0);
   
   const finalTotal = getOrderTotal(currentOrder);
+  const billPrinted = !!currentOrder.billPrintedAt;
 
   // Phụ thu nhiều dòng (fallback đơn cũ = 1 dòng từ surchargeAmount/tag).
   const surchargeRows = (
@@ -559,6 +563,24 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     }
   };
 
+  // In xong (đã bung hộp thoại in) → đánh dấu "đã in bill" trên BE + cập nhật badge (local + list).
+  const handlePrintDone = () => {
+    setPrinting(false);
+    void (async () => {
+      try {
+        const updated = await markOrderBillPrinted(currentOrder.id);
+        const ts = updated?.billPrintedAt ?? new Date().toISOString();
+        setLocalOrder((prev) => (prev ? { ...prev, billPrintedAt: ts } : prev));
+        queryClient.setQueryData<Order[]>(qk.orders.all, (old) =>
+          old?.map((o) => (o.id === currentOrder.id ? { ...o, billPrintedAt: ts } : o)),
+        );
+        queryClient.invalidateQueries({ queryKey: qk.orders.all });
+      } catch {
+        toast.error('Đã in nhưng chưa lưu được trạng thái in');
+      }
+    })();
+  };
+
   const headerContent = (
     <Box layoutClassName="flex w-full items-start justify-between">
       <Box>
@@ -572,6 +594,14 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
             className={STATUS_COLORS[currentOrder.status]}
           >
             {currentOrder.status}
+          </Badge>
+          <Badge
+            size="sm"
+            layoutClassName="px-2.5 py-0.5 text-xs font-medium"
+            backgroundClassName={billPrinted ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-slate-100 dark:bg-slate-700'}
+            textClassName={billPrinted ? 'text-blue-700 dark:text-blue-300' : 'text-slate-500 dark:text-slate-300'}
+          >
+            {billPrinted ? '🖨 Đã in bill' : 'Chưa in bill'}
           </Badge>
         </Box>
         <Typography size="sm" variant="muted">
@@ -623,6 +653,25 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
   const footer = (
     <Box layoutClassName="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end sm:gap-3">
+      <Button
+        type="button"
+        onClick={() => setPrinting(true)}
+        disabled={printing}
+        variant="secondary"
+        disableVariantHover
+        disableVariantTextColor
+        borderClassName="border border-blue-200 dark:border-blue-700/50"
+        backgroundClassName="bg-blue-50 dark:bg-blue-900/20"
+        hoverClassName="hover:bg-blue-100 dark:hover:bg-blue-900/30"
+        textClassName="text-sm font-medium text-blue-700 dark:text-blue-300"
+        roundedClassName="rounded-lg"
+        layoutClassName="w-full justify-center px-4 py-2 sm:w-auto"
+        stateClassName="transition-colors disabled:opacity-50"
+        leftIcon={<Printer className="h-4 w-4" />}
+        iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+      >
+        {printing ? 'Đang in...' : billPrinted ? 'In lại (bill+bếp)' : 'In bill + bếp'}
+      </Button>
       <Button
         type="button"
         onClick={handleShareOrder}
@@ -701,6 +750,24 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
   return (
     <>
+    {printing ? (
+      <OrderPrintPortal
+        order={currentOrder}
+        subtotal={subtotal}
+        finalTotal={finalTotal}
+        shippingCost={shippingCost}
+        qrUrl={shareQrUrl}
+        description={shareDescription}
+        bankCode={qrAccount?.bankCode}
+        accountNumber={qrAccount?.accountNumber}
+        accountHolder={qrAccount?.accountHolder}
+        onDone={handlePrintDone}
+        onError={(msg) => {
+          setPrinting(false);
+          toast.error(`Không in được (${msg}). Kiểm tra máy in đã bật + cầu nối in đang chạy.`);
+        }}
+      />
+    ) : null}
     <BaseSlidePanel
       isOpen={isOpen && !!order}
       onClose={onClose}

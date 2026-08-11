@@ -5,6 +5,7 @@ import {
   MapPin,
   Package,
   Phone,
+  Printer,
   Store,
   User,
 } from 'lucide-react';
@@ -105,13 +106,18 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                       {order.deliveryTime ? ` · ${order.deliveryTime}` : ''}
                     </Typography>
                   </Box>
-                  <Typography
-                    as="span"
-                    size="xs"
-                    layoutClassName="font-mono opacity-70"
-                  >
-                    {order.orderNumber || order.id}
-                  </Typography>
+                  <Box layoutClassName="flex items-center gap-1.5">
+                    <Printer
+                      className={`h-3.5 w-3.5 shrink-0 ${order.billPrintedAt ? 'text-blue-600 dark:text-blue-400' : 'opacity-25'}`}
+                    />
+                    <Typography
+                      as="span"
+                      size="xs"
+                      layoutClassName="font-mono opacity-70"
+                    >
+                      {order.orderNumber || order.id}
+                    </Typography>
+                  </Box>
                 </Box>
 
                 {/* Body grid: image | customer & items | total */}

@@ -216,6 +216,8 @@ export interface Order {
   /** Trạng thái vận chuyển từ file 3PL (đồng bộ lúc upload). */
   trackingStatus?: string;
   note?: string;
+  /** ISO thời điểm in bill cho khách gần nhất — undefined/null = chưa in. */
+  billPrintedAt?: string | null;
   createdByUid?: string;
   createdBy?: string;
   updatedBy?: string;

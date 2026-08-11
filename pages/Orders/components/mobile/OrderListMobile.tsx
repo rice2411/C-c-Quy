@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarDays, ChevronRight, Globe, MapPin, Package, Phone, Store, User } from 'lucide-react';
+import { CalendarDays, ChevronRight, Globe, MapPin, Package, Phone, Printer, Store, User } from 'lucide-react';
 import { PAYMENT_STATUS_COLORS, STATUS_COLORS } from '@/constant/order';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
@@ -286,6 +286,9 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
               })()}
 
               <Box layoutClassName="flex items-center justify-end gap-2 px-4 pb-2 pt-1">
+                <Printer
+                  className={`h-3.5 w-3.5 shrink-0 ${order.billPrintedAt ? 'text-blue-600 dark:text-blue-400' : 'opacity-25'}`}
+                />
                 <Typography
                   as="span"
                   size="xs"

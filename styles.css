@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* In bill/phiếu bếp: KHÔNG dùng window.print() nữa — OrderPrintPortal render off-screen,
+ * chụp canvas → ESC/POS → gửi cầu nối in local (cucquy-print-agent). Xem utils/print/escpos.ts. */
+
 /* Design tokens "Nhân Hòa" — biến CSS cho chart (recharts)/inline style */
 :root {
   --color-primary: #4abab9;
