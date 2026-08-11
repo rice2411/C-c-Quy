@@ -384,6 +384,17 @@ export const navGroups: NavGroupConfig[] = [
     ],
   },
   {
+    // Nhân sự: gom Nhân viên (lương) + Chấm công + Quản lý chấm công vào 1 nhóm.
+    key: "hr",
+    labelKey: "nav.hrGroup",
+    icon: Users,
+    childPaths: [
+      "/employees",
+      "/attendance",
+      "/attendance/manage",
+    ],
+  },
+  {
     key: "commission",
     labelKey: "nav.commissionGroup",
     icon: Coins,
