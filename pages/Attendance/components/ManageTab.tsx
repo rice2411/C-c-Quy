@@ -33,7 +33,7 @@ import {
   useNetworks,
 } from '@/hooks/queries/useAttendanceQuery';
 import { fetchCurrentIp } from '@/services/attendanceService';
-import { kindLabel, shiftLabel } from '@/types/attendance';
+import { kindLabel, shiftLabel, type AttendanceRecord } from '@/types/attendance';
 
 const fmtDateTime = (iso?: string | null): string =>
   iso ? new Date(iso).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
@@ -58,6 +58,8 @@ const ManageTab: React.FC = () => {
   const [to, setTo] = useState('');
   // Ảnh chấm công đang xem phóng to (đã đóng dấu tên/ca/ngày giờ sẵn từ lúc chụp).
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // Bản ghi đang mở chi tiết (click 1 dòng lịch sử → xem ảnh + thông tin chấm công).
+  const [detailRec, setDetailRec] = useState<AttendanceRecord | null>(null);
   const historyParams = useMemo(
     () => ({ employeeId: empFilter || undefined, from: from || undefined, to: to || undefined, limit: 200 }),
     [empFilter, from, to],
@@ -317,23 +319,23 @@ const ManageTab: React.FC = () => {
               </TableHead>
               <TableBody>
                 {history.items.map((rec) => (
-                  <TableRow key={rec.id} borderClassName="border-b border-slate-100 dark:border-slate-700/60 last:border-0">
+                  <TableRow
+                    key={rec.id}
+                    borderClassName="border-b border-slate-100 dark:border-slate-700/60 last:border-0"
+                    layoutClassName="cursor-pointer"
+                    hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700/40"
+                    stateClassName="transition-colors"
+                    onClick={() => setDetailRec(rec)}
+                  >
                     <TableCell layoutClassName="px-4 py-3">
                       {rec.imageUrl ? (
-                        <Button
-                          type="button"
-                          aria-label="Xem ảnh chấm công"
-                          variant="ghost"
-                          disableVariantHover
-                          disableVariantTextColor
-                          sizeClassName="p-0"
-                          roundedClassName="rounded-lg"
+                        <Box
                           layoutClassName="flex h-12 w-12 items-center justify-center overflow-hidden"
+                          roundedClassName="rounded-lg"
                           borderClassName="border border-slate-200 dark:border-slate-600"
-                          onClick={() => setPreviewUrl(rec.imageUrl)}
                         >
                           <Image src={rec.imageUrl} alt="Ảnh chấm công" layoutClassName="h-full w-full object-cover" />
-                        </Button>
+                        </Box>
                       ) : (
                         <Typography as="span" size="xs" variant="muted">—</Typography>
                       )}
@@ -380,6 +382,104 @@ const ManageTab: React.FC = () => {
         onDone={() => setEnroll(null)}
       />
 
+      {/* ------- Chi tiết 1 bản ghi chấm công (ảnh + thông tin) ------- */}
+      <BaseModal
+        isOpen={!!detailRec}
+        onClose={() => setDetailRec(null)}
+        title="Chi tiết chấm công"
+        size="md"
+      >
+        {detailRec && (
+          <Box layoutClassName="flex flex-col gap-4">
+            {/* Ảnh (bấm để phóng to) */}
+            {detailRec.imageUrl ? (
+              <Box layoutClassName="flex justify-center">
+                <Button
+                  type="button"
+                  aria-label="Phóng to ảnh chấm công"
+                  variant="ghost"
+                  disableVariantHover
+                  disableVariantTextColor
+                  sizeClassName="p-0"
+                  roundedClassName="rounded-xl"
+                  layoutClassName="overflow-hidden"
+                  borderClassName="border border-slate-200 dark:border-slate-600"
+                  onClick={() => setPreviewUrl(detailRec.imageUrl)}
+                >
+                  <Image
+                    src={detailRec.imageUrl}
+                    alt="Ảnh chấm công"
+                    layoutClassName="max-h-64 w-auto object-contain"
+                  />
+                </Button>
+              </Box>
+            ) : (
+              <Box
+                layoutClassName="flex h-32 items-center justify-center"
+                backgroundClassName="bg-slate-50 dark:bg-slate-700/40"
+                roundedClassName="rounded-xl"
+              >
+                <Typography as="span" size="sm" variant="muted">Không có ảnh</Typography>
+              </Box>
+            )}
+
+            {/* Thông tin */}
+            <Box layoutClassName="flex flex-col gap-2">
+              <Box layoutClassName="flex items-center justify-between gap-4">
+                <Typography as="span" size="sm" variant="muted">Nhân viên</Typography>
+                <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-800 dark:text-slate-100">
+                  {detailRec.employeeName || detailRec.employeeId}
+                </Typography>
+              </Box>
+              <Box layoutClassName="flex items-center justify-between gap-4">
+                <Typography as="span" size="sm" variant="muted">Thời gian</Typography>
+                <Typography as="span" size="sm" textClassName="text-slate-700 dark:text-slate-200">
+                  {fmtDateTime(detailRec.checkedAt)}
+                </Typography>
+              </Box>
+              <Box layoutClassName="flex items-center justify-between gap-4">
+                <Typography as="span" size="sm" variant="muted">Loại</Typography>
+                <Badge
+                  size="sm"
+                  layoutClassName="inline-flex px-2 py-0.5 text-xs font-semibold"
+                  backgroundClassName={detailRec.kind === 'in' ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-rose-50 dark:bg-rose-900/20'}
+                  textClassName={detailRec.kind === 'in' ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}
+                >
+                  {kindLabel(detailRec.kind)}
+                </Badge>
+              </Box>
+              <Box layoutClassName="flex items-center justify-between gap-4">
+                <Typography as="span" size="sm" variant="muted">Ca</Typography>
+                <Typography as="span" size="sm" textClassName="text-slate-700 dark:text-slate-200">
+                  {shiftLabel(detailRec.shift)}
+                </Typography>
+              </Box>
+              <Box layoutClassName="flex items-center justify-between gap-4">
+                <Typography as="span" size="sm" variant="muted">IP</Typography>
+                <Typography as="span" size="sm" layoutClassName="font-mono" textClassName="text-slate-600 dark:text-slate-300">
+                  {detailRec.ip || '—'}
+                </Typography>
+              </Box>
+              <Box layoutClassName="flex items-center justify-between gap-4">
+                <Typography as="span" size="sm" variant="muted">Độ khớp khuôn mặt</Typography>
+                <Typography as="span" size="sm" layoutClassName="tabular-nums" textClassName="text-slate-600 dark:text-slate-300">
+                  {detailRec.faceDistance != null ? detailRec.faceDistance.toFixed(3) : '—'}
+                </Typography>
+              </Box>
+              {detailRec.note ? (
+                <Box layoutClassName="flex items-start justify-between gap-4">
+                  <Typography as="span" size="sm" variant="muted">Ghi chú</Typography>
+                  <Typography as="span" size="sm" layoutClassName="text-right" textClassName="text-slate-700 dark:text-slate-200">
+                    {detailRec.note}
+                  </Typography>
+                </Box>
+              ) : null}
+            </Box>
+          </Box>
+        )}
+      </BaseModal>
+
+      {/* Zoom ảnh (mở từ modal chi tiết) — đặt SAU để nổi trên modal chi tiết */}
       <BaseModal
         isOpen={!!previewUrl}
         onClose={() => setPreviewUrl(null)}
