@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Package, PackagePlus, Plus, RefreshCw, Truck } from 'lucide-react';
+import { Package } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -19,6 +19,7 @@ import OrderDetail from '@/pages/Orders/components/modals/OrderDetail';
 import OrderForm from '@/pages/Orders/components/modals/OrderForm';
 import OrderList from '@/pages/Orders/components/OrderList';
 import OrdersStats from '@/pages/Orders/components/OrdersStats';
+import OrderToolbarActions from '@/pages/Orders/components/OrderToolbarActions';
 
 const OrdersPage: React.FC = () => {
   const { userData } = useAuth();
@@ -157,106 +158,15 @@ const OrdersPage: React.FC = () => {
   };
 
   const ordersActions = (
-    <>
-      <Button
-        type="button"
-        onClick={handleRefresh}
-        disabled={isRefreshing}
-        variant="secondary"
-        disableVariantHover
-        disableVariantTextColor
-        backgroundClassName="bg-white dark:bg-slate-800"
-        borderClassName="border border-slate-200 dark:border-slate-600"
-        textClassName="font-medium text-slate-700 dark:text-slate-200"
-        roundedClassName="rounded-xl"
-        sizeClassName="px-3 py-2 text-xs"
-        layoutClassName="inline-flex items-center gap-1.5"
-        stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-        leftIcon={<RefreshCw />}
-        iconClassName={`inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5${isRefreshing ? ' [&_svg]:animate-spin' : ''}`}
-      >
-        <Typography as="span" size="xs" layoutClassName="hidden sm:inline">
-          {t('orders.refresh')}
-        </Typography>
-      </Button>
-      <Button
-        type="button"
-        onClick={handleOpenExportModal}
-        variant="secondary"
-        disableVariantHover
-        disableVariantTextColor
-        backgroundClassName="bg-white dark:bg-slate-800"
-        borderClassName="border border-slate-200 dark:border-slate-600"
-        textClassName="font-medium text-slate-700 dark:text-slate-200"
-        roundedClassName="rounded-xl"
-        sizeClassName="px-3 py-2 text-xs"
-        layoutClassName="inline-flex items-center gap-1.5"
-        stateClassName="transition-colors"
-        leftIcon={<Download />}
-        iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-      >
-        {t('orders.exportCsv')}
-      </Button>
-      <Button
-        type="button"
-        onClick={() => setIsTrackingModalOpen(true)}
-        variant="secondary"
-        disableVariantHover
-        disableVariantTextColor
-        backgroundClassName="bg-white dark:bg-slate-800"
-        borderClassName="border border-slate-200 dark:border-slate-600"
-        textClassName="font-medium text-slate-700 dark:text-slate-200"
-        roundedClassName="rounded-xl"
-        sizeClassName="px-3 py-2 text-xs"
-        layoutClassName="inline-flex items-center gap-1.5"
-        stateClassName="transition-colors"
-        leftIcon={<Truck />}
-        iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-      >
-        <Typography as="span" size="xs" layoutClassName="hidden sm:inline">
-          Đồng bộ vận đơn
-        </Typography>
-      </Button>
-      <Button
-        type="button"
-        onClick={() => setIsSpxExportOpen(true)}
-        variant="secondary"
-        disableVariantHover
-        disableVariantTextColor
-        backgroundClassName="bg-white dark:bg-slate-800"
-        borderClassName="border border-slate-200 dark:border-slate-600"
-        textClassName="font-medium text-slate-700 dark:text-slate-200"
-        roundedClassName="rounded-xl"
-        sizeClassName="px-3 py-2 text-xs"
-        layoutClassName="inline-flex items-center gap-1.5"
-        stateClassName="transition-colors"
-        leftIcon={<PackagePlus />}
-        iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-      >
-        <Typography as="span" size="xs" layoutClassName="hidden sm:inline">
-          Xuất file SPX
-        </Typography>
-      </Button>
-      <Button
-        type="button"
-        onClick={handleCreateNewOrder}
-        leftIcon={<Plus />}
-        iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-        backgroundClassName="bg-primary-600"
-        hoverClassName="hover:bg-primary-700"
-        textClassName="font-medium text-white"
-        roundedClassName="rounded-xl"
-        shadowClassName="shadow-sm shadow-primary-200 dark:shadow-none"
-        sizeClassName="px-4 py-2 text-xs"
-        layoutClassName="inline-flex items-center gap-1.5"
-        stateClassName="transition-colors"
-        variant="primary"
-        disableVariantHover
-        disableVariantTextColor
-      >
-        {t('nav.newOrder')}
-      </Button>
-    </>
+    <OrderToolbarActions
+      onRefresh={handleRefresh}
+      isRefreshing={isRefreshing}
+      onExport={handleOpenExportModal}
+      canExport={canExportOrders}
+      onSyncTracking={() => setIsTrackingModalOpen(true)}
+      onExportSpx={() => setIsSpxExportOpen(true)}
+      onCreate={handleCreateNewOrder}
+    />
   );
 
   return (

@@ -5,6 +5,7 @@ export const translations = {
       apply: "Apply",
       cancel: "Cancel",
       reset: "Reset",
+      more: "More",
       searchPlaceholder: "Search…"
     },
     nav: {
@@ -769,6 +770,7 @@ export const translations = {
       apply: "Áp dụng",
       cancel: "Hủy",
       reset: "Đặt lại",
+      more: "Thêm",
       searchPlaceholder: "Tìm kiếm…"
     },
     nav: {
