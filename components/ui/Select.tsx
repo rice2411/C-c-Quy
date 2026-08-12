@@ -1,6 +1,11 @@
+/**
+ * Select — GIỮ API cũ (children <option>, onChange(e.target.value)) nhưng render bằng
+ * Dropdown TUỲ BIẾN (thay <select> native). Mọi call-site cũ không phải đổi gì.
+ * Tự bật ô tìm kiếm khi danh sách dài (>8 mục). Cần multi-select / icon / group →
+ * dùng thẳng component Dropdown.
+ */
 import React from 'react';
-import { ChevronDown } from 'lucide-react';
-import { twMerge } from 'tailwind-merge';
+import Dropdown, { type DropdownOption } from './Dropdown';
 
 type SelectSize = 'sm' | 'md';
 
@@ -8,6 +13,8 @@ export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectE
   size?: SelectSize;
   error?: boolean;
   fullWidth?: boolean;
+  /** Ép bật/tắt ô tìm kiếm (mặc định tự bật khi >8 mục). */
+  searchable?: boolean;
   layoutClassName?: string;
   backgroundClassName?: string;
   borderClassName?: string;
@@ -17,60 +24,74 @@ export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectE
   textClassName?: string;
 }
 
-const sizeClasses: Record<SelectSize, string> = {
-  sm: 'py-1.5 text-sm',
-  md: 'py-2 text-sm'
+/** Ghép mọi con của <option> thành 1 chuỗi label. */
+const flattenText = (c: React.ReactNode): string => {
+  if (c == null || c === false || c === true) return '';
+  if (typeof c === 'string' || typeof c === 'number') return String(c);
+  if (Array.isArray(c)) return c.map(flattenText).join('');
+  return '';
 };
 
-const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  (
-    {
-      size = 'md',
-      error = false,
-      fullWidth = false,
-      className,
-      children,
-      layoutClassName,
-      backgroundClassName,
-      borderClassName,
-      focusClassName,
-      sizeClassName,
-      stateClassName,
-      textClassName,
-      ...props
-    },
-    ref
-  ) => {
-    // appearance-none + mũi tên tự vẽ → bỏ chrome native (padding nội bộ + arrow gốc)
-    // để select KHỚP HỆT Input: cùng pl-3, cùng chiều cao, cùng nền/viền. pr-9 chừa chỗ mũi tên.
-    const classes = twMerge(
-      [
-        'block w-full min-w-0 box-border max-w-full appearance-none rounded-lg border bg-slate-50 pl-3 pr-9 text-slate-900 outline-none transition-colors focus:ring-2 focus:ring-primary-500 dark:bg-slate-700 dark:text-white',
-        error ? 'border-red-500 dark:border-red-500' : 'border-slate-200 dark:border-slate-600',
-        sizeClasses[size],
-        layoutClassName ?? '',
-        borderClassName ?? '',
-        focusClassName ?? '',
-        backgroundClassName ?? '',
-        textClassName ?? '',
-        stateClassName ?? '',
-        sizeClassName ?? '',
-        className ?? ''
-      ]
-        .filter(Boolean)
-        .join(' ')
-    );
+/** Parse children <option>/<optgroup> → mảng DropdownOption. */
+const parseOptions = (children: React.ReactNode): DropdownOption[] => {
+  const out: DropdownOption[] = [];
+  const pushOption = (el: React.ReactElement, group?: string) => {
+    const p: any = el.props;
+    const label = flattenText(p.children);
+    out.push({
+      value: p.value !== undefined ? String(p.value) : label,
+      label,
+      group,
+      disabled: !!p.disabled,
+    });
+  };
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) return;
+    if (child.type === 'option') pushOption(child);
+    else if (child.type === 'optgroup') {
+      const g = (child.props as any).label as string | undefined;
+      React.Children.forEach((child.props as any).children, (o) => {
+        if (React.isValidElement(o) && o.type === 'option') pushOption(o, g);
+      });
+    }
+  });
+  return out;
+};
 
-    return (
-      <div className={twMerge(['relative min-w-0', fullWidth ? 'block w-full' : 'inline-block'].join(' '))}>
-        <select ref={ref} className={classes} {...props}>
-          {children}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-      </div>
-    );
-  }
-);
+const Select = React.forwardRef<HTMLSelectElement, SelectProps>((props, _ref) => {
+  const {
+    size, error, fullWidth: _fullWidth, searchable, className: _className,
+    layoutClassName, backgroundClassName, borderClassName, focusClassName: _focus,
+    sizeClassName, stateClassName: _state, textClassName,
+    children, value, onChange, disabled, id, 'aria-label': ariaLabel,
+  } = props;
+
+  const options = React.useMemo(() => parseOptions(children), [children]);
+
+  const handleChange = (v: string) => {
+    // Giả lập event native để call-site `onChange={(e)=>e.target.value}` chạy y như cũ.
+    onChange?.({ target: { value: v }, currentTarget: { value: v } } as any);
+  };
+
+  return (
+    <Dropdown
+      options={options}
+      value={value != null ? String(value) : ''}
+      onChange={handleChange}
+      disabled={disabled}
+      id={id}
+      ariaLabel={typeof ariaLabel === 'string' ? ariaLabel : undefined}
+      error={error}
+      size={size}
+      searchable={searchable ?? options.length > 8}
+      layoutClassName={layoutClassName}
+      backgroundClassName={backgroundClassName}
+      borderClassName={borderClassName}
+      textClassName={textClassName}
+      sizeClassName={sizeClassName}
+    />
+  );
+});
 
 Select.displayName = 'Select';
 

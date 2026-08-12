@@ -13,6 +13,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import BaseModal from '@/components/BaseModal';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
+import Select from '@/components/ui/Select';
 import { Order } from '@/types';
 import { UserRole } from '@/types/user';
 import { ExportColumn, getOrderTotal } from '@/utils/order/orderUtils';
@@ -308,18 +309,12 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
                             <span className="ml-3 text-sm font-medium text-slate-900 dark:text-white">{t('orders.exportMonth')}</span>
                         </div>
                         {rangeType === 'month' && (
-                            <div className="mt-3 relative animate-fade-in w-full">
-                                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                                 <select 
-                                    value={selectedMonth} 
-                                    onChange={(e) => setSelectedMonth(e.target.value)}
-                                    className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer shadow-sm"
-                                 >
+                            <div className="mt-3 animate-fade-in w-full">
+                                 <Select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
                                     {monthOptions.map(opt => (
                                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                                     ))}
-                                 </select>
-                                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+                                 </Select>
                             </div>
                         )}
                       </label>
@@ -338,33 +333,19 @@ const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, orders, user
                         </div>
                         {rangeType === 'custom' && (
                           <div className="grid grid-cols-2 gap-2 mt-3 animate-fade-in pl-7">
-                            <div className="relative">
-                               <select 
-                                  value={startMonth}
-                                  onChange={(e) => setStartMonth(e.target.value)}
-                                  className="w-full pl-2 pr-6 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer"
-                               >
-                                  <option value="" disabled>From</option>
-                                  {monthOptions.map(opt => (
-                                      <option key={`start-${opt.value}`} value={opt.value}>{opt.label}</option>
-                                  ))}
-                               </select>
-                               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 w-3 h-3 pointer-events-none" />
-                            </div>
-                            
-                            <div className="relative">
-                               <select 
-                                  value={endMonth}
-                                  onChange={(e) => setEndMonth(e.target.value)}
-                                  className="w-full pl-2 pr-6 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none cursor-pointer"
-                               >
-                                  <option value="" disabled>To</option>
-                                  {monthOptions.map(opt => (
-                                      <option key={`end-${opt.value}`} value={opt.value}>{opt.label}</option>
-                                  ))}
-                               </select>
-                               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 w-3 h-3 pointer-events-none" />
-                            </div>
+                            <Select value={startMonth} onChange={(e) => setStartMonth(e.target.value)}>
+                               <option value="" disabled>From</option>
+                               {monthOptions.map(opt => (
+                                   <option key={`start-${opt.value}`} value={opt.value}>{opt.label}</option>
+                               ))}
+                            </Select>
+
+                            <Select value={endMonth} onChange={(e) => setEndMonth(e.target.value)}>
+                               <option value="" disabled>To</option>
+                               {monthOptions.map(opt => (
+                                   <option key={`end-${opt.value}`} value={opt.value}>{opt.label}</option>
+                               ))}
+                            </Select>
                           </div>
                         )}
                       </label>
