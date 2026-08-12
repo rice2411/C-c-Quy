@@ -85,7 +85,7 @@ const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
   ];
   return (
     <Box
-      layoutClassName="flex shrink-0 flex-col gap-3 p-5"
+      layoutClassName="flex shrink-0 flex-col gap-3 p-4 sm:p-5"
       borderClassName="border-b border-slate-100 dark:border-slate-700"
     >
       <Box layoutClassName="flex items-center gap-2">
