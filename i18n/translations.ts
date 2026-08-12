@@ -113,7 +113,7 @@ export const translations = {
       filterYear: "Year"
     },
     orders: {
-      recent: "Recent Orders",
+      recent: "Order Tracking",
       searchPlaceholder: "Search ID or Customer...",
       filterProductPlaceholder: "Filter product...",
       filters: "Filters",
@@ -879,7 +879,7 @@ export const translations = {
       filterYear: "Năm"
     },
     orders: {
-      recent: "Đơn hàng gần đây",
+      recent: "Theo dõi đơn hàng",
       searchPlaceholder: "Tìm ID hoặc Khách hàng...",
       filterProductPlaceholder: "Lọc theo sản phẩm...",
       filters: "Bộ lọc",

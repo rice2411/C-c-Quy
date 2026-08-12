@@ -4,7 +4,7 @@
  * để toolbar không bị dài/rối do 5 nút to chen cạnh ô tìm kiếm.
  */
 import React from 'react';
-import { Download, MoreHorizontal, PackagePlus, Plus, RefreshCw, Truck, type LucideIcon } from 'lucide-react';
+import { Download, MoreHorizontal, PackagePlus, Plus, RefreshCw, Scale, Truck, type LucideIcon } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -18,6 +18,7 @@ interface OrderToolbarActionsProps {
   onExport: () => void;
   canExport: boolean;
   onSyncTracking: () => void;
+  onCompare: () => void;
   onExportSpx: () => void;
   onCreate: () => void;
 }
@@ -48,7 +49,7 @@ const MenuItem: React.FC<{
 );
 
 const OrderToolbarActions: React.FC<OrderToolbarActionsProps> = ({
-  onRefresh, isRefreshing, onExport, canExport, onSyncTracking, onExportSpx, onCreate,
+  onRefresh, isRefreshing, onExport, canExport, onSyncTracking, onCompare, onExportSpx, onCreate,
 }) => {
   const { t } = useLanguage();
   return (
@@ -96,6 +97,7 @@ const OrderToolbarActions: React.FC<OrderToolbarActionsProps> = ({
               <MenuItem icon={Download} label={t('orders.exportCsv')} onClick={() => { close(); onExport(); }} />
             ) : null}
             <MenuItem icon={Truck} label="Đồng bộ vận đơn" onClick={() => { close(); onSyncTracking(); }} />
+            <MenuItem icon={Scale} label="So sánh vận đơn" onClick={() => { close(); onCompare(); }} />
             <MenuItem icon={PackagePlus} label="Xuất file SPX" onClick={() => { close(); onExportSpx(); }} />
           </Box>
         )}

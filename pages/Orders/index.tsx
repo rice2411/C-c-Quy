@@ -31,6 +31,7 @@ const OrdersPage: React.FC = () => {
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [isSpxExportOpen, setIsSpxExportOpen] = useState(false);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -164,6 +165,7 @@ const OrdersPage: React.FC = () => {
       onExport={handleOpenExportModal}
       canExport={canExportOrders}
       onSyncTracking={() => setIsTrackingModalOpen(true)}
+      onCompare={() => setIsCompareOpen(true)}
       onExportSpx={() => setIsSpxExportOpen(true)}
       onCreate={handleCreateNewOrder}
     />
@@ -203,6 +205,8 @@ const OrdersPage: React.FC = () => {
           onDeleteOrder={handleDeleteClick}
           onUpdateOrder={modifyOrder}
           actions={ordersActions}
+          compareOpen={isCompareOpen}
+          onCompareClose={() => setIsCompareOpen(false)}
         />
       )}
 

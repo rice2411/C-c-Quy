@@ -17,6 +17,7 @@ import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import OrderListDesktop from '@/pages/Orders/components/desktop/OrderListDesktop';
 import OrderFiltersModal, { OrderFiltersState } from '@/pages/Orders/components/modals/OrderFiltersModal';
+import OrderCompareModal from '@/pages/Orders/components/modals/OrderCompareModal';
 import OrderFiltersToolbar from '@/pages/Orders/components/OrderFiltersToolbar';
 import OrderListMobile from '@/pages/Orders/components/mobile/OrderListMobile';
 
@@ -27,9 +28,12 @@ interface OrderListProps {
   onUpdateOrder: (id: string, data: any) => Promise<void>;
   /** Nút action đặt trong toolbar (tạo đơn / export / làm mới). */
   actions?: React.ReactNode;
+  /** Modal so sánh vận đơn — điều khiển từ index, dùng danh sách đơn ĐANG LỌC ở đây. */
+  compareOpen?: boolean;
+  onCompareClose?: () => void;
 }
 
-const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions }) => {
+const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions, compareOpen, onCompareClose }) => {
   const { t } = useLanguage();
   const { currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -612,6 +616,12 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
           setHideCompleted(values.hideCompleted);
           setIsAdvancedOpen(false);
         }}
+      />
+
+      <OrderCompareModal
+        isOpen={!!compareOpen}
+        onClose={onCompareClose ?? (() => {})}
+        orders={filteredOrders}
       />
 
       <Box
