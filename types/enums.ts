@@ -22,6 +22,7 @@ export enum DeliveryType {
   SHIP = 'SHIP',
   PICKUP = 'PICKUP',
   SHIP_PROVINCE = 'SHIP_PROVINCE',
+  SHIP_COACH = 'SHIP_COACH',
 }
 
 

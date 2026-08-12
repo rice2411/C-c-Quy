@@ -38,6 +38,7 @@ const ZaloSettingsTab = lazy(() => import("./pages/Settings/ZaloSettingsTab"));
 const OrderSettingsTab = lazy(() => import("./pages/Settings/OrderSettingsTab"));
 const SepaySettingsTab = lazy(() => import("./pages/Settings/SepaySettingsTab"));
 const ProductSettings = lazy(() => import("./pages/Settings/ProductSettings"));
+const CoachesTab = lazy(() => import("./pages/Settings/CoachesTab"));
 const LoginPage = lazy(() => import("./pages/Login/index"));
 const AuthCallbackPage = lazy(() => import("./pages/AuthCallback/index"));
 const SerpApiMapsTestPage = lazy(() => import("./pages/Test/SerpApiMaps/index"));
@@ -309,6 +310,14 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/product")?.roles}>
             <ProductSettings />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="settings/coaches"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/coaches")?.roles}>
+            <CoachesTab />
           </RoleBasedRoute>
         }
       />

@@ -410,6 +410,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
       if (s === 'SHIP') return t('deliveryType.ship');
       if (s === 'PICKUP') return t('deliveryType.pickup');
       if (s === 'SHIP_PROVINCE') return t('deliveryType.shipProvince');
+      if (s === 'SHIP_COACH') return t('deliveryType.shipCoach');
     }
     if (field === 'total' || field === 'shippingCost') {
       const n = Number(value);
@@ -611,6 +612,15 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           <Typography size="sm" variant="muted">
             Ngày nhận hàng: {new Date(currentOrder.deliveryDate).toLocaleDateString()}
             {currentOrder.deliveryTime ? ` • ${currentOrder.deliveryTime}` : ''}
+          </Typography>
+        ) : null}
+        {currentOrder.deliveryType === DeliveryType.SHIP_COACH && currentOrder.coachInfo ? (
+          <Typography size="sm" layoutClassName="font-medium" textClassName="text-primary-600 dark:text-primary-400">
+            🚌 Nhà xe: {currentOrder.coachInfo.name}
+            {[currentOrder.coachInfo.phone, currentOrder.coachInfo.route, currentOrder.coachInfo.pickupPoint]
+              .filter(Boolean).length > 0
+              ? ` · ${[currentOrder.coachInfo.phone, currentOrder.coachInfo.route, currentOrder.coachInfo.pickupPoint].filter(Boolean).join(' · ')}`
+              : ''}
           </Typography>
         ) : null}
         {currentOrder.trackingNumber ? (
@@ -1577,6 +1587,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                           {([
                             { dt: DeliveryType.SHIP,          label: t('deliveryType.ship') },
                             { dt: DeliveryType.SHIP_PROVINCE,  label: t('deliveryType.shipProvince') },
+                            { dt: DeliveryType.SHIP_COACH,     label: t('deliveryType.shipCoach') },
                             { dt: DeliveryType.PICKUP,         label: t('deliveryType.pickup') },
                           ]).map(({ dt, label }) => {
                             const isActive = (currentOrder.deliveryType ?? DeliveryType.SHIP) === dt;
@@ -2513,6 +2524,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         deliveryLabel={
           currentOrder.deliveryType === DeliveryType.PICKUP ? t('deliveryType.pickup')
           : currentOrder.deliveryType === DeliveryType.SHIP_PROVINCE ? t('deliveryType.shipProvince')
+          : currentOrder.deliveryType === DeliveryType.SHIP_COACH ? t('deliveryType.shipCoach')
           : currentOrder.deliveryType === DeliveryType.SHIP ? t('deliveryType.ship') : ''
         }
         paymentLabel={

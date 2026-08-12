@@ -19,6 +19,7 @@ import { calcItemCommission } from '@/types/commissionGroup';
 import { getUserByUid } from '@/services/userService';
 import { DeliveryType, Order, OrderStatus, PaymentMethod, PaymentStatus, Product, SurchargeLine, DiscountLine, sizeCount } from '@/types/index';
 import { resolveTierPrice } from '@/types/product';
+import type { OrderCoachInfo } from '@/types/coach';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Box from '@/components/ui/Box';
@@ -167,6 +168,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const [isDeliveryTimeEnabled, setIsDeliveryTimeEnabled] = useState<boolean>(false);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>(DeliveryType.SHIP);
   const [trackingNumber, setTrackingNumber] = useState('');   // mã vận đơn (ship tỉnh)
+  const [coachInfo, setCoachInfo] = useState<OrderCoachInfo | null>(null); // nhà xe (ship xe khách)
   // Đơn hàng test — dùng để test tính năng. Khi bật, Zalo message sẽ có banner === ĐƠN HÀNG TEST ===
   const [isTest, setIsTest] = useState<boolean>(false);
 
@@ -225,6 +227,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPaymentMethod(initialData.paymentMethod || PaymentMethod.BANKING);
       setDeliveryType(initialData.deliveryType || DeliveryType.SHIP);
       setTrackingNumber(initialData.trackingNumber || '');
+      setCoachInfo(initialData.coachInfo ?? null);
       setShippingCost(initialData.shippingCost || 0);
       setShipInfo(initialData.shipInfo ?? null);
       setIsTest(!!initialData.isTest);
@@ -301,6 +304,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPaymentMethod(PaymentMethod.BANKING); // mặc định: chuyển khoản
       setDeliveryType(DeliveryType.SHIP);
       setTrackingNumber('');
+      setCoachInfo(null);
       setItems([]);
       loadedSnapRef.current = new Map();
       setIsTest(false);
@@ -683,6 +687,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         paymentMethod: paymentMethod,
         deliveryType: deliveryType,
         trackingNumber: deliveryType === DeliveryType.SHIP_PROVINCE ? trackingNumber.trim() : '',
+        coachInfo: deliveryType === DeliveryType.SHIP_COACH ? coachInfo : null,
         isTest: isTest,
         createdBy: currentUser.uid,
         ...(commissionAmount !== undefined && { commissionAmount }),
@@ -914,6 +919,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               onShipFeeChange={(fee) => { if (fee != null) setShippingCost(fee); }}
               initialShipInfo={shipInfo ?? undefined}
               onShipInfoChange={setShipInfo}
+              coachInfo={coachInfo}
+              setCoachInfo={setCoachInfo}
             />
             <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2 min-w-0">
               <Field label="Ngày nhận hàng" htmlFor="order-form-delivery-date" required className="min-w-0 overflow-hidden">

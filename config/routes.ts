@@ -22,6 +22,7 @@ import {
   Monitor,
   MessageSquare,
   QrCode,
+  Bus,
   AlertTriangle,
   HeartPulse,
   Building2,
@@ -278,6 +279,13 @@ export const routes: RouteConfig[] = [
     path: "/settings/product",
     labelKey: "nav.settingsProduct",
     icon: Package,
+    roles: [UserRole.SUPER_ADMIN],
+  },
+  {
+    type: "page",
+    path: "/settings/coaches",
+    labelKey: "nav.settingsCoaches",
+    icon: Bus,
     roles: [UserRole.SUPER_ADMIN],
   },
 ];

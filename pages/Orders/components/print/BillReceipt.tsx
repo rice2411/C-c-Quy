@@ -89,6 +89,7 @@ const BillReceipt: React.FC<BillReceiptProps> = ({
         {infoRow('Khách', c?.name || '—')}
         {c?.phone ? infoRow('SĐT', c.phone) : null}
         {c?.address ? infoRow('Địa chỉ', `${c.address}${c.city ? `, ${c.city}` : ''}`) : null}
+        {order.coachInfo ? infoRow('Nhà xe', [order.coachInfo.name, order.coachInfo.phone, order.coachInfo.route, order.coachInfo.pickupPoint].filter(Boolean).join(' · ')) : null}
         {deliveryDateText ? infoRow('Ngày giao', deliveryDateText) : null}
       </Box>
 
