@@ -31,11 +31,24 @@ const SORT_FIELD_OPTIONS: { value: SortFieldKey; label: string }[] = [
   { value: 'orderNumber', label: 'Mã đơn' },
 ];
 
+// Field trắng đồng bộ với DatePicker (viền slate-300) — nổi trên nền panel slate-50.
+const FIELD_BG = 'bg-white dark:bg-slate-800';
+const FIELD_BORDER = 'border border-slate-300 dark:border-slate-600';
+
+/** Select đồng bộ màu field. */
+const PSelect: React.FC<React.ComponentProps<typeof Select>> = (p) => (
+  <Select {...p} backgroundClassName={FIELD_BG} borderClassName={FIELD_BORDER} />
+);
+/** Input đồng bộ màu field. */
+const PInput: React.FC<React.ComponentProps<typeof Input>> = (p) => (
+  <Input {...p} backgroundClassName={FIELD_BG} borderClassName={FIELD_BORDER} />
+);
+
 const OrderFiltersPanel: React.FC<Props> = ({ initialValues, creatorOptions, onApply, onCollapse }) => {
   const { t, language } = useLanguage();
   const [values, setValues] = useState<OrderFiltersState>(initialValues);
 
-  // Đồng bộ nháp khi filter ngoài đổi (vd bấm pill / xoá filter).
+  // Đồng bộ nháp khi filter ngoài đổi (vd xoá filter).
   useEffect(() => { setValues(initialValues); }, [initialValues]);
 
   const monthOptions = useMemo(() => {
@@ -63,8 +76,8 @@ const OrderFiltersPanel: React.FC<Props> = ({ initialValues, creatorOptions, onA
 
   const handleReset = () => {
     const d: OrderFiltersState = {
-      searchTerm: values.searchTerm, // giữ ô search toolbar
-      statusFilter: values.statusFilter, // giữ tab trạng thái
+      searchTerm: values.searchTerm,
+      statusFilter: values.statusFilter,
       productFilter: '', selectedMonth: '', paymentStatusFilter: 'All', paymentMethodFilter: 'All',
       creatorFilter: '', trackingStatusFilter: 'All', dateFrom: '', dateTo: '', dateType: 'orderDate',
       sortField: 'date', sortDirection: 'desc', hideCompleted: false,
@@ -77,47 +90,47 @@ const OrderFiltersPanel: React.FC<Props> = ({ initialValues, creatorOptions, onA
     <Box
       layoutClassName="flex shrink-0 flex-col gap-4 p-5"
       borderClassName="border-b border-slate-100 dark:border-slate-700"
-      backgroundClassName="bg-slate-50/60 dark:bg-slate-800/40"
+      backgroundClassName="bg-slate-50/70 dark:bg-slate-800/30"
     >
       <Box layoutClassName="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
         <Field label="Tên sản phẩm" htmlFor="ofp-product">
-          <Input id="ofp-product" value={values.productFilter} placeholder="VD: matcha, combo…"
+          <PInput id="ofp-product" value={values.productFilter} placeholder="VD: matcha, combo…"
             onChange={(e) => set('productFilter', e.target.value)} />
         </Field>
 
         <Field label="Người tạo đơn" htmlFor="ofp-creator">
-          <Select id="ofp-creator" value={values.creatorFilter} onChange={(e) => set('creatorFilter', e.target.value)}>
+          <PSelect id="ofp-creator" value={values.creatorFilter} onChange={(e) => set('creatorFilter', e.target.value)}>
             <option value="">Tất cả</option>
             {creatorOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-          </Select>
+          </PSelect>
         </Field>
 
         <Field label="Tình trạng thanh toán" htmlFor="ofp-paystatus">
-          <Select id="ofp-paystatus" value={values.paymentStatusFilter} onChange={(e) => set('paymentStatusFilter', e.target.value)}>
+          <PSelect id="ofp-paystatus" value={values.paymentStatusFilter} onChange={(e) => set('paymentStatusFilter', e.target.value)}>
             <option value="All">Tất cả</option>
             {Object.values(PaymentStatus).map((s) => <option key={s} value={s}>{t(`orders.paymentStatusLabels.${s}`)}</option>)}
-          </Select>
+          </PSelect>
         </Field>
 
         <Field label="Phương thức thanh toán" htmlFor="ofp-paymethod">
-          <Select id="ofp-paymethod" value={values.paymentMethodFilter} onChange={(e) => set('paymentMethodFilter', e.target.value)}>
+          <PSelect id="ofp-paymethod" value={values.paymentMethodFilter} onChange={(e) => set('paymentMethodFilter', e.target.value)}>
             <option value="All">Tất cả</option>
             <option value="CASH">{t('paymentMethod.cash')}</option>
             <option value="BANKING">{t('paymentMethod.banking')}</option>
-          </Select>
+          </PSelect>
         </Field>
 
         <Field label="Trạng thái vận chuyển (ĐVVC)" htmlFor="ofp-tracking">
-          <Select id="ofp-tracking" value={values.trackingStatusFilter} onChange={(e) => set('trackingStatusFilter', e.target.value)}>
+          <PSelect id="ofp-tracking" value={values.trackingStatusFilter} onChange={(e) => set('trackingStatusFilter', e.target.value)}>
             {CARRIER_STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </Select>
+          </PSelect>
         </Field>
 
         <Field label="Lọc theo" htmlFor="ofp-datetype">
-          <Select id="ofp-datetype" value={values.dateType} onChange={(e) => set('dateType', e.target.value)}>
+          <PSelect id="ofp-datetype" value={values.dateType} onChange={(e) => set('dateType', e.target.value)}>
             <option value="orderDate">{t('orders.orderDateLabel')}</option>
             <option value="deliveryDate">{t('orders.deliveryDateLabel')}</option>
-          </Select>
+          </PSelect>
         </Field>
 
         <Field label={t('orders.fromDate') ?? 'Từ ngày'} htmlFor="ofp-from">
@@ -129,23 +142,23 @@ const OrderFiltersPanel: React.FC<Props> = ({ initialValues, creatorOptions, onA
         </Field>
 
         <Field label="Hoặc chọn tháng" htmlFor="ofp-month">
-          <Select id="ofp-month" value={values.selectedMonth} onChange={(e) => set('selectedMonth', e.target.value)}>
+          <PSelect id="ofp-month" value={values.selectedMonth} onChange={(e) => set('selectedMonth', e.target.value)}>
             <option value="">{t('orders.allMonths')}</option>
             {monthOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </Select>
+          </PSelect>
         </Field>
 
         <Field label="Sắp xếp theo" htmlFor="ofp-sort">
-          <Select id="ofp-sort" value={values.sortField} onChange={(e) => set('sortField', e.target.value)}>
+          <PSelect id="ofp-sort" value={values.sortField} onChange={(e) => set('sortField', e.target.value)}>
             {SORT_FIELD_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </Select>
+          </PSelect>
         </Field>
 
         <Field label="Hướng sắp xếp" htmlFor="ofp-dir">
-          <Select id="ofp-dir" value={values.sortDirection} onChange={(e) => set('sortDirection', e.target.value)}>
+          <PSelect id="ofp-dir" value={values.sortDirection} onChange={(e) => set('sortDirection', e.target.value)}>
             <option value="desc">Giảm dần</option>
             <option value="asc">Tăng dần</option>
-          </Select>
+          </PSelect>
         </Field>
       </Box>
 
@@ -159,6 +172,7 @@ const OrderFiltersPanel: React.FC<Props> = ({ initialValues, creatorOptions, onA
           hoverClassName="hover:bg-primary-700"
           textClassName="font-semibold text-white"
           roundedClassName="rounded-lg"
+          shadowClassName="shadow-sm shadow-primary-200 dark:shadow-none"
           sizeClassName="px-5 py-2 text-sm"
           layoutClassName="inline-flex items-center gap-1.5"
           stateClassName="transition-colors"
@@ -174,7 +188,7 @@ const OrderFiltersPanel: React.FC<Props> = ({ initialValues, creatorOptions, onA
           leftIcon={<RotateCcw />}
           iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
           backgroundClassName="bg-white dark:bg-slate-800"
-          borderClassName="border border-slate-200 dark:border-slate-600"
+          borderClassName="border border-slate-300 dark:border-slate-600"
           hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
           textClassName="font-medium text-slate-600 dark:text-slate-300"
           roundedClassName="rounded-lg"
