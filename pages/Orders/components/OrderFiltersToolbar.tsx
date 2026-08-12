@@ -1,9 +1,22 @@
 import React from 'react';
 import { AlertTriangle, Clock, Filter, MapPin, Truck, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { OrderStatus } from '@/types/enums';
 import Box from '@/components/ui/Box';
 import Heading from '@/components/ui/Heading';
+import Typography from '@/components/ui/Typography';
+import Tabs, { type TabsItem } from '@/components/ui/Tabs';
 import FilterToolbar, { type ToolbarPill, type ToolbarOption } from '@/components/shared/FilterToolbar';
+
+/** Thứ tự tab trạng thái đơn (theo dòng vòng đời) — 'All' + các OrderStatus. */
+const STATUS_TAB_ORDER: string[] = [
+  'All',
+  OrderStatus.PENDING,
+  OrderStatus.PROCESSING,
+  OrderStatus.DELIVERED,
+  OrderStatus.RETURNED,
+  OrderStatus.CANCELLED,
+];
 
 export interface QuickPillState {
   pending: boolean;
@@ -33,6 +46,11 @@ interface OrderFiltersToolbarProps {
   sortKey?: OrderSortKey;
   onSortChange?: (k: OrderSortKey) => void;
   onClearAll?: () => void;
+  /** Tab lọc theo trạng thái đơn ('All' | OrderStatus). */
+  statusFilter?: string;
+  onStatusChange?: (s: string) => void;
+  /** Số đơn theo từng trạng thái (hiển thị badge trên tab). */
+  statusCounts?: Record<string, number>;
   /** Nút action tuỳ biến (tạo đơn / export / làm mới) — đặt trong toolbar như Product. */
   actions?: React.ReactNode;
 }
@@ -40,9 +58,28 @@ interface OrderFiltersToolbarProps {
 const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
   searchTerm, onSearchChange, onOpenAdvanced, activeFiltersCount = 0,
   quickPills, onTogglePending, onToggleUnpaid, onToggleToday, onToggleOverdue, onToggleProvince,
-  sortKey, onSortChange, onClearAll, actions,
+  sortKey, onSortChange, onClearAll, statusFilter = 'All', onStatusChange, statusCounts, actions,
 }) => {
   const { t } = useLanguage();
+  const statusTabs: TabsItem[] = STATUS_TAB_ORDER.map((id) => {
+    const count = statusCounts?.[id];
+    return {
+      id,
+      label: id === 'All' ? t('orders.tabAll') : t(`orders.statusLabels.${id}`),
+      badge:
+        typeof count === 'number' ? (
+          <Typography
+            as="span"
+            size="xs"
+            layoutClassName="ml-1.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5"
+            backgroundClassName={statusFilter === id ? 'bg-primary-100 dark:bg-primary-900/40' : 'bg-slate-100 dark:bg-slate-700'}
+            textClassName={statusFilter === id ? 'text-primary-600 dark:text-primary-300' : 'text-slate-500 dark:text-slate-400'}
+          >
+            {count}
+          </Typography>
+        ) : undefined,
+    };
+  });
   const SORT_OPTIONS: ToolbarOption[] = [
     { value: 'date-desc',         label: t('orders.sort.newest') },
     { value: 'date-asc',          label: t('orders.sort.oldest') },
@@ -71,6 +108,11 @@ const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
           {t('orders.recent')}
         </Heading>
       </Box>
+      {onStatusChange ? (
+        <Box layoutClassName="-mb-1 overflow-x-auto">
+          <Tabs items={statusTabs} value={statusFilter} onChange={onStatusChange} />
+        </Box>
+      ) : null}
       <FilterToolbar
         search={searchTerm}
         onSearchChange={onSearchChange}

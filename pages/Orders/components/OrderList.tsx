@@ -67,6 +67,16 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
     return Array.from(new Set(creators)).sort((a, b) => a.localeCompare(b, 'vi'));
   }, [usersData]);
 
+  // Đếm số đơn theo từng trạng thái (badge trên tab). Dựa trên toàn bộ orders đã tải.
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { All: orders.length };
+    for (const order of orders) {
+      const s = order.status as string;
+      counts[s] = (counts[s] ?? 0) + 1;
+    }
+    return counts;
+  }, [orders]);
+
   // Helper: YYYY-MM-DD string của hôm nay (dùng cho pill "Ship hôm nay")
   const todayStr = useMemo(() => {
     const d = new Date();
@@ -384,13 +394,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
         onClear: () => setSearchTerm(''),
       });
     }
-    if (statusFilter !== 'All') {
-      chips.push({
-        key: 'status',
-        label: `Trạng thái: ${statusFilter}`,
-        onClear: () => setStatusFilter('All'),
-      });
-    }
+    // Trạng thái đã có tab riêng đại diện → không đẩy vào chip để tránh trùng lặp.
     if (paymentStatusFilter !== 'All') {
       chips.push({
         key: 'paymentStatus',
@@ -526,6 +530,9 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions })
         onSearchChange={setSearchTerm}
         onOpenAdvanced={() => setIsAdvancedOpen(true)}
         activeFiltersCount={activeFiltersCount}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+        statusCounts={statusCounts}
         quickPills={quickPills}
         onTogglePending={togglePill_pending}
         onToggleUnpaid={togglePill_unpaid}

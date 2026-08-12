@@ -143,6 +143,7 @@ export const translations = {
       tableActions: "Actions",
       labelCreated: "Created",
       labelUpdated: "Updated",
+      tabAll: "All",
       statusLabels: {
         PENDING: "Pending",
         PROCESSING: "Processing",
@@ -908,6 +909,7 @@ export const translations = {
       tableActions: "Thao tác",
       labelCreated: "Tạo",
       labelUpdated: "Sửa",
+      tabAll: "Tất cả",
       statusLabels: {
         PENDING: "Chờ xử lý",
         PROCESSING: "Đang xử lý",
