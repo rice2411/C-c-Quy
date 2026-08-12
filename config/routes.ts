@@ -19,10 +19,6 @@ import {
   Activity,
   ShieldCheck,
   Tag,
-  Monitor,
-  MessageSquare,
-  QrCode,
-  Bus,
   AlertTriangle,
   HeartPulse,
   Building2,
@@ -184,13 +180,6 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/users",
-    labelKey: "nav.users",
-    icon: UserCog,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN], // Chỉ admin mới quản lý users
-  },
-  {
-    type: "page",
     path: "/employees",
     labelKey: "nav.employees",
     icon: IdCard,
@@ -210,6 +199,13 @@ export const routes: RouteConfig[] = [
     labelKey: "nav.attendanceManage",
     icon: UserCheck,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/users",
+    labelKey: "nav.users",
+    icon: UserCog,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN], // Chỉ admin mới quản lý users
   },
   {
     type: "page",
@@ -248,44 +244,17 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/settings/screens",
-    labelKey: "nav.settingsScreens",
-    icon: Monitor,
-    roles: [UserRole.SUPER_ADMIN],
-  },
-  {
-    type: "page",
-    path: "/settings/zalo",
-    labelKey: "nav.settingsZalo",
-    icon: MessageSquare,
-    roles: [UserRole.SUPER_ADMIN],
-  },
-  {
-    type: "page",
-    path: "/settings/order",
-    labelKey: "nav.settingsOrder",
-    icon: ShoppingCart,
-    roles: [UserRole.SUPER_ADMIN],
-  },
-  {
-    type: "page",
-    path: "/settings/sepay",
-    labelKey: "nav.settingsSepay",
-    icon: QrCode,
-    roles: [UserRole.SUPER_ADMIN],
-  },
-  {
-    type: "page",
     path: "/settings/product",
     labelKey: "nav.settingsProduct",
     icon: Package,
     roles: [UserRole.SUPER_ADMIN],
   },
   {
+    // Gộp các trang cài đặt lẻ (Đơn hàng/Thanh toán/Zalo/Màn hình/Nhà xe) vào 1 trang nhiều tab.
     type: "page",
-    path: "/settings/coaches",
-    labelKey: "nav.settingsCoaches",
-    icon: Bus,
+    path: "/settings",
+    labelKey: "nav.settingsGroup",
+    icon: Settings,
     roles: [UserRole.SUPER_ADMIN],
   },
 ];
@@ -383,12 +352,32 @@ export interface NavGroupConfig {
 
 export const navGroups: NavGroupConfig[] = [
   {
+    // Bán hàng: vận chuyển + khuyến mãi (Đơn hàng để phẳng cho nhanh).
+    key: "sales",
+    labelKey: "nav.salesGroup",
+    icon: ShoppingCart,
+    childPaths: [
+      "/shipping",
+      "/promotions",
+    ],
+  },
+  {
     key: "transactions",
     labelKey: "nav.transactionsHub",
     icon: Wallet,
     childPaths: [
       "/finance/overview",
       "/finance/ledger",
+    ],
+  },
+  {
+    // Đối tác: khách hàng + nhà cung cấp.
+    key: "partners",
+    labelKey: "nav.partnersGroup",
+    icon: Users,
+    childPaths: [
+      "/customers",
+      "/suppliers",
     ],
   },
   {
@@ -435,25 +424,17 @@ export const navGroups: NavGroupConfig[] = [
     ],
   },
   {
+    // Hệ thống & quản trị: người dùng + thông báo + giám sát hệ thống.
     key: "system",
     labelKey: "nav.systemGroup",
     icon: ShieldCheck,
     childPaths: [
+      "/users",
+      "/notifications",
       "/system/traffic",
       "/system/logs",
       "/system/errors",
       "/system/health",
-    ],
-  },
-  {
-    key: "settings",
-    labelKey: "nav.settingsGroup",
-    icon: Settings,
-    childPaths: [
-      "/settings/screens",
-      "/settings/zalo",
-      "/settings/order",
-      "/settings/sepay",
     ],
   },
 ];
