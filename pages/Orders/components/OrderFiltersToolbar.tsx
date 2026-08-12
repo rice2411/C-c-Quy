@@ -1,12 +1,12 @@
 import React from 'react';
-import { Filter } from 'lucide-react';
+import { AlertTriangle, Clock, Filter, MapPin, Truck, Wallet } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { OrderStatus } from '@/types/enums';
 import Box from '@/components/ui/Box';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import Tabs, { type TabsItem } from '@/components/ui/Tabs';
-import FilterToolbar, { type ToolbarOption } from '@/components/shared/FilterToolbar';
+import FilterToolbar, { type ToolbarPill, type ToolbarOption } from '@/components/shared/FilterToolbar';
 
 /** Thứ tự tab trạng thái đơn (theo dòng vòng đời) — 'All' + các OrderStatus. */
 const STATUS_TAB_ORDER: string[] = [
@@ -37,6 +37,12 @@ interface OrderFiltersToolbarProps {
   onSearchChange: (value: string) => void;
   onOpenAdvanced: () => void;
   activeFiltersCount?: number;
+  quickPills?: QuickPillState;
+  onTogglePending?: () => void;
+  onToggleUnpaid?: () => void;
+  onToggleToday?: () => void;
+  onToggleOverdue?: () => void;
+  onToggleProvince?: () => void;
   sortKey?: OrderSortKey;
   onSortChange?: (k: OrderSortKey) => void;
   onClearAll?: () => void;
@@ -51,6 +57,7 @@ interface OrderFiltersToolbarProps {
 
 const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
   searchTerm, onSearchChange, onOpenAdvanced, activeFiltersCount = 0,
+  quickPills, onTogglePending, onToggleUnpaid, onToggleToday, onToggleOverdue, onToggleProvince,
   sortKey, onSortChange, onClearAll, statusFilter = 'All', onStatusChange, statusCounts, actions,
 }) => {
   const { t } = useLanguage();
@@ -83,6 +90,13 @@ const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
     { value: 'status-asc',        label: t('orders.sort.status') },
     { value: 'paymentStatus-asc', label: t('orders.sort.payment') },
   ];
+  const pills: ToolbarPill[] = [
+    { id: 'pending',  label: 'Cần xử lý',       active: !!quickPills?.pending,  onClick: onTogglePending ?? (() => {}),  icon: Clock },
+    { id: 'today',    label: 'Ship hôm nay',    active: !!quickPills?.today,    onClick: onToggleToday ?? (() => {}),    icon: Truck },
+    { id: 'overdue',  label: 'Quá hạn',         active: !!quickPills?.overdue,  onClick: onToggleOverdue ?? (() => {}),  icon: AlertTriangle },
+    { id: 'unpaid',   label: 'Chưa thanh toán', active: !!quickPills?.unpaid,   onClick: onToggleUnpaid ?? (() => {}),   icon: Wallet },
+    { id: 'province', label: 'Đơn tỉnh',        active: !!quickPills?.province, onClick: onToggleProvince ?? (() => {}), icon: MapPin },
+  ];
   return (
     <Box
       layoutClassName="flex shrink-0 flex-col gap-3 p-4 sm:p-5"
@@ -108,6 +122,7 @@ const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
         onSortChange={onSortChange ? (v) => onSortChange(v as OrderSortKey) : undefined}
         onOpenAdvanced={onOpenAdvanced}
         advancedFiltersCount={activeFiltersCount}
+        pills={pills}
         onClearAll={onClearAll}
         actions={actions}
       />

@@ -358,6 +358,34 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions, c
     if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
   };
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Quick filter pills state + handlers
+  // ─────────────────────────────────────────────────────────────────────────────
+  const quickPills = {
+    pending: hideCompleted,
+    unpaid: paymentStatusFilter === 'UNPAID',
+    today:
+      dateType === 'deliveryDate' && dateFrom === todayStr && dateTo === todayStr,
+    overdue: isOverdueFilter,
+    province: isProvinceFilter,
+  };
+
+  const togglePill_pending = () => setHideCompleted((p) => !p);
+  const togglePill_unpaid = () =>
+    setPaymentStatusFilter((p) => (p === 'UNPAID' ? 'All' : 'UNPAID'));
+  const togglePill_today = () => {
+    if (quickPills.today) {
+      setDateFrom('');
+      setDateTo('');
+    } else {
+      setDateType('deliveryDate');
+      setDateFrom(todayStr);
+      setDateTo(todayStr);
+      setSelectedMonth('');
+    }
+  };
+  const togglePill_overdue = () => setIsOverdueFilter((p) => !p);
+  const togglePill_province = () => setIsProvinceFilter((p) => !p);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Active filter chips — list các filter đang bật để render chip bar có thể × bỏ
@@ -507,6 +535,12 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions, c
         onSearchChange={setSearchTerm}
         onOpenAdvanced={() => setIsAdvancedOpen((v) => !v)}
         activeFiltersCount={activeFiltersCount}
+        quickPills={quickPills}
+        onTogglePending={togglePill_pending}
+        onToggleUnpaid={togglePill_unpaid}
+        onToggleToday={togglePill_today}
+        onToggleOverdue={togglePill_overdue}
+        onToggleProvince={togglePill_province}
         statusFilter={statusFilter}
         onStatusChange={setStatusFilter}
         statusCounts={statusCounts}
