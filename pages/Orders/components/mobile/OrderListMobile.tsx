@@ -24,7 +24,6 @@ import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import OrderItemsMini from '@/pages/Orders/components/OrderItemsMini';
 import CarrierBadge from '@/pages/Orders/components/CarrierBadge';
-import OrderSoundTestButton from '@/pages/Orders/components/OrderSoundTestButton';
 
 interface OrderListMobileProps {
   orders: Order[];
@@ -297,7 +296,6 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                 >
                   {order.orderNumber || order.id}
                 </Typography>
-                <OrderSoundTestButton amount={Number(order.total) || 0} />
               </Box>
             </Card>
           );
