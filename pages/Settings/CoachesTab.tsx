@@ -15,16 +15,21 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import EmptyState from '@/components/ui/EmptyState';
+import IconButton from '@/components/ui/IconButton';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
+import ViewToggle from '@/components/ui/ViewToggle';
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import CoachEditModal from '@/pages/Settings/CoachEditModal';
+import { useViewMode } from '@/hooks/useViewMode';
 
 const CoachesTab: React.FC = () => {
   const coachesQuery = useQuery({ queryKey: ['coaches'], queryFn: fetchCoaches });
   const coaches = coachesQuery.data ?? [];
 
   const [search, setSearch] = useState('');
+  const [view, setView] = useViewMode<'list' | 'table' | 'grid'>('coaches-view', 'grid');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Coach | null>(null);
   const [saving, setSaving] = useState(false);
@@ -109,6 +114,7 @@ const CoachesTab: React.FC = () => {
         search={search}
         onSearchChange={setSearch}
         searchPlaceholder="Tìm nhà xe / SĐT / tuyến…"
+        viewToggle={<ViewToggle value={view} onChange={(v) => setView(v as 'list' | 'table' | 'grid')} />}
         actions={addButton}
         stats={
           <Typography size="xs" variant="muted" layoutClassName="text-right">
@@ -119,8 +125,51 @@ const CoachesTab: React.FC = () => {
 
       {filtered.length === 0 ? (
         <EmptyState icon={<Bus className="h-6 w-6" />} title="Chưa có nhà xe phù hợp." />
+      ) : view === 'table' ? (
+        <Box
+          layoutClassName="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700"
+          backgroundClassName="bg-white dark:bg-slate-900"
+        >
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeaderCell textClassName="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Tên nhà xe</TableHeaderCell>
+                <TableHeaderCell textClassName="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">SĐT</TableHeaderCell>
+                <TableHeaderCell textClassName="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Tuyến</TableHeaderCell>
+                <TableHeaderCell textClassName="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Điểm gửi</TableHeaderCell>
+                <TableHeaderCell textClassName="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Phí</TableHeaderCell>
+                <TableHeaderCell layoutClassName="w-20">
+                  <Typography as="span" size="xs" layoutClassName="sr-only">Thao tác</Typography>
+                </TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filtered.map((c) => (
+                <TableRow key={c.id} borderClassName="border-t border-slate-100 dark:border-slate-800" hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-800/60" stateClassName="transition-colors">
+                  <TableCell>
+                    <Typography size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">{c.name}</Typography>
+                  </TableCell>
+                  <TableCell textClassName="text-slate-600 dark:text-slate-300">{c.phone || '—'}</TableCell>
+                  <TableCell textClassName="text-slate-600 dark:text-slate-300">{c.route || '—'}</TableCell>
+                  <TableCell textClassName="text-slate-600 dark:text-slate-300">{c.pickupPoint || '—'}</TableCell>
+                  <TableCell textClassName="text-slate-600 dark:text-slate-300">{c.defaultFee ? formatVND(c.defaultFee) : '—'}</TableCell>
+                  <TableCell layoutClassName="text-right">
+                    <Box layoutClassName="inline-flex items-center gap-1">
+                      <IconButton label="Sửa" size="sm" variant="ghost" onClick={() => openEdit(c)}>
+                        <Pencil className="h-4 w-4" />
+                      </IconButton>
+                      <IconButton label="Xoá" size="sm" variant="danger" onClick={() => handleDelete(c)}>
+                        <Trash2 className="h-4 w-4" />
+                      </IconButton>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Box>
       ) : (
-        <Box layoutClassName="grid gap-3 p-1 sm:grid-cols-2 xl:grid-cols-3">
+        <Box layoutClassName={`grid gap-3 p-1 ${view === 'grid' ? 'sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
           {filtered.map((c) => (
             <Card key={c.id} padding="md" layoutClassName="flex flex-col gap-2" borderClassName="border-slate-200 dark:border-slate-700">
               <Box layoutClassName="flex items-start gap-2">
