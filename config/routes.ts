@@ -19,6 +19,10 @@ import {
   Activity,
   ShieldCheck,
   Tag,
+  Monitor,
+  MessageSquare,
+  QrCode,
+  Bus,
   AlertTriangle,
   HeartPulse,
   Building2,
@@ -222,11 +226,38 @@ export const routes: RouteConfig[] = [
     roles: [UserRole.SUPER_ADMIN],
   },
   {
-    // Gộp các trang cài đặt lẻ (Đơn hàng/Thanh toán/Zalo/Màn hình/Nhà xe) vào 1 trang nhiều tab.
     type: "page",
-    path: "/settings",
-    labelKey: "nav.settingsGroup",
-    icon: Settings,
+    path: "/settings/order",
+    labelKey: "nav.settingsOrder",
+    icon: ShoppingCart,
+    roles: [UserRole.SUPER_ADMIN],
+  },
+  {
+    type: "page",
+    path: "/settings/sepay",
+    labelKey: "nav.settingsSepay",
+    icon: QrCode,
+    roles: [UserRole.SUPER_ADMIN],
+  },
+  {
+    type: "page",
+    path: "/settings/zalo",
+    labelKey: "nav.settingsZalo",
+    icon: MessageSquare,
+    roles: [UserRole.SUPER_ADMIN],
+  },
+  {
+    type: "page",
+    path: "/settings/screens",
+    labelKey: "nav.settingsScreens",
+    icon: Monitor,
+    roles: [UserRole.SUPER_ADMIN],
+  },
+  {
+    type: "page",
+    path: "/settings/coaches",
+    labelKey: "nav.settingsCoaches",
+    icon: Bus,
     roles: [UserRole.SUPER_ADMIN],
   },
 ];
@@ -396,6 +427,19 @@ export const navGroups: NavGroupConfig[] = [
       "/system/logs",
       "/system/errors",
       "/system/health",
+    ],
+  },
+  {
+    // Cài đặt: mỗi mục 1 screen con (Đơn hàng/Thanh toán/Zalo/Màn hình/Nhà xe).
+    key: "settings",
+    labelKey: "nav.settingsGroup",
+    icon: Settings,
+    childPaths: [
+      "/settings/order",
+      "/settings/sepay",
+      "/settings/zalo",
+      "/settings/screens",
+      "/settings/coaches",
     ],
   },
 ];

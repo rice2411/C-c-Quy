@@ -29,7 +29,11 @@ const SystemLogsPage = lazy(() => import("./pages/System/Requests/index"));
 const SystemErrorsPage = lazy(() => import("./pages/System/Errors/index"));
 const SystemHealthPage = lazy(() => import("./pages/System/Health/index"));
 const NotificationsPage = lazy(() => import("./pages/Notifications/index"));
-const SettingsPage = lazy(() => import("./pages/Settings/index"));
+const OrderSettingsTab = lazy(() => import("./pages/Settings/OrderSettingsTab"));
+const SepaySettingsTab = lazy(() => import("./pages/Settings/SepaySettingsTab"));
+const ZaloSettingsTab = lazy(() => import("./pages/Settings/ZaloSettingsTab"));
+const ScreenVisibilityTab = lazy(() => import("./pages/Settings/ScreenVisibilityTab"));
+const CoachesTab = lazy(() => import("./pages/Settings/CoachesTab"));
 const ProductSettings = lazy(() => import("./pages/Settings/ProductSettings"));
 const LoginPage = lazy(() => import("./pages/Login/index"));
 const AuthCallbackPage = lazy(() => import("./pages/AuthCallback/index"));
@@ -237,20 +241,47 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
+      <Route path="settings" element={<Navigate to="/settings/order" replace />} />
       <Route
-        path="settings"
+        path="settings/order"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings")?.roles}>
-            <SettingsPage />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/order")?.roles}>
+            <OrderSettingsTab />
           </RoleBasedRoute>
         }
       />
-      {/* Back-compat: các trang cài đặt lẻ cũ → gộp vào 1 trang nhiều tab */}
-      <Route path="settings/screens" element={<Navigate to="/settings?tab=screens" replace />} />
-      <Route path="settings/zalo" element={<Navigate to="/settings?tab=zalo" replace />} />
-      <Route path="settings/order" element={<Navigate to="/settings?tab=order" replace />} />
-      <Route path="settings/sepay" element={<Navigate to="/settings?tab=sepay" replace />} />
-      <Route path="settings/coaches" element={<Navigate to="/settings?tab=coaches" replace />} />
+      <Route
+        path="settings/sepay"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/sepay")?.roles}>
+            <SepaySettingsTab />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="settings/zalo"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/zalo")?.roles}>
+            <ZaloSettingsTab />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="settings/screens"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/screens")?.roles}>
+            <ScreenVisibilityTab />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="settings/coaches"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/coaches")?.roles}>
+            <CoachesTab />
+          </RoleBasedRoute>
+        }
+      />
       <Route
         path="settings/product"
         element={
