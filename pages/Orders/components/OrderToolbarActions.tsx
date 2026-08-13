@@ -3,13 +3,15 @@
  * Gom gọn: [Làm mới (icon)] · [Thêm ▾ (menu action phụ)] · [Tạo đơn (CTA)]
  * để toolbar không bị dài/rối do 5 nút to chen cạnh ô tìm kiếm.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { Download, MoreHorizontal, PackagePlus, Plus, RefreshCw, Scale, Truck, type LucideIcon } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Popover from '@/components/ui/Popover';
+import BottomSheet from '@/components/ui/BottomSheet';
 import Typography from '@/components/ui/Typography';
 
 interface OrderToolbarActionsProps {
@@ -52,6 +54,45 @@ const OrderToolbarActions: React.FC<OrderToolbarActionsProps> = ({
   onRefresh, isRefreshing, onExport, canExport, onSyncTracking, onCompare, onExportSpx, onCreate,
 }) => {
   const { t } = useLanguage();
+  const isMobile = useIsMobile();
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  // Danh sách mục menu "Thêm" — dùng chung cho Popover (desktop) và BottomSheet (mobile).
+  const renderMenu = (close: () => void) => (
+    <>
+      {canExport ? (
+        <MenuItem icon={Download} label={t('orders.exportCsv')} onClick={() => { close(); onExport(); }} />
+      ) : null}
+      <MenuItem icon={Truck} label="Đồng bộ vận đơn" onClick={() => { close(); onSyncTracking(); }} />
+      <MenuItem icon={Scale} label="So sánh vận đơn" onClick={() => { close(); onCompare(); }} />
+      <MenuItem icon={PackagePlus} label="Xuất file SPX" onClick={() => { close(); onExportSpx(); }} />
+    </>
+  );
+
+  const moreButton = (onClick?: () => void) => (
+    <Button
+      type="button"
+      onClick={onClick}
+      variant="secondary"
+      disableVariantHover
+      disableVariantTextColor
+      leftIcon={<MoreHorizontal />}
+      iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+      backgroundClassName="bg-white dark:bg-slate-800"
+      borderClassName="border border-slate-200 dark:border-slate-600"
+      textClassName="font-medium text-slate-700 dark:text-slate-200"
+      roundedClassName="rounded-xl"
+      sizeClassName="px-3 py-2 text-xs"
+      layoutClassName="inline-flex items-center gap-1.5"
+      hoverClassName="hover:border-primary-300 dark:hover:border-primary-500"
+      stateClassName="transition-colors"
+    >
+      <Typography as="span" size="xs" layoutClassName="hidden sm:inline">
+        {t('common.more')}
+      </Typography>
+    </Button>
+  );
+
   return (
     <Box layoutClassName="flex items-center gap-2">
       <IconButton
@@ -65,43 +106,20 @@ const OrderToolbarActions: React.FC<OrderToolbarActionsProps> = ({
         <RefreshCw className={`h-4 w-4${isRefreshing ? ' animate-spin' : ''}`} />
       </IconButton>
 
-      <Popover
-        align="right"
-        width={216}
-        trigger={
-          <Button
-            type="button"
-            variant="secondary"
-            disableVariantHover
-            disableVariantTextColor
-            leftIcon={<MoreHorizontal />}
-            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-            backgroundClassName="bg-white dark:bg-slate-800"
-            borderClassName="border border-slate-200 dark:border-slate-600"
-            textClassName="font-medium text-slate-700 dark:text-slate-200"
-            roundedClassName="rounded-xl"
-            sizeClassName="px-3 py-2 text-xs"
-            layoutClassName="inline-flex items-center gap-1.5"
-            hoverClassName="hover:border-primary-300 dark:hover:border-primary-500"
-            stateClassName="transition-colors"
-          >
-            <Typography as="span" size="xs" layoutClassName="hidden sm:inline">
-              {t('common.more')}
-            </Typography>
-          </Button>
-        }
-      >
-        {(close) => (
-          <Box layoutClassName="flex flex-col gap-0.5">
-            {canExport ? (
-              <MenuItem icon={Download} label={t('orders.exportCsv')} onClick={() => { close(); onExport(); }} />
-            ) : null}
-            <MenuItem icon={Truck} label="Đồng bộ vận đơn" onClick={() => { close(); onSyncTracking(); }} />
-            <MenuItem icon={Scale} label="So sánh vận đơn" onClick={() => { close(); onCompare(); }} />
-            <MenuItem icon={PackagePlus} label="Xuất file SPX" onClick={() => { close(); onExportSpx(); }} />
-          </Box>
-        )}
-      </Popover>
+      {isMobile ? (
+        <>
+          {moreButton(() => setSheetOpen(true))}
+          <BottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title={t('common.more')}>
+            <Box layoutClassName="flex flex-col gap-0.5">
+              {renderMenu(() => setSheetOpen(false))}
+            </Box>
+          </BottomSheet>
+        </>
+      ) : (
+        <Popover align="right" width={216} trigger={moreButton()}>
+          {(close) => <Box layoutClassName="flex flex-col gap-0.5">{renderMenu(close)}</Box>}
+        </Popover>
+      )}
 
       <Button
         type="button"
