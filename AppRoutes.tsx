@@ -11,10 +11,6 @@ const ShippingPage = lazy(() => import("./pages/Shipping/index"));
 const TxOverviewPage = lazy(() => import("./pages/Transactions/OverviewPage"));
 const TxLedgerPage = lazy(() => import("./pages/Transactions/LedgerPage"));
 const PromotionsPage = lazy(() => import("./pages/Promotions/index"));
-const CommissionPage = lazy(() => import("./pages/Commission/index"));
-const CommissionSettingsPage = lazy(() => import("./pages/Commission/SettingsPage"));
-const CommissionGuidePage = lazy(() => import("./pages/Commission/GuidePage"));
-const MyCommissionPage = lazy(() => import("./pages/MyCommission/index"));
 const InventoryPage = lazy(() => import("./pages/Storage/index"));
 const ProductDetailPage = lazy(() => import("./pages/Storage/product/ProductDetailPage"));
 const CostOverviewPage = lazy(() => import("./pages/CostHub/OverviewTab"));
@@ -120,38 +116,11 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      <Route
-        path="commission"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/commission")?.roles}>
-            <CommissionPage />
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="commission-settings"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/commission-settings")?.roles}>
-            <CommissionSettingsPage />
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="my-commission"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/my-commission")?.roles}>
-            <MyCommissionPage />
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="commission-guide"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/commission-guide")?.roles}>
-            <CommissionGuidePage />
-          </RoleBasedRoute>
-        }
-      />
+      {/* Đã gỡ screen Hoa hồng — redirect các path cũ về Tổng quan */}
+      <Route path="commission" element={<Navigate to="/" replace />} />
+      <Route path="commission-settings" element={<Navigate to="/" replace />} />
+      <Route path="my-commission" element={<Navigate to="/" replace />} />
+      <Route path="commission-guide" element={<Navigate to="/" replace />} />
       <Route
         path="storage"
         element={

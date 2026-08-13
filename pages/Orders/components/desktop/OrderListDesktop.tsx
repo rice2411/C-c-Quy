@@ -106,9 +106,21 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                     </Typography>
                   </Box>
                   <Box layoutClassName="flex items-center gap-1.5">
-                    <Printer
-                      className={`h-3.5 w-3.5 shrink-0 ${order.billPrintedAt ? 'text-blue-600 dark:text-blue-400' : 'opacity-25'}`}
-                    />
+                    <Box
+                      layoutClassName="inline-flex items-center gap-1 px-1.5 py-0.5"
+                      roundedClassName="rounded-full"
+                      backgroundClassName={order.billPrintedAt ? 'bg-slate-100 dark:bg-slate-700/50' : 'bg-amber-100 dark:bg-amber-900/40'}
+                    >
+                      <Printer className={`h-3 w-3 shrink-0 ${order.billPrintedAt ? 'text-slate-400 dark:text-slate-500' : 'text-amber-600 dark:text-amber-400'}`} />
+                      <Typography
+                        as="span"
+                        size="xs"
+                        layoutClassName="font-semibold leading-none"
+                        textClassName={order.billPrintedAt ? 'text-slate-400 dark:text-slate-500' : 'text-amber-700 dark:text-amber-300'}
+                      >
+                        {order.billPrintedAt ? 'Đã in' : 'Chưa in'}
+                      </Typography>
+                    </Box>
                     <Typography
                       as="span"
                       size="xs"

@@ -122,6 +122,21 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
                       {order.customer?.name || '—'}
                     </Typography>
                     <CarrierBadge order={order} />
+                    <Box
+                      layoutClassName="inline-flex shrink-0 items-center gap-1 px-1.5 py-0.5"
+                      roundedClassName="rounded-full"
+                      backgroundClassName={order.billPrintedAt ? 'bg-slate-100 dark:bg-slate-700/50' : 'bg-amber-100 dark:bg-amber-900/40'}
+                    >
+                      <Printer className={`h-3 w-3 shrink-0 ${order.billPrintedAt ? 'text-slate-400 dark:text-slate-500' : 'text-amber-600 dark:text-amber-400'}`} />
+                      <Typography
+                        as="span"
+                        size="xs"
+                        layoutClassName="text-[10px] font-semibold leading-none"
+                        textClassName={order.billPrintedAt ? 'text-slate-400 dark:text-slate-500' : 'text-amber-700 dark:text-amber-300'}
+                      >
+                        {order.billPrintedAt ? 'Đã in' : 'Chưa in'}
+                      </Typography>
+                    </Box>
                   </Box>
                   {order.customer?.phone ? (
                     <a

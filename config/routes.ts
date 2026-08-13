@@ -96,34 +96,6 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/commission",
-    labelKey: "nav.commissionHome",
-    icon: TrendingUp,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  },
-  {
-    type: "page",
-    path: "/commission-settings",
-    labelKey: "nav.commissionSettings",
-    icon: Settings2,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  },
-  {
-    type: "page",
-    path: "/my-commission",
-    labelKey: "nav.myCommission",
-    icon: Wallet,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR],
-  },
-  {
-    type: "page",
-    path: "/commission-guide",
-    labelKey: "nav.commissionGuide",
-    icon: BookOpen,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR],
-  },
-  {
-    type: "page",
     path: "/storage",
     labelKey: "nav.inventory",
     icon: Boxes,
@@ -389,17 +361,6 @@ export const navGroups: NavGroupConfig[] = [
       "/employees",
       "/attendance",
       "/attendance/manage",
-    ],
-  },
-  {
-    key: "commission",
-    labelKey: "nav.commissionGroup",
-    icon: Coins,
-    childPaths: [
-      "/commission",
-      "/commission-settings",
-      "/my-commission",
-      "/commission-guide",
     ],
   },
   {
