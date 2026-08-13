@@ -16,8 +16,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import OrderListDesktop from '@/pages/Orders/components/desktop/OrderListDesktop';
-import { type OrderFiltersState } from '@/pages/Orders/components/modals/OrderFiltersModal';
-import OrderFiltersPanel from '@/pages/Orders/components/OrderFiltersPanel';
+import OrderFiltersModal, { type OrderFiltersState } from '@/pages/Orders/components/modals/OrderFiltersModal';
 import OrderCompareModal from '@/pages/Orders/components/modals/OrderCompareModal';
 import OrderFiltersToolbar from '@/pages/Orders/components/OrderFiltersToolbar';
 import OrderListMobile from '@/pages/Orders/components/mobile/OrderListMobile';
@@ -533,7 +532,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions, c
         actions={actions}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        onOpenAdvanced={() => setIsAdvancedOpen((v) => !v)}
+        onOpenAdvanced={() => setIsAdvancedOpen(true)}
         activeFiltersCount={activeFiltersCount}
         quickPills={quickPills}
         onTogglePending={togglePill_pending}
@@ -568,44 +567,44 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions, c
         }}
       />
 
-      {isAdvancedOpen ? (
-        <OrderFiltersPanel
-          creatorOptions={creatorOptions}
-          initialValues={{
-            searchTerm,
-            statusFilter,
-            productFilter,
-            selectedMonth,
-            paymentStatusFilter,
-            paymentMethodFilter,
-            creatorFilter,
-            trackingStatusFilter,
-            dateFrom,
-            dateTo,
-            dateType,
-            sortField: sortField as any,
-            sortDirection,
-            hideCompleted,
-          }}
-          onApply={(values: OrderFiltersState) => {
-            setSearchTerm(values.searchTerm);
-            setStatusFilter(values.statusFilter);
-            setProductFilter(values.productFilter);
-            setSelectedMonth(values.selectedMonth);
-            setPaymentStatusFilter(values.paymentStatusFilter);
-            setPaymentMethodFilter(values.paymentMethodFilter);
-            setCreatorFilter(values.creatorFilter);
-            setTrackingStatusFilter(values.trackingStatusFilter);
-            setDateFrom(values.dateFrom);
-            setDateTo(values.dateTo);
-            setDateType(values.dateType);
-            setSortField(values.sortField as keyof Order);
-            setSortDirection(values.sortDirection);
-            setHideCompleted(values.hideCompleted);
-          }}
-          onCollapse={() => setIsAdvancedOpen(false)}
-        />
-      ) : null}
+      <OrderFiltersModal
+        isOpen={isAdvancedOpen}
+        onClose={() => setIsAdvancedOpen(false)}
+        creatorOptions={creatorOptions}
+        initialValues={{
+          searchTerm,
+          statusFilter,
+          productFilter,
+          selectedMonth,
+          paymentStatusFilter,
+          paymentMethodFilter,
+          creatorFilter,
+          trackingStatusFilter,
+          dateFrom,
+          dateTo,
+          dateType,
+          sortField: sortField as any,
+          sortDirection,
+          hideCompleted,
+        }}
+        onApply={(values: OrderFiltersState) => {
+          setSearchTerm(values.searchTerm);
+          setStatusFilter(values.statusFilter);
+          setProductFilter(values.productFilter);
+          setSelectedMonth(values.selectedMonth);
+          setPaymentStatusFilter(values.paymentStatusFilter);
+          setPaymentMethodFilter(values.paymentMethodFilter);
+          setCreatorFilter(values.creatorFilter);
+          setTrackingStatusFilter(values.trackingStatusFilter);
+          setDateFrom(values.dateFrom);
+          setDateTo(values.dateTo);
+          setDateType(values.dateType);
+          setSortField(values.sortField as keyof Order);
+          setSortDirection(values.sortDirection);
+          setHideCompleted(values.hideCompleted);
+          setIsAdvancedOpen(false);
+        }}
+      />
 
       <OrderListMobile
         orders={currentOrders}
