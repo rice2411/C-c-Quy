@@ -653,208 +653,79 @@ const ZaloSettingsTab: React.FC = () => {
         {activeGroup ? (
           <div className="max-h-[min(80vh,720px)] overflow-y-auto pr-1">
             <Typography size="xs" variant="muted" layoutClassName="mb-4">
-              Đổi tên hoặc ID nhóm cần bấm &quot;Lưu cấu hình Zalo&quot; ở trang. Thêm / gỡ CTV lưu ngay lên server.
+              Chỉ cần ID nhóm Zalo và loại thông báo. Nhớ bấm &quot;Lưu cấu hình&quot; để lưu thay đổi.
             </Typography>
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
-              {/* Column: group info */}
-              <div className="space-y-4">
-                <Typography size="xs" layoutClassName="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Thông tin nhóm
-                </Typography>
-
-                <Box
-                  layoutClassName="rounded-xl border border-slate-100 p-4 dark:border-slate-700/80"
-                  backgroundClassName="bg-slate-50/70 dark:bg-slate-800/40"
-                >
-                  <Typography
-                    size="xs"
-                    layoutClassName="mb-2 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                  >
-                    Tên nhóm
+            <div className="space-y-4">
+              {/* ID nhóm Zalo */}
+              <Box
+                layoutClassName="rounded-xl border border-slate-200 p-4 dark:border-slate-600"
+                backgroundClassName="bg-slate-50/70 dark:bg-slate-800/40"
+              >
+                <Box layoutClassName="mb-2 flex items-center justify-between gap-2">
+                  <Typography size="xs" layoutClassName="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    ID nhóm Zalo <span className="text-red-500">*</span>
                   </Typography>
-                  <Input
-                    value={activeGroup.name}
-                    onChange={(e) => updateGroup(activeGroup.id, { name: e.target.value })}
-                    placeholder="VD: Nhóm khu vực A"
-                    containerClassName="w-full"
-                  />
+                  <Button
+                    type="button"
+                    onClick={() => handleTestGroup(activeGroup.zaloGroupId, activeGroup.name)}
+                    disabled={!activeGroup.zaloGroupId.trim() || testingGroupId === activeGroup.zaloGroupId.trim()}
+                    leftIcon={<Send className="h-3 w-3" />}
+                    sizeClassName="px-2.5 py-1"
+                    backgroundClassName="bg-slate-800 dark:bg-slate-700"
+                    textClassName="text-[11px] font-semibold text-white"
+                    roundedClassName="rounded-md"
+                    disableVariantHover
+                    disableVariantTextColor
+                  >
+                    {testingGroupId === activeGroup.zaloGroupId.trim() ? 'Đang gửi…' : 'Test'}
+                  </Button>
                 </Box>
+                <Input
+                  value={activeGroup.zaloGroupId}
+                  onChange={(e) => updateGroup(activeGroup.id, { zaloGroupId: e.target.value })}
+                  placeholder="Dán hoặc nhập ID nhóm từ Zalo"
+                  containerClassName="w-full"
+                />
+              </Box>
 
-                <Box
-                  layoutClassName="rounded-xl border border-slate-200 p-4 dark:border-slate-600"
-                  backgroundClassName="bg-gradient-to-b from-slate-50 to-white dark:from-slate-800/60 dark:to-slate-900"
-                >
-                  <Box layoutClassName="mb-2 flex items-center justify-between gap-2">
-                    <Typography
-                      size="xs"
-                      layoutClassName="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                    >
-                      ID nhóm Zalo <span className="text-red-500">*</span>
-                    </Typography>
-                    <Hash className="h-3.5 w-3.5 text-slate-400" />
-                  </Box>
-                  {editingZaloId || !activeGroup.zaloGroupId.trim() ? (
-                    <Box layoutClassName="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-                      <Input
-                        value={activeGroup.zaloGroupId}
-                        onChange={(e) => updateGroup(activeGroup.id, { zaloGroupId: e.target.value })}
-                        placeholder="Dán hoặc nhập ID nhóm từ Zalo"
-                        containerClassName="min-w-0 flex-1"
-                      />
+              {/* Loại thông báo */}
+              <Box
+                layoutClassName="rounded-xl border border-slate-100 p-4 dark:border-slate-700/80"
+                backgroundClassName="bg-slate-50/70 dark:bg-slate-800/40"
+              >
+                <Typography size="xs" layoutClassName="mb-2 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Loại thông báo
+                </Typography>
+                <Box layoutClassName="flex flex-wrap gap-1.5">
+                  {([
+                    ['Tạo đơn', activeGroup.notifyOnCreate !== false, 'notifyOnCreate'],
+                    ['Sửa đơn', activeGroup.notifyOnUpdate !== false, 'notifyOnUpdate'],
+                    ['Xoá đơn', activeGroup.notifyOnDelete !== false, 'notifyOnDelete'],
+                  ] as Array<[string, boolean, 'notifyOnCreate' | 'notifyOnUpdate' | 'notifyOnDelete']>).map(
+                    ([label, val, key]) => (
                       <Button
+                        key={key}
                         type="button"
-                        onClick={() => {
-                          if (!activeGroup.zaloGroupId.trim()) {
-                            toast.error('Nhập ID nhóm trước khi ẩn');
-                            return;
-                          }
-                          setEditingZaloId(false);
-                          setPeekZaloId(false);
-                        }}
-                        sizeClassName="px-4 py-2 sm:shrink-0"
-                        backgroundClassName="bg-slate-800 dark:bg-slate-600"
-                        textClassName="text-sm font-semibold text-white"
-                        roundedClassName="rounded-lg"
-                        disableVariantHover
-                        disableVariantTextColor
-                      >
-                        Xong — ẩn ID
+                        onClick={() => updateGroup(activeGroup.id, { [key]: !val } as Partial<ZaloGroupConfig>)}
+                        className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
+                          val
+                            ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
+                            : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
+                        }`}
+                       variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
+                        {val ? <Check className="h-3 w-3" /> : null}
+                        {label}
                       </Button>
-                    </Box>
-                  ) : (
-                    <Box layoutClassName="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200/80 bg-white px-3 py-2.5 shadow-sm dark:border-slate-600 dark:bg-slate-900/80">
-                      <Typography
-                        size="sm"
-                        layoutClassName="min-w-0 flex-1 break-all font-mono tracking-tight"
-                        textClassName="text-slate-800 dark:text-slate-100"
-                      >
-                        {peekZaloId ? activeGroup.zaloGroupId.trim() : maskZaloGroupId(activeGroup.zaloGroupId)}
-                      </Typography>
-                      <Box layoutClassName="flex shrink-0 gap-1">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          sizeClassName="rounded-lg p-2"
-                          onClick={() => setPeekZaloId((v) => !v)}
-                          aria-label={peekZaloId ? 'Hide id' : 'Peek id'}
-                          textClassName="text-slate-500 hover:text-primary-600 dark:hover:text-primary-400"
-                        >
-                          {peekZaloId ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          sizeClassName="rounded-lg px-3 py-1.5 text-xs font-semibold"
-                          onClick={() => {
-                            setEditingZaloId(true);
-                            setPeekZaloId(false);
-                          }}
-                          textClassName="text-primary-600 dark:text-primary-400"
-                        >
-                          Sửa ID
-                        </Button>
-                      </Box>
-                    </Box>
+                    ),
                   )}
                 </Box>
+              </Box>
+            </div>
 
-                <Box
-                  layoutClassName="rounded-xl border border-slate-100 p-4 dark:border-slate-700/80"
-                  backgroundClassName="bg-slate-50/70 dark:bg-slate-800/40"
-                >
-                  <Box layoutClassName="mb-3 flex items-center justify-between gap-2">
-                    <Box layoutClassName="flex items-center gap-2">
-                      <Bell className="h-3.5 w-3.5 text-primary-600" />
-                      <Typography
-                        size="xs"
-                        layoutClassName="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                      >
-                        Thông báo cho nhóm này
-                      </Typography>
-                    </Box>
-                    <Button
-                      type="button"
-                      onClick={() => handleTestGroup(activeGroup.zaloGroupId, activeGroup.name)}
-                      disabled={!activeGroup.zaloGroupId.trim() || testingGroupId === activeGroup.zaloGroupId.trim()}
-                      leftIcon={<Send className="h-3 w-3" />}
-                      sizeClassName="px-2.5 py-1"
-                      backgroundClassName="bg-slate-800 dark:bg-slate-700"
-                      textClassName="text-[11px] font-semibold text-white"
-                      roundedClassName="rounded-md"
-                      disableVariantHover
-                      disableVariantTextColor
-                    >
-                      {testingGroupId === activeGroup.zaloGroupId.trim() ? 'Đang gửi…' : 'Test'}
-                    </Button>
-                  </Box>
-
-                  <Box layoutClassName="flex flex-wrap gap-1.5">
-                    {([
-                      ['Tạo đơn', activeGroup.notifyOnCreate !== false, 'notifyOnCreate'],
-                      ['Sửa đơn', activeGroup.notifyOnUpdate !== false, 'notifyOnUpdate'],
-                      ['Xoá đơn', activeGroup.notifyOnDelete !== false, 'notifyOnDelete'],
-                    ] as Array<[string, boolean, 'notifyOnCreate' | 'notifyOnUpdate' | 'notifyOnDelete']>).map(
-                      ([label, val, key]) => (
-                        <Button
-                          key={key}
-                          type="button"
-                          onClick={() =>
-                            updateGroup(activeGroup.id, { [key]: !val } as Partial<ZaloGroupConfig>)
-                          }
-                          className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
-                            val
-                              ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
-                              : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
-                          }`}
-                         variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
-                          {val ? <Check className="h-3 w-3" /> : null}
-                          {label}
-                        </Button>
-                      ),
-                    )}
-                  </Box>
-
-                  {activeGroup.notifyOnUpdate !== false && (
-                    <Box layoutClassName="mt-3">
-                      <Typography
-                        size="xs"
-                        layoutClassName="mb-1.5 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
-                      >
-                        Chỉ bắn khi field đổi (rỗng = tất cả)
-                      </Typography>
-                      <Box layoutClassName="flex flex-wrap gap-1.5">
-                        {ZALO_TRACKABLE_FIELDS.map((f) => {
-                          const wl = activeGroup.updateFieldWhitelist ?? [];
-                          const active = wl.includes(f.key);
-                          return (
-                            <Button
-                              key={f.key}
-                              type="button"
-                              onClick={() =>
-                                updateGroup(activeGroup.id, {
-                                  updateFieldWhitelist: active
-                                    ? wl.filter((x) => x !== f.key)
-                                    : [...wl, f.key],
-                                })
-                              }
-                              className={`rounded-md border px-2 py-1 text-[11px] transition ${
-                                active
-                                  ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300'
-                                  : 'border-slate-200 bg-white text-slate-500 hover:border-primary-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
-                              }`}
-                             variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
-                              {f.label}
-                            </Button>
-                          );
-                        })}
-                      </Box>
-                    </Box>
-                  )}
-                </Box>
-              </div>
-
-              {/* Column: members + add */}
+            {/* removed: tên nhóm / whitelist / danh sách CTV */}
+            {false ? (
+              <div className="space-y-4">
               <div className="space-y-4">
                 <Typography size="xs" layoutClassName="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   CTV &amp; thêm người
@@ -1116,6 +987,7 @@ const ZaloSettingsTab: React.FC = () => {
                 </Box>
               </div>
             </div>
+            ) : null}
           </div>
         ) : null}
       </BaseModal>
