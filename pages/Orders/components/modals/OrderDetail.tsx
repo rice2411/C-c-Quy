@@ -675,7 +675,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         hoverClassName="hover:bg-blue-100 dark:hover:bg-blue-900/30"
         textClassName="text-sm font-medium text-blue-700 dark:text-blue-300"
         roundedClassName="rounded-lg"
-        layoutClassName="w-full justify-center px-4 py-2 sm:w-auto"
+        layoutClassName="w-full justify-center px-4 py-2.5 sm:w-auto sm:py-2"
         stateClassName="transition-colors disabled:opacity-50"
         leftIcon={<Printer className="h-4 w-4" />}
         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
@@ -694,7 +694,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-900/30"
         textClassName="text-sm font-medium text-primary-700 dark:text-primary-300"
         roundedClassName="rounded-lg"
-        layoutClassName="w-full justify-center px-4 py-2 sm:mr-auto sm:w-auto"
+        layoutClassName="w-full justify-center px-4 py-2.5 sm:mr-auto sm:w-auto sm:py-2"
         stateClassName="transition-colors disabled:opacity-50"
         leftIcon={<Share2 className="h-4 w-4" />}
         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
@@ -712,7 +712,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
         textClassName="text-sm font-medium text-slate-700 dark:text-slate-300"
         roundedClassName="rounded-lg"
-        layoutClassName="w-full justify-center px-4 py-2 sm:w-auto"
+        layoutClassName="w-full justify-center px-4 py-2.5 sm:w-auto sm:py-2"
         stateClassName="transition-colors"
       >
         {t('detail.close')}
@@ -726,7 +726,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           textClassName="text-sm font-medium text-white"
           roundedClassName="rounded-lg"
           shadowClassName="shadow-sm shadow-primary-200 dark:shadow-none"
-          layoutClassName="w-full justify-center px-4 py-2 sm:w-auto"
+          layoutClassName="order-first col-span-2 w-full justify-center px-4 py-2.5 sm:order-none sm:col-auto sm:w-auto sm:py-2"
           stateClassName="transition-colors"
           variant="primary"
           disableVariantHover
@@ -747,7 +747,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           hoverClassName="hover:bg-red-100 dark:hover:bg-red-900/30"
           textClassName="text-sm font-medium text-red-700 dark:text-red-300"
           roundedClassName="rounded-lg"
-          layoutClassName="w-full justify-center px-4 py-2 sm:w-auto"
+          layoutClassName="w-full justify-center px-4 py-2.5 sm:w-auto sm:py-2"
           stateClassName="transition-colors"
           leftIcon={<Trash2 className="h-4 w-4" />}
           iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
@@ -787,7 +787,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     >
       <Box layoutClassName="flex flex-col h-full">
         <Box
-          layoutClassName="flex space-x-6 px-6"
+          layoutClassName="flex gap-4 overflow-x-auto scrollbar-hide px-4 sm:gap-6 sm:px-6"
           borderClassName="border-b border-slate-100 dark:border-slate-700"
           backgroundClassName="bg-white dark:bg-slate-800"
           stateClassName="transition-colors"
@@ -806,7 +806,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 ? 'text-sm font-medium text-primary-600 dark:text-primary-400'
                 : 'text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
             }
-            layoutClassName="rounded-none py-4 shadow-none"
+            layoutClassName="shrink-0 whitespace-nowrap rounded-none py-3.5 shadow-none"
             stateClassName="transition-colors"
           >
             {t('detail.tabDetails')}
@@ -825,7 +825,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 ? 'text-sm font-medium text-amber-600 dark:text-amber-400'
                 : 'text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
             }
-            layoutClassName="flex items-center gap-2 rounded-none py-4 shadow-none"
+            layoutClassName="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-none py-3.5 shadow-none"
             stateClassName="transition-colors"
             leftIcon={<Wallet className="h-4 w-4" />}
           >
@@ -855,7 +855,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                 ? 'text-sm font-medium text-sky-600 dark:text-sky-400'
                 : 'text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
             }
-            layoutClassName="flex items-center gap-2 rounded-none py-4 shadow-none"
+            layoutClassName="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-none py-3.5 shadow-none"
             stateClassName="transition-colors"
             leftIcon={<History className="h-4 w-4" />}
           >
@@ -896,7 +896,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                   ? 'text-sm font-medium text-primary-600 dark:text-primary-400'
                   : 'text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
               }
-              layoutClassName="flex items-center gap-2 rounded-none py-4 shadow-none"
+              layoutClassName="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-none py-3.5 shadow-none"
               stateClassName="transition-colors"
               leftIcon={<Truck className="h-4 w-4" />}
             >
