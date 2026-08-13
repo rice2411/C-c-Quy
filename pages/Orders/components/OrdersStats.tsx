@@ -33,28 +33,24 @@ const OrdersStats: React.FC<OrdersStatsProps> = ({ orders }) => {
         icon: Package,
         label: t('dashboard.totalOrders'),
         value: String(orders.length),
-        sub: t('orders.stats.scopeHint'),
         accent: '#2563eb',
       },
       {
         icon: AlertCircle,
         label: t('dashboard.pending'),
         value: String(pending),
-        sub: t('dashboard.requiresAttention'),
         accent: '#d97706',
       },
       {
         icon: XCircle,
         label: t('orders.stats.cancelledOrders'),
         value: String(cancelled),
-        sub: t('orders.stats.cancelledHint'),
         accent: '#64748b',
       },
       {
         icon: Wallet,
         label: t('orders.stats.unpaidOrders'),
         value: String(unpaid),
-        sub: t('orders.stats.unpaidHint'),
         accent: '#e11d48',
       },
     ];
