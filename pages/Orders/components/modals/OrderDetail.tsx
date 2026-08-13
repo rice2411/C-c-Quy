@@ -680,7 +680,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         leftIcon={<Printer className="h-4 w-4" />}
         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
       >
-        {printing ? 'Đang in...' : billPrinted ? 'In lại (bill+bếp)' : 'In bill + bếp'}
+        {printing ? 'Đang in...' : 'In đơn hàng'}
       </Button>
       <Button
         type="button"
