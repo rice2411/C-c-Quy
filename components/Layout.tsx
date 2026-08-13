@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut, ChevronDown, Menu, LayoutGrid, RefreshCw, MoreVertical } from 'lucide-react';
+import { LogOut, ChevronDown, Menu, LayoutGrid, MoreVertical } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,21 +25,13 @@ const Layout: React.FC = () => {
   // PWA: phát hiện bản web mới → cho user bấm cập nhật (reload lấy asset + dữ liệu mới nhất).
   // Poll mỗi 60s để bắt bản deploy mới mà không cần reload thủ công.
   const swReg = React.useRef<ServiceWorkerRegistration | null>(null);
-  const {
-    needRefresh: [needRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
+  // Poll SW mỗi 60s để tải bản deploy mới ở nền; bản mới tự áp ở lần mở app kế tiếp
+  // (đã bỏ nút "Tải lại bản mới nhất" theo yêu cầu).
+  useRegisterSW({
     onRegisteredSW(_swUrl, r) {
       if (r) { swReg.current = r; setInterval(() => { void r.update(); }, 60_000); }
     },
   });
-
-  // Nút cập nhật luôn hiện: có bản mới → áp bản mới + reload; không thì kiểm tra rồi tải lại.
-  const forceUpdate = async () => {
-    if (needRefresh) { updateServiceWorker(true); return; }
-    try { await swReg.current?.update(); } catch { /* bỏ qua */ }
-    window.location.reload();
-  };
 
   const pingDot =
     ping.level === 'good' ? 'bg-emerald-500' : ping.level === 'ok' ? 'bg-amber-500' : 'bg-red-500';
@@ -250,19 +242,8 @@ const Layout: React.FC = () => {
             </button>
           </div>
 
-          {/* Phiên bản web + nút cập nhật (luôn hiện; nổi bật khi có bản mới) */}
-          <div className="pt-3 space-y-2">
-            <button
-              onClick={forceUpdate}
-              className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                needRefresh
-                  ? 'bg-primary-600 text-white hover:bg-primary-700 animate-pulse'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
-              }`}
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              {needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
-            </button>
+          {/* Phiên bản web */}
+          <div className="pt-3">
             <p className="text-center text-[11px] font-mono text-slate-400 dark:text-slate-500">v{__BUILD_ID__}</p>
           </div>
         </nav>
@@ -383,19 +364,6 @@ const Layout: React.FC = () => {
                       </span>
                     )}
                  </div>
-                 {/* Cập nhật — mobile luôn hiện (desktop dùng nút ở cuối sidebar); nổi bật khi có bản mới */}
-                 <button
-                    onClick={forceUpdate}
-                    aria-label={needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
-                    title={needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
-                    className={`hidden sm:inline-flex md:hidden items-center justify-center w-9 h-9 rounded-lg transition-colors active:scale-90 ${
-                      needRefresh
-                        ? 'bg-primary-600 text-white hover:bg-primary-700 animate-pulse'
-                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
-                    }`}
-                 >
-                    <RefreshCw className="w-5 h-5" />
-                 </button>
                  {/* Đăng xuất — chỉ dải sm→md (desktop dùng nút trong sidebar; mobile <sm dùng menu ⋯) */}
                  <button
                     onClick={handleLogout}
@@ -414,11 +382,7 @@ const Layout: React.FC = () => {
                        aria-haspopup="true"
                        aria-expanded={moreOpen}
                        aria-label="Thêm"
-                       className={`inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors active:scale-90 ${
-                         needRefresh
-                           ? 'text-primary-600 dark:text-primary-400'
-                           : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
-                       }`}
+                       className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors active:scale-90"
                     >
                        <MoreVertical className="w-5 h-5" />
                     </button>
@@ -440,14 +404,6 @@ const Layout: React.FC = () => {
                              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Giao diện</span>
                              <ThemeToggle />
                           </div>
-                          <button
-                             type="button"
-                             onClick={() => { void forceUpdate(); setMoreOpen(false); }}
-                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                          >
-                             <RefreshCw className={`w-4 h-4 ${needRefresh ? 'text-primary-600 dark:text-primary-400' : ''}`} />
-                             {needRefresh ? t('nav.updateAvailable') : t('nav.checkUpdate')}
-                          </button>
                           <button
                              type="button"
                              onClick={() => { handleLogout(); setMoreOpen(false); }}
