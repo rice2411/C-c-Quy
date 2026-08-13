@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import DatePicker from '@/components/ui/DatePicker';
 import { ArrowDownWideNarrow, ArrowUpWideNarrow, Calendar, Filter, Package, RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -159,8 +160,8 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
 
   if (!show && !isOpen) return null;
 
-  return (
-    <Box layoutClassName="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4">
+  return createPortal(
+    <Box layoutClassName="fixed inset-0 z-[80] flex items-center justify-center p-0 sm:p-4">
       <Box
         layoutClassName="fixed inset-0 bg-black/40 transition-opacity duration-300 ease-out"
         stateClassName={isAnimating ? 'opacity-100' : 'opacity-0'}
@@ -562,7 +563,8 @@ const OrderFiltersModal: React.FC<OrderFiltersModalProps> = ({ isOpen, initialVa
           </Box>
         </Box>
       </Box>
-    </Box>
+    </Box>,
+    document.body,
   );
 };
 
