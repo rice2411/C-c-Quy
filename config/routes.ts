@@ -30,6 +30,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
+import ZaloIcon from "@/components/ui/ZaloIcon";
 import { ScreenVisibilityMap } from "@/types";
 
 export type RouteType = "page" | "tab";
@@ -243,7 +244,7 @@ export const routes: RouteConfig[] = [
     type: "page",
     path: "/settings/zalo",
     labelKey: "nav.settingsZalo",
-    icon: MessageSquare,
+    icon: ZaloIcon as unknown as LucideIcon,
     roles: [UserRole.SUPER_ADMIN],
   },
   {
