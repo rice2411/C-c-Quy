@@ -527,6 +527,48 @@ const ZaloSettingsTab: React.FC = () => {
         }
       />
 
+      {/* Group chính — 1 row */}
+      <Card
+        padding="md"
+        layoutClassName="flex flex-col gap-3 sm:flex-row sm:items-center"
+        borderClassName="border border-primary-200 dark:border-primary-800/60"
+        backgroundClassName="bg-primary-50/50 dark:bg-primary-950/20"
+      >
+        <Box layoutClassName="flex shrink-0 items-center gap-2">
+          <ZaloIcon className="h-8 w-8 rounded-lg" />
+          <Box>
+            <Typography size="sm" layoutClassName="font-bold" textClassName="text-slate-900 dark:text-white">
+              Group chính
+            </Typography>
+            <Typography size="xs" variant="muted">Nhận mọi thông báo (admin)</Typography>
+          </Box>
+        </Box>
+        <Box layoutClassName="min-w-0 flex-1">
+          <Input
+            value={mainGroupId}
+            onChange={(e) => setMainGroupId(e.target.value)}
+            placeholder="ID group chính (trống = dùng env)"
+            containerClassName="w-full"
+          />
+        </Box>
+        <Button
+          type="button"
+          onClick={() => handleTestGroup(mainGroupId, 'Group chính')}
+          disabled={!mainGroupId.trim() || testingGroupId === mainGroupId.trim()}
+          leftIcon={<Send className="h-3.5 w-3.5" />}
+          iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+          sizeClassName="px-3 py-2"
+          backgroundClassName="bg-slate-800 dark:bg-slate-700"
+          textClassName="text-xs font-semibold text-white"
+          roundedClassName="rounded-lg"
+          layoutClassName="inline-flex shrink-0 items-center justify-center gap-1.5"
+          disableVariantHover
+          disableVariantTextColor
+        >
+          {testingGroupId === mainGroupId.trim() ? 'Đang gửi…' : 'Test gửi'}
+        </Button>
+      </Card>
+
       {filteredGroups.length === 0 ? (
         <EmptyState
           icon={<ZaloIcon className="h-6 w-6 rounded-md" />}
@@ -640,119 +682,6 @@ const ZaloSettingsTab: React.FC = () => {
           })}
         </Box>
       )}
-
-
-      {/* ╭─────── SECTION: THÔNG BÁO ───────╮ */}
-      <Box layoutClassName="flex items-center gap-2 pt-2">
-        <Bell className="h-5 w-5 text-primary-600" />
-        <Heading level={2} textClassName="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-          Thông báo
-        </Heading>
-      </Box>
-      <Box
-        layoutClassName="rounded-2xl border border-slate-200 p-5 dark:border-slate-700"
-        backgroundClassName="bg-white dark:bg-slate-900"
-      >
-        <Box layoutClassName="mb-4 flex items-center gap-2">
-          <Bell className="h-4 w-4 text-primary-600" />
-          <Typography size="sm" layoutClassName="font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-            Cài đặt chung — Group chính
-          </Typography>
-        </Box>
-
-        <Box layoutClassName="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <Box>
-            <Typography size="xs" layoutClassName="mb-1.5 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              ID group chính
-            </Typography>
-            <Input
-              value={mainGroupId}
-              onChange={(e) => setMainGroupId(e.target.value)}
-              placeholder="VD: 4912345678901234567"
-              containerClassName="w-full"
-            />
-            <Typography size="xs" variant="muted" layoutClassName="mt-1">
-              Nhập ID group nhận thông báo chính (admin). Trống = dùng giá trị từ env.
-            </Typography>
-            <Box layoutClassName="mt-2 flex gap-2">
-              <Button
-                type="button"
-                onClick={() => handleTestGroup(mainGroupId, 'Group chính')}
-                disabled={!mainGroupId.trim() || testingGroupId === mainGroupId.trim()}
-                leftIcon={<Send className="h-3.5 w-3.5" />}
-                sizeClassName="px-3 py-1.5"
-                backgroundClassName="bg-slate-800 dark:bg-slate-700"
-                textClassName="text-xs font-semibold text-white"
-                roundedClassName="rounded-lg"
-                disableVariantHover
-                disableVariantTextColor
-              >
-                {testingGroupId === mainGroupId.trim() ? 'Đang gửi…' : 'Test gửi'}
-              </Button>
-            </Box>
-          </Box>
-
-          <Box>
-            <Typography size="xs" layoutClassName="mb-2 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Bắn thông báo khi
-            </Typography>
-            <Box layoutClassName="flex flex-wrap gap-2">
-              {([
-                ['Tạo đơn', mainNotifyOnCreate, setMainNotifyOnCreate],
-                ['Sửa đơn', mainNotifyOnUpdate, setMainNotifyOnUpdate],
-                ['Xoá đơn', mainNotifyOnDelete, setMainNotifyOnDelete],
-              ] as Array<[string, boolean, (v: boolean) => void]>).map(([label, val, setter]) => (
-                <Button
-                  key={label}
-                  type="button"
-                  onClick={() => setter(!val)}
-                  className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
-                    val
-                      ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
-                      : 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
-                  }`}
-                 variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
-                  {val ? <Check className="h-3 w-3" /> : null}
-                  {label}
-                </Button>
-              ))}
-            </Box>
-
-            {mainNotifyOnUpdate && (
-              <Box layoutClassName="mt-3">
-                <Typography size="xs" layoutClassName="mb-1.5 font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Chỉ bắn khi field đổi (rỗng = tất cả)
-                </Typography>
-                <Box layoutClassName="flex flex-wrap gap-1.5">
-                  {ZALO_TRACKABLE_FIELDS.map((f) => {
-                    const active = mainUpdateFieldWhitelist.includes(f.key);
-                    return (
-                      <Button
-                        key={f.key}
-                        type="button"
-                        onClick={() =>
-                          setMainUpdateFieldWhitelist(
-                            active
-                              ? mainUpdateFieldWhitelist.filter((x) => x !== f.key)
-                              : [...mainUpdateFieldWhitelist, f.key]
-                          )
-                        }
-                        className={`rounded-md border px-2 py-1 text-[11px] transition ${
-                          active
-                            ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-800 dark:bg-primary-950/40 dark:text-primary-300'
-                            : 'border-slate-200 bg-white text-slate-500 hover:border-primary-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400'
-                        }`}
-                       variant="ghost" disableVariantHover disableVariantTextColor borderClassName="border-transparent">
-                        {f.label}
-                      </Button>
-                    );
-                  })}
-                </Box>
-              </Box>
-            )}
-          </Box>
-        </Box>
-      </Box>
 
 
       <BaseModal
