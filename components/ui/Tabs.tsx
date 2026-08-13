@@ -46,7 +46,7 @@ const Tabs: React.FC<TabsProps> = ({ items, value, onChange, className }) => {
 
   return (
     <div className={wrapperClassName}>
-      <div ref={containerRef} className="relative flex gap-6">
+      <div ref={containerRef} className="relative flex gap-4 sm:gap-6">
         {items.map((item, index) => {
           const isActive = value === item.id;
           const isDisabled = Boolean(item.disabled);
@@ -59,7 +59,7 @@ const Tabs: React.FC<TabsProps> = ({ items, value, onChange, className }) => {
               type="button"
               onClick={() => !isDisabled && onChange(item.id)}
               disabled={isDisabled}
-              className={`relative pb-2 text-sm font-semibold tracking-wide uppercase transition-colors duration-200 ${
+              className={`relative shrink-0 whitespace-nowrap pb-2 text-sm font-semibold tracking-wide uppercase transition-colors duration-200 ${
                 isActive
                   ? 'text-primary-500 dark:text-primary-400'
                   : isDisabled
