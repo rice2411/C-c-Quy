@@ -1,10 +1,10 @@
 /**
  * BottomSheet — tấm trượt LÊN từ đáy màn hình (mobile action sheet), render qua PORTAL.
  * Đóng khi bấm nền tối / Esc. Có thanh kéo + tiêu đề tuỳ chọn + chừa safe-area đáy.
+ * Animation mở dùng double rAF (commit khung "đóng ở đáy" trước) → trượt lên mượt cả khi mở.
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useFadeAnimation } from '@/hooks/useFadeAnimation';
 
 interface BottomSheetProps {
   open: boolean;
@@ -14,7 +14,28 @@ interface BottomSheetProps {
 }
 
 const BottomSheet: React.FC<BottomSheetProps> = ({ open, onClose, title, children }) => {
-  const { show, isAnimating } = useFadeAnimation(open, true);
+  const [render, setRender] = useState(open);
+  const [shown, setShown] = useState(false);
+
+  // Mở: mount → paint khung translate-y-full → khung sau set shown → trượt lên.
+  // Đóng: bỏ shown (trượt xuống) → sau 300ms unmount.
+  useEffect(() => {
+    if (open) {
+      setRender(true);
+      const id = requestAnimationFrame(() => requestAnimationFrame(() => setShown(true)));
+      return () => cancelAnimationFrame(id);
+    }
+    setShown(false);
+    const t = setTimeout(() => setRender(false), 300);
+    return () => clearTimeout(t);
+  }, [open]);
+
+  // Khoá scroll nền khi đang mở; trả lại khi đóng hẳn / unmount.
+  useEffect(() => {
+    if (render) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
+    return () => { document.body.style.overflow = ''; };
+  }, [render]);
 
   useEffect(() => {
     if (!open) return;
@@ -23,20 +44,20 @@ const BottomSheet: React.FC<BottomSheetProps> = ({ open, onClose, title, childre
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  if (!show && !open) return null;
+  if (!render) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[130] flex items-end">
       <div
-        className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${isAnimating ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${shown ? 'opacity-100' : 'opacity-0'}`}
         onClick={onClose}
         aria-hidden="true"
       />
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative w-full max-h-[80vh] overflow-y-auto rounded-t-2xl border-t border-slate-200 bg-white p-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] shadow-xl transition-transform duration-300 ease-out dark:border-slate-700 dark:bg-slate-800 ${
-          isAnimating ? 'translate-y-0' : 'translate-y-full'
+        className={`relative w-full max-h-[80vh] overflow-y-auto rounded-t-2xl border-t border-slate-200 bg-white p-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] shadow-xl transition-transform duration-300 ease-out will-change-transform dark:border-slate-700 dark:bg-slate-800 ${
+          shown ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
         <div className="mx-auto mb-2 mt-1 h-1.5 w-10 shrink-0 rounded-full bg-slate-300 dark:bg-slate-600" />
