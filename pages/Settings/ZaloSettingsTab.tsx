@@ -512,14 +512,21 @@ const ZaloSettingsTab: React.FC = () => {
         }
       />
 
-      <Card
-        padding="none"
-        layoutClassName="overflow-hidden"
-        borderClassName="border-slate-100 dark:border-slate-700"
-        backgroundClassName="bg-white dark:bg-slate-800"
-      >
-        <Box layoutClassName="overflow-x-auto">
-          <Table>
+      {filteredGroups.length === 0 ? (
+        <EmptyState
+          icon={<ZaloIcon className="h-6 w-6 rounded-md" />}
+          title={groups.length === 0 ? 'Chưa có nhóm Zalo' : 'Không có nhóm phù hợp'}
+          description="Bấm &quot;Thêm nhóm&quot; để tạo nhóm gửi thông báo."
+        />
+      ) : (
+        <Card
+          padding="none"
+          layoutClassName="overflow-hidden"
+          borderClassName="border-slate-100 dark:border-slate-700"
+          backgroundClassName="bg-white dark:bg-slate-800"
+        >
+          <Box layoutClassName="overflow-x-auto">
+            <Table>
             <TableHead
               backgroundClassName="bg-slate-50 dark:bg-slate-700/60"
               borderClassName="border-b border-slate-200 dark:border-slate-600"
@@ -534,49 +541,6 @@ const ZaloSettingsTab: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {/* Record đầu tiên: Group chính (admin) */}
-              <TableRow
-                backgroundClassName="bg-primary-50/40 dark:bg-primary-950/20"
-                borderClassName="border-b border-slate-100 dark:border-slate-700/60"
-              >
-                <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5" textClassName="font-semibold text-primary-600 dark:text-primary-400">1</TableCell>
-                <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
-                  <Box layoutClassName="flex items-center gap-2.5">
-                    <Box layoutClassName="h-8 w-1.5 shrink-0 rounded-full" backgroundClassName="bg-primary-500" />
-                    <Box layoutClassName="min-w-0">
-                      <Box layoutClassName="flex items-center gap-1.5">
-                        <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">Group chính</Typography>
-                        <Badge size="sm" borderClassName="border-primary-200 dark:border-primary-800" backgroundClassName="bg-primary-100 dark:bg-primary-900/40" textClassName="text-primary-700 dark:text-primary-300">Chính</Badge>
-                      </Box>
-                      <Typography as="span" size="xs" variant="muted">Nhận mọi thông báo (admin)</Typography>
-                    </Box>
-                  </Box>
-                </TableCell>
-                <TableCell layoutClassName="px-5 py-3.5">
-                  <Input
-                    value={mainGroupId}
-                    onChange={(e) => setMainGroupId(e.target.value)}
-                    placeholder="ID group chính (trống = env)"
-                    sizeClassName="py-1.5 text-sm"
-                    containerClassName="min-w-[200px]"
-                  />
-                </TableCell>
-                <TableCell layoutClassName="px-5 py-3.5">
-                  <Badge size="sm" borderClassName="border-primary-200 dark:border-primary-800" backgroundClassName="bg-primary-50 dark:bg-primary-950/40" textClassName="text-primary-700 dark:text-primary-300">Tất cả</Badge>
-                </TableCell>
-                <TableCell layoutClassName="px-5 py-3.5" textClassName="text-slate-400 dark:text-slate-500">—</TableCell>
-                <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5 text-right">
-                  <IconButton
-                    label="Test gửi"
-                    size="sm"
-                    variant="ghost"
-                    disabled={!mainGroupId.trim() || testingGroupId === mainGroupId.trim()}
-                    onClick={() => handleTestGroup(mainGroupId, 'Group chính')}
-                  >
-                    <Send className="h-4 w-4" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
                 {filteredGroups.map((g, idx) => {
                   const hasId = Boolean(g.zaloGroupId.trim());
                   return (
@@ -589,7 +553,7 @@ const ZaloSettingsTab: React.FC = () => {
                       borderClassName="border-b border-slate-100 dark:border-slate-700/60 last:border-0"
                     >
                       <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5" textClassName="text-slate-400 dark:text-slate-500">
-                        {idx + 2}
+                        {idx + 1}
                       </TableCell>
                       <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
                         <Box layoutClassName="flex items-center gap-2.5">
@@ -672,7 +636,7 @@ const ZaloSettingsTab: React.FC = () => {
             </Table>
           </Box>
         </Card>
-
+      )}
 
       <BaseModal
         isOpen={Boolean(activeGroup)}
