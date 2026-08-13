@@ -590,10 +590,11 @@ const ZaloSettingsTab: React.FC = () => {
                 borderClassName="border-b border-slate-200 dark:border-slate-600"
               >
                 <TableRow textClassName="text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                  <TableHeaderCell layoutClassName="px-5 py-3.5 w-12">STT</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-5 py-3.5">Nhóm</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="px-5 py-3.5">ID Zalo</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="px-5 py-3.5">Loại thông báo</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-5 py-3.5">Thành viên</TableHeaderCell>
-                  <TableHeaderCell layoutClassName="px-5 py-3.5">Trạng thái ID</TableHeaderCell>
-                  <TableHeaderCell layoutClassName="px-5 py-3.5">Danh sách</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-5 py-3.5 text-right">Thao tác</TableHeaderCell>
                 </TableRow>
               </TableHead>
@@ -609,6 +610,9 @@ const ZaloSettingsTab: React.FC = () => {
                       stateClassName="group cursor-pointer transition-colors"
                       borderClassName="border-b border-slate-100 dark:border-slate-700/60 last:border-0"
                     >
+                      <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5" textClassName="text-slate-400 dark:text-slate-500">
+                        {idx + 1}
+                      </TableCell>
                       <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
                         <Box layoutClassName="flex items-center gap-2.5">
                           <Box
@@ -620,14 +624,11 @@ const ZaloSettingsTab: React.FC = () => {
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5" textClassName="text-slate-600 dark:text-slate-300">
-                        {g.memberUids.length} thành viên
-                      </TableCell>
                       <TableCell layoutClassName="px-5 py-3.5">
                         {hasId ? (
-                          <Badge size="sm" borderClassName="border-emerald-200 dark:border-emerald-800" backgroundClassName="bg-emerald-50 dark:bg-emerald-950/40" textClassName="text-emerald-700 dark:text-emerald-300">
-                            Đã có ID
-                          </Badge>
+                          <Typography as="span" size="xs" layoutClassName="font-mono" textClassName="text-slate-600 dark:text-slate-300">
+                            {g.zaloGroupId}
+                          </Typography>
                         ) : (
                           <Badge size="sm" borderClassName="border-amber-200 dark:border-amber-800" backgroundClassName="bg-amber-50 dark:bg-amber-950/40" textClassName="text-amber-800 dark:text-amber-200">
                             Thiếu ID
@@ -635,18 +636,42 @@ const ZaloSettingsTab: React.FC = () => {
                         )}
                       </TableCell>
                       <TableCell layoutClassName="px-5 py-3.5">
+                        {(() => {
+                          const on = [
+                            g.notifyOnCreate !== false ? 'Tạo' : null,
+                            g.notifyOnUpdate !== false ? 'Sửa' : null,
+                            g.notifyOnDelete !== false ? 'Xoá' : null,
+                          ].filter(Boolean) as string[];
+                          if (on.length === 0) return <Typography as="span" size="xs" variant="muted">Tắt</Typography>;
+                          if (on.length === 3) {
+                            return (
+                              <Badge size="sm" borderClassName="border-primary-200 dark:border-primary-800" backgroundClassName="bg-primary-50 dark:bg-primary-950/40" textClassName="text-primary-700 dark:text-primary-300">
+                                Tất cả
+                              </Badge>
+                            );
+                          }
+                          return (
+                            <Box layoutClassName="flex flex-wrap items-center gap-1">
+                              {on.map((l) => (
+                                <Badge key={l} size="sm" borderClassName="border-emerald-200 dark:border-emerald-800" backgroundClassName="bg-emerald-50 dark:bg-emerald-950/40" textClassName="text-emerald-700 dark:text-emerald-300">
+                                  {l}
+                                </Badge>
+                              ))}
+                            </Box>
+                          );
+                        })()}
+                      </TableCell>
+                      <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
                         {g.memberUids.length > 0 ? (
-                          <Box layoutClassName="flex items-center">
-                            {g.memberUids.slice(0, 6).map((uid, i) => (
-                              <Box key={uid} layoutClassName={`relative shrink-0 ${i > 0 ? '-ml-2' : ''}`} style={{ zIndex: 10 - i }}>
-                                <UserAvatar user={userByUid.get(uid)} size="sm" />
-                              </Box>
-                            ))}
-                            {g.memberUids.length > 6 ? (
-                              <Box layoutClassName="-ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-white bg-slate-300 text-[10px] font-bold text-slate-800 dark:border-slate-900 dark:bg-slate-600 dark:text-slate-100">
-                                +{g.memberUids.length - 6}
-                              </Box>
-                            ) : null}
+                          <Box layoutClassName="flex items-center gap-2">
+                            <Box layoutClassName="flex items-center">
+                              {g.memberUids.slice(0, 5).map((uid, i) => (
+                                <Box key={uid} layoutClassName={`relative shrink-0 ${i > 0 ? '-ml-2' : ''}`} style={{ zIndex: 10 - i }}>
+                                  <UserAvatar user={userByUid.get(uid)} size="sm" />
+                                </Box>
+                              ))}
+                            </Box>
+                            <Typography as="span" size="xs" variant="muted">{g.memberUids.length}</Typography>
                           </Box>
                         ) : (
                           <Typography as="span" size="xs" variant="muted">—</Typography>
