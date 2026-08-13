@@ -460,23 +460,7 @@ const ZaloSettingsTab: React.FC = () => {
   ) : undefined;
 
   return (
-    <Box layoutClassName="space-y-6">
-      <Box>
-        <Heading level={2} textClassName="flex items-center gap-2 text-xl font-semibold">
-          <ZaloIcon className="h-6 w-6 rounded-md" />
-          Cấu hình Zalo
-        </Heading>
-        <Typography size="sm" variant="muted" layoutClassName="mt-1">
-          Nhóm gửi thông báo Zalo và gán CTV theo từng nhóm.
-        </Typography>
-      </Box>
-      {/* ╭─────── SECTION: NHÓM GỬI THÔNG BÁO ───────╮ */}
-      <Box layoutClassName="flex items-center gap-2">
-        <ZaloIcon className="h-5 w-5 rounded-md" />
-        <Heading level={2} textClassName="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-          Nhóm gửi thông báo
-        </Heading>
-      </Box>
+    <Box layoutClassName="space-y-4">
       <FilterToolbar
         search={groupSearch}
         onSearchChange={setGroupSearch}
@@ -528,77 +512,71 @@ const ZaloSettingsTab: React.FC = () => {
         }
       />
 
-      {/* Group chính — 1 row */}
       <Card
-        padding="md"
-        layoutClassName="flex flex-col gap-3 sm:flex-row sm:items-center"
-        borderClassName="border border-primary-200 dark:border-primary-800/60"
-        backgroundClassName="bg-primary-50/50 dark:bg-primary-950/20"
+        padding="none"
+        layoutClassName="overflow-hidden"
+        borderClassName="border-slate-100 dark:border-slate-700"
+        backgroundClassName="bg-white dark:bg-slate-800"
       >
-        <Box layoutClassName="flex shrink-0 items-center gap-2">
-          <ZaloIcon className="h-8 w-8 rounded-lg" />
-          <Box>
-            <Typography size="sm" layoutClassName="font-bold" textClassName="text-slate-900 dark:text-white">
-              Group chính
-            </Typography>
-            <Typography size="xs" variant="muted">Nhận mọi thông báo (admin)</Typography>
-          </Box>
-        </Box>
-        <Box layoutClassName="min-w-0 flex-1">
-          <Input
-            value={mainGroupId}
-            onChange={(e) => setMainGroupId(e.target.value)}
-            placeholder="ID group chính (trống = dùng env)"
-            containerClassName="w-full"
-          />
-        </Box>
-        <Button
-          type="button"
-          onClick={() => handleTestGroup(mainGroupId, 'Group chính')}
-          disabled={!mainGroupId.trim() || testingGroupId === mainGroupId.trim()}
-          leftIcon={<Send className="h-3.5 w-3.5" />}
-          iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-          sizeClassName="px-3 py-2"
-          backgroundClassName="bg-slate-800 dark:bg-slate-700"
-          textClassName="text-xs font-semibold text-white"
-          roundedClassName="rounded-lg"
-          layoutClassName="inline-flex shrink-0 items-center justify-center gap-1.5"
-          disableVariantHover
-          disableVariantTextColor
-        >
-          {testingGroupId === mainGroupId.trim() ? 'Đang gửi…' : 'Test gửi'}
-        </Button>
-      </Card>
-
-      {filteredGroups.length === 0 ? (
-        <EmptyState
-          icon={<ZaloIcon className="h-6 w-6 rounded-md" />}
-          title={groups.length === 0 ? 'Chưa có nhóm Zalo' : 'Không có nhóm phù hợp'}
-          description="Bấm &quot;Thêm nhóm&quot; để tạo nhóm gửi thông báo."
-        />
-      ) : (
-        <Card
-          padding="none"
-          layoutClassName="overflow-hidden"
-          borderClassName="border-slate-100 dark:border-slate-700"
-          backgroundClassName="bg-white dark:bg-slate-800"
-        >
-          <Box layoutClassName="overflow-x-auto">
-            <Table>
-              <TableHead
-                backgroundClassName="bg-slate-50 dark:bg-slate-700/60"
-                borderClassName="border-b border-slate-200 dark:border-slate-600"
+        <Box layoutClassName="overflow-x-auto">
+          <Table>
+            <TableHead
+              backgroundClassName="bg-slate-50 dark:bg-slate-700/60"
+              borderClassName="border-b border-slate-200 dark:border-slate-600"
+            >
+              <TableRow textClassName="text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                <TableHeaderCell layoutClassName="px-5 py-3.5 w-12">STT</TableHeaderCell>
+                <TableHeaderCell layoutClassName="px-5 py-3.5">Nhóm</TableHeaderCell>
+                <TableHeaderCell layoutClassName="px-5 py-3.5">ID Zalo</TableHeaderCell>
+                <TableHeaderCell layoutClassName="px-5 py-3.5">Loại thông báo</TableHeaderCell>
+                <TableHeaderCell layoutClassName="px-5 py-3.5">Thành viên</TableHeaderCell>
+                <TableHeaderCell layoutClassName="px-5 py-3.5 text-right">Thao tác</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {/* Record đầu tiên: Group chính (admin) */}
+              <TableRow
+                backgroundClassName="bg-primary-50/40 dark:bg-primary-950/20"
+                borderClassName="border-b border-slate-100 dark:border-slate-700/60"
               >
-                <TableRow textClassName="text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  <TableHeaderCell layoutClassName="px-5 py-3.5 w-12">STT</TableHeaderCell>
-                  <TableHeaderCell layoutClassName="px-5 py-3.5">Nhóm</TableHeaderCell>
-                  <TableHeaderCell layoutClassName="px-5 py-3.5">ID Zalo</TableHeaderCell>
-                  <TableHeaderCell layoutClassName="px-5 py-3.5">Loại thông báo</TableHeaderCell>
-                  <TableHeaderCell layoutClassName="px-5 py-3.5">Thành viên</TableHeaderCell>
-                  <TableHeaderCell layoutClassName="px-5 py-3.5 text-right">Thao tác</TableHeaderCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+                <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5" textClassName="font-semibold text-primary-600 dark:text-primary-400">1</TableCell>
+                <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
+                  <Box layoutClassName="flex items-center gap-2.5">
+                    <Box layoutClassName="h-8 w-1.5 shrink-0 rounded-full" backgroundClassName="bg-primary-500" />
+                    <Box layoutClassName="min-w-0">
+                      <Box layoutClassName="flex items-center gap-1.5">
+                        <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">Group chính</Typography>
+                        <Badge size="sm" borderClassName="border-primary-200 dark:border-primary-800" backgroundClassName="bg-primary-100 dark:bg-primary-900/40" textClassName="text-primary-700 dark:text-primary-300">Chính</Badge>
+                      </Box>
+                      <Typography as="span" size="xs" variant="muted">Nhận mọi thông báo (admin)</Typography>
+                    </Box>
+                  </Box>
+                </TableCell>
+                <TableCell layoutClassName="px-5 py-3.5">
+                  <Input
+                    value={mainGroupId}
+                    onChange={(e) => setMainGroupId(e.target.value)}
+                    placeholder="ID group chính (trống = env)"
+                    sizeClassName="py-1.5 text-sm"
+                    containerClassName="min-w-[200px]"
+                  />
+                </TableCell>
+                <TableCell layoutClassName="px-5 py-3.5">
+                  <Badge size="sm" borderClassName="border-primary-200 dark:border-primary-800" backgroundClassName="bg-primary-50 dark:bg-primary-950/40" textClassName="text-primary-700 dark:text-primary-300">Tất cả</Badge>
+                </TableCell>
+                <TableCell layoutClassName="px-5 py-3.5" textClassName="text-slate-400 dark:text-slate-500">—</TableCell>
+                <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5 text-right">
+                  <IconButton
+                    label="Test gửi"
+                    size="sm"
+                    variant="ghost"
+                    disabled={!mainGroupId.trim() || testingGroupId === mainGroupId.trim()}
+                    onClick={() => handleTestGroup(mainGroupId, 'Group chính')}
+                  >
+                    <Send className="h-4 w-4" />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
                 {filteredGroups.map((g, idx) => {
                   const hasId = Boolean(g.zaloGroupId.trim());
                   return (
@@ -611,7 +589,7 @@ const ZaloSettingsTab: React.FC = () => {
                       borderClassName="border-b border-slate-100 dark:border-slate-700/60 last:border-0"
                     >
                       <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5" textClassName="text-slate-400 dark:text-slate-500">
-                        {idx + 1}
+                        {idx + 2}
                       </TableCell>
                       <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
                         <Box layoutClassName="flex items-center gap-2.5">
@@ -694,7 +672,6 @@ const ZaloSettingsTab: React.FC = () => {
             </Table>
           </Box>
         </Card>
-      )}
 
 
       <BaseModal
