@@ -30,6 +30,7 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import EmptyState from '@/components/ui/EmptyState';
+import IconButton from '@/components/ui/IconButton';
 import FilterToolbar from '@/components/shared/FilterToolbar';
 import Heading from '@/components/ui/Heading';
 import Input from '@/components/ui/Input';
@@ -576,111 +577,98 @@ const ZaloSettingsTab: React.FC = () => {
           description="Bấm &quot;Thêm nhóm&quot; để tạo nhóm gửi thông báo."
         />
       ) : (
-        <Box layoutClassName="grid gap-3 p-1 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredGroups.map((g, idx) => {
-            const hasId = Boolean(g.zaloGroupId.trim());
-            return (
-              <Card key={g.id} padding="md" layoutClassName="flex flex-col gap-2" borderClassName="border-slate-200 dark:border-slate-700">
-                <Box layoutClassName="flex items-start gap-2">
-                  <Box
-                    layoutClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                    backgroundClassName={idx % 3 === 0 ? 'bg-primary-100 dark:bg-primary-950/60' : idx % 3 === 1 ? 'bg-sky-100 dark:bg-sky-950/50' : 'bg-rose-100 dark:bg-rose-950/50'}
-                  >
-                    <Users className="h-4 w-4 text-primary-700 dark:text-primary-300" />
-                  </Box>
-                  <Box layoutClassName="min-w-0 flex-1">
-                    <Typography size="base" layoutClassName="break-words font-semibold" textClassName="text-slate-900 dark:text-white">
-                      {g.name.trim() || 'Nhóm chưa đặt tên'}
-                    </Typography>
-                    <Box layoutClassName="mt-1 flex flex-wrap items-center gap-1.5">
-                      <Badge
-                        size="sm"
-                        borderClassName="border-slate-200 dark:border-slate-600"
-                        backgroundClassName="bg-slate-100 dark:bg-slate-800"
-                        textClassName="text-slate-600 dark:text-slate-300"
-                      >
+        <Card
+          padding="none"
+          layoutClassName="overflow-hidden"
+          borderClassName="border-slate-100 dark:border-slate-700"
+          backgroundClassName="bg-white dark:bg-slate-800"
+        >
+          <Box layoutClassName="overflow-x-auto">
+            <Table>
+              <TableHead
+                backgroundClassName="bg-slate-50 dark:bg-slate-700/60"
+                borderClassName="border-b border-slate-200 dark:border-slate-600"
+              >
+                <TableRow textClassName="text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                  <TableHeaderCell layoutClassName="px-5 py-3.5">Nhóm</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="px-5 py-3.5">Thành viên</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="px-5 py-3.5">Trạng thái ID</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="px-5 py-3.5">Danh sách</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="px-5 py-3.5 text-right">Thao tác</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredGroups.map((g, idx) => {
+                  const hasId = Boolean(g.zaloGroupId.trim());
+                  return (
+                    <TableRow
+                      key={g.id}
+                      onClick={() => openGroupModal(g.id)}
+                      backgroundClassName={idx % 2 === 0 ? '' : 'bg-slate-50/50 dark:bg-slate-700/20'}
+                      hoverClassName="hover:bg-primary-50/60 dark:hover:bg-primary-900/10"
+                      stateClassName="group cursor-pointer transition-colors"
+                      borderClassName="border-b border-slate-100 dark:border-slate-700/60 last:border-0"
+                    >
+                      <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
+                        <Box layoutClassName="flex items-center gap-2.5">
+                          <Box
+                            layoutClassName="h-8 w-1.5 shrink-0 rounded-full"
+                            backgroundClassName={idx % 3 === 0 ? 'bg-primary-500' : idx % 3 === 1 ? 'bg-sky-500' : 'bg-rose-400'}
+                          />
+                          <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">
+                            {g.name.trim() || 'Nhóm chưa đặt tên'}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5" textClassName="text-slate-600 dark:text-slate-300">
                         {g.memberUids.length} thành viên
-                      </Badge>
-                      {hasId ? (
-                        <Badge
-                          size="sm"
-                          borderClassName="border-emerald-200 dark:border-emerald-800"
-                          backgroundClassName="bg-emerald-50 dark:bg-emerald-950/40"
-                          textClassName="text-emerald-700 dark:text-emerald-300"
-                        >
-                          Đã có ID
-                        </Badge>
-                      ) : (
-                        <Badge
-                          size="sm"
-                          borderClassName="border-amber-200 dark:border-amber-800"
-                          backgroundClassName="bg-amber-50 dark:bg-amber-950/40"
-                          textClassName="text-amber-800 dark:text-amber-200"
-                        >
-                          Thiếu ID
-                        </Badge>
-                      )}
-                    </Box>
-                  </Box>
-                </Box>
-
-                {g.memberUids.length > 0 ? (
-                  <Box layoutClassName="flex items-center">
-                    {g.memberUids.slice(0, 6).map((uid, i) => (
-                      <Box key={uid} layoutClassName={`relative shrink-0 ${i > 0 ? '-ml-2' : ''}`} style={{ zIndex: 10 - i }}>
-                        <UserAvatar user={userByUid.get(uid)} size="sm" />
-                      </Box>
-                    ))}
-                    {g.memberUids.length > 6 ? (
-                      <Box layoutClassName="-ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-white bg-slate-300 text-[10px] font-bold text-slate-800 dark:border-slate-900 dark:bg-slate-600 dark:text-slate-100">
-                        +{g.memberUids.length - 6}
-                      </Box>
-                    ) : null}
-                  </Box>
-                ) : null}
-
-                <Box layoutClassName="mt-auto flex gap-2 border-t border-slate-100 pt-2 dark:border-slate-700/60">
-                  <Button
-                    type="button"
-                    onClick={() => openGroupModal(g.id)}
-                    leftIcon={<Pencil />}
-                    iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                    variant="secondary"
-                    disableVariantHover
-                    disableVariantTextColor
-                    borderClassName="border border-slate-200 dark:border-slate-600"
-                    backgroundClassName="bg-white dark:bg-slate-800"
-                    hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
-                    textClassName="text-xs font-medium text-slate-700 dark:text-slate-200"
-                    roundedClassName="rounded-lg"
-                    sizeClassName="px-3 py-1.5"
-                    layoutClassName="inline-flex flex-1 items-center justify-center gap-1.5"
-                  >
-                    Sửa
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => removeGroup(g.id)}
-                    leftIcon={<Trash2 />}
-                    iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
-                    variant="secondary"
-                    disableVariantHover
-                    disableVariantTextColor
-                    borderClassName="border border-red-200 dark:border-red-700/50"
-                    backgroundClassName="bg-red-50 dark:bg-red-900/20"
-                    hoverClassName="hover:bg-red-100 dark:hover:bg-red-900/30"
-                    textClassName="text-xs font-medium text-red-700 dark:text-red-300"
-                    roundedClassName="rounded-lg"
-                    sizeClassName="px-3 py-1.5"
-                    layoutClassName="inline-flex items-center justify-center gap-1.5"
-                  >
-                    Xoá
-                  </Button>
-                </Box>
-              </Card>
-            );
-          })}
-        </Box>
+                      </TableCell>
+                      <TableCell layoutClassName="px-5 py-3.5">
+                        {hasId ? (
+                          <Badge size="sm" borderClassName="border-emerald-200 dark:border-emerald-800" backgroundClassName="bg-emerald-50 dark:bg-emerald-950/40" textClassName="text-emerald-700 dark:text-emerald-300">
+                            Đã có ID
+                          </Badge>
+                        ) : (
+                          <Badge size="sm" borderClassName="border-amber-200 dark:border-amber-800" backgroundClassName="bg-amber-50 dark:bg-amber-950/40" textClassName="text-amber-800 dark:text-amber-200">
+                            Thiếu ID
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell layoutClassName="px-5 py-3.5">
+                        {g.memberUids.length > 0 ? (
+                          <Box layoutClassName="flex items-center">
+                            {g.memberUids.slice(0, 6).map((uid, i) => (
+                              <Box key={uid} layoutClassName={`relative shrink-0 ${i > 0 ? '-ml-2' : ''}`} style={{ zIndex: 10 - i }}>
+                                <UserAvatar user={userByUid.get(uid)} size="sm" />
+                              </Box>
+                            ))}
+                            {g.memberUids.length > 6 ? (
+                              <Box layoutClassName="-ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-white bg-slate-300 text-[10px] font-bold text-slate-800 dark:border-slate-900 dark:bg-slate-600 dark:text-slate-100">
+                                +{g.memberUids.length - 6}
+                              </Box>
+                            ) : null}
+                          </Box>
+                        ) : (
+                          <Typography as="span" size="xs" variant="muted">—</Typography>
+                        )}
+                      </TableCell>
+                      <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5 text-right">
+                        <Box layoutClassName="inline-flex items-center gap-1">
+                          <IconButton label="Sửa" size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); openGroupModal(g.id); }}>
+                            <Pencil className="h-4 w-4" />
+                          </IconButton>
+                          <IconButton label="Xoá" size="sm" variant="danger" onClick={(e) => { e.stopPropagation(); removeGroup(g.id); }}>
+                            <Trash2 className="h-4 w-4" />
+                          </IconButton>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Box>
+        </Card>
       )}
 
 
