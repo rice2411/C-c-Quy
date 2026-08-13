@@ -44,7 +44,7 @@ import { formatVND } from '@/utils/format/currencyUtil';
 import { allocateSurcharge, generateQRCodeImage, getOrderTotal } from '@/utils/order/orderUtils';
 import { buildOrderEmvQr } from '@/utils/order/vietQrEmv';
 import { pushPosQr, clearPosQr } from '@/services/posService';
-import { Sparkles, MonitorSmartphone, Home, Printer } from 'lucide-react';
+import { Sparkles, MonitorSmartphone, Home, Printer, MoreHorizontal } from 'lucide-react';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
@@ -53,8 +53,11 @@ import EmptyState from '@/components/ui/EmptyState';
 import Heading from '@/components/ui/Heading';
 import IconButton from '@/components/ui/IconButton';
 import Image from '@/components/ui/Image';
+import Popover from '@/components/ui/Popover';
+import BottomSheet from '@/components/ui/BottomSheet';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import CancelRefundModal, { type CancelRefundMode, type CancelRefundResult } from '@/pages/Orders/components/modals/CancelRefundModal';
 import ShareableOrderCard from '@/pages/Orders/components/modals/ShareableOrderCard';
 import OrderPrintPortal from '@/pages/Orders/components/print/OrderPrintPortal';
@@ -93,6 +96,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const { activeAccount } = usePaymentAccounts();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'details' | 'refund' | 'history' | 'tracking'>('details');
+  const [moreOpen, setMoreOpen] = useState(false);
+  const isMobile = useIsMobile();
   const [qrMode, setQrMode] = useState<'deposit' | 'remainder'>('deposit');
   const [posBusy, setPosBusy] = useState(false);
   const [qrCopying, setQrCopying] = useState(false);
@@ -661,62 +666,69 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     </Box>
   );
 
+  // 1 dòng menu trong "Thêm" (dùng cho cả bottom sheet mobile + popover desktop).
+  const MoreRow: React.FC<{
+    icon: typeof Printer;
+    label: string;
+    onClick: () => void;
+    disabled?: boolean;
+    danger?: boolean;
+  }> = ({ icon: Icon, label, onClick, disabled, danger }) => (
+    <Button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      variant="ghost"
+      disableVariantHover
+      disableVariantTextColor
+      leftIcon={<Icon className="h-4 w-4" />}
+      iconClassName={`inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4 ${danger ? 'text-red-500' : 'text-slate-400'}`}
+      layoutClassName="flex w-full items-center gap-2.5"
+      sizeClassName="px-2.5 py-2.5 text-sm"
+      textClassName={danger ? 'font-medium text-red-600 dark:text-red-400' : 'font-medium text-slate-700 dark:text-slate-200'}
+      roundedClassName="rounded-lg"
+      backgroundClassName="bg-transparent"
+      hoverClassName={danger ? 'hover:bg-red-50 dark:hover:bg-red-900/20' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}
+      stateClassName="transition-colors disabled:opacity-50"
+    >
+      {label}
+    </Button>
+  );
+
+  const renderMoreMenu = (close: () => void) => (
+    <Box layoutClassName="flex flex-col gap-0.5">
+      <MoreRow icon={Printer} label={printing ? 'Đang in...' : 'In đơn hàng'} disabled={printing} onClick={() => { close(); setPrinting(true); }} />
+      <MoreRow icon={Share2} label={copyingImg ? (t('detail.copyImageLoading') || 'Đang tạo ảnh...') : 'Chia sẻ'} disabled={copyingImg} onClick={() => { close(); handleShareOrder(); }} />
+      {canDelete && onDelete ? (
+        <MoreRow icon={Trash2} label={t('orders.delete')} danger onClick={() => { close(); onDelete(); }} />
+      ) : null}
+    </Box>
+  );
+
+  const moreButton = (onClick?: () => void) => (
+    <Button
+      type="button"
+      onClick={onClick}
+      variant="secondary"
+      disableVariantHover
+      disableVariantTextColor
+      leftIcon={<MoreHorizontal className="h-4 w-4" />}
+      iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+      borderClassName="border border-slate-200 dark:border-slate-600"
+      backgroundClassName="bg-white dark:bg-slate-800"
+      hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+      textClassName="text-sm font-medium text-slate-700 dark:text-slate-200"
+      roundedClassName="rounded-lg"
+      sizeClassName="px-4 py-2.5 sm:py-2"
+      layoutClassName="flex-1 justify-center sm:flex-none"
+      stateClassName="transition-colors"
+    >
+      {t('common.more')}
+    </Button>
+  );
+
   const footer = (
-    <Box layoutClassName="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end sm:gap-3">
-      <Button
-        type="button"
-        onClick={() => setPrinting(true)}
-        disabled={printing}
-        variant="secondary"
-        disableVariantHover
-        disableVariantTextColor
-        borderClassName="border border-blue-200 dark:border-blue-700/50"
-        backgroundClassName="bg-blue-50 dark:bg-blue-900/20"
-        hoverClassName="hover:bg-blue-100 dark:hover:bg-blue-900/30"
-        textClassName="text-sm font-medium text-blue-700 dark:text-blue-300"
-        roundedClassName="rounded-lg"
-        layoutClassName="w-full justify-center px-4 py-2.5 sm:w-auto sm:py-2"
-        stateClassName="transition-colors disabled:opacity-50"
-        leftIcon={<Printer className="h-4 w-4" />}
-        iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-      >
-        {printing ? 'Đang in...' : 'In đơn hàng'}
-      </Button>
-      <Button
-        type="button"
-        onClick={handleShareOrder}
-        disabled={copyingImg}
-        variant="secondary"
-        disableVariantHover
-        disableVariantTextColor
-        borderClassName="border border-primary-200 dark:border-primary-700/50"
-        backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
-        hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-900/30"
-        textClassName="text-sm font-medium text-primary-700 dark:text-primary-300"
-        roundedClassName="rounded-lg"
-        layoutClassName="w-full justify-center px-4 py-2.5 sm:mr-auto sm:w-auto sm:py-2"
-        stateClassName="transition-colors disabled:opacity-50"
-        leftIcon={<Share2 className="h-4 w-4" />}
-        iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-      >
-        {copyingImg ? (t('detail.copyImageLoading') || 'Đang tạo ảnh...') : (t('detail.shareOrder') || 'Gửi khách')}
-      </Button>
-      <Button
-        type="button"
-        onClick={onClose}
-        variant="secondary"
-        disableVariantHover
-        disableVariantTextColor
-        borderClassName="border border-slate-200 dark:border-slate-600"
-        backgroundClassName="bg-transparent"
-        hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
-        textClassName="text-sm font-medium text-slate-700 dark:text-slate-300"
-        roundedClassName="rounded-lg"
-        layoutClassName="w-full justify-center px-4 py-2.5 sm:w-auto sm:py-2"
-        stateClassName="transition-colors"
-      >
-        {t('detail.close')}
-      </Button>
+    <Box layoutClassName="flex items-center gap-2 sm:justify-end sm:gap-3">
       {onEdit ? (
         <Button
           type="button"
@@ -726,7 +738,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           textClassName="text-sm font-medium text-white"
           roundedClassName="rounded-lg"
           shadowClassName="shadow-sm shadow-primary-200 dark:shadow-none"
-          layoutClassName="order-first col-span-2 w-full justify-center px-4 py-2.5 sm:order-none sm:col-auto sm:w-auto sm:py-2"
+          sizeClassName="px-4 py-2.5 sm:py-2"
+          layoutClassName="flex-1 justify-center sm:flex-none"
           stateClassName="transition-colors"
           variant="primary"
           disableVariantHover
@@ -735,26 +748,19 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           {t('detail.edit')}
         </Button>
       ) : null}
-      {canDelete && onDelete ? (
-        <Button
-          type="button"
-          onClick={onDelete}
-          variant="secondary"
-          disableVariantHover
-          disableVariantTextColor
-          borderClassName="border border-red-200 dark:border-red-700/50"
-          backgroundClassName="bg-red-50 dark:bg-red-900/20"
-          hoverClassName="hover:bg-red-100 dark:hover:bg-red-900/30"
-          textClassName="text-sm font-medium text-red-700 dark:text-red-300"
-          roundedClassName="rounded-lg"
-          layoutClassName="w-full justify-center px-4 py-2.5 sm:w-auto sm:py-2"
-          stateClassName="transition-colors"
-          leftIcon={<Trash2 className="h-4 w-4" />}
-          iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-        >
-          {t('orders.delete')}
-        </Button>
-      ) : null}
+
+      {isMobile ? (
+        <>
+          {moreButton(() => setMoreOpen(true))}
+          <BottomSheet open={moreOpen} onClose={() => setMoreOpen(false)} title={t('common.more')}>
+            {renderMoreMenu(() => setMoreOpen(false))}
+          </BottomSheet>
+        </>
+      ) : (
+        <Popover align="right" width={220} trigger={moreButton()}>
+          {(close) => renderMoreMenu(close)}
+        </Popover>
+      )}
     </Box>
   );
 
