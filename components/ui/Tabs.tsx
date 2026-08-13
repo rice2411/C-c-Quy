@@ -46,7 +46,7 @@ const Tabs: React.FC<TabsProps> = ({ items, value, onChange, className }) => {
 
   return (
     <div className={wrapperClassName}>
-      <div ref={containerRef} className="relative flex gap-4 sm:gap-6">
+      <div ref={containerRef} className="relative flex gap-4 overflow-x-auto scrollbar-hide sm:gap-6">
         {items.map((item, index) => {
           const isActive = value === item.id;
           const isDisabled = Boolean(item.disabled);

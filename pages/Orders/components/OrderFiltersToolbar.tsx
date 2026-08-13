@@ -109,7 +109,7 @@ const OrderFiltersToolbar: React.FC<OrderFiltersToolbarProps> = ({
         </Heading>
       </Box>
       {onStatusChange ? (
-        <Box layoutClassName="-mb-1 overflow-x-auto">
+        <Box layoutClassName="-mb-1 overflow-x-auto scrollbar-hide">
           <Tabs items={statusTabs} value={statusFilter} onChange={onStatusChange} />
         </Box>
       ) : null}
