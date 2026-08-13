@@ -28,6 +28,9 @@ import BaseModal from '@/components/BaseModal';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import EmptyState from '@/components/ui/EmptyState';
+import FilterToolbar from '@/components/shared/FilterToolbar';
 import Heading from '@/components/ui/Heading';
 import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
@@ -109,6 +112,7 @@ const ZaloSettingsTab: React.FC = () => {
   const { save: saveZaloGroups } = useSaveZaloGroups();
   const { updateRole: updateUserRoleMut } = useUserMutations();
   const [groups, setGroups] = useState<ZaloGroupConfig[]>([]);
+  const [groupSearch, setGroupSearch] = useState('');
   const [saving, setSaving] = useState(false);
   const [mainGroupId, setMainGroupId] = useState('');
   const [mainNotifyOnCreate, setMainNotifyOnCreate] = useState(true);
@@ -154,6 +158,14 @@ const ZaloSettingsTab: React.FC = () => {
     users.forEach((u) => m.set(u.uid, u));
     return m;
   }, [users]);
+
+  const filteredGroups = useMemo(() => {
+    const q = groupSearch.trim().toLowerCase();
+    if (!q) return groups;
+    return groups.filter(
+      (g) => g.name.toLowerCase().includes(q) || g.zaloGroupId.toLowerCase().includes(q),
+    );
+  }, [groups, groupSearch]);
 
   const previewPickUsers = useMemo(
     () => pickUidsModal.map((uid) => userByUid.get(uid)).filter(Boolean) as UserData[],
@@ -457,73 +469,33 @@ const ZaloSettingsTab: React.FC = () => {
           Nhóm gửi thông báo Zalo và gán CTV theo từng nhóm.
         </Typography>
       </Box>
-      {/* ╭─────── SECTION: GROUP ───────╮ */}
+      {/* ╭─────── SECTION: NHÓM GỬI THÔNG BÁO ───────╮ */}
       <Box layoutClassName="flex items-center gap-2">
-        <Users className="h-5 w-5 text-primary-600" />
+        <ZaloIcon className="h-5 w-5 rounded-md" />
         <Heading level={2} textClassName="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-          Nhóm CTV
+          Nhóm gửi thông báo
         </Heading>
       </Box>
-      <Box
-        layoutClassName="relative overflow-hidden rounded-2xl border border-slate-200/90 p-6 dark:border-slate-600/80"
-        backgroundClassName="bg-gradient-to-br from-primary-50 via-white to-sky-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800"
-      >
-        <Box
-          layoutClassName="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full opacity-40 blur-2xl"
-          backgroundClassName="bg-primary-400"
-        />
-        <Box layoutClassName="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Box layoutClassName="flex min-w-0 items-start gap-4">
-            <Box
-              layoutClassName="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-md ring-1 ring-primary-200/80 dark:ring-primary-800/60"
-              backgroundClassName="bg-white dark:bg-slate-800"
-            >
-              <ZaloIcon className="h-8 w-8 rounded-lg" />
-            </Box>
-            <Box layoutClassName="min-w-0">
-              <Heading level={2} textClassName="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-                Nhóm Zalo & CTV
-              </Heading>
-              <Typography size="sm" variant="muted" layoutClassName="mt-1 max-w-xl leading-relaxed">
-                Nhấn một nhóm để mở popup chỉnh sửa. Thêm CTV lưu ngay; đổi tên / ID nhớ bấm &quot;Lưu cấu hình Zalo&quot;.
-              </Typography>
-              <Box layoutClassName="mt-3 flex flex-wrap gap-2">
-                <Badge
-                  size="sm"
-                  borderClassName="border-emerald-200 dark:border-emerald-800"
-                  backgroundClassName="bg-emerald-50 dark:bg-emerald-950/50"
-                  textClassName="text-emerald-700 dark:text-emerald-300"
-                  layoutClassName="gap-1"
-                >
-                  <Shield className="h-3 w-3" />
-                  1 CTV / 1 nhóm
-                </Badge>
-                <Badge
-                  size="sm"
-                  borderClassName="border-slate-200 dark:border-slate-600"
-                  backgroundClassName="bg-white/80 dark:bg-slate-800/80"
-                  textClassName="text-slate-600 dark:text-slate-300"
-                  layoutClassName="gap-1"
-                >
-                  <Hash className="h-3 w-3" />
-                  {groups.length} nhóm
-                </Badge>
-              </Box>
-            </Box>
-          </Box>
-          <Box layoutClassName="flex shrink-0 flex-wrap gap-2 sm:flex-col sm:items-stretch">
+      <FilterToolbar
+        search={groupSearch}
+        onSearchChange={setGroupSearch}
+        searchPlaceholder="Tìm nhóm / ID Zalo…"
+        actions={
+          <>
             <Button
               type="button"
               onClick={addGroup}
               disabled={saving}
-              leftIcon={<Plus className="h-4 w-4" />}
-              sizeClassName="px-4 py-2.5"
+              leftIcon={<Plus />}
+              iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
               borderClassName="border border-slate-200 dark:border-slate-600"
               backgroundClassName="bg-white dark:bg-slate-800"
               hoverClassName="hover:border-primary-300 hover:bg-primary-50/80 dark:hover:border-primary-700 dark:hover:bg-slate-700"
               textClassName="text-sm font-semibold text-slate-800 dark:text-slate-100"
               roundedClassName="rounded-xl"
-              layoutClassName="inline-flex w-full items-center justify-center gap-2 shadow-sm"
+              sizeClassName="px-3 py-2"
+              layoutClassName="inline-flex items-center gap-1.5"
+              stateClassName="transition-colors"
             >
               Thêm nhóm
             </Button>
@@ -532,80 +504,61 @@ const ZaloSettingsTab: React.FC = () => {
               onClick={handleSaveAll}
               disabled={saving}
               leftIcon={saving ? <Spinner size="sm" textClassName="text-white" borderClassName="border-white" /> : undefined}
-              sizeClassName="px-4 py-2.5"
-              backgroundClassName="bg-gradient-to-r from-primary-600 to-primary-600"
-              hoverClassName="hover:from-primary-700 hover:to-primary-700"
+              backgroundClassName="bg-primary-600"
+              hoverClassName="hover:bg-primary-700"
               textClassName="text-sm font-semibold text-white"
               roundedClassName="rounded-xl"
-              layoutClassName="inline-flex w-full items-center justify-center gap-2 shadow-md"
-              stateClassName="transition-all disabled:cursor-not-allowed disabled:opacity-50"
+              shadowClassName="shadow-sm shadow-primary-200 dark:shadow-none"
+              sizeClassName="px-4 py-2"
+              layoutClassName="inline-flex items-center gap-1.5"
+              stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              variant="primary"
               disableVariantHover
               disableVariantTextColor
             >
-              {saving ? 'Đang lưu…' : 'Lưu cấu hình Zalo'}
+              {saving ? 'Đang lưu…' : 'Lưu cấu hình'}
             </Button>
-          </Box>
-        </Box>
-      </Box>
+          </>
+        }
+        stats={
+          <Typography size="xs" variant="muted" layoutClassName="text-right">
+            {filteredGroups.length} / {groups.length} nhóm
+          </Typography>
+        }
+      />
 
-      {groups.length === 0 ? (
-        <Box
-          layoutClassName="flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 px-6 py-16 text-center dark:border-slate-600"
-          backgroundClassName="bg-slate-50/60 dark:bg-slate-900/40"
-        >
-          <Users className="h-10 w-10 text-slate-400" />
-          <Typography size="sm" layoutClassName="font-semibold text-slate-800 dark:text-slate-100">
-            Chưa có nhóm Zalo
-          </Typography>
-          <Typography size="xs" variant="muted" layoutClassName="max-w-sm">
-            Bấm &quot;Thêm nhóm&quot; để tạo nhóm và mở popup cấu hình.
-          </Typography>
-        </Box>
+      {filteredGroups.length === 0 ? (
+        <EmptyState
+          icon={<ZaloIcon className="h-6 w-6 rounded-md" />}
+          title={groups.length === 0 ? 'Chưa có nhóm Zalo' : 'Không có nhóm phù hợp'}
+          description="Bấm &quot;Thêm nhóm&quot; để tạo nhóm gửi thông báo."
+        />
       ) : (
-        <Box
-          layoutClassName="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700"
-          backgroundClassName="bg-white dark:bg-slate-900"
-        >
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeaderCell textClassName="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Nhóm</TableHeaderCell>
-                <TableHeaderCell textClassName="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Số CTV</TableHeaderCell>
-                <TableHeaderCell textClassName="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">ID nhóm</TableHeaderCell>
-                <TableHeaderCell textClassName="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Thành viên</TableHeaderCell>
-                <TableHeaderCell layoutClassName="w-10">
-                  <Typography as="span" size="xs" layoutClassName="sr-only">Sửa</Typography>
-                </TableHeaderCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {groups.map((g, idx) => {
-                const hasId = Boolean(g.zaloGroupId.trim());
-                return (
-                  <TableRow
-                    key={g.id}
-                    onClick={() => openGroupModal(g.id)}
-                    borderClassName="border-t border-slate-100 dark:border-slate-800"
-                    hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-800/60"
-                    stateClassName="cursor-pointer transition-colors"
+        <Box layoutClassName="grid gap-3 p-1 sm:grid-cols-2 xl:grid-cols-3">
+          {filteredGroups.map((g, idx) => {
+            const hasId = Boolean(g.zaloGroupId.trim());
+            return (
+              <Card key={g.id} padding="md" layoutClassName="flex flex-col gap-2" borderClassName="border-slate-200 dark:border-slate-700">
+                <Box layoutClassName="flex items-start gap-2">
+                  <Box
+                    layoutClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                    backgroundClassName={idx % 3 === 0 ? 'bg-primary-100 dark:bg-primary-950/60' : idx % 3 === 1 ? 'bg-sky-100 dark:bg-sky-950/50' : 'bg-rose-100 dark:bg-rose-950/50'}
                   >
-                    <TableCell>
-                      <Box layoutClassName="flex items-center gap-2.5">
-                        <Box
-                          layoutClassName="h-8 w-1.5 shrink-0 rounded-full"
-                          backgroundClassName={idx % 3 === 0 ? 'bg-primary-500' : idx % 3 === 1 ? 'bg-sky-500' : 'bg-rose-400'}
-                        />
-                        <Typography size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">
-                          {g.name.trim() || 'Nhóm chưa đặt tên'}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography as="span" size="sm" textClassName="text-slate-600 dark:text-slate-300">
-                        {g.memberUids.length}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
+                    <Users className="h-4 w-4 text-primary-700 dark:text-primary-300" />
+                  </Box>
+                  <Box layoutClassName="min-w-0 flex-1">
+                    <Typography size="base" layoutClassName="break-words font-semibold" textClassName="text-slate-900 dark:text-white">
+                      {g.name.trim() || 'Nhóm chưa đặt tên'}
+                    </Typography>
+                    <Box layoutClassName="mt-1 flex flex-wrap items-center gap-1.5">
+                      <Badge
+                        size="sm"
+                        borderClassName="border-slate-200 dark:border-slate-600"
+                        backgroundClassName="bg-slate-100 dark:bg-slate-800"
+                        textClassName="text-slate-600 dark:text-slate-300"
+                      >
+                        {g.memberUids.length} thành viên
+                      </Badge>
                       {hasId ? (
                         <Badge
                           size="sm"
@@ -625,37 +578,66 @@ const ZaloSettingsTab: React.FC = () => {
                           Thiếu ID
                         </Badge>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      {g.memberUids.length > 0 ? (
-                        <Box layoutClassName="flex items-center">
-                          {g.memberUids.slice(0, 5).map((uid, i) => (
-                            <Box
-                              key={uid}
-                              layoutClassName={`relative shrink-0 ${i > 0 ? '-ml-2' : ''}`}
-                              style={{ zIndex: 10 - i }}
-                            >
-                              <UserAvatar user={userByUid.get(uid)} size="sm" />
-                            </Box>
-                          ))}
-                          {g.memberUids.length > 5 ? (
-                            <Box layoutClassName="-ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-white bg-slate-300 text-[10px] font-bold text-slate-800 dark:border-slate-900 dark:bg-slate-600 dark:text-slate-100">
-                              +{g.memberUids.length - 5}
-                            </Box>
-                          ) : null}
-                        </Box>
-                      ) : (
-                        <Typography as="span" size="xs" variant="muted">—</Typography>
-                      )}
-                    </TableCell>
-                    <TableCell layoutClassName="text-right">
-                      <Pencil className="inline h-4 w-4 text-slate-400" aria-hidden />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                    </Box>
+                  </Box>
+                </Box>
+
+                {g.memberUids.length > 0 ? (
+                  <Box layoutClassName="flex items-center">
+                    {g.memberUids.slice(0, 6).map((uid, i) => (
+                      <Box key={uid} layoutClassName={`relative shrink-0 ${i > 0 ? '-ml-2' : ''}`} style={{ zIndex: 10 - i }}>
+                        <UserAvatar user={userByUid.get(uid)} size="sm" />
+                      </Box>
+                    ))}
+                    {g.memberUids.length > 6 ? (
+                      <Box layoutClassName="-ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-white bg-slate-300 text-[10px] font-bold text-slate-800 dark:border-slate-900 dark:bg-slate-600 dark:text-slate-100">
+                        +{g.memberUids.length - 6}
+                      </Box>
+                    ) : null}
+                  </Box>
+                ) : null}
+
+                <Box layoutClassName="mt-auto flex gap-2 border-t border-slate-100 pt-2 dark:border-slate-700/60">
+                  <Button
+                    type="button"
+                    onClick={() => openGroupModal(g.id)}
+                    leftIcon={<Pencil />}
+                    iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                    variant="secondary"
+                    disableVariantHover
+                    disableVariantTextColor
+                    borderClassName="border border-slate-200 dark:border-slate-600"
+                    backgroundClassName="bg-white dark:bg-slate-800"
+                    hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+                    textClassName="text-xs font-medium text-slate-700 dark:text-slate-200"
+                    roundedClassName="rounded-lg"
+                    sizeClassName="px-3 py-1.5"
+                    layoutClassName="inline-flex flex-1 items-center justify-center gap-1.5"
+                  >
+                    Sửa
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => removeGroup(g.id)}
+                    leftIcon={<Trash2 />}
+                    iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+                    variant="secondary"
+                    disableVariantHover
+                    disableVariantTextColor
+                    borderClassName="border border-red-200 dark:border-red-700/50"
+                    backgroundClassName="bg-red-50 dark:bg-red-900/20"
+                    hoverClassName="hover:bg-red-100 dark:hover:bg-red-900/30"
+                    textClassName="text-xs font-medium text-red-700 dark:text-red-300"
+                    roundedClassName="rounded-lg"
+                    sizeClassName="px-3 py-1.5"
+                    layoutClassName="inline-flex items-center justify-center gap-1.5"
+                  >
+                    Xoá
+                  </Button>
+                </Box>
+              </Card>
+            );
+          })}
         </Box>
       )}
 
