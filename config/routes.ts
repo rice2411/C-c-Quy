@@ -81,6 +81,13 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
+    path: "/calendar",
+    labelKey: "nav.calendar",
+    icon: CalendarDays,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
     path: "/finance/overview",
     labelKey: "nav.txOverview",
     icon: LayoutDashboard,
