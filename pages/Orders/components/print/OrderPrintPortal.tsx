@@ -6,6 +6,8 @@ import KitchenTicket from './KitchenTicket';
 import { buildEscpos, sendToPrintAgent } from '@/utils/print/escpos';
 
 export interface OrderPrintPortalProps extends BillReceiptProps {
+  /** Chọn in gì: 'bill' = hoá đơn khách, 'kitchen' = phiếu bếp, 'both' = cả hai (mặc định). */
+  mode?: 'both' | 'bill' | 'kitchen';
   /** Gọi khi in thành công (đã gửi cầu nối) → mark "đã in" + gỡ portal. */
   onDone?: () => void;
   /** Gọi khi lỗi (agent không chạy / máy in lỗi) → toast + gỡ portal. */
@@ -73,7 +75,7 @@ async function inlineImages(node: HTMLElement): Promise<void> {
  * Render OFF-SCREEN (không display:none để html-to-image chụp được) BILL KHÁCH + PHIẾU BẾP
  * ở khổ 384px (= 58mm), chụp → canvas → ESC/POS raster → gửi cầu nối in local (1 lần 2 tờ, tự cắt).
  */
-const OrderPrintPortal: React.FC<OrderPrintPortalProps> = ({ onDone, onError, ...billProps }) => {
+const OrderPrintPortal: React.FC<OrderPrintPortalProps> = ({ mode = 'both', onDone, onError, ...billProps }) => {
   const billRef = React.useRef<HTMLDivElement>(null);
   const kitchenRef = React.useRef<HTMLDivElement>(null);
 
@@ -86,17 +88,23 @@ const OrderPrintPortal: React.FC<OrderPrintPortalProps> = ({ onDone, onError, ..
         const bill = billRef.current;
         const kitchen = kitchenRef.current;
         if (!bill || !kitchen) throw new Error('no node');
-        await withTimeout(inlineImages(bill), 8000, 'Tải ảnh QR/logo');
         const { toCanvas } = await import('html-to-image');
         // skipFonts: KHÔNG cố inline @font-face của Google Fonts (cross-origin) — trước gây
         // SecurityError "Cannot access cssRules" spam console + chậm. Bill in đen trắng khổ
         // nhiệt không cần web font, dùng font hệ thống là đủ nét.
         const opts = { backgroundColor: '#ffffff', pixelRatio: 1, width: 384, skipFonts: true } as const;
-        await withTimeout(toCanvas(bill, opts), 12000, 'Chụp bill'); // warm-up (html-to-image hay miss ảnh lần đầu)
-        const billCanvas = await withTimeout(toCanvas(bill, opts), 12000, 'Chụp bill');
-        const kitchenCanvas = await withTimeout(toCanvas(kitchen, opts), 12000, 'Chụp phiếu bếp');
+        // Chỉ chụp tờ cần in theo mode → in bill / in bếp / cả hai.
+        const canvases: HTMLCanvasElement[] = [];
+        if (mode !== 'kitchen') {
+          await withTimeout(inlineImages(bill), 8000, 'Tải ảnh QR/logo'); // QR/logo chỉ có ở bill
+          await withTimeout(toCanvas(bill, opts), 12000, 'Chụp bill'); // warm-up (html-to-image hay miss ảnh lần đầu)
+          canvases.push(await withTimeout(toCanvas(bill, opts), 12000, 'Chụp bill'));
+        }
+        if (mode !== 'bill') {
+          canvases.push(await withTimeout(toCanvas(kitchen, opts), 12000, 'Chụp phiếu bếp'));
+        }
         if (cancelled) return;
-        const bytes = buildEscpos([billCanvas, kitchenCanvas]);
+        const bytes = buildEscpos(canvases);
         await withTimeout(sendToPrintAgent(bytes), 30000, 'Gửi máy in');
         if (!cancelled) onDone?.();
       } catch (e) {

@@ -44,7 +44,7 @@ import { formatVND } from '@/utils/format/currencyUtil';
 import { allocateSurcharge, generateQRCodeImage, getOrderTotal } from '@/utils/order/orderUtils';
 import { buildOrderEmvQr } from '@/utils/order/vietQrEmv';
 import { pushPosQr, clearPosQr } from '@/services/posService';
-import { Sparkles, MonitorSmartphone, Home, Printer, MoreHorizontal } from 'lucide-react';
+import { Sparkles, MonitorSmartphone, Home, Printer, ChefHat, MoreHorizontal } from 'lucide-react';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
@@ -102,7 +102,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const [posBusy, setPosBusy] = useState(false);
   const [qrCopying, setQrCopying] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [printing, setPrinting] = useState(false);
+  const [printMode, setPrintMode] = useState<'bill' | 'kitchen' | null>(null);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [crMode, setCrMode] = useState<CancelRefundMode | null>(null);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
@@ -570,8 +570,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   };
 
   // In xong (đã bung hộp thoại in) → đánh dấu "đã in bill" trên BE + cập nhật badge (local + list).
+  // Chỉ đánh dấu khi in BILL khách; in phiếu bếp không ảnh hưởng badge "đã in bill".
   const handlePrintDone = () => {
-    setPrinting(false);
+    const mode = printMode;
+    setPrintMode(null);
+    if (mode !== 'bill') return;
     void (async () => {
       try {
         const updated = await markOrderBillPrinted(currentOrder.id);
@@ -697,7 +700,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
   const renderMoreMenu = (close: () => void) => (
     <Box layoutClassName="flex flex-col gap-0.5">
-      <MoreRow icon={Printer} label={printing ? 'Đang in...' : 'In đơn hàng'} disabled={printing} onClick={() => { close(); setPrinting(true); }} />
+      <MoreRow icon={Printer} label={printMode === 'bill' ? 'Đang in bill...' : 'In bill'} disabled={printMode !== null} onClick={() => { close(); setPrintMode('bill'); }} />
+      <MoreRow icon={ChefHat} label={printMode === 'kitchen' ? 'Đang in bếp...' : 'In bếp'} disabled={printMode !== null} onClick={() => { close(); setPrintMode('kitchen'); }} />
       <MoreRow icon={Share2} label={copyingImg ? (t('detail.copyImageLoading') || 'Đang tạo ảnh...') : 'Chia sẻ'} disabled={copyingImg} onClick={() => { close(); handleShareOrder(); }} />
       {canDelete && onDelete ? (
         <MoreRow icon={Trash2} label={t('orders.delete')} danger onClick={() => { close(); onDelete(); }} />
@@ -766,8 +770,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
   return (
     <>
-    {printing ? (
+    {printMode ? (
       <OrderPrintPortal
+        mode={printMode}
         order={currentOrder}
         subtotal={subtotal}
         finalTotal={finalTotal}
@@ -779,7 +784,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         accountHolder={qrAccount?.accountHolder}
         onDone={handlePrintDone}
         onError={(msg) => {
-          setPrinting(false);
+          setPrintMode(null);
           toast.error(`Không in được (${msg}). Kiểm tra máy in đã bật + cầu nối in đang chạy.`);
         }}
       />
