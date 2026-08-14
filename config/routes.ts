@@ -28,6 +28,7 @@ import {
   Building2,
   Clock,
   UserCheck,
+  CalendarDays,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import ZaloIcon from "@/components/ui/ZaloIcon";
@@ -160,6 +161,13 @@ export const routes: RouteConfig[] = [
     path: "/employees",
     labelKey: "nav.employees",
     icon: IdCard,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/shifts",
+    labelKey: "nav.shifts",
+    icon: CalendarDays,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -391,6 +399,7 @@ export const navGroups: NavGroupConfig[] = [
     icon: Users,
     childPaths: [
       "/employees",
+      "/shifts",
       "/attendance",
       "/attendance/manage",
     ],

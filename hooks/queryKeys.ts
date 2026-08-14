@@ -31,6 +31,11 @@ export const qk = {
     networks: ['attendance', 'networks'] as const,
     history: (params: unknown) => ['attendance', 'history', params] as const,
   },
+  shifts: {
+    defs: ['shifts', 'defs'] as const,
+    assignments: (from: string, to: string) =>
+      ['shifts', 'assignments', from, to] as const,
+  },
   products: {
     all: ['products'] as const,
     versions: (productId: string) => ['products', 'versions', productId] as const,
