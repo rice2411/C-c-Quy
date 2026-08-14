@@ -28,19 +28,19 @@ const KitchenTicket: React.FC<KitchenTicketProps> = ({ order }) => {
     <Box layoutClassName="w-full px-0 py-1 leading-tight" backgroundClassName="bg-white" textClassName="text-black">
       {/* Header */}
       <Box layoutClassName="text-center border-b-2 border-black pb-1">
-        <Heading level={3} layoutClassName="text-[16px] font-extrabold uppercase" textClassName="text-black">Phiếu bếp</Heading>
-        <Typography as="p" layoutClassName="text-[15px] font-mono font-extrabold" textClassName="text-black">{order.orderNumber || order.id}</Typography>
+        <Heading level={3} layoutClassName="text-[30px] font-extrabold uppercase" textClassName="text-black">Phiếu bếp</Heading>
+        <Typography as="p" layoutClassName="text-[27px] font-mono font-extrabold" textClassName="text-black">{order.orderNumber || order.id}</Typography>
       </Box>
 
       {/* Giờ + khách */}
       <Box layoutClassName="py-1 space-y-0.5">
-        <Typography as="p" layoutClassName="text-[10px]" textClassName="text-black">Đặt lúc: {orderedAt}</Typography>
+        <Typography as="p" layoutClassName="text-[20px]" textClassName="text-black">Đặt lúc: {orderedAt}</Typography>
         {deliverAt ? (
           <Box layoutClassName="border-2 border-black px-1 py-0.5 my-0.5">
-            <Typography as="p" layoutClassName="text-[13px] font-extrabold text-center" textClassName="text-black">⏰ GIAO: {deliverAt}</Typography>
+            <Typography as="p" layoutClassName="text-[26px] font-extrabold text-center" textClassName="text-black">⏰ GIAO: {deliverAt}</Typography>
           </Box>
         ) : null}
-        <Typography as="p" layoutClassName="text-[11px] font-semibold" textClassName="text-black">Khách: {c?.name || '—'}{c?.phone ? ` · ${c.phone}` : ''}</Typography>
+        <Typography as="p" layoutClassName="text-[22px] font-semibold" textClassName="text-black">Khách: {c?.name || '—'}{c?.phone ? ` · ${c.phone}` : ''}</Typography>
       </Box>
 
       {/* Món — chữ to, có SL lớn */}
@@ -48,12 +48,12 @@ const KitchenTicket: React.FC<KitchenTicketProps> = ({ order }) => {
         {itemRows.map((r) => (
           <Box key={r.key} layoutClassName="flex items-start justify-between gap-2 border-b border-dashed border-black pb-1">
             <Box layoutClassName="min-w-0 flex-1">
-              <Typography as="p" layoutClassName="text-[15px] font-extrabold leading-tight" textClassName="text-black">{r.name}</Typography>
+              <Typography as="p" layoutClassName="text-[28px] font-extrabold leading-tight" textClassName="text-black">{r.name}</Typography>
               {r.meta.map((m, i) => (
-                <Typography key={i} as="p" layoutClassName="text-[12px] font-medium leading-tight" textClassName="text-black">• {m}</Typography>
+                <Typography key={i} as="p" layoutClassName="text-[22px] font-medium leading-tight" textClassName="text-black">• {m}</Typography>
               ))}
             </Box>
-            <Typography as="span" layoutClassName="shrink-0 text-[22px] font-extrabold leading-none" textClassName="text-black">×{r.qty}</Typography>
+            <Typography as="span" layoutClassName="shrink-0 text-[34px] font-extrabold leading-none" textClassName="text-black">×{r.qty}</Typography>
           </Box>
         ))}
       </Box>
@@ -61,8 +61,8 @@ const KitchenTicket: React.FC<KitchenTicketProps> = ({ order }) => {
       {/* Ghi chú đơn */}
       {order.note ? (
         <Box layoutClassName="border-2 border-black px-1 py-1 mt-1">
-          <Typography as="p" layoutClassName="text-[10px] font-bold uppercase" textClassName="text-black">Ghi chú</Typography>
-          <Typography as="p" layoutClassName="text-[13px] font-semibold" textClassName="text-black">{order.note}</Typography>
+          <Typography as="p" layoutClassName="text-[20px] font-bold uppercase" textClassName="text-black">Ghi chú</Typography>
+          <Typography as="p" layoutClassName="text-[26px] font-semibold" textClassName="text-black">{order.note}</Typography>
         </Box>
       ) : null}
     </Box>
