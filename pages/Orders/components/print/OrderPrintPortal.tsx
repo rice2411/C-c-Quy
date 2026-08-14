@@ -15,6 +15,23 @@ export interface OrderPrintPortalProps extends BillReceiptProps {
 const TRANSPARENT =
   'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
+/** Bọc timeout cho 1 promise — treo quá `ms` thì reject để chuỗi in không kẹt âm thầm. */
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const id = setTimeout(() => reject(new Error(`${label} quá lâu (>${ms / 1000}s)`)), ms);
+    p.then(
+      (v) => {
+        clearTimeout(id);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(id);
+        reject(e);
+      },
+    );
+  });
+}
+
 /** Inline mọi ảnh (QR/logo) thành dataURL trước khi chụp → tránh canvas bị taint (CORS). */
 async function inlineImages(node: HTMLElement): Promise<void> {
   const imgs = Array.from(node.querySelectorAll('img')) as HTMLImageElement[];
@@ -23,7 +40,12 @@ async function inlineImages(node: HTMLElement): Promise<void> {
       const src = img.src;
       if (!src || src.startsWith('data:')) return;
       try {
-        const res = await fetch(src, { mode: 'cors', cache: 'reload' });
+        // AbortController: fetch ảnh remote (QR/logo) treo → huỷ sau 6s, fallback ảnh trong suốt.
+        const ac = new AbortController();
+        const to = setTimeout(() => ac.abort(), 6000);
+        const res = await fetch(src, { mode: 'cors', cache: 'reload', signal: ac.signal }).finally(
+          () => clearTimeout(to),
+        );
         if (!res.ok) throw new Error(String(res.status));
         const blob = await res.blob();
         img.src = await new Promise<string>((resolve, reject) => {
@@ -59,22 +81,23 @@ const OrderPrintPortal: React.FC<OrderPrintPortalProps> = ({ onDone, onError, ..
     let cancelled = false;
     (async () => {
       try {
-        if (document.fonts?.ready) await document.fonts.ready;
+        // font đã load → chờ, nhưng không để nó treo vô hạn (skipFonts vẫn dùng font hệ thống).
+        if (document.fonts?.ready) await withTimeout(document.fonts.ready, 4000, 'Chờ font').catch(() => {});
         const bill = billRef.current;
         const kitchen = kitchenRef.current;
         if (!bill || !kitchen) throw new Error('no node');
-        await inlineImages(bill);
+        await withTimeout(inlineImages(bill), 8000, 'Tải ảnh QR/logo');
         const { toCanvas } = await import('html-to-image');
         // skipFonts: KHÔNG cố inline @font-face của Google Fonts (cross-origin) — trước gây
         // SecurityError "Cannot access cssRules" spam console + chậm. Bill in đen trắng khổ
         // nhiệt không cần web font, dùng font hệ thống là đủ nét.
         const opts = { backgroundColor: '#ffffff', pixelRatio: 1, width: 384, skipFonts: true } as const;
-        await toCanvas(bill, opts); // warm-up (html-to-image hay miss ảnh lần đầu)
-        const billCanvas = await toCanvas(bill, opts);
-        const kitchenCanvas = await toCanvas(kitchen, opts);
+        await withTimeout(toCanvas(bill, opts), 12000, 'Chụp bill'); // warm-up (html-to-image hay miss ảnh lần đầu)
+        const billCanvas = await withTimeout(toCanvas(bill, opts), 12000, 'Chụp bill');
+        const kitchenCanvas = await withTimeout(toCanvas(kitchen, opts), 12000, 'Chụp phiếu bếp');
         if (cancelled) return;
         const bytes = buildEscpos([billCanvas, kitchenCanvas]);
-        await sendToPrintAgent(bytes);
+        await withTimeout(sendToPrintAgent(bytes), 30000, 'Gửi máy in');
         if (!cancelled) onDone?.();
       } catch (e) {
         if (!cancelled) onError?.(e instanceof Error ? e.message : String(e));
