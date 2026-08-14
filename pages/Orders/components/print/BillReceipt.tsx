@@ -63,29 +63,29 @@ const BillReceipt: React.FC<BillReceiptProps> = ({
 
   // Font vừa (đọc thoải mái) + SIẾT khoảng cách/lề để ảnh gọn lại → tổng mực không tăng dù chữ to hơn.
   const infoRow = (label: string, value: React.ReactNode) => (
-    <Box layoutClassName="flex gap-1">
+    <Box layoutClassName="flex gap-2">
       <Typography as="span" layoutClassName="w-[15mm] shrink-0 text-[21px]" textClassName="text-black">{label}</Typography>
       <Typography as="span" layoutClassName="min-w-0 flex-1 text-[21px] font-medium" textClassName="text-black">{value}</Typography>
     </Box>
   );
 
   return (
-    <Box layoutClassName="w-full px-0 py-0.5 leading-none" backgroundClassName="bg-white" textClassName="text-black">
+    <Box layoutClassName="w-full px-0 py-1 leading-snug" backgroundClassName="bg-white" textClassName="text-black">
       {/* Header tiệm — bỏ logo (giảm mực), chữ vừa */}
-      <Box layoutClassName="flex flex-col items-center text-center pb-0.5">
+      <Box layoutClassName="flex flex-col items-center text-center pb-1">
         <Heading level={3} layoutClassName="text-[27px] font-semibold uppercase" textClassName="text-black">{SHOP_INFO.name}</Heading>
         {SHOP_INFO.address ? <Typography as="p" layoutClassName="text-[19px]" textClassName="text-black">{SHOP_INFO.address}</Typography> : null}
         {SHOP_INFO.phone ? <Typography as="p" layoutClassName="text-[19px]" textClassName="text-black">ĐT: {SHOP_INFO.phone}</Typography> : null}
       </Box>
 
-      <Box layoutClassName="text-center border-t border-b border-dashed border-black py-0.5">
+      <Box layoutClassName="text-center border-t border-b border-dashed border-black py-1">
         <Typography as="p" layoutClassName="text-[24px] font-semibold uppercase" textClassName="text-black">Hoá đơn bán hàng</Typography>
         <Typography as="p" layoutClassName="text-[22px] font-mono font-semibold" textClassName="text-black">{order.orderNumber || order.id}</Typography>
         <Typography as="p" layoutClassName="text-[19px]" textClassName="text-black">{new Date(order.date || Date.now()).toLocaleString('vi-VN')}</Typography>
       </Box>
 
       {/* Khách */}
-      <Box layoutClassName="py-0.5">
+      <Box layoutClassName="py-1 space-y-1">
         {infoRow('Khách', c?.name || '—')}
         {c?.phone ? infoRow('SĐT', c.phone) : null}
         {c?.address ? infoRow('Địa chỉ', `${c.address}${c.city ? `, ${c.city}` : ''}`) : null}
@@ -94,15 +94,15 @@ const BillReceipt: React.FC<BillReceiptProps> = ({
       </Box>
 
       {/* Món */}
-      <Box layoutClassName={`${dashed} space-y-0.5`}>
+      <Box layoutClassName={`${dashed} space-y-1.5`}>
         {itemRows.map((r) => {
           const lineItem = order.items.find((it) => r.key.startsWith(it.id));
           const unitPrice = lineItem?.price ?? 0;
           return (
-            <Box key={r.key}>
-              <Typography as="p" layoutClassName="text-[23px] font-semibold leading-tight" textClassName="text-black">{r.name}</Typography>
+            <Box key={r.key} layoutClassName="space-y-0.5">
+              <Typography as="p" layoutClassName="text-[23px] font-semibold leading-snug" textClassName="text-black">{r.name}</Typography>
               {r.meta.length > 0 ? (
-                <Typography as="p" layoutClassName="text-[19px] leading-tight" textClassName="text-black">{r.meta.join(' · ')}</Typography>
+                <Typography as="p" layoutClassName="text-[19px] leading-snug" textClassName="text-black">{r.meta.join(' · ')}</Typography>
               ) : null}
               <Box layoutClassName={row}>
                 <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">{r.qty} × {formatVND(unitPrice)}</Typography>
@@ -114,7 +114,7 @@ const BillReceipt: React.FC<BillReceiptProps> = ({
       </Box>
 
       {/* Tổng */}
-      <Box layoutClassName={`${dashed} space-y-0.5`}>
+      <Box layoutClassName={`${dashed} space-y-1.5`}>
         <Box layoutClassName={row}>
           <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">Tạm tính</Typography>
           <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">{formatVND(subtotal)}</Typography>
