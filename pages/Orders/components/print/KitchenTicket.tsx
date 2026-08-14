@@ -28,19 +28,19 @@ const KitchenTicket: React.FC<KitchenTicketProps> = ({ order }) => {
     <Box layoutClassName="w-full px-0 py-0.5 leading-none" backgroundClassName="bg-white" textClassName="text-black">
       {/* Header — font vừa, siết spacing để ảnh gọn (bù chữ to, mực không tăng) */}
       <Box layoutClassName="text-center border-b border-black pb-0.5">
-        <Heading level={3} layoutClassName="text-[33px] font-semibold uppercase" textClassName="text-black">Phiếu bếp</Heading>
-        <Typography as="p" layoutClassName="text-[31px] font-mono font-semibold" textClassName="text-black">{order.orderNumber || order.id}</Typography>
+        <Heading level={3} layoutClassName="text-[28px] font-semibold uppercase" textClassName="text-black">Phiếu bếp</Heading>
+        <Typography as="p" layoutClassName="text-[26px] font-mono font-semibold" textClassName="text-black">{order.orderNumber || order.id}</Typography>
       </Box>
 
       {/* Giờ + khách */}
       <Box layoutClassName="py-0.5">
-        <Typography as="p" layoutClassName="text-[25px]" textClassName="text-black">Đặt lúc: {orderedAt}</Typography>
+        <Typography as="p" layoutClassName="text-[20px]" textClassName="text-black">Đặt lúc: {orderedAt}</Typography>
         {deliverAt ? (
           <Box layoutClassName="border border-black px-1 py-0.5 my-0.5">
-            <Typography as="p" layoutClassName="text-[30px] font-semibold text-center" textClassName="text-black">⏰ GIAO: {deliverAt}</Typography>
+            <Typography as="p" layoutClassName="text-[25px] font-semibold text-center" textClassName="text-black">⏰ GIAO: {deliverAt}</Typography>
           </Box>
         ) : null}
-        <Typography as="p" layoutClassName="text-[26px] font-medium" textClassName="text-black">Khách: {c?.name || '—'}{c?.phone ? ` · ${c.phone}` : ''}</Typography>
+        <Typography as="p" layoutClassName="text-[21px] font-medium" textClassName="text-black">Khách: {c?.name || '—'}{c?.phone ? ` · ${c.phone}` : ''}</Typography>
       </Box>
 
       {/* Món — SL nổi bật */}
@@ -48,12 +48,12 @@ const KitchenTicket: React.FC<KitchenTicketProps> = ({ order }) => {
         {itemRows.map((r) => (
           <Box key={r.key} layoutClassName="flex items-start justify-between gap-2 border-b border-dashed border-black pb-0.5">
             <Box layoutClassName="min-w-0 flex-1">
-              <Typography as="p" layoutClassName="text-[32px] font-semibold leading-tight" textClassName="text-black">{r.name}</Typography>
+              <Typography as="p" layoutClassName="text-[27px] font-semibold leading-tight" textClassName="text-black">{r.name}</Typography>
               {r.meta.map((m, i) => (
-                <Typography key={i} as="p" layoutClassName="text-[25px] font-normal leading-tight" textClassName="text-black">• {m}</Typography>
+                <Typography key={i} as="p" layoutClassName="text-[20px] font-normal leading-tight" textClassName="text-black">• {m}</Typography>
               ))}
             </Box>
-            <Typography as="span" layoutClassName="shrink-0 text-[36px] font-bold leading-none" textClassName="text-black">×{r.qty}</Typography>
+            <Typography as="span" layoutClassName="shrink-0 text-[31px] font-bold leading-none" textClassName="text-black">×{r.qty}</Typography>
           </Box>
         ))}
       </Box>
@@ -61,8 +61,8 @@ const KitchenTicket: React.FC<KitchenTicketProps> = ({ order }) => {
       {/* Ghi chú đơn */}
       {order.note ? (
         <Box layoutClassName="border border-black px-1 py-0.5 mt-0.5">
-          <Typography as="p" layoutClassName="text-[24px] font-semibold uppercase" textClassName="text-black">Ghi chú</Typography>
-          <Typography as="p" layoutClassName="text-[27px] font-medium" textClassName="text-black">{order.note}</Typography>
+          <Typography as="p" layoutClassName="text-[19px] font-semibold uppercase" textClassName="text-black">Ghi chú</Typography>
+          <Typography as="p" layoutClassName="text-[22px] font-medium" textClassName="text-black">{order.note}</Typography>
         </Box>
       ) : null}
     </Box>

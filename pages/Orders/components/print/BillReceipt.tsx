@@ -64,8 +64,8 @@ const BillReceipt: React.FC<BillReceiptProps> = ({
   // Font vừa (đọc thoải mái) + SIẾT khoảng cách/lề để ảnh gọn lại → tổng mực không tăng dù chữ to hơn.
   const infoRow = (label: string, value: React.ReactNode) => (
     <Box layoutClassName="flex gap-1">
-      <Typography as="span" layoutClassName="w-[15mm] shrink-0 text-[26px]" textClassName="text-black">{label}</Typography>
-      <Typography as="span" layoutClassName="min-w-0 flex-1 text-[26px] font-medium" textClassName="text-black">{value}</Typography>
+      <Typography as="span" layoutClassName="w-[15mm] shrink-0 text-[21px]" textClassName="text-black">{label}</Typography>
+      <Typography as="span" layoutClassName="min-w-0 flex-1 text-[21px] font-medium" textClassName="text-black">{value}</Typography>
     </Box>
   );
 
@@ -73,15 +73,15 @@ const BillReceipt: React.FC<BillReceiptProps> = ({
     <Box layoutClassName="w-full px-0 py-0.5 leading-none" backgroundClassName="bg-white" textClassName="text-black">
       {/* Header tiệm — bỏ logo (giảm mực), chữ vừa */}
       <Box layoutClassName="flex flex-col items-center text-center pb-0.5">
-        <Heading level={3} layoutClassName="text-[32px] font-semibold uppercase" textClassName="text-black">{SHOP_INFO.name}</Heading>
-        {SHOP_INFO.address ? <Typography as="p" layoutClassName="text-[24px]" textClassName="text-black">{SHOP_INFO.address}</Typography> : null}
-        {SHOP_INFO.phone ? <Typography as="p" layoutClassName="text-[24px]" textClassName="text-black">ĐT: {SHOP_INFO.phone}</Typography> : null}
+        <Heading level={3} layoutClassName="text-[27px] font-semibold uppercase" textClassName="text-black">{SHOP_INFO.name}</Heading>
+        {SHOP_INFO.address ? <Typography as="p" layoutClassName="text-[19px]" textClassName="text-black">{SHOP_INFO.address}</Typography> : null}
+        {SHOP_INFO.phone ? <Typography as="p" layoutClassName="text-[19px]" textClassName="text-black">ĐT: {SHOP_INFO.phone}</Typography> : null}
       </Box>
 
       <Box layoutClassName="text-center border-t border-b border-dashed border-black py-0.5">
-        <Typography as="p" layoutClassName="text-[29px] font-semibold uppercase" textClassName="text-black">Hoá đơn bán hàng</Typography>
-        <Typography as="p" layoutClassName="text-[27px] font-mono font-semibold" textClassName="text-black">{order.orderNumber || order.id}</Typography>
-        <Typography as="p" layoutClassName="text-[24px]" textClassName="text-black">{new Date(order.date || Date.now()).toLocaleString('vi-VN')}</Typography>
+        <Typography as="p" layoutClassName="text-[24px] font-semibold uppercase" textClassName="text-black">Hoá đơn bán hàng</Typography>
+        <Typography as="p" layoutClassName="text-[22px] font-mono font-semibold" textClassName="text-black">{order.orderNumber || order.id}</Typography>
+        <Typography as="p" layoutClassName="text-[19px]" textClassName="text-black">{new Date(order.date || Date.now()).toLocaleString('vi-VN')}</Typography>
       </Box>
 
       {/* Khách */}
@@ -100,13 +100,13 @@ const BillReceipt: React.FC<BillReceiptProps> = ({
           const unitPrice = lineItem?.price ?? 0;
           return (
             <Box key={r.key}>
-              <Typography as="p" layoutClassName="text-[28px] font-semibold leading-tight" textClassName="text-black">{r.name}</Typography>
+              <Typography as="p" layoutClassName="text-[23px] font-semibold leading-tight" textClassName="text-black">{r.name}</Typography>
               {r.meta.length > 0 ? (
-                <Typography as="p" layoutClassName="text-[24px] leading-tight" textClassName="text-black">{r.meta.join(' · ')}</Typography>
+                <Typography as="p" layoutClassName="text-[19px] leading-tight" textClassName="text-black">{r.meta.join(' · ')}</Typography>
               ) : null}
               <Box layoutClassName={row}>
-                <Typography as="span" layoutClassName="text-[26px]" textClassName="text-black">{r.qty} × {formatVND(unitPrice)}</Typography>
-                <Typography as="span" layoutClassName="text-[26px] font-medium" textClassName="text-black">{formatVND(unitPrice * r.qty)}</Typography>
+                <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">{r.qty} × {formatVND(unitPrice)}</Typography>
+                <Typography as="span" layoutClassName="text-[21px] font-medium" textClassName="text-black">{formatVND(unitPrice * r.qty)}</Typography>
               </Box>
             </Box>
           );
@@ -116,47 +116,47 @@ const BillReceipt: React.FC<BillReceiptProps> = ({
       {/* Tổng */}
       <Box layoutClassName={`${dashed} space-y-0.5`}>
         <Box layoutClassName={row}>
-          <Typography as="span" layoutClassName="text-[26px]" textClassName="text-black">Tạm tính</Typography>
-          <Typography as="span" layoutClassName="text-[26px]" textClassName="text-black">{formatVND(subtotal)}</Typography>
+          <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">Tạm tính</Typography>
+          <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">{formatVND(subtotal)}</Typography>
         </Box>
         {surchargeRows.map((s, i) => (
           <Box key={i} layoutClassName={row}>
-            <Typography as="span" layoutClassName="text-[26px]" textClassName="text-black">Phụ thu{s.label ? ` · ${s.label}` : ''}</Typography>
-            <Typography as="span" layoutClassName="text-[26px]" textClassName="text-black">+{formatVND(s.amount)}</Typography>
+            <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">Phụ thu{s.label ? ` · ${s.label}` : ''}</Typography>
+            <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">+{formatVND(s.amount)}</Typography>
           </Box>
         ))}
         {shippingCost > 0 ? (
           <Box layoutClassName={row}>
-            <Typography as="span" layoutClassName="text-[26px]" textClassName="text-black">Phí ship</Typography>
-            <Typography as="span" layoutClassName="text-[26px]" textClassName="text-black">{formatVND(shippingCost)}</Typography>
+            <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">Phí ship</Typography>
+            <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">{formatVND(shippingCost)}</Typography>
           </Box>
         ) : null}
         {order.discountAmount && order.discountAmount > 0 ? (
           <Box layoutClassName={row}>
-            <Typography as="span" layoutClassName="text-[26px]" textClassName="text-black">Khuyến mãi</Typography>
-            <Typography as="span" layoutClassName="text-[26px]" textClassName="text-black">−{formatVND(order.discountAmount)}</Typography>
+            <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">Khuyến mãi</Typography>
+            <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">−{formatVND(order.discountAmount)}</Typography>
           </Box>
         ) : null}
         {order.manualDiscountAmount && order.manualDiscountAmount > 0 ? (
           <Box layoutClassName={row}>
-            <Typography as="span" layoutClassName="text-[26px]" textClassName="text-black">Giảm giá</Typography>
-            <Typography as="span" layoutClassName="text-[26px]" textClassName="text-black">−{formatVND(order.manualDiscountAmount)}</Typography>
+            <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">Giảm giá</Typography>
+            <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">−{formatVND(order.manualDiscountAmount)}</Typography>
           </Box>
         ) : null}
         <Box layoutClassName={`${row} border-t border-black pt-0.5 mt-0.5`}>
-          <Typography as="span" layoutClassName="text-[30px] font-bold" textClassName="text-black">TỔNG</Typography>
-          <Typography as="span" layoutClassName="text-[31px] font-bold" textClassName="text-black">{formatVND(finalTotal)}</Typography>
+          <Typography as="span" layoutClassName="text-[25px] font-bold" textClassName="text-black">TỔNG</Typography>
+          <Typography as="span" layoutClassName="text-[26px] font-bold" textClassName="text-black">{formatVND(finalTotal)}</Typography>
         </Box>
         {dep.show ? (
           <>
             <Box layoutClassName={row}>
-              <Typography as="span" layoutClassName="text-[26px]" textClassName="text-black">Đã nhận ({dep.statusLabel})</Typography>
-              <Typography as="span" layoutClassName="text-[26px] font-medium" textClassName="text-black">{formatVND(dep.deposit || dep.paid)}</Typography>
+              <Typography as="span" layoutClassName="text-[21px]" textClassName="text-black">Đã nhận ({dep.statusLabel})</Typography>
+              <Typography as="span" layoutClassName="text-[21px] font-medium" textClassName="text-black">{formatVND(dep.deposit || dep.paid)}</Typography>
             </Box>
             {dep.remaining > 0 && dep.paid < finalTotal ? (
               <Box layoutClassName={`${row} border-t border-black pt-0.5`}>
-                <Typography as="span" layoutClassName="text-[28px] font-bold" textClassName="text-black">CÒN LẠI</Typography>
-                <Typography as="span" layoutClassName="text-[29px] font-bold" textClassName="text-black">{formatVND(dep.remaining)}</Typography>
+                <Typography as="span" layoutClassName="text-[23px] font-bold" textClassName="text-black">CÒN LẠI</Typography>
+                <Typography as="span" layoutClassName="text-[24px] font-bold" textClassName="text-black">{formatVND(dep.remaining)}</Typography>
               </Box>
             ) : null}
           </>
@@ -166,20 +166,20 @@ const BillReceipt: React.FC<BillReceiptProps> = ({
       {/* QR chuyển khoản (mặc định KHÔNG in — bỏ QR cho nhẹ mực; chỉ hiện nếu có qrUrl) */}
       {qrUrl ? (
         <Box layoutClassName={`${dashed} flex flex-col items-center gap-0.5 pt-1`}>
-          <Typography as="p" layoutClassName="text-[22px] font-semibold uppercase" textClassName="text-black">Quét QR chuyển khoản</Typography>
+          <Typography as="p" layoutClassName="text-[17px] font-semibold uppercase" textClassName="text-black">Quét QR chuyển khoản</Typography>
           <Image src={qrUrl} alt="QR chuyển khoản" disableFade loading="eager" layoutClassName="h-[26mm] w-[26mm] object-contain" />
-          <Typography as="p" layoutClassName="text-[22px] text-center" textClassName="text-black">
+          <Typography as="p" layoutClassName="text-[17px] text-center" textClassName="text-black">
             {(bankCode || '').toUpperCase()}{accountNumber ? ` · ${accountNumber}` : ''}
           </Typography>
-          {accountHolder ? <Typography as="p" layoutClassName="text-[22px] font-medium text-center" textClassName="text-black">{accountHolder.toUpperCase()}</Typography> : null}
-          {description ? <Typography as="p" layoutClassName="text-[22px] text-center" textClassName="text-black">Nội dung: <Typography as="span" layoutClassName="font-mono font-semibold text-[22px]" textClassName="text-black">{description}</Typography></Typography> : null}
+          {accountHolder ? <Typography as="p" layoutClassName="text-[17px] font-medium text-center" textClassName="text-black">{accountHolder.toUpperCase()}</Typography> : null}
+          {description ? <Typography as="p" layoutClassName="text-[17px] text-center" textClassName="text-black">Nội dung: <Typography as="span" layoutClassName="font-mono font-semibold text-[17px]" textClassName="text-black">{description}</Typography></Typography> : null}
         </Box>
       ) : null}
 
       {/* Chân bill */}
       <Box layoutClassName="border-t border-dashed border-black pt-0.5 mt-0.5 text-center">
-        <Typography as="p" layoutClassName="text-[26px] font-semibold" textClassName="text-black">Cảm ơn quý khách!</Typography>
-        {SHOP_INFO.social ? <Typography as="p" layoutClassName="text-[24px]" textClassName="text-black">{SHOP_INFO.social}</Typography> : null}
+        <Typography as="p" layoutClassName="text-[21px] font-semibold" textClassName="text-black">Cảm ơn quý khách!</Typography>
+        {SHOP_INFO.social ? <Typography as="p" layoutClassName="text-[19px]" textClassName="text-black">{SHOP_INFO.social}</Typography> : null}
       </Box>
     </Box>
   );
