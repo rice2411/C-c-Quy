@@ -65,7 +65,10 @@ const OrderPrintPortal: React.FC<OrderPrintPortalProps> = ({ onDone, onError, ..
         if (!bill || !kitchen) throw new Error('no node');
         await inlineImages(bill);
         const { toCanvas } = await import('html-to-image');
-        const opts = { backgroundColor: '#ffffff', pixelRatio: 1, width: 384 } as const;
+        // skipFonts: KHÔNG cố inline @font-face của Google Fonts (cross-origin) — trước gây
+        // SecurityError "Cannot access cssRules" spam console + chậm. Bill in đen trắng khổ
+        // nhiệt không cần web font, dùng font hệ thống là đủ nét.
+        const opts = { backgroundColor: '#ffffff', pixelRatio: 1, width: 384, skipFonts: true } as const;
         await toCanvas(bill, opts); // warm-up (html-to-image hay miss ảnh lần đầu)
         const billCanvas = await toCanvas(bill, opts);
         const kitchenCanvas = await toCanvas(kitchen, opts);
