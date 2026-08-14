@@ -777,7 +777,6 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         subtotal={subtotal}
         finalTotal={finalTotal}
         shippingCost={shippingCost}
-        qrUrl={shareQrUrl}
         description={shareDescription}
         bankCode={qrAccount?.bankCode}
         accountNumber={qrAccount?.accountNumber}
