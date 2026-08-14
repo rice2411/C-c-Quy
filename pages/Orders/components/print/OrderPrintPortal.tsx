@@ -94,13 +94,17 @@ const OrderPrintPortal: React.FC<OrderPrintPortalProps> = ({ mode = 'both', onDo
         // nhiệt không cần web font, dùng font hệ thống là đủ nét.
         const opts = { backgroundColor: '#ffffff', pixelRatio: 1, width: 384, skipFonts: true } as const;
         // Chỉ chụp tờ cần in theo mode → in bill / in bếp / cả hai.
+        // ⚠️ Lần toCanvas ĐẦU TIÊN của html-to-image hay lỗi (miss ảnh / canvas méo) → LUÔN warm-up
+        //    (chụp bỏ 1 lần) TRƯỚC mỗi tờ rồi mới lấy lần thứ 2. Thiếu warm-up ở phiếu bếp khi in
+        //    bếp-riêng → canvas hỏng → raster méo → máy in nhả ký tự rác.
         const canvases: HTMLCanvasElement[] = [];
         if (mode !== 'kitchen') {
           await withTimeout(inlineImages(bill), 8000, 'Tải ảnh QR/logo'); // QR/logo chỉ có ở bill
-          await withTimeout(toCanvas(bill, opts), 12000, 'Chụp bill'); // warm-up (html-to-image hay miss ảnh lần đầu)
+          await withTimeout(toCanvas(bill, opts), 12000, 'Chụp bill'); // warm-up
           canvases.push(await withTimeout(toCanvas(bill, opts), 12000, 'Chụp bill'));
         }
         if (mode !== 'bill') {
+          await withTimeout(toCanvas(kitchen, opts), 12000, 'Chụp phiếu bếp'); // warm-up
           canvases.push(await withTimeout(toCanvas(kitchen, opts), 12000, 'Chụp phiếu bếp'));
         }
         if (cancelled) return;
