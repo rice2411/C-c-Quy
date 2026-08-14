@@ -9,8 +9,14 @@ import {
   fetchShifts,
   fetchShiftAssignments,
   setDayAssignments,
+  saveShifts,
 } from '@/services/shiftService';
-import { ShiftAssignment, SetDayInput, WorkShift } from '@/types/shift';
+import {
+  ShiftAssignment,
+  SetDayInput,
+  WorkShift,
+  WorkShiftSaveItem,
+} from '@/types/shift';
 
 /** 3 ca định nghĩa (ít đổi → cache lâu). */
 export const useWorkShifts = () => {
@@ -26,6 +32,18 @@ export const useWorkShifts = () => {
     loading: q.isLoading,
     error: q.error,
   };
+};
+
+/** Lưu cài đặt ca (giờ + thứ trong tuần). */
+export const useSaveShifts = () => {
+  const queryClient = useQueryClient();
+  const m = useMutation({
+    mutationFn: (items: WorkShiftSaveItem[]) => saveShifts(items),
+    onSuccess: (data) => {
+      queryClient.setQueryData(qk.shifts.defs, data);
+    },
+  });
+  return { saveShifts: (items: WorkShiftSaveItem[]) => m.mutateAsync(items), saving: m.isPending };
 };
 
 /** Phân ca trong khoảng ngày [from, to] (yyyy-mm-dd). */

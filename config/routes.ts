@@ -167,7 +167,7 @@ export const routes: RouteConfig[] = [
     type: "page",
     path: "/shifts",
     labelKey: "nav.shifts",
-    icon: CalendarDays,
+    icon: Settings2,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {

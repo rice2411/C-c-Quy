@@ -1,5 +1,10 @@
 import { apiClient } from '@/services/api/client';
-import { ShiftAssignment, SetDayInput, WorkShift } from '@/types/shift';
+import {
+  ShiftAssignment,
+  SetDayInput,
+  WorkShift,
+  WorkShiftSaveItem,
+} from '@/types/shift';
 
 const BASE = '/shifts';
 
@@ -12,6 +17,9 @@ function toShift(r: any): WorkShift {
     endTime: typeof r?.endTime === 'string' ? r.endTime : '',
     congFactor: typeof r?.congFactor === 'number' ? r.congFactor : 0,
     sortOrder: typeof r?.sortOrder === 'number' ? r.sortOrder : 0,
+    weekdays: Array.isArray(r?.weekdays)
+      ? r.weekdays.filter((n: unknown): n is number => typeof n === 'number')
+      : [],
     active: r?.active !== false,
   };
 }
@@ -30,6 +38,14 @@ function toAssignment(r: any): ShiftAssignment {
 
 export async function fetchShifts(): Promise<WorkShift[]> {
   const res = await apiClient.get<any[]>(BASE);
+  return Array.isArray(res.data) ? res.data.map(toShift) : [];
+}
+
+/** Lưu cài đặt ca (giờ + thứ trong tuần + bật/tắt) → trả danh sách sau lưu. */
+export async function saveShifts(
+  items: WorkShiftSaveItem[],
+): Promise<WorkShift[]> {
+  const res = await apiClient.put<any[]>(BASE, items);
   return Array.isArray(res.data) ? res.data.map(toShift) : [];
 }
 
