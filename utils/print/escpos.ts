@@ -4,7 +4,12 @@ import { PRINT_AGENT_URL } from '@/config/printAgent';
 const WIDTH_DOTS = 384;
 const WIDTH_BYTES = WIDTH_DOTS / 8;
 
-const INIT = [0x1b, 0x40]; // ESC @ : khởi tạo
+// ESC @ (khởi tạo) + ESC 7 n1 n2 n3 (chỉnh đầu đốt): n1 = SỐ CHẤM ĐỐT CÙNG LÚC tối đa.
+// Hạ n1 xuống thấp → giảm DÒNG ĐỈNH tức thời của đầu in nhiệt → bớt nhiễu điện → máy in KHÔNG
+// tự ngắt USB giữa lúc in (thủ phạm khiến bản in ảnh cũ ra ký tự rác ở tờ 2). Đã đo trên máy
+// SingPC Print-211: in ảnh nhẹ cao tới 800px vẫn sống với ESC 7 này (trước rớt vì in full nhiệt).
+// n2 = thời gian đốt (độ đậm), n3 = khoảng nghỉ. Chỉnh nếu bản in quá nhạt/quá đậm.
+const INIT = [0x1b, 0x40, 0x1b, 0x37, 3, 180, 6];
 const CUT = [0x1d, 0x56, 0x01]; // GS V 1 : cắt giấy (partial)
 const feed = (n: number) => [0x1b, 0x64, n & 0xff]; // ESC d n : nhả n dòng
 
@@ -38,7 +43,9 @@ function appendRaster(out: number[], canvas: HTMLCanvasElement): void {
             const alpha = data[i + 3];
             if (alpha >= 32) {
               const lum = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-              if (lum < 160) byte |= 0x80 >> bit;
+              // Ngưỡng 130 (thấp hơn 160 cũ): chỉ lấy nét ĐẬM thật → in MẢNH hơn, ít chấm đen hơn
+              // → nhẹ dòng đốt thêm ("nén nhẹ"). Vẫn giữ lõi chữ nên đọc tốt.
+              if (lum < 130) byte |= 0x80 >> bit;
             }
           }
         }
