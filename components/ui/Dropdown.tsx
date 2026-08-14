@@ -74,7 +74,8 @@ const Dropdown: React.FC<DropdownProps> = (props) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [activeIdx, setActiveIdx] = useState(-1);
-  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  // top HOẶC bottom (neo đáy khi lật lên) — dùng bottom để panel ngắn không bị nổi cao khỏi trigger.
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; left: number; width: number; height: number } | null>(null);
 
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -109,9 +110,16 @@ const Dropdown: React.FC<DropdownProps> = (props) => {
     let left = align === 'right' ? r.right - width : r.left;
     if (left + width > window.innerWidth - 8) left = window.innerWidth - width - 8;
     if (left < 8) left = 8;
-    let top = r.bottom + 4;
-    if (top + maxHeight > window.innerHeight && r.top - maxHeight > 0) top = r.top - maxHeight - 4;
-    setPos({ top, left, width });
+    // Chỗ trống thực bên dưới / bên trên trigger (chừa 8px mép).
+    const spaceBelow = window.innerHeight - r.bottom - 8;
+    const spaceAbove = r.top - 8;
+    // Lật lên chỉ khi dưới thiếu chỗ MÀ trên rộng hơn. Neo ĐÁY panel sát trigger (bottom)
+    // để panel ngắn (ít mục) không nổi lơ lửng cách trigger cả trăm px.
+    if (spaceBelow < Math.min(maxHeight, 200) && spaceAbove > spaceBelow) {
+      setPos({ bottom: window.innerHeight - r.top + 4, left, width, height: Math.min(maxHeight, spaceAbove) });
+    } else {
+      setPos({ top: r.bottom + 4, left, width, height: Math.min(maxHeight, spaceBelow) });
+    }
   }, [align, maxHeight]);
 
   useLayoutEffect(() => { if (open) place(); }, [open, place]);
@@ -203,7 +211,13 @@ const Dropdown: React.FC<DropdownProps> = (props) => {
           ref={panelRef}
           role="listbox"
           aria-multiselectable={multiple || undefined}
-          style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, maxHeight }}
+          style={{
+            position: 'fixed',
+            left: pos.left,
+            width: pos.width,
+            maxHeight: pos.height,
+            ...(pos.top != null ? { top: pos.top } : { bottom: pos.bottom }),
+          }}
           className="z-[130] flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800"
         >
           {searchable ? (

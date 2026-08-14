@@ -59,7 +59,8 @@ const Popover: React.FC<PopoverProps> = ({
   );
   const close = useCallback(() => setOpen(false), [setOpen]);
 
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  // top HOẶC bottom (neo đáy khi lật lên) để panel ngắn không nổi cao khỏi trigger.
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; left: number; height: number } | null>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -70,9 +71,14 @@ const Popover: React.FC<PopoverProps> = ({
     let left = align === 'right' ? r.right - width : r.left;
     if (left + width > window.innerWidth - 8) left = window.innerWidth - width - 8;
     if (left < 8) left = 8;
-    let top = r.bottom + 4;
-    if (top + maxHeight > window.innerHeight && r.top - maxHeight > 0) top = r.top - maxHeight - 4;
-    setPos({ top, left });
+    const spaceBelow = window.innerHeight - r.bottom - 8;
+    const spaceAbove = r.top - 8;
+    // Lật lên chỉ khi dưới thiếu chỗ mà trên rộng hơn; neo ĐÁY panel sát trigger.
+    if (spaceBelow < Math.min(maxHeight, 200) && spaceAbove > spaceBelow) {
+      setPos({ bottom: window.innerHeight - r.top + 4, left, height: Math.min(maxHeight, spaceAbove) });
+    } else {
+      setPos({ top: r.bottom + 4, left, height: Math.min(maxHeight, spaceBelow) });
+    }
   }, [align, width, maxHeight]);
 
   useLayoutEffect(() => { if (open) place(); }, [open, place]);
@@ -102,7 +108,13 @@ const Popover: React.FC<PopoverProps> = ({
     ? createPortal(
         <Box
           ref={panelRef as React.RefObject<HTMLDivElement>}
-          style={{ position: 'fixed', top: pos.top, left: pos.left, width, maxHeight }}
+          style={{
+            position: 'fixed',
+            left: pos.left,
+            width,
+            maxHeight: pos.height,
+            ...(pos.top != null ? { top: pos.top } : { bottom: pos.bottom }),
+          }}
           layoutClassName={`${zIndexClassName} overflow-y-auto ${paddingClassName}`}
           backgroundClassName={backgroundClassName}
           borderClassName={borderClassName}
