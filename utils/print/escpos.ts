@@ -4,12 +4,10 @@ import { PRINT_AGENT_URL } from '@/config/printAgent';
 const WIDTH_DOTS = 384;
 const WIDTH_BYTES = WIDTH_DOTS / 8;
 
-// ESC @ (khởi tạo) + ESC 7 n1 n2 n3 (chỉnh đầu đốt): n1 = SỐ CHẤM ĐỐT CÙNG LÚC tối đa.
-// Hạ n1 xuống thấp → giảm DÒNG ĐỈNH tức thời của đầu in nhiệt → bớt nhiễu điện → máy in KHÔNG
-// tự ngắt USB giữa lúc in (thủ phạm khiến bản in ảnh cũ ra ký tự rác ở tờ 2). Đã đo trên máy
-// SingPC Print-211: in ảnh nhẹ cao tới 800px vẫn sống với ESC 7 này (trước rớt vì in full nhiệt).
-// n2 = thời gian đốt (độ đậm), n3 = khoảng nghỉ. Chỉnh nếu bản in quá nhạt/quá đậm.
-const INIT = [0x1b, 0x40, 0x1b, 0x37, 3, 180, 6];
+// ESC @ : khởi tạo. ⚠️ KHÔNG thêm ESC 7 (chỉnh đầu đốt) — máy SingPC Print-211 KHÔNG nuốt được
+// ESC 7 trong luồng raster → in ra KÝ TỰ RÁC (đã test tách bạch 2026-08-14: raster có ESC 7 = rác,
+// không ESC 7 = đẹp). Giảm mực để nhẹ dòng đốt làm bằng font nhỏ + ngưỡng đen thấp bên dưới.
+const INIT = [0x1b, 0x40];
 const CUT = [0x1d, 0x56, 0x01]; // GS V 1 : cắt giấy (partial)
 const feed = (n: number) => [0x1b, 0x64, n & 0xff]; // ESC d n : nhả n dòng
 
