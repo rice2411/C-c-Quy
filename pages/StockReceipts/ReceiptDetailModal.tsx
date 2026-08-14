@@ -12,6 +12,7 @@ import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 
 import Button from '@/components/ui/Button';
 import Image from '@/components/ui/Image';
+import AllocationPanel from './components/AllocationPanel';
 const ZOOM_MIN = 0.5;
 const ZOOM_MAX = 4;
 const ZOOM_STEP = 0.25;
@@ -263,6 +264,8 @@ const ReceiptDetailModal: React.FC<ReceiptDetailModalProps> = ({
                 </Typography>
               </Box>
             </Box>
+
+            {receiptDetail.id ? <AllocationPanel receiptId={receiptDetail.id} /> : null}
           </Box>
         )}
       </Card>

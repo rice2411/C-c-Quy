@@ -449,3 +449,86 @@ export async function fetchUnlinkedOutTxns(): Promise<UnlinkedOutTxn[]> {
       }))
     : [];
 }
+
+// ===== Đối soát NHIỀU giao dịch / bill (allocation) =====
+export interface ReceiptAllocation {
+  id: string;
+  transactionId: string;
+  amount: number;
+  txAmount: number | null;
+  transactionDate: string | null;
+  gateway: string | null;
+  content: string | null;
+}
+export interface ReceiptAllocSummary {
+  total: number | null;
+  paid: number;
+  remaining: number;
+  reconciled: boolean;
+  allocations: ReceiptAllocation[];
+}
+export interface AvailableOutTxn {
+  id: string;
+  amount: number;
+  remaining: number;
+  transactionDate: string | null;
+  gateway: string | null;
+  content: string | null;
+}
+
+function toAllocSummary(r: any): ReceiptAllocSummary {
+  return {
+    total: typeof r?.total === 'number' ? r.total : null,
+    paid: numOr0(r?.paid),
+    remaining: numOr0(r?.remaining),
+    reconciled: r?.reconciled === true,
+    allocations: Array.isArray(r?.allocations)
+      ? r.allocations.map((a: any) => ({
+          id: strOrNull(a?.id) ?? '',
+          transactionId: strOrNull(a?.transactionId) ?? '',
+          amount: numOr0(a?.amount),
+          txAmount: typeof a?.txAmount === 'number' ? a.txAmount : null,
+          transactionDate: strOrNull(a?.transactionDate),
+          gateway: strOrNull(a?.gateway),
+          content: strOrNull(a?.content),
+        }))
+      : [],
+  };
+}
+
+/** Tổng hợp phân bổ của 1 bill — GET /stock-receipts/:id/allocations. */
+export async function fetchReceiptAllocations(receiptId: string): Promise<ReceiptAllocSummary> {
+  const res = await apiClient.get<any>(`${BASE}/${receiptId}/allocations`);
+  return toAllocSummary(res.data);
+}
+
+/** GD tiền ra còn lại để gắn — GET /stock-receipts/:id/available-txns. */
+export async function fetchAvailableOutTxns(receiptId: string): Promise<AvailableOutTxn[]> {
+  const res = await apiClient.get<any[]>(`${BASE}/${receiptId}/available-txns`);
+  return Array.isArray(res.data)
+    ? res.data.map((r) => ({
+        id: strOrNull(r?.id) ?? '',
+        amount: numOr0(r?.amount),
+        remaining: numOr0(r?.remaining),
+        transactionDate: strOrNull(r?.transactionDate),
+        gateway: strOrNull(r?.gateway),
+        content: strOrNull(r?.content),
+      }))
+    : [];
+}
+
+/** Gắn thêm 1 GD (amount rỗng → tự tính) — POST /stock-receipts/:id/allocations. */
+export async function addReceiptAllocation(
+  receiptId: string,
+  transactionId: string,
+  amount?: number | null,
+): Promise<ReceiptAllocSummary> {
+  const res = await apiClient.post<any>(`${BASE}/${receiptId}/allocations`, { transactionId, amount: amount ?? null });
+  return toAllocSummary(res.data);
+}
+
+/** Xoá 1 phân bổ — DELETE /stock-receipts/allocations/:allocId. */
+export async function removeReceiptAllocation(allocId: string): Promise<ReceiptAllocSummary> {
+  const res = await apiClient.delete<any>(`${BASE}/allocations/${allocId}`);
+  return toAllocSummary(res.data);
+}
