@@ -17,13 +17,21 @@ const loadSaved = (): Saved => {
   return { fromDate: r.from, toDate: r.to, preset: 'month' };
 };
 
+/** Period = Hôm nay (không đọc/ghi localStorage). */
+const todayState = (): Saved => {
+  const r = computePresetRange('today');
+  return { fromDate: r.from, toDate: r.to, preset: 'today' };
+};
+
 interface TransactionsLayoutProps {
   children: (range: { fromDate: string; toDate: string }) => React.ReactNode;
+  /** Mỗi lần vào trang mặc định chọn Hôm nay (bỏ qua period đã lưu). Dùng cho Sổ. */
+  defaultToday?: boolean;
 }
 
 /** Khung 3 page con Giao dịch: DateRangePicker chung + render nội dung theo period. */
-const TransactionsLayout: React.FC<TransactionsLayoutProps> = ({ children }) => {
-  const [state, setState] = useState<Saved>(loadSaved);
+const TransactionsLayout: React.FC<TransactionsLayoutProps> = ({ children, defaultToday }) => {
+  const [state, setState] = useState<Saved>(() => (defaultToday ? todayState() : loadSaved()));
 
   // Functional update: DateRangePicker.handleApply gọi onFromChange rồi onToChange
   // LIÊN TIẾP; nếu merge từ `state` (stale closure) thì lần sau ghi đè lần trước

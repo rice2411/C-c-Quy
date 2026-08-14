@@ -23,7 +23,7 @@ const LedgerPage: React.FC = () => {
   ];
 
   return (
-    <TransactionsLayout>
+    <TransactionsLayout defaultToday>
       {({ fromDate, toDate }) => (
         <Box layoutClassName="space-y-4">
           <Box layoutClassName="flex gap-1 rounded-xl border border-slate-100 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800/60 sm:inline-flex">
