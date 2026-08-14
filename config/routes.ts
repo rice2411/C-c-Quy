@@ -179,6 +179,13 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
+    path: "/wages",
+    labelKey: "nav.wages",
+    icon: Coins,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
     path: "/attendance",
     labelKey: "nav.attendance",
     icon: Clock,
@@ -407,6 +414,7 @@ export const navGroups: NavGroupConfig[] = [
     childPaths: [
       "/employees",
       "/shifts",
+      "/wages",
       "/attendance",
       "/attendance/manage",
     ],

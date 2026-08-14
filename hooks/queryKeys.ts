@@ -40,6 +40,9 @@ export const qk = {
     events: (from: string, to: string) =>
       ['calendar', 'events', from, to] as const,
   },
+  wages: {
+    all: ['wages'] as const,
+  },
   products: {
     all: ['products'] as const,
     versions: (productId: string) => ['products', 'versions', productId] as const,
