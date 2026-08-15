@@ -102,6 +102,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const [qrCopying, setQrCopying] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [printMode, setPrintMode] = useState<'bill' | 'kitchen' | null>(null);
+  const printToastRef = useRef<string | null>(null);
   const [updatingPayment, setUpdatingPayment] = useState(false);
   const [crMode, setCrMode] = useState<CancelRefundMode | null>(null);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
@@ -287,6 +288,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const handleShareOrder = async () => {
     if (!shareRef.current || copyingImg) return;
     setCopyingImg(true);
+    const shareToastId = toast.loading(t('detail.copyImageLoading') || 'Đang tạo ảnh...');
     try {
       if (document.fonts?.ready) await document.fonts.ready; // tránh nhảy font khi render
       const node = shareRef.current;
@@ -341,6 +343,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     } catch {
       toast.error(t('detail.copyImageError') || 'Không tạo được ảnh đơn');
     } finally {
+      toast.dismiss(shareToastId);
       setCopyingImg(false);
     }
   };
@@ -571,9 +574,23 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
   // In xong (đã bung hộp thoại in) → đánh dấu "đã in bill" trên BE + cập nhật badge (local + list).
   // Chỉ đánh dấu khi in BILL khách; in phiếu bếp không ảnh hưởng badge "đã in bill".
+  // Bắt đầu in: disable nút + hiện toast loading (thay vì đổi chữ trên nút).
+  const startPrint = (mode: 'bill' | 'kitchen') => {
+    printToastRef.current = toast.loading(mode === 'bill' ? 'Đang in bill...' : 'Đang in bếp...');
+    setPrintMode(mode);
+  };
+  const dismissPrintToast = () => {
+    if (printToastRef.current) {
+      toast.dismiss(printToastRef.current);
+      printToastRef.current = null;
+    }
+  };
+
   const handlePrintDone = () => {
     const mode = printMode;
     setPrintMode(null);
+    dismissPrintToast();
+    if (mode) toast.success(mode === 'bill' ? 'Đã in bill' : 'Đã in bếp');
     if (mode !== 'bill') return;
     void (async () => {
       try {
@@ -702,9 +719,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
   const renderMoreMenu = (close: () => void) => (
     <Box layoutClassName="flex flex-col gap-0.5">
-      <MoreRow icon={Printer} label={printMode === 'bill' ? 'Đang in bill...' : 'In bill'} disabled={printMode !== null} onClick={() => { close(); setPrintMode('bill'); }} />
-      <MoreRow icon={ChefHat} label={printMode === 'kitchen' ? 'Đang in bếp...' : 'In bếp'} disabled={printMode !== null} onClick={() => { close(); setPrintMode('kitchen'); }} />
-      <MoreRow icon={Share2} label={copyingImg ? (t('detail.copyImageLoading') || 'Đang tạo ảnh...') : 'Chia sẻ'} disabled={copyingImg} onClick={() => { close(); handleShareOrder(); }} />
+      <MoreRow icon={Printer} label="In bill" disabled={printMode !== null} onClick={() => { close(); startPrint('bill'); }} />
+      <MoreRow icon={ChefHat} label="In bếp" disabled={printMode !== null} onClick={() => { close(); startPrint('kitchen'); }} />
+      <MoreRow icon={Share2} label="Chia sẻ" disabled={copyingImg} onClick={() => { close(); handleShareOrder(); }} />
       {canDelete && onDelete ? (
         <MoreRow icon={Trash2} label={t('orders.delete')} danger onClick={() => { close(); onDelete(); }} />
       ) : null}
@@ -765,9 +782,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
 
   const desktopActions = (
     <>
-      <ActionButton icon={Printer} label={printMode === 'bill' ? 'Đang in bill...' : 'In bill'} disabled={printMode !== null} onClick={() => setPrintMode('bill')} />
-      <ActionButton icon={ChefHat} label={printMode === 'kitchen' ? 'Đang in bếp...' : 'In bếp'} disabled={printMode !== null} onClick={() => setPrintMode('kitchen')} />
-      <ActionButton icon={Share2} label={copyingImg ? (t('detail.copyImageLoading') || 'Đang tạo ảnh...') : 'Chia sẻ'} disabled={copyingImg} onClick={handleShareOrder} />
+      <ActionButton icon={Printer} label="In bill" disabled={printMode !== null} onClick={() => startPrint('bill')} />
+      <ActionButton icon={ChefHat} label="In bếp" disabled={printMode !== null} onClick={() => startPrint('kitchen')} />
+      <ActionButton icon={Share2} label="Chia sẻ" disabled={copyingImg} onClick={handleShareOrder} />
       {canDelete && onDelete ? (
         <ActionButton icon={Trash2} label={t('orders.delete')} danger onClick={onDelete} />
       ) : null}
@@ -825,6 +842,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         onDone={handlePrintDone}
         onError={(msg) => {
           setPrintMode(null);
+          dismissPrintToast();
           toast.error(`Không in được (${msg}). Kiểm tra máy in đã bật + cầu nối in đang chạy.`);
         }}
       />
