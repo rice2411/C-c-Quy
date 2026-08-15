@@ -53,7 +53,6 @@ import EmptyState from '@/components/ui/EmptyState';
 import Heading from '@/components/ui/Heading';
 import IconButton from '@/components/ui/IconButton';
 import Image from '@/components/ui/Image';
-import Popover from '@/components/ui/Popover';
 import BottomSheet from '@/components/ui/BottomSheet';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
@@ -601,7 +600,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           <Badge
             size="sm"
             layoutClassName="px-2.5 py-0.5 text-xs font-medium"
-            className={STATUS_COLORS[currentOrder.status]}
+            backgroundClassName={STATUS_COLORS[currentOrder.status]}
           >
             {currentOrder.status}
           </Badge>
@@ -636,15 +635,17 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           <Typography size="sm" layoutClassName="font-medium" textClassName="text-primary-600 dark:text-primary-400">
             🚚 Mã vận đơn:{' '}
             {currentOrder.trackingLink ? (
-              <a
-                href={currentOrder.trackingLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="underline hover:opacity-80"
+              <Typography
+                as="span"
+                size="inherit"
+                textClassName="underline hover:opacity-80 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(currentOrder.trackingLink!, '_blank', 'noopener,noreferrer');
+                }}
               >
                 {currentOrder.trackingNumber}
-              </a>
+              </Typography>
             ) : (
               currentOrder.trackingNumber
             )}
@@ -732,6 +733,47 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     </Button>
   );
 
+  // Nút hành động dạng inline (PC hiện đủ nút thay vì gom vào "Thêm").
+  const ActionButton: React.FC<{
+    icon: typeof Printer;
+    label: string;
+    onClick: () => void;
+    disabled?: boolean;
+    danger?: boolean;
+  }> = ({ icon: Icon, label, onClick, disabled, danger }) => (
+    <Button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      variant="secondary"
+      disableVariantHover
+      disableVariantTextColor
+      leftIcon={<Icon className="h-4 w-4" />}
+      iconClassName={`inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4 ${danger ? 'text-red-500' : 'text-slate-400'}`}
+      borderClassName={danger ? 'border border-red-200 dark:border-red-800' : 'border border-slate-200 dark:border-slate-600'}
+      backgroundClassName="bg-white dark:bg-slate-800"
+      hoverClassName={danger ? 'hover:bg-red-50 dark:hover:bg-red-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-700'}
+      textClassName={danger ? 'text-sm font-medium text-red-600 dark:text-red-400' : 'text-sm font-medium text-slate-700 dark:text-slate-200'}
+      roundedClassName="rounded-lg"
+      sizeClassName="px-3 py-2"
+      layoutClassName="justify-center"
+      stateClassName="transition-colors disabled:opacity-50"
+    >
+      {label}
+    </Button>
+  );
+
+  const desktopActions = (
+    <>
+      <ActionButton icon={Printer} label={printMode === 'bill' ? 'Đang in bill...' : 'In bill'} disabled={printMode !== null} onClick={() => setPrintMode('bill')} />
+      <ActionButton icon={ChefHat} label={printMode === 'kitchen' ? 'Đang in bếp...' : 'In bếp'} disabled={printMode !== null} onClick={() => setPrintMode('kitchen')} />
+      <ActionButton icon={Share2} label={copyingImg ? (t('detail.copyImageLoading') || 'Đang tạo ảnh...') : 'Chia sẻ'} disabled={copyingImg} onClick={handleShareOrder} />
+      {canDelete && onDelete ? (
+        <ActionButton icon={Trash2} label={t('orders.delete')} danger onClick={onDelete} />
+      ) : null}
+    </>
+  );
+
   const footer = (
     <Box layoutClassName="flex items-center gap-2 sm:justify-end sm:gap-3">
       {onEdit ? (
@@ -762,9 +804,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
           </BottomSheet>
         </>
       ) : (
-        <Popover align="right" width={220} trigger={moreButton()}>
-          {(close) => renderMoreMenu(close)}
-        </Popover>
+        desktopActions
       )}
     </Box>
   );
@@ -1343,10 +1383,10 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                     roundedClassName=""
                                     stateClassName={!canEdit || updatingStatus ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
                                   >
-                                    <Typography as="span" size="inherit" layoutClassName={baseCircle} className={circleCls}>
+                                    <Typography as="span" size="inherit" layoutClassName={baseCircle} stateClassName={circleCls}>
                                       {idx + 1}
                                     </Typography>
-                                    <Typography as="span" size="inherit" layoutClassName="text-[11px] sm:text-xs text-center whitespace-nowrap" className={labelCls}>
+                                    <Typography as="span" size="inherit" layoutClassName="text-[11px] sm:text-xs text-center whitespace-nowrap" stateClassName={labelCls}>
                                       {t(`orders.statusLabels.${step}`)}
                                     </Typography>
                                   </Button>
@@ -2362,7 +2402,14 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                   {currentOrder.trackingLink ? (
                     <>
                       {' · '}
-                      <a href={currentOrder.trackingLink} target="_blank" rel="noopener noreferrer" className="underline">tra cứu trên hãng</a>
+                      <Typography
+                        as="span"
+                        size="inherit"
+                        textClassName="underline cursor-pointer text-primary-600 dark:text-primary-400"
+                        onClick={() => window.open(currentOrder.trackingLink!, '_blank', 'noopener,noreferrer')}
+                      >
+                        tra cứu trên hãng
+                      </Typography>
                     </>
                   ) : null}
                 </Typography>
