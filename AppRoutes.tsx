@@ -19,6 +19,7 @@ const CostReceiptsPage = lazy(() => import("./pages/StockReceipts/index"));
 const CostMaterialsPage = lazy(() => import("./pages/Materials/index"));
 const CostAssetsPage = lazy(() => import("./pages/CostHub/AssetsTab"));
 const CostOpexPage = lazy(() => import("./pages/CostHub/OpexTab"));
+const RecipesPage = lazy(() => import("./pages/Recipes/index"));
 const SuppliersPage = lazy(() => import("./pages/Suppliers/index"));
 const CustomersPage = lazy(() => import("./pages/Customers/index"));
 const UsersPage = lazy(() => import("./pages/Users/index"));
@@ -158,6 +159,7 @@ const AppRoutes: React.FC = () => (
       <Route path="expenses/receipts" element={<RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses/receipts")?.roles}><CostReceiptsPage /></RoleBasedRoute>} />
       <Route path="expenses/materials" element={<RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses/materials")?.roles}><CostMaterialsPage /></RoleBasedRoute>} />
       <Route path="expenses/assets" element={<RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses/assets")?.roles}><CostAssetsPage /></RoleBasedRoute>} />
+      <Route path="recipes" element={<RoleBasedRoute requiredRole={routes.find((r) => r.path === "/recipes")?.roles}><RecipesPage /></RoleBasedRoute>} />
       <Route path="expenses/opex" element={<RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses/opex")?.roles}><CostOpexPage /></RoleBasedRoute>} />
       {/* NCC = page riêng. */}
       <Route

@@ -30,6 +30,7 @@ import {
   UserCheck,
   CalendarDays,
   Utensils,
+  ChefHat,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import ZaloIcon from "@/components/ui/ZaloIcon";
@@ -155,6 +156,13 @@ export const routes: RouteConfig[] = [
     path: "/expenses/opex",
     labelKey: "nav.costOpex",
     icon: Coins,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/recipes",
+    labelKey: "nav.recipes",
+    icon: ChefHat,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -437,6 +445,7 @@ export const navGroups: NavGroupConfig[] = [
     icon: Boxes,
     childPaths: [
       "/storage",
+      "/recipes",
       "/settings/product",
     ],
   },
