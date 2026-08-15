@@ -11,6 +11,7 @@ export const translations = {
     nav: {
       dashboard: "Dashboard",
       orders: "Orders",
+      dineIn: "Dine-in tables",
       shipping: "Shipping",
       analytics: "Analytics",
       inventory: "Product list",
@@ -786,6 +787,7 @@ export const translations = {
     nav: {
       dashboard: "Tổng quan",
       orders: "Đơn hàng",
+      dineIn: "Order theo bàn",
       shipping: "Vận chuyển",
       analytics: "Phân tích",
       inventory: "Danh sách sản phẩm",

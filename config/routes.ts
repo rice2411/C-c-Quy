@@ -29,6 +29,7 @@ import {
   Clock,
   UserCheck,
   CalendarDays,
+  Utensils,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import ZaloIcon from "@/components/ui/ZaloIcon";
@@ -71,6 +72,13 @@ export const routes: RouteConfig[] = [
     labelKey: "nav.orders",
     icon: ShoppingCart,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR],
+  },
+  {
+    type: "page",
+    path: "/dine-in",
+    labelKey: "nav.dineIn",
+    icon: Utensils,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
     type: "page",

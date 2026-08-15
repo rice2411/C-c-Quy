@@ -11,3 +11,4 @@ export * from './configuration';
 export * from './zaloConfig';
 export * from './billReceipt';
 export * from './badge';
+export * from './table';

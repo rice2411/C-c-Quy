@@ -207,6 +207,14 @@ export interface Order {
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   deliveryType?: DeliveryType;
+  /** Order theo bàn (dine-in): id bàn đang gắn. */
+  tableId?: string | null;
+  /** Số khách ngồi bàn. */
+  guestCount?: number | null;
+  /** Giờ vào (ISO) — set khi mở bàn. */
+  seatedAt?: string | null;
+  /** Giờ ra (ISO) — set khi đóng bàn; null = đang ngồi. */
+  leftAt?: string | null;
   date: string;
   orderDate?: any;
   deliveryDate?: string;
