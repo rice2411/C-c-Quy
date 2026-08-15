@@ -16,12 +16,16 @@ import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import EmptyState from '@/components/ui/EmptyState';
 
 /** Cột có thể sort. */
-type SortKey = 'date' | 'total';
+type SortKey = 'date' | 'created' | 'total';
 type SortDir = 'asc' | 'desc';
 
 /** Mốc thời gian của 1 phiếu: ưu tiên receiptDate, fallback createdAt. */
 const receiptSortTime = (row: SavedStockReceiptSummary): number =>
   (parseDateValue(row.receiptDate) ?? parseDateValue(row.createdAt))?.getTime() ?? 0;
+
+/** Mốc thời gian "lên hệ thống" (createdAt) — dùng để sort cột ngày tạo phiếu. */
+const createdSortTime = (row: SavedStockReceiptSummary): number =>
+  parseDateValue(row.createdAt)?.getTime() ?? 0;
 
 /** Ngày hiển thị (dd/mm/yyyy) — ưu tiên receiptDate, fallback createdAt. */
 const receiptDateLabel = (row: SavedStockReceiptSummary): string => {
@@ -30,8 +34,15 @@ const receiptDateLabel = (row: SavedStockReceiptSummary): string => {
   return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-/** Chỉ giờ:phút của 1 phiếu (suy từ createdAt), rỗng nếu không. */
-const receiptTimeLabel = (row: SavedStockReceiptSummary): string => {
+/** Ngày lên hệ thống (dd/mm/yyyy) — chỉ từ createdAt. */
+const createdDateLabel = (row: SavedStockReceiptSummary): string => {
+  const d = parseDateValue(row.createdAt);
+  if (!d) return '—';
+  return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+/** Chỉ giờ:phút "lên hệ thống" (suy từ createdAt), rỗng nếu không. */
+const createdTimeLabel = (row: SavedStockReceiptSummary): string => {
   const d = parseDateValue(row.createdAt);
   if (!d) return '';
   return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
@@ -72,8 +83,8 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
 }) => {
   const { t } = useLanguage();
 
-  // (1) state
-  const [sortKey, setSortKey] = useState<SortKey>('date');
+  // (1) state — mặc định sort theo ngày lên hệ thống (createdAt) mới nhất trước.
+  const [sortKey, setSortKey] = useState<SortKey>('created');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [period, setPeriod] = useState<DatePeriod>('all');
   const [reconcileOpen, setReconcileOpen] = useState(false);
@@ -95,6 +106,9 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
     return [...periodFilteredReceipts].sort((a, b) => {
       if (sortKey === 'total') {
         return ((a.totalAmount || 0) - (b.totalAmount || 0)) * dir;
+      }
+      if (sortKey === 'created') {
+        return (createdSortTime(a) - createdSortTime(b)) * dir;
       }
       return (receiptSortTime(a) - receiptSortTime(b)) * dir;
     });
@@ -250,8 +264,23 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
                         layoutClassName="inline-flex items-center gap-1 font-medium uppercase"
                         onClick={() => toggleSort('date')}
                       >
-                        {t('billImport.colDateTime')}
+                        {t('billImport.colReceiptDate')}
                         {sortIcon('date')}
+                      </Button>
+                    </TableHeaderCell>
+                    <TableHeaderCell layoutClassName="px-4 py-2.5">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        disableVariantHover
+                        disableVariantTextColor
+                        borderClassName="border-transparent"
+                        sizeClassName="px-0 py-0 text-xs"
+                        layoutClassName="inline-flex items-center gap-1 font-medium uppercase"
+                        onClick={() => toggleSort('created')}
+                      >
+                        {t('billImport.colCreatedAt')}
+                        {sortIcon('created')}
                       </Button>
                     </TableHeaderCell>
                     <TableHeaderCell layoutClassName="px-4 py-2.5">{t('billImport.colSupplier')}</TableHeaderCell>
@@ -279,7 +308,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
                 </TableHead>
                 <TableBody>
                   {sortedReceipts.map((row) => {
-                    const time = receiptTimeLabel(row);
+                    const createdTime = createdTimeLabel(row);
                     return (
                       <TableRow
                         key={row.id}
@@ -299,9 +328,14 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
                           <Typography size="sm" layoutClassName="font-medium">
                             {receiptDateLabel(row)}
                           </Typography>
-                          {time ? (
+                        </TableCell>
+                        <TableCell layoutClassName="px-4 py-3 whitespace-nowrap">
+                          <Typography size="sm" layoutClassName="font-medium">
+                            {createdDateLabel(row)}
+                          </Typography>
+                          {createdTime ? (
                             <Typography size="xs" variant="muted">
-                              {time}
+                              {createdTime}
                             </Typography>
                           ) : null}
                         </TableCell>
@@ -367,13 +401,16 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
                   backgroundClassName="bg-white dark:bg-slate-900"
                   hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-800/60"
                 >
-                  {/* Trái: NCC + ngày */}
+                  {/* Trái: NCC + ngày nhập + ngày lên hệ thống */}
                   <Box layoutClassName="min-w-0 flex-1 space-y-0.5">
                     <Typography size="sm" layoutClassName="truncate font-medium">
                       {row.supplierNameRaw || 'Không rõ NCC'}
                     </Typography>
                     <Typography size="xs" variant="muted">
-                      {receiptDateLabel(row)}
+                      {t('billImport.colReceiptDate')}: {receiptDateLabel(row)}
+                    </Typography>
+                    <Typography size="xs" variant="muted">
+                      {t('billImport.colCreatedAt')}: {createdDateLabel(row)}
                     </Typography>
                   </Box>
 
