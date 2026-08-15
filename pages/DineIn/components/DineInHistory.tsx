@@ -13,7 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { PaymentStatus } from '@/types';
 import { fetchDineInHistory } from '@/services/tableService';
 import { formatVND } from '@/utils/format/currencyUtil';
-import { fmtDateTime, fmtTime, fmtDuration, useNowTick } from './time';
+import { fmtDateTime, fmtTime, fmtDuration, useNowTick, msOf } from './time';
 
 /** Tab "Lịch sử bàn" — mọi phiên vào/ra của tất cả bàn, mới nhất trước. */
 const DineInHistory: React.FC<{ active: boolean }> = ({ active }) => {
@@ -76,7 +76,7 @@ const DineInHistory: React.FC<{ active: boolean }> = ({ active }) => {
                   </TableCell>
                   <TableCell layoutClassName="px-3 py-2.5">
                     <Typography textClassName="text-sm text-slate-600 dark:text-slate-300">
-                      {fmtDuration(s.seatedAt, open ? now : (s.leftAt ? new Date(s.leftAt).getTime() : undefined))}
+                      {fmtDuration(s.seatedAt, open ? now : (msOf(s.leftAt) ?? undefined))}
                     </Typography>
                   </TableCell>
                   <TableCell layoutClassName="px-3 py-2.5">
