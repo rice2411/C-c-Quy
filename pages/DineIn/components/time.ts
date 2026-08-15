@@ -35,20 +35,18 @@ export const fmtDuration = (fromISO?: string | null, toMs?: number): string => {
   return h > 0 ? `${h}g${mins.toString().padStart(2, '0')}p` : `${mins}p`;
 };
 
-/** Đồng hồ đếm giờ live "M:SS" hoặc "H:MM:SS" giữa from→to (mặc định to = bây giờ). */
+/** Đồng hồ đếm giờ live "HH:MM:SS" giữa from→to (mặc định to = bây giờ). */
 export const fmtDurationClock = (fromISO?: string | null, toMs?: number): string => {
-  if (!fromISO) return '0:00';
+  if (!fromISO) return '00:00:00';
   const from = new Date(fromISO).getTime();
-  if (isNaN(from)) return '0:00';
+  if (isNaN(from)) return '00:00:00';
   const to = toMs ?? Date.now();
   let s = Math.max(0, Math.floor((to - from) / 1000));
   const h = Math.floor(s / 3600);
   s %= 3600;
   const m = Math.floor(s / 60);
   s %= 60;
-  const mm = String(m).padStart(2, '0');
-  const ss = String(s).padStart(2, '0');
-  return h > 0 ? `${h}:${mm}:${ss}` : `${m}:${ss}`;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 };
 
 /** Now.getTime() tự cập nhật mỗi `intervalMs` (cho đồng hồ đếm giờ live). */
