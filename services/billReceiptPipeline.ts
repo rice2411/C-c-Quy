@@ -54,9 +54,14 @@ export async function runBillImportPipeline(
   let data: unknown;
   try {
     // apiClient đã bóc envelope → data = { ocrText, structured, validation }.
-    const res = await apiClient.post('/stock-receipts/process-bill', {
-      imageBase64: imageBase64NoPrefix,
-    });
+    // OCR (Google Vision) + 2 lượt AI + tối đa 3 lần retry Vision khi "deadline
+    // exceeded" (ảnh bill nặng) → 1 request có thể chạy > 30s. Nới timeout riêng
+    // cho lời gọi này (120s) để FE không tự huỷ giữa lúc BE đang retry.
+    const res = await apiClient.post(
+      '/stock-receipts/process-bill',
+      { imageBase64: imageBase64NoPrefix },
+      { timeout: 120000 },
+    );
     data = res.data;
   } finally {
     timers.forEach(clearTimeout);
