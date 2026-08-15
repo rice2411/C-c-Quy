@@ -57,6 +57,7 @@ const RecipesPage: React.FC = () => {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [view, setView] = useState<'price' | 'detail'>('price');
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState<RecipeForm>(EMPTY_FORM);
 
@@ -189,6 +190,33 @@ const RecipesPage: React.FC = () => {
     return has ? MARGIN_OPTIONS : [{ value: m, label: marginLabel(m) }, ...MARGIN_OPTIONS];
   };
 
+  const renderDetailCard = (r: Recipe) => (
+    <Box key={r.id} layoutClassName="flex flex-col gap-2 p-3" backgroundClassName="bg-white dark:bg-slate-800/40" borderClassName="border border-slate-200 dark:border-slate-700" roundedClassName="rounded-xl">
+      <Box layoutClassName="flex items-center justify-between gap-2">
+        <Typography as="span" size="sm" layoutClassName="font-semibold text-slate-800 dark:text-slate-100">{r.name}</Typography>
+        {r.kind === 'product' ? (
+          <Typography as="span" size="sm" layoutClassName="font-semibold text-primary-600 dark:text-primary-400">{formatVND(r.suggestedPrice)}</Typography>
+        ) : (
+          <Typography as="span" size="xs" variant="muted">BTP</Typography>
+        )}
+      </Box>
+      <Typography size="xs" variant="muted">Mẻ {r.yieldQty} {r.yieldUnit} · giá thành {formatVND(r.totalCost)}{r.kind === 'product' ? ` · lãi ${formatVND(r.profit)} (${marginLabel(r.marginPct)})` : ''}</Typography>
+      <Box layoutClassName="flex flex-col gap-0.5 pt-1.5" borderClassName="border-t border-slate-100 dark:border-slate-700/60">
+        {r.lines.map((l, i) => (
+          <Box key={l.id ?? i} layoutClassName="flex items-center justify-between gap-2">
+            <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-300">{l.kind === 'recipe' ? '🥣 ' : '• '}{l.name} · {l.qty}{l.unit}</Typography>
+            <Typography as="span" size="xs" variant="muted" layoutClassName="tabular-nums">{formatVND(l.lineCost ?? 0)}</Typography>
+          </Box>
+        ))}
+      </Box>
+      {r.kind === 'product' ? (
+        <Box layoutClassName="pt-1" borderClassName="border-t border-slate-100 dark:border-slate-700/60">
+          <Typography size="xs" variant="muted">NVL {formatVND(r.nvl)} · công {formatVND(r.labor)} · vh {formatVND(r.overhead)} · bao bì {formatVND(r.packaging)} · hao hụt {formatVND(r.waste)}</Typography>
+        </Box>
+      ) : null}
+    </Box>
+  );
+
   if (loading) {
     return (
       <Box layoutClassName="flex min-h-[40vh] items-center justify-center">
@@ -225,8 +253,19 @@ const RecipesPage: React.FC = () => {
         </Box>
       ) : null}
 
+      {recipes.length > 0 ? (
+        <Box layoutClassName="flex items-center gap-2">
+          <Button type="button" onClick={() => setView('price')} variant={view === 'price' ? 'primary' : 'secondary'} sizeClassName="px-3 py-1.5 text-xs" roundedClassName="rounded-lg" disableVariantHover>Bảng giá</Button>
+          <Button type="button" onClick={() => setView('detail')} variant={view === 'detail' ? 'primary' : 'secondary'} sizeClassName="px-3 py-1.5 text-xs" roundedClassName="rounded-lg" disableVariantHover>Công thức chi tiết</Button>
+        </Box>
+      ) : null}
+
       {recipes.length === 0 ? (
         <EmptyState icon={<ChefHat className="h-6 w-6" />} title="Chưa có công thức" />
+      ) : view === 'detail' ? (
+        <Box layoutClassName="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {[...products, ...semis].map((r) => renderDetailCard(r))}
+        </Box>
       ) : (
         <Box layoutClassName="flex flex-col gap-6">
           {(['cake', 'cookie', 'drink'] as RecipeCategory[]).map((cat) => {
