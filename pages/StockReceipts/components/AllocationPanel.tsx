@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Trash2, Link2 } from 'lucide-react';
+import { Plus, Trash2, Link2, AlertTriangle, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
@@ -15,6 +15,7 @@ import {
   fetchAvailableOutTxns,
   addReceiptAllocation,
   removeReceiptAllocation,
+  setReceiptAllocForce,
   type ReceiptAllocSummary,
   type AvailableOutTxn,
 } from '@/services/stockReceiptService';
@@ -104,6 +105,20 @@ const AllocationPanel: React.FC<Props> = ({ receiptId, onChanged }) => {
     }
   };
 
+  const handleForce = async (forced: boolean) => {
+    setBusy(true);
+    try {
+      const s = await setReceiptAllocForce(receiptId, forced);
+      apply(s);
+      toast.success(forced ? 'Đã đánh dấu khớp (dù lệch).' : 'Đã bỏ đánh dấu khớp.');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.response?.data?.message || err?.message || 'Thao tác thất bại.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleRemove = async (allocId: string) => {
     setBusy(true);
     try {
@@ -122,6 +137,12 @@ const AllocationPanel: React.FC<Props> = ({ receiptId, onChanged }) => {
   const total = summary?.total ?? null;
   const remaining = summary?.remaining ?? 0;
   const done = summary?.reconciled ?? false;
+  const forced = summary?.forced ?? false;
+  // Lệch giữa tiền đã gắn và tổng bill: >0 = dư, <0 = thiếu.
+  const diff = total != null ? paid - total : 0;
+  const mismatched = done && diff !== 0; // đã chốt khớp nhưng không đúng 100%
+  // Cho phép chốt "khớp dù lệch" khi đã gắn ≥1 GD mà chưa đủ tiền.
+  const canForce = !done && paid > 0 && total != null;
 
   return (
     <Box
@@ -135,7 +156,11 @@ const AllocationPanel: React.FC<Props> = ({ receiptId, onChanged }) => {
             Đối soát thanh toán
           </Typography>
         </Box>
-        {loading ? null : done ? (
+        {loading ? null : mismatched ? (
+          <Badge size="sm" layoutClassName="px-2 py-0.5 text-xs font-semibold" backgroundClassName="bg-amber-50 dark:bg-amber-900/20" textClassName="text-amber-700 dark:text-amber-300">
+            Đã khớp · lệch {formatVND(Math.abs(diff))} {diff < 0 ? 'thiếu' : 'dư'}
+          </Badge>
+        ) : done ? (
           <Badge size="sm" layoutClassName="px-2 py-0.5 text-xs font-semibold" backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20" textClassName="text-emerald-700 dark:text-emerald-300">
             Đã đủ
           </Badge>
@@ -210,6 +235,35 @@ const AllocationPanel: React.FC<Props> = ({ receiptId, onChanged }) => {
               Gắn
             </Button>
           </Box>
+
+          {/* Chốt "đã khớp dù lệch" — không bắt buộc gắn đủ 100% */}
+          {canForce ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              leftIcon={<Check className="h-4 w-4 text-amber-500" />}
+              disabled={busy}
+              onClick={() => handleForce(true)}
+            >
+              Đánh dấu đã khớp (lệch {formatVND(remaining)})
+            </Button>
+          ) : null}
+
+          {/* Đang ở trạng thái khớp-dù-lệch → cảnh báo + cho phép bỏ đánh dấu */}
+          {forced ? (
+            <Box layoutClassName="flex items-center justify-between gap-2">
+              <Box layoutClassName="flex min-w-0 items-center gap-1.5">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                <Typography size="xs" textClassName="text-amber-600 dark:text-amber-400">
+                  Đã chốt khớp{diff !== 0 ? <> dù lệch {formatVND(Math.abs(diff))} {diff < 0 ? 'thiếu' : 'dư'}</> : null}.
+                </Typography>
+              </Box>
+              <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={() => handleForce(false)}>
+                Bỏ đánh dấu
+              </Button>
+            </Box>
+          ) : null}
         </>
       )}
     </Box>

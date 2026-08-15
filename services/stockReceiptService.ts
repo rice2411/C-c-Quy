@@ -465,6 +465,8 @@ export interface ReceiptAllocSummary {
   paid: number;
   remaining: number;
   reconciled: boolean;
+  /** Đã đánh dấu "khớp dù lệch" (paid không nhất thiết >= total). */
+  forced: boolean;
   allocations: ReceiptAllocation[];
 }
 export interface AvailableOutTxn {
@@ -482,6 +484,7 @@ function toAllocSummary(r: any): ReceiptAllocSummary {
     paid: numOr0(r?.paid),
     remaining: numOr0(r?.remaining),
     reconciled: r?.reconciled === true,
+    forced: r?.forced === true,
     allocations: Array.isArray(r?.allocations)
       ? r.allocations.map((a: any) => ({
           id: strOrNull(a?.id) ?? '',
@@ -530,5 +533,17 @@ export async function addReceiptAllocation(
 /** Xoá 1 phân bổ — DELETE /stock-receipts/allocations/:allocId. */
 export async function removeReceiptAllocation(allocId: string): Promise<ReceiptAllocSummary> {
   const res = await apiClient.delete<any>(`${BASE}/allocations/${allocId}`);
+  return toAllocSummary(res.data);
+}
+
+/**
+ * Đánh dấu / bỏ đánh dấu bill "đã khớp dù lệch" — POST /stock-receipts/:id/allocations/force.
+ * forced=true: chốt đã khớp dù tổng GD đã gắn chưa đủ (hoặc vượt) total — phần lệch chỉ cảnh báo.
+ */
+export async function setReceiptAllocForce(
+  receiptId: string,
+  forced: boolean,
+): Promise<ReceiptAllocSummary> {
+  const res = await apiClient.post<any>(`${BASE}/${receiptId}/allocations/force`, { forced });
   return toAllocSummary(res.data);
 }
