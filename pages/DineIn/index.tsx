@@ -8,69 +8,116 @@ import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
 import ViewToggle from '@/components/ui/ViewToggle';
+import Tabs from '@/components/ui/Tabs';
 import { useTables } from '@/hooks/useTables';
 import { useOrders } from '@/hooks/useOrders';
-import { useProducts } from '@/hooks/queries/useProductsQuery';
-import { DiningTable, tableStatus } from '@/types';
+import {
+  DeliveryType, DiningTable, Order, OrderStatus, PaymentMethod, PaymentStatus, tableStatus,
+} from '@/types';
+import OrderForm from '@/pages/Orders/components/modals/OrderForm';
 import FloorMap from './components/FloorMap';
 import TableGrid from './components/TableGrid';
-import TableOrderPanel from './components/TableOrderPanel';
+import TableStatusPanel from './components/TableStatusPanel';
 import TableManagePanel from './components/TableManagePanel';
+import DineInHistory from './components/DineInHistory';
 
 const VIEW_OPTIONS = [
   { id: 'grid', Icon: LayoutGrid, title: 'Lưới thẻ bàn' },
   { id: 'map', Icon: MapIcon, title: 'Sơ đồ quán' },
 ];
 
-const DineInPage: React.FC = () => {
-  const {
-    tables,
-    loading,
-    refreshTables,
-    createTable,
-    modifyTable,
-    removeTable,
-    closeTable,
-  } = useTables();
-  const { createNewOrder, modifyOrder } = useOrders();
-  const { products } = useProducts();
+const TAB_ITEMS = [
+  { id: 'tables', label: 'Bàn' },
+  { id: 'history', label: 'Lịch sử bàn' },
+];
 
+const todayStr = (): string => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+/** initialData seed cho OrderForm khi MỞ BÀN (đơn tại quán mới). */
+const dineInSeed = (): any => ({
+  customer: { name: 'Khách tại quán', phone: '', address: '' },
+  items: [],
+  deliveryType: DeliveryType.DINE_IN,
+  deliveryDate: todayStr(), // OrderForm bắt buộc ngày nhận — dine-in lấy hôm nay
+  status: OrderStatus.PENDING,
+  paymentStatus: PaymentStatus.UNPAID,
+  paymentMethod: PaymentMethod.CASH,
+});
+
+const DineInPage: React.FC = () => {
+  const { tables, loading, refreshTables, createTable, modifyTable, removeTable, closeTable } = useTables();
+  const { createNewOrder, modifyOrder } = useOrders();
+
+  const [tab, setTab] = useState<'tables' | 'history'>('tables');
   const [view, setView] = useState<'grid' | 'map'>('grid');
   const [editMode, setEditMode] = useState(false);
   const [managing, setManaging] = useState(false);
-  const [selected, setSelected] = useState<DiningTable | null>(null);
-  const [orderPanelOpen, setOrderPanelOpen] = useState(false);
+
+  // Panel trạng thái (bàn đang ngồi)
+  const [statusTable, setStatusTable] = useState<DiningTable | null>(null);
+  const [statusOpen, setStatusOpen] = useState(false);
+
+  // OrderForm (tạo/sửa đơn của bàn)
+  const [formOpen, setFormOpen] = useState(false);
+  const [formInitial, setFormInitial] = useState<Order | null>(null);
+  const [formEditId, setFormEditId] = useState<string | null>(null);
+  const [formTableId, setFormTableId] = useState<string | null>(null);
 
   const occupiedCount = useMemo(
     () => tables.filter((t) => tableStatus(t) === 'occupied').length,
     [tables],
   );
 
+  // Click bàn: trống → OrderForm tạo đơn (mở bàn); đang ngồi → panel trạng thái.
   const openTable = (t: DiningTable) => {
-    setSelected(t);
-    setOrderPanelOpen(true);
-  };
-
-  const handleMove = async (id: string, posX: number, posY: number) => {
-    try {
-      await modifyTable(id, { posX, posY });
-    } catch {
-      toast.error('Không lưu được vị trí bàn');
+    if (tableStatus(t) === 'occupied') {
+      setStatusTable(t);
+      setStatusOpen(true);
+    } else {
+      setFormInitial(dineInSeed());
+      setFormEditId(null);
+      setFormTableId(t.id);
+      setFormOpen(true);
     }
   };
 
-  const handleCreate = async (payload: any) => {
-    await createNewOrder(payload);
-    await refreshTables();
+  // Sửa đơn của bàn đang ngồi (từ panel trạng thái).
+  const editOrder = (order: Order) => {
+    setStatusOpen(false);
+    setFormInitial(order);
+    setFormEditId(order.id);
+    setFormTableId(order.tableId ?? null);
+    setFormOpen(true);
   };
+
+  const handleFormSave = async (data: any) => {
+    const payload = { ...data, deliveryType: DeliveryType.DINE_IN, tableId: formTableId };
+    if (formEditId) {
+      await modifyOrder(formEditId, payload);
+    } else {
+      delete payload.orderNumber; // để BE tự sinh số đơn
+      payload.seatedAt = new Date().toISOString();
+      await createNewOrder(payload);
+      toast.success('Đã mở bàn');
+    }
+    await refreshTables();
+    setFormOpen(false);
+  };
+
   const handleSave = async (orderId: string, payload: any) => {
     await modifyOrder(orderId, payload);
     await refreshTables();
   };
-  // Đóng bàn THỦ CÔNG: chỉ set giờ ra (không ép thanh toán).
   const handleCloseTable = async (orderId: string) => {
     await closeTable(orderId);
     await refreshTables();
+  };
+  const handleMove = async (id: string, posX: number, posY: number) => {
+    try { await modifyTable(id, { posX, posY }); }
+    catch { toast.error('Không lưu được vị trí bàn'); }
   };
 
   return (
@@ -83,44 +130,34 @@ const DineInPage: React.FC = () => {
             {occupiedCount}/{tables.length} bàn đang ngồi
           </Typography>
         </Box>
-        <Box layoutClassName="flex items-center gap-2">
-          <ViewToggle value={view} onChange={(v) => setView(v as 'grid' | 'map')} options={VIEW_OPTIONS} />
-          {view === 'map' && (
-            <Button
-              variant={editMode ? 'primary' : 'secondary'}
-              onClick={() => setEditMode((v) => !v)}
-              leftIcon={<Pencil className="w-4 h-4" />}
-            >
-              {editMode ? 'Xong' : 'Sửa sơ đồ'}
+        {tab === 'tables' && (
+          <Box layoutClassName="flex items-center gap-2">
+            <ViewToggle value={view} onChange={(v) => setView(v as 'grid' | 'map')} options={VIEW_OPTIONS} />
+            {view === 'map' && (
+              <Button variant={editMode ? 'primary' : 'secondary'} onClick={() => setEditMode((v) => !v)}
+                leftIcon={<Pencil className="w-4 h-4" />}>
+                {editMode ? 'Xong' : 'Sửa sơ đồ'}
+              </Button>
+            )}
+            <Button variant="secondary" onClick={() => setManaging(true)} leftIcon={<Settings2 className="w-4 h-4" />}>
+              Quản lý bàn
             </Button>
-          )}
-          <Button
-            variant="secondary"
-            onClick={() => setManaging(true)}
-            leftIcon={<Settings2 className="w-4 h-4" />}
-          >
-            Quản lý bàn
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => refreshTables()}
-            leftIcon={<RefreshCw className="w-4 h-4" />}
-          >
-            Làm mới
-          </Button>
-        </Box>
+            <Button variant="ghost" onClick={() => refreshTables()} leftIcon={<RefreshCw className="w-4 h-4" />}>
+              Làm mới
+            </Button>
+          </Box>
+        )}
       </Box>
 
-      {loading ? (
-        <Box layoutClassName="flex flex-1 items-center justify-center">
-          <Spinner size="lg" />
-        </Box>
+      <Tabs items={TAB_ITEMS} value={tab} onChange={(v) => setTab(v as 'tables' | 'history')} />
+
+      {tab === 'history' ? (
+        <DineInHistory active={tab === 'history'} />
+      ) : loading ? (
+        <Box layoutClassName="flex flex-1 items-center justify-center"><Spinner size="lg" /></Box>
       ) : tables.length === 0 ? (
-        <EmptyState
-          icon={<LayoutGrid className="w-6 h-6" />}
-          title="Chưa có bàn"
-          description="Bấm “Quản lý bàn” để thêm bàn."
-        />
+        <EmptyState icon={<LayoutGrid className="w-6 h-6" />} title="Chưa có bàn"
+          description="Bấm “Quản lý bàn” để thêm bàn." />
       ) : view === 'grid' ? (
         <Box layoutClassName="flex-1 overflow-y-auto">
           <TableGrid tables={tables} onTableClick={openTable} />
@@ -141,23 +178,26 @@ const DineInPage: React.FC = () => {
             </Typography>
           </Box>
           <Box layoutClassName="max-w-3xl">
-            <FloorMap
-              tables={tables}
-              editMode={editMode}
-              onTableClick={openTable}
-              onMoveTable={handleMove}
-            />
+            <FloorMap tables={tables} editMode={editMode} onTableClick={openTable} onMoveTable={handleMove} />
           </Box>
         </Box>
       )}
 
-      <TableOrderPanel
-        isOpen={orderPanelOpen}
-        table={selected}
-        products={products}
-        onClose={() => setOrderPanelOpen(false)}
-        onCreate={handleCreate}
-        onSave={handleSave}
+      {/* OrderForm thật của trang Order — tạo/sửa đơn cho bàn */}
+      <OrderForm
+        isOpen={formOpen}
+        initialData={formInitial}
+        onSave={handleFormSave}
+        onCancel={() => setFormOpen(false)}
+      />
+
+      {/* Trạng thái bàn đang ngồi */}
+      <TableStatusPanel
+        isOpen={statusOpen}
+        table={statusTable}
+        onClose={() => setStatusOpen(false)}
+        onEdit={editOrder}
+        onPay={handleSave}
         onCloseTable={handleCloseTable}
       />
 

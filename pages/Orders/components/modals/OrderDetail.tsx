@@ -416,6 +416,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
       if (s === 'PICKUP') return t('deliveryType.pickup');
       if (s === 'SHIP_PROVINCE') return t('deliveryType.shipProvince');
       if (s === 'SHIP_COACH') return t('deliveryType.shipCoach');
+      if (s === 'DINE_IN') return t('deliveryType.dineIn');
     }
     if (field === 'total' || field === 'shippingCost') {
       const n = Number(value);

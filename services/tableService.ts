@@ -66,6 +66,8 @@ export const checkoutTable = async (orderId: string): Promise<void> => {
 const toSession = (r: any): DineInSession => ({
   id: typeof r?.id === "string" ? r.id : "",
   orderNumber: r?.orderNumber ?? null,
+  tableId: r?.tableId ?? null,
+  tableName: r?.tableName ?? null,
   seatedAt: r?.seatedAt ?? null,
   leftAt: r?.leftAt ?? null,
   guestCount: typeof r?.guestCount === "number" ? r.guestCount : null,
@@ -79,5 +81,11 @@ const toSession = (r: any): DineInSession => ({
 /** Lịch sử vào/ra của 1 bàn — GET /dine-in/tables/:id/history. */
 export const fetchTableHistory = async (tableId: string): Promise<DineInSession[]> => {
   const res = await apiClient.get(`/dine-in/tables/${tableId}/history`);
+  return Array.isArray(res.data) ? res.data.map(toSession) : [];
+};
+
+/** Lịch sử vào/ra toàn bộ bàn — GET /dine-in/history. */
+export const fetchDineInHistory = async (): Promise<DineInSession[]> => {
+  const res = await apiClient.get(`/dine-in/history`);
   return Array.isArray(res.data) ? res.data.map(toSession) : [];
 };

@@ -70,6 +70,7 @@ export const orderAddressFallbackKey = (dt?: DeliveryType): string => {
   if (dt === DeliveryType.PICKUP) return 'deliveryType.pickup';
   if (dt === DeliveryType.SHIP_PROVINCE) return 'deliveryType.shipProvince';
   if (dt === DeliveryType.SHIP_COACH) return 'deliveryType.shipCoach';
+  if (dt === DeliveryType.DINE_IN) return 'deliveryType.dineIn';
   return 'deliveryType.noAddress';
 };
 

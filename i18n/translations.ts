@@ -653,6 +653,7 @@ export const translations = {
       pickup: "Customer pickup",
       shipProvince: "Province shipping",
       shipCoach: "Coach shipping",
+      dineIn: "Dine-in",
       noAddress: "No address"
     },
     qr: {
@@ -1430,6 +1431,7 @@ export const translations = {
       pickup: "Khách tới lấy",
       shipProvince: "Ship tỉnh",
       shipCoach: "Ship xe khách",
+      dineIn: "Tại quán",
       noAddress: "Chưa có địa chỉ"
     },
     qr: {

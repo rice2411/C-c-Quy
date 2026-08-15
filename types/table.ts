@@ -31,6 +31,8 @@ export interface DineInOpenOrder {
 export interface DineInSession {
   id: string;
   orderNumber?: string | null;
+  tableId?: string | null;
+  tableName?: string | null;
   seatedAt?: string | null; // giờ vào
   leftAt?: string | null; // giờ ra (null = đang ngồi)
   guestCount?: number | null;
