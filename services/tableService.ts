@@ -1,5 +1,5 @@
 import { apiClient } from "@/services/api/client";
-import { DiningTable, DiningTableInput } from "@/types";
+import { DiningTable, DiningTableInput, DineInSession } from "@/types";
 
 /** Đọc dữ liệu bàn từ API — coi mọi field untrusted, có default an toàn. */
 const toTable = (r: any): DiningTable => ({
@@ -61,4 +61,23 @@ export const deleteTable = async (id: string): Promise<void> => {
 /** Đóng bàn của 1 đơn (set giờ ra) — POST /dine-in/orders/:orderId/checkout. */
 export const checkoutTable = async (orderId: string): Promise<void> => {
   await apiClient.post(`/dine-in/orders/${orderId}/checkout`);
+};
+
+const toSession = (r: any): DineInSession => ({
+  id: typeof r?.id === "string" ? r.id : "",
+  orderNumber: r?.orderNumber ?? null,
+  seatedAt: r?.seatedAt ?? null,
+  leftAt: r?.leftAt ?? null,
+  guestCount: typeof r?.guestCount === "number" ? r.guestCount : null,
+  total: typeof r?.total === "number" ? r.total : 0,
+  paidAmount: typeof r?.paidAmount === "number" ? r.paidAmount : 0,
+  paymentStatus: typeof r?.paymentStatus === "string" ? r.paymentStatus : "",
+  status: typeof r?.status === "string" ? r.status : "",
+  itemCount: typeof r?.itemCount === "number" ? r.itemCount : 0,
+});
+
+/** Lịch sử vào/ra của 1 bàn — GET /dine-in/tables/:id/history. */
+export const fetchTableHistory = async (tableId: string): Promise<DineInSession[]> => {
+  const res = await apiClient.get(`/dine-in/tables/${tableId}/history`);
+  return Array.isArray(res.data) ? res.data.map(toSession) : [];
 };

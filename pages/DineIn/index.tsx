@@ -67,8 +67,8 @@ const DineInPage: React.FC = () => {
     await modifyOrder(orderId, payload);
     await refreshTables();
   };
-  const handleCheckout = async (orderId: string, payload: any) => {
-    await modifyOrder(orderId, payload);
+  // Đóng bàn THỦ CÔNG: chỉ set giờ ra (không ép thanh toán).
+  const handleCloseTable = async (orderId: string) => {
     await closeTable(orderId);
     await refreshTables();
   };
@@ -158,7 +158,7 @@ const DineInPage: React.FC = () => {
         onClose={() => setOrderPanelOpen(false)}
         onCreate={handleCreate}
         onSave={handleSave}
-        onCheckout={handleCheckout}
+        onCloseTable={handleCloseTable}
       />
 
       <TableManagePanel

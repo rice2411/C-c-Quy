@@ -5,20 +5,15 @@ import Typography from '@/components/ui/Typography';
 import Badge from '@/components/ui/Badge';
 import { DiningTable, tableStatus, tableStatusLabel } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
-
-const fmtTime = (iso?: string | null): string => {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return isNaN(d.getTime())
-    ? '—'
-    : d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-};
+import { fmtTime, fmtDuration, useNowTick } from './time';
 
 /** Lưới thẻ bàn kiểu POS — gọn, dễ bấm trên tablet. Bấm thẻ → mở panel order. */
 const TableGrid: React.FC<{
   tables: DiningTable[];
   onTableClick: (t: DiningTable) => void;
-}> = ({ tables, onTableClick }) => (
+}> = ({ tables, onTableClick }) => {
+  const now = useNowTick(30000); // cập nhật đồng hồ đếm giờ mỗi 30s
+  return (
   <Box layoutClassName="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
     {tables.map((t) => {
       const occupied = tableStatus(t) === 'occupied';
@@ -65,6 +60,9 @@ const TableGrid: React.FC<{
                   <Utensils className="w-3.5 h-3.5" /> {co?.itemCount ?? 0}
                 </Typography>
               </Box>
+              <Typography textClassName="text-xs font-medium text-amber-600 dark:text-amber-400">
+                ⏱ {fmtDuration(co?.seatedAt, now)}
+              </Typography>
               <Typography textClassName="text-lg font-bold text-amber-700 dark:text-amber-300">
                 {formatVND(co?.total ?? 0)}
               </Typography>
@@ -83,6 +81,7 @@ const TableGrid: React.FC<{
       );
     })}
   </Box>
-);
+  );
+};
 
 export default TableGrid;

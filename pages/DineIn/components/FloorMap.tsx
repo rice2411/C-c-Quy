@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import Box from '@/components/ui/Box';
 import { DiningTable, tableStatus } from '@/types';
+import { fmtDuration, useNowTick } from './time';
 
 /**
  * Sơ đồ quán vẽ bằng SVG theo ĐÚNG mặt bằng thật (362cm × 450cm → dùng luôn cm làm
@@ -53,6 +54,7 @@ const FloorMap: React.FC<FloorMapProps> = ({
   onMoveTable,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const now = useNowTick(30000);
   const [drag, setDrag] = useState<{ id: string; posX: number; posY: number } | null>(null);
 
   const toNorm = (clientX: number, clientY: number) => {
@@ -194,7 +196,9 @@ const FloorMap: React.FC<FloorMapProps> = ({
                 style={{ pointerEvents: 'none' }}>{t.name}</text>
               <text x={W / 2} y="34" textAnchor="middle" fill="#ffffff" fontSize="10"
                 style={{ pointerEvents: 'none', opacity: 0.95 }}>
-                {occupied ? `${t.currentOrder?.guestCount ?? '?'} khách` : `${t.seats} ghế`}
+                {occupied
+                  ? `${t.currentOrder?.guestCount ?? '?'}k · ${fmtDuration(t.currentOrder?.seatedAt, now)}`
+                  : `${t.seats} ghế`}
               </text>
             </g>
           );

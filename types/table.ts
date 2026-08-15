@@ -27,6 +27,20 @@ export interface DineInOpenOrder {
   itemCount: number; // tổng số lượng món
 }
 
+/** 1 phiên vào/ra của bàn (lịch sử) — mỗi đơn dine-in = 1 phiên. */
+export interface DineInSession {
+  id: string;
+  orderNumber?: string | null;
+  seatedAt?: string | null; // giờ vào
+  leftAt?: string | null; // giờ ra (null = đang ngồi)
+  guestCount?: number | null;
+  total: number;
+  paidAmount: number;
+  paymentStatus: string;
+  status: string;
+  itemCount: number;
+}
+
 /** 1 bàn ăn tại chỗ + đơn đang mở (nếu có). */
 export interface DiningTable {
   id: string;
