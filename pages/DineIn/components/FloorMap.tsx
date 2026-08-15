@@ -3,44 +3,40 @@ import Box from '@/components/ui/Box';
 import { DiningTable, tableStatus } from '@/types';
 
 /**
- * Sơ đồ quán vẽ bằng SVG theo tỉ lệ mặt bằng (362cm × 450cm → viewBox 100 × 124).
- * Bàn định vị bằng toạ độ chuẩn hoá posX/posY (0..1); màu theo trạng thái
- * (trống = xanh, đang ngồi = hổ phách). Chế độ sửa (editMode) cho kéo-thả bàn.
+ * Sơ đồ quán vẽ bằng SVG theo ĐÚNG mặt bằng thật (362cm × 450cm → dùng luôn cm làm
+ * đơn vị viewBox). Vẽ lại: bồn rửa, nhà vệ sinh, cửa sau/cửa chính (vòng cung mở cửa),
+ * cửa sổ (ô kẻ), quầy bếp chữ U, các vách "Tường" + nhãn kích thước — giống ảnh gốc.
+ * Bàn định vị bằng toạ độ chuẩn hoá posX/posY (0..1); màu theo trạng thái.
  *
- * Dùng thuộc tính SVG (fill/stroke) + style thay cho className: (1) SVG element không
- * nhận prop *ClassName của UI convention, (2) tránh scan_page_classname gắn className
- * lowercase-tag vào Box bao ngoài. Map là "bản vẽ trên thẻ trắng" — đọc tốt cả 2 theme.
+ * Dùng thuộc tính SVG (fill/stroke) + style thay className: (1) SVG element không nhận
+ * prop *ClassName, (2) tránh scan_page_classname gắn className lowercase-tag vào Box ngoài.
  */
 
-const VW = 100; // viewBox width
-const VH = 124; // viewBox height (giữ tỉ lệ 362:450)
+const VW = 362; // cm — chiều ngang
+const VH = 450; // cm — chiều dọc
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
 
-// Bảng màu cố định (đọc tốt trên nền thẻ trắng ở cả light/dark).
 const C = {
-  wall: '#94a3b8',
   paper: '#ffffff',
-  room: '#f1f5f9',
-  roomStroke: '#cbd5e1',
-  sink: '#f0f9ff',
-  sinkStroke: '#7dd3fc',
-  counter: '#e2e8f0',
+  wall: '#334155', // tường ngoài (đậm)
+  wallFill: '#cbd5e1', // vách trong (đặc)
+  fixture: '#f1f5f9',
+  fixtureStroke: '#94a3b8',
+  sink: '#eff6ff',
+  sinkStroke: '#60a5fa',
   kitchen: '#fff7ed',
-  kitchenStroke: '#fdba74',
-  partition: '#cbd5e1',
-  label: '#64748b',
-  amber: '#d97706',
-  emerald: '#059669',
-  sky: '#0ea5e9',
-  orange: '#ea580c',
-  doorBack: '#f59e0b',
-  doorFront: '#10b981',
-  doorWindow: '#38bdf8',
+  kitchenStroke: '#fb923c',
+  door: '#475569',
+  hatch: '#94a3b8',
+  label: '#334155',
+  dim: '#94a3b8',
+  amber: '#b45309',
+  emerald: '#047857',
   tableFree: '#34d399',
   tableFreeStroke: '#059669',
   tableBusy: '#fbbf24',
-  tableBusyStroke: '#d97706',
+  tableBusyStroke: '#b45309',
 };
 
 interface FloorMapProps {
@@ -63,10 +59,11 @@ const FloorMap: React.FC<FloorMapProps> = ({
     const svg = svgRef.current;
     if (!svg) return null;
     const rect = svg.getBoundingClientRect();
-    return {
-      posX: clamp01((clientX - rect.left) / rect.width),
-      posY: clamp01((clientY - rect.top) / rect.height),
-    };
+    // viewBox có margin: map theo vùng khung tường (0..VW, 0..VH) trong ảnh render.
+    const vbX = -16, vbY = -10, vbW = 394, vbH = 520;
+    const vx = vbX + ((clientX - rect.left) / rect.width) * vbW;
+    const vy = vbY + ((clientY - rect.top) / rect.height) * vbH;
+    return { posX: clamp01(vx / VW), posY: clamp01(vy / VH) };
   };
 
   const onPointerDown = (e: React.PointerEvent, t: DiningTable) => {
@@ -96,47 +93,98 @@ const FloorMap: React.FC<FloorMapProps> = ({
     >
       <svg
         ref={svgRef}
-        viewBox={`0 0 ${VW} ${VH}`}
+        viewBox="-16 -10 394 520"
         style={{ width: '100%', height: 'auto', touchAction: 'none', userSelect: 'none', display: 'block' }}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
       >
-        {/* Khung tường ngoài */}
-        <rect x="2" y="2" width="96" height="120" rx="1" fill={C.paper} stroke={C.wall} strokeWidth="0.8" />
+        <defs>
+          <pattern id="cq-hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="7" stroke={C.hatch} strokeWidth="1.2" />
+          </pattern>
+        </defs>
 
-        {/* Nhà vệ sinh (trên phải) */}
-        <rect x="46" y="2" width="52" height="16" fill={C.room} stroke={C.roomStroke} strokeWidth="0.4" />
-        <text x="72" y="11" textAnchor="middle" fill={C.label} fontSize="3.4">Nhà vệ sinh</text>
+        {/* ── Tường ngoài ── */}
+        <rect x="0" y="0" width={VW} height={VH} fill={C.paper} stroke={C.wall} strokeWidth="4" />
 
-        {/* Bồn rửa mặt (trên trái) */}
-        <rect x="6" y="4" width="14" height="12" rx="6" fill={C.sink} stroke={C.sinkStroke} strokeWidth="0.4" />
-        <text x="13" y="22" textAnchor="middle" fill={C.label} fontSize="2.6">Bồn rửa</text>
+        {/* ── Vách ngăn ngang trên (phân tách WC/bồn rửa với phòng), dày ~10cm ── */}
+        <rect x="0" y="112" width="120" height="10" fill={C.wallFill} />          {/* stub 53cm + tường bồn rửa */}
+        <rect x="116" y="112" width="4" height="24" fill={C.wallFill} />           {/* jamb trái cửa sau */}
+        <rect x="175" y="112" width="187" height="10" fill={C.wallFill} />         {/* stub 153cm (trước WC) */}
+        <rect x="173" y="112" width="4" height="24" fill={C.wallFill} />           {/* jamb phải cửa sau */}
 
-        {/* Cửa sau (giữa trên) */}
-        <line x1="33" y1="18" x2="45" y2="18" stroke={C.doorBack} strokeWidth="1.2" />
-        <text x="39" y="24" textAnchor="middle" fill={C.amber} fontSize="2.6">Cửa sau</text>
+        {/* Cửa sau (vòm mở) */}
+        <path d="M120,134 Q147,192 175,134" fill="none" stroke={C.door} strokeWidth="2" />
 
-        {/* Bếp / quầy bếp (phải dưới, hình chữ L) */}
-        <rect x="52" y="56" width="46" height="6" fill={C.counter} stroke={C.roomStroke} strokeWidth="0.3" />
-        <rect x="80" y="56" width="18" height="52" fill={C.kitchen} stroke={C.kitchenStroke} strokeWidth="0.4" />
-        <rect x="52" y="62" width="10" height="40" fill={C.kitchen} stroke={C.kitchenStroke} strokeWidth="0.4" />
-        <text x="70" y="76" textAnchor="middle" fill={C.orange} fontSize="3.4">Quầy bếp</text>
-        <text x="89" y="86" textAnchor="middle" fill={C.orange} fontSize="3">Bếp</text>
+        {/* Vách trái WC (có ô cửa) */}
+        <line x1="175" y1="0" x2="175" y2="60" stroke={C.wallFill} strokeWidth="4" />
+        <line x1="175" y1="90" x2="175" y2="112" stroke={C.wallFill} strokeWidth="4" />
+        {/* 2 vạch cửa WC treo từ trần (như ảnh) */}
+        <line x1="215" y1="0" x2="215" y2="16" stroke={C.wallFill} strokeWidth="3" />
+        <line x1="215" y1="40" x2="215" y2="56" stroke={C.wallFill} strokeWidth="3" />
 
-        {/* Vách ngăn trong (Tường) */}
-        <rect x="14" y="60" width="16" height="3.4" fill={C.partition} />
-        <text x="22" y="62.6" textAnchor="middle" fill={C.label} fontSize="2.2">Tường</text>
+        {/* Bồn rửa mặt (nửa bầu dục, mở sang phải) */}
+        <path d="M92,26 A34,40 0 0 0 92,106" fill={C.sink} stroke={C.sinkStroke} strokeWidth="2" />
+        <text x="70" y="66" textAnchor="middle" fill={C.label} fontSize="11"
+          transform="rotate(-90 70 66)">Bồn rửa mặt</text>
 
-        {/* Cửa chính (dưới trái) */}
-        <line x1="20" y1="122" x2="40" y2="122" stroke={C.doorFront} strokeWidth="1.4" />
-        <text x="30" y="119" textAnchor="middle" fill={C.emerald} fontSize="2.8">Cửa chính</text>
+        {/* Nhà vệ sinh */}
+        <text x="272" y="60" textAnchor="middle" fill={C.label} fontSize="13">Nhà vệ sinh</text>
 
-        {/* Cửa sổ (dưới giữa) */}
-        <line x1="50" y1="122" x2="68" y2="122" stroke={C.doorWindow} strokeWidth="1.2" strokeDasharray="2 1.5" />
-        <text x="59" y="119" textAnchor="middle" fill={C.sky} fontSize="2.6">Cửa sổ</text>
+        {/* ── Vách "Tường" 70cm (trái giữa), dày 17cm ── */}
+        <rect x="0" y="250" width="70" height="17" fill={C.wallFill} stroke={C.fixtureStroke} strokeWidth="0.5" />
+        <text x="35" y="263" textAnchor="middle" fill={C.label} fontSize="11">Tường</text>
 
-        {/* Bàn */}
+        {/* ── Bếp (phải giữa–dưới): vách 170cm + quầy bếp chữ U ── */}
+        <rect x="130" y="250" width="170" height="16" fill={C.wallFill} stroke={C.fixtureStroke} strokeWidth="0.5" />
+        <text x="215" y="262" textAnchor="middle" fill={C.label} fontSize="11">Tường</text>
+        {/* cạnh trái bếp chạy xuống (chừa khe 54cm) */}
+        <rect x="130" y="266" width="9" height="124" fill={C.wallFill} />
+        {/* quầy bếp */}
+        <rect x="175" y="290" width="125" height="140" fill={C.kitchen} stroke={C.kitchenStroke} strokeWidth="1.5" />
+        <text x="252" y="286" textAnchor="middle" fill={C.amber} fontSize="11">bếp</text>
+        <text x="235" y="366" textAnchor="middle" fill={C.amber} fontSize="12">quầy bếp</text>
+        <text x="291" y="360" textAnchor="middle" fill={C.amber} fontSize="11"
+          transform="rotate(-90 291 360)">Bếp</text>
+
+        {/* ── Cửa chính (2 cánh, vòng cung mở vào phòng) ── */}
+        <line x1="78" y1="450" x2="78" y2="410" stroke={C.door} strokeWidth="2" />
+        <line x1="158" y1="450" x2="158" y2="410" stroke={C.door} strokeWidth="2" />
+        <path d="M118,450 A40,40 0 0 0 78,410" fill="none" stroke={C.door} strokeWidth="2" />
+        <path d="M118,450 A40,40 0 0 1 158,410" fill="none" stroke={C.door} strokeWidth="2" />
+
+        {/* ── Tường 10cm (stub đứng gần cửa sổ) ── */}
+        <rect x="201" y="415" width="10" height="35" fill={C.wallFill} />
+
+        {/* ── Cửa sổ (ô kẻ) ── */}
+        <rect x="238" y="435" width="62" height="14" fill="url(#cq-hatch)" stroke={C.fixtureStroke} strokeWidth="1" />
+        <line x1="269" y1="435" x2="269" y2="449" stroke={C.fixtureStroke} strokeWidth="1" />
+
+        {/* ── Nhãn phòng/cửa ── */}
+        <text x="147" y="176" textAnchor="middle" fill={C.label} fontSize="11">Cửa sau</text>
+        <text x="118" y="474" textAnchor="middle" fill={C.label} fontSize="11">Cửa chính</text>
+        <text x="269" y="474" textAnchor="middle" fill={C.label} fontSize="11">Cửa sổ</text>
+
+        {/* ── Nhãn tường ngoài ── */}
+        <text x="10" y="200" textAnchor="middle" fill={C.dim} fontSize="10" transform="rotate(-90 10 200)">Tường 2</text>
+        <text x="10" y="392" textAnchor="middle" fill={C.dim} fontSize="10" transform="rotate(-90 10 392)">Tường 1</text>
+        <text x="352" y="200" textAnchor="middle" fill={C.dim} fontSize="10" transform="rotate(-90 352 200)">Tường 3</text>
+        <text x="352" y="360" textAnchor="middle" fill={C.dim} fontSize="10" transform="rotate(-90 352 360)">Tường 4</text>
+
+        {/* ── Nhãn kích thước ── */}
+        <text x="62" y="105" textAnchor="middle" fill={C.dim} fontSize="9">53 cm</text>
+        <text x="265" y="140" textAnchor="middle" fill={C.dim} fontSize="9">153 cm</text>
+        <text x="147" y="192" textAnchor="middle" fill={C.dim} fontSize="9">90 cm</text>
+        <text x="35" y="243" textAnchor="middle" fill={C.dim} fontSize="9">70 cm</text>
+        <text x="215" y="243" textAnchor="middle" fill={C.dim} fontSize="9">170 cm</text>
+        <text x="150" y="404" textAnchor="middle" fill={C.dim} fontSize="9">54 cm</text>
+        <text x="118" y="400" textAnchor="middle" fill={C.dim} fontSize="9">80 cm</text>
+        <text x="269" y="424" textAnchor="middle" fill={C.dim} fontSize="9">100 cm</text>
+        <text x="181" y="492" textAnchor="middle" fill={C.dim} fontSize="10">362 cm</text>
+        <text x="-10" y="70" textAnchor="middle" fill={C.dim} fontSize="9" transform="rotate(-90 -10 70)">117 cm</text>
+
+        {/* ── Bàn ── */}
         {tables.map((t) => {
           const isDragging = drag?.id === t.id;
           const posX = isDragging ? drag!.posX : t.posX;
@@ -144,8 +192,8 @@ const FloorMap: React.FC<FloorMapProps> = ({
           const cx = posX * VW;
           const cy = posY * VH;
           const occupied = tableStatus(t) === 'occupied';
-          const W = 15;
-          const H = 12;
+          const W = 58;
+          const H = 44;
           return (
             <g
               key={t.id}
@@ -157,23 +205,15 @@ const FloorMap: React.FC<FloorMapProps> = ({
               }}
             >
               <rect
-                x="0" y="0" width={W} height={H} rx="1.6"
+                x="0" y="0" width={W} height={H} rx="5"
                 fill={occupied ? C.tableBusy : C.tableFree}
                 stroke={occupied ? C.tableBusyStroke : C.tableFreeStroke}
-                strokeWidth="0.5"
+                strokeWidth="1.5"
               />
-              <text
-                x={W / 2} y="5" textAnchor="middle"
-                fill="#ffffff" fontSize="3.4" fontWeight="600"
-                style={{ pointerEvents: 'none' }}
-              >
-                {t.name}
-              </text>
-              <text
-                x={W / 2} y="9.4" textAnchor="middle"
-                fill="#ffffff" fontSize="2.6"
-                style={{ pointerEvents: 'none', opacity: 0.9 }}
-              >
+              <text x={W / 2} y="20" textAnchor="middle" fill="#ffffff" fontSize="13" fontWeight="700"
+                style={{ pointerEvents: 'none' }}>{t.name}</text>
+              <text x={W / 2} y="34" textAnchor="middle" fill="#ffffff" fontSize="10"
+                style={{ pointerEvents: 'none', opacity: 0.95 }}>
                 {occupied ? `${t.currentOrder?.guestCount ?? '?'} khách` : `${t.seats} ghế`}
               </text>
             </g>
