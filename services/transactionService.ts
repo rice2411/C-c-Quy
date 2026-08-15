@@ -20,7 +20,7 @@ const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v)
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 
 const LEDGER_STATUSES: LedgerStatus[] = [
-  'matched', 'shopee', 'external', 'unmatched', 'refund', 'settled', 'excluded', 'expense', 'stock',
+  'matched', 'shopee', 'capital', 'external', 'unmatched', 'refund', 'settled', 'excluded', 'expense', 'stock',
 ];
 
 /** Chuẩn hoá 1 dòng sổ trả từ API — coi mọi field untrusted (data-safety). */
@@ -109,8 +109,20 @@ export const setTransactionExpense = async (
   transactionId: string,
   category: string | null,
   excluded: boolean,
+  note?: string | null,
 ): Promise<void> => {
-  await apiClient.patch(`/transactions/${transactionId}/expense`, { category, excluded });
+  await apiClient.patch(`/transactions/${transactionId}/expense`, { category, excluded, note: note ?? null });
+};
+
+/**
+ * Đánh dấu / gỡ 1 giao dịch TIỀN VÀO là "Cấp vốn" (chủ bơm vốn — không phải doanh thu).
+ * Tái dùng cột expense_category (value 'capital') — BE derive status 'capital'.
+ */
+export const markTransactionCapital = async (
+  transactionId: string,
+  isCapital: boolean,
+): Promise<void> => {
+  await setTransactionExpense(transactionId, isCapital ? 'capital' : null, false);
 };
 
 /**

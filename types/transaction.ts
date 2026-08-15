@@ -85,7 +85,7 @@ export interface ExpenseRule {
  *   Tiền ra:  refund | settled | excluded | expense | stock | unmatched
  */
 export type LedgerStatus =
-  | 'matched' | 'shopee' | 'external' | 'unmatched'
+  | 'matched' | 'shopee' | 'capital' | 'external' | 'unmatched'
   | 'refund' | 'settled' | 'excluded' | 'expense' | 'stock'
   | 'test';
 
@@ -131,12 +131,13 @@ export interface LedgerFilters {
   offset?: number;
 }
 
-type Tone = 'emerald' | 'amber' | 'rose' | 'violet' | 'blue' | 'slate' | 'orange' | 'teal';
+type Tone = 'emerald' | 'amber' | 'rose' | 'violet' | 'blue' | 'slate' | 'orange' | 'teal' | 'indigo';
 
 /** Nhãn + tone hiển thị badge cho từng trạng thái sổ. */
 export const LEDGER_STATUS_META: Record<LedgerStatus, { label: string; tone: Tone }> = {
   matched: { label: 'Khớp đơn', tone: 'emerald' },
   shopee: { label: 'Shopee thanh toán', tone: 'orange' },
+  capital: { label: 'Cấp vốn', tone: 'indigo' },
   external: { label: 'Ngoài hệ thống', tone: 'slate' },
   unmatched: { label: 'Chưa khớp', tone: 'amber' },
   refund: { label: 'Hoàn tiền', tone: 'violet' },
@@ -157,4 +158,5 @@ export const LEDGER_TONE_CLASS: Record<Tone, { bg: string; text: string; border:
   slate: { bg: 'bg-slate-100 dark:bg-slate-700/40', text: 'text-slate-600 dark:text-slate-300', border: 'border border-slate-200 dark:border-slate-600' },
   orange: { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-700 dark:text-orange-300', border: 'border border-orange-200 dark:border-orange-700' },
   teal: { bg: 'bg-teal-50 dark:bg-teal-900/20', text: 'text-teal-700 dark:text-teal-300', border: 'border border-teal-200 dark:border-teal-700' },
+  indigo: { bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-700 dark:text-indigo-300', border: 'border border-indigo-200 dark:border-indigo-700' },
 };

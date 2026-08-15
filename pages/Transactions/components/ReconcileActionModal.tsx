@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Link2, Link2Off, PackageOpen, ReceiptText, RotateCcw, ShoppingBag, ShoppingCart, Tag } from 'lucide-react';
+import { Link2, Link2Off, PackageOpen, PiggyBank, ReceiptText, RotateCcw, ShoppingBag, ShoppingCart, Tag } from 'lucide-react';
 import { LedgerTransaction } from '@/types';
 import {
   EXPENSE_CATEGORIES,
@@ -15,6 +15,7 @@ import {
   linkTransactionExpense,
   linkTransactionOrder,
   markTransactionShopee,
+  markTransactionCapital,
   setTransactionExpense,
   unlinkTransactionExpense,
 } from '@/services/transactionService';
@@ -32,6 +33,7 @@ import Button from '@/components/ui/Button';
 import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
+import Input from '@/components/ui/Input';
 
 interface Props {
   isOpen: boolean;
@@ -56,6 +58,14 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  // Ràng buộc: phân loại "Khác" (tiền ra) phải kèm ghi chú.
+  const [askOther, setAskOther] = useState(false);
+  const [otherNote, setOtherNote] = useState('');
+
+  useEffect(() => {
+    setAskOther(false);
+    setOtherNote('');
+  }, [isOpen, tx?.id]);
 
   const out = tx?.transferType === 'out';
   const amt = tx?.transferAmount ?? 0;
@@ -177,6 +187,20 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
     </Button>
   );
 
+  // Nút đánh dấu "Cấp vốn" cho tiền VÀO (chủ bơm vốn, không phải doanh thu).
+  const capitalMark = (
+    <Button
+      type="button"
+      fullWidth
+      variant="secondary"
+      disabled={busy !== null}
+      leftIcon={<PiggyBank className="h-4 w-4" />}
+      onClick={() => run('capital', () => markTransactionCapital(tx.id, true), 'Đã đánh dấu Cấp vốn.')}
+    >
+      Cấp vốn (không phải doanh thu)
+    </Button>
+  );
+
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title="Đối soát giao dịch" size="lg">
       <Box layoutClassName="space-y-4">
@@ -202,6 +226,11 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
                 onClick={() => run('unshopee', () => markTransactionShopee(tx.id, false), 'Đã gỡ đánh dấu Shopee.')}>
                 Gỡ đánh dấu Shopee
               </Button>
+            ) : tx.status === 'capital' ? (
+              <Button type="button" variant="secondary" fullWidth disabled={busy !== null} leftIcon={<Link2Off className="h-4 w-4" />}
+                onClick={() => run('uncapital', () => markTransactionCapital(tx.id, false), 'Đã gỡ đánh dấu cấp vốn.')}>
+                Gỡ đánh dấu cấp vốn
+              </Button>
             ) : tx.status === 'expense' || tx.status === 'excluded' ? (
               <Button type="button" variant="secondary" fullWidth disabled={busy !== null} leftIcon={<RotateCcw className="h-4 w-4" />}
                 onClick={() => run('reset', async () => {
@@ -226,6 +255,7 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
                 <ShoppingCart className="h-3.5 w-3.5" /> Nguồn ngoài đơn
               </Typography>
               {shopeeMark}
+              {capitalMark}
               {looksShopee ? (
                 <Typography size="xs" variant="muted">Nội dung CK có chữ “shopee” — đã tự nhận là Shopee thanh toán.</Typography>
               ) : null}
@@ -286,13 +316,50 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
                       textClassName={isCost ? 'font-medium text-slate-600 dark:text-slate-300' : 'font-semibold text-amber-700 dark:text-amber-300'}
                       hoverClassName={isCost ? 'hover:bg-slate-50 dark:hover:bg-slate-700' : 'hover:bg-amber-100 dark:hover:bg-amber-900/30'}
                       stateClassName="transition-colors disabled:opacity-50"
-                      onClick={() => run(`cat-${c.value}`, () => setTransactionExpense(tx.id, c.value, !isCost), `Đã phân loại: ${c.label}.`)}
+                      onClick={() => {
+                        // "Khác" bắt buộc ghi chú → mở ô nhập thay vì áp ngay.
+                        if (c.value === 'other') { setAskOther(true); return; }
+                        run(`cat-${c.value}`, () => setTransactionExpense(tx.id, c.value, !isCost), `Đã phân loại: ${c.label}.`);
+                      }}
                     >
                       {c.label}
                     </Button>
                   );
                 })}
               </Box>
+
+              {askOther ? (
+                <Box
+                  layoutClassName="space-y-2 rounded-lg p-2.5"
+                  borderClassName="border border-amber-200 dark:border-amber-700"
+                  backgroundClassName="bg-amber-50/60 dark:bg-amber-900/10"
+                >
+                  <Typography size="xs" layoutClassName="font-semibold" textClassName="text-amber-700 dark:text-amber-300">
+                    Ghi chú cho “Khác” (bắt buộc)
+                  </Typography>
+                  <Input
+                    value={otherNote}
+                    onChange={(e) => setOtherNote(e.target.value)}
+                    placeholder="Chi cho việc gì…"
+                    autoFocus
+                  />
+                  <Box layoutClassName="flex justify-end gap-2">
+                    <Button type="button" variant="ghost" size="sm" disabled={busy !== null} onClick={() => { setAskOther(false); setOtherNote(''); }}>
+                      Huỷ
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      disabled={busy !== null || !otherNote.trim()}
+                      onClick={() => run('cat-other', () => setTransactionExpense(tx.id, 'other', false, otherNote.trim()), 'Đã phân loại: Khác.')}
+                    >
+                      Xác nhận
+                    </Button>
+                  </Box>
+                </Box>
+              ) : null}
+
               <Typography size="xs" variant="muted">
                 Chọn “Cá nhân / Rút vốn / Nội bộ” cho khoản không khớp bill — sẽ không tính vào chi phí quán.
               </Typography>
