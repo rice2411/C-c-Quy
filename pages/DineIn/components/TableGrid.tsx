@@ -5,14 +5,14 @@ import Typography from '@/components/ui/Typography';
 import Badge from '@/components/ui/Badge';
 import { DiningTable, tableStatus, tableStatusLabel } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
-import { fmtTime, fmtDuration, useNowTick } from './time';
+import { fmtTime, fmtDurationClock, useNowTick } from './time';
 
 /** Lưới thẻ bàn kiểu POS — gọn, dễ bấm trên tablet. Bấm thẻ → mở panel order. */
 const TableGrid: React.FC<{
   tables: DiningTable[];
   onTableClick: (t: DiningTable) => void;
 }> = ({ tables, onTableClick }) => {
-  const now = useNowTick(30000); // cập nhật đồng hồ đếm giờ mỗi 30s
+  const now = useNowTick(1000); // đồng hồ đếm giờ chạy mỗi giây
   return (
   <Box layoutClassName="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
     {tables.map((t) => {
@@ -48,22 +48,24 @@ const TableGrid: React.FC<{
           </Box>
 
           {occupied ? (
-            <Box layoutClassName="flex flex-col gap-1.5 mt-0.5">
-              <Box layoutClassName="flex items-center gap-3 text-xs">
-                <Typography textClassName="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                  <Clock className="w-3.5 h-3.5" /> {fmtTime(co?.seatedAt)}
+            <Box layoutClassName="flex flex-col gap-1 mt-0.5">
+              <Box layoutClassName="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <Typography textClassName="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" /> Vào {fmtTime(co?.seatedAt)}
                 </Typography>
-                <Typography textClassName="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                  <Users className="w-3.5 h-3.5" /> {co?.guestCount ?? '—'}
-                </Typography>
-                <Typography textClassName="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                  <Utensils className="w-3.5 h-3.5" /> {co?.itemCount ?? 0}
-                </Typography>
+                <Box layoutClassName="flex items-center gap-2">
+                  <Typography textClassName="flex items-center gap-1">
+                    <Users className="w-3.5 h-3.5" /> {co?.guestCount ?? '—'}
+                  </Typography>
+                  <Typography textClassName="flex items-center gap-1">
+                    <Utensils className="w-3.5 h-3.5" /> {co?.itemCount ?? 0}
+                  </Typography>
+                </Box>
               </Box>
-              <Typography textClassName="text-xs font-medium text-amber-600 dark:text-amber-400">
-                ⏱ {fmtDuration(co?.seatedAt, now)}
+              <Typography textClassName="font-mono text-lg font-bold tabular-nums text-amber-700 dark:text-amber-300">
+                ⏱ {fmtDurationClock(co?.seatedAt, now)}
               </Typography>
-              <Typography textClassName="text-lg font-bold text-amber-700 dark:text-amber-300">
+              <Typography textClassName="text-sm font-semibold text-slate-900 dark:text-white">
                 {formatVND(co?.total ?? 0)}
               </Typography>
             </Box>

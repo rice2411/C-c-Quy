@@ -11,7 +11,7 @@ import { DiningTable, Order, PaymentMethod, PaymentStatus } from '@/types';
 import { fetchOrder } from '@/services/orderService';
 import { formatVND } from '@/utils/format/currencyUtil';
 import OrderItemsMini from '@/pages/Orders/components/OrderItemsMini';
-import { fmtTime, fmtDuration, useNowTick } from './time';
+import { fmtTime, fmtDurationClock, useNowTick } from './time';
 
 interface TableStatusPanelProps {
   isOpen: boolean;
@@ -114,8 +114,8 @@ const TableStatusPanel: React.FC<TableStatusPanelProps> = ({
               <Typography textClassName="text-xs font-medium text-amber-700 dark:text-amber-300 flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" /> Đã ngồi
               </Typography>
-              <Typography textClassName="text-xl font-bold text-amber-700 dark:text-amber-200">
-                {fmtDuration(order.seatedAt, now) || '0p'}
+              <Typography textClassName="font-mono text-2xl font-bold tabular-nums text-amber-700 dark:text-amber-200">
+                {fmtDurationClock(order.seatedAt, now)}
               </Typography>
               <Typography textClassName="text-xs text-amber-600 dark:text-amber-400">
                 Vào lúc {fmtTime(order.seatedAt)}

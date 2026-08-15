@@ -54,7 +54,7 @@ const FloorMap: React.FC<FloorMapProps> = ({
   onMoveTable,
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const now = useNowTick(30000);
+  const now = useNowTick(1000);
   const [drag, setDrag] = useState<{ id: string; posX: number; posY: number } | null>(null);
 
   const toNorm = (clientX: number, clientY: number) => {

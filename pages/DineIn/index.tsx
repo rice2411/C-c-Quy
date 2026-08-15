@@ -15,6 +15,7 @@ import {
   DeliveryType, DiningTable, Order, OrderStatus, PaymentMethod, PaymentStatus, tableStatus,
 } from '@/types';
 import OrderForm from '@/pages/Orders/components/modals/OrderForm';
+import { getNextOrderNumber } from '@/services/orderService';
 import FloorMap from './components/FloorMap';
 import TableGrid from './components/TableGrid';
 import TableStatusPanel from './components/TableStatusPanel';
@@ -72,16 +73,19 @@ const DineInPage: React.FC = () => {
   );
 
   // Click bàn: trống → OrderForm tạo đơn (mở bàn); đang ngồi → panel trạng thái.
-  const openTable = (t: DiningTable) => {
+  const openTable = async (t: DiningTable) => {
     if (tableStatus(t) === 'occupied') {
       setStatusTable(t);
       setStatusOpen(true);
-    } else {
-      setFormInitial(dineInSeed());
-      setFormEditId(null);
-      setFormTableId(t.id);
-      setFormOpen(true);
+      return;
     }
+    setFormEditId(null);
+    setFormTableId(t.id);
+    // Lấy trước số đơn kế tiếp để hiển thị (BE vẫn tự sinh số chuẩn lúc lưu).
+    let orderNumber: string | undefined;
+    try { orderNumber = await getNextOrderNumber(); } catch { /* fallback N/A trong form */ }
+    setFormInitial({ ...dineInSeed(), orderNumber });
+    setFormOpen(true);
   };
 
   // Sửa đơn của bàn đang ngồi (từ panel trạng thái).
