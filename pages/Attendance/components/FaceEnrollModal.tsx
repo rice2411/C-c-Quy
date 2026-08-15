@@ -34,13 +34,12 @@ interface Step {
   label: string;
 }
 
-/** Các góc mặt cần quét, theo thứ tự hướng dẫn. */
+/** Các góc mặt cần quét, theo thứ tự hướng dẫn.
+ *  Rút còn 3 góc (thẳng + trái + phải) cho nhanh — mỗi góc là 1 lượt detect server. */
 const STEPS: Step[] = [
   { dir: 'center', label: 'Nhìn thẳng vào camera' },
   { dir: 'left', label: 'Từ từ nghiêng đầu sang TRÁI' },
   { dir: 'right', label: 'Từ từ nghiêng đầu sang PHẢI' },
-  { dir: 'up', label: 'Ngẩng đầu lên trên' },
-  { dir: 'down', label: 'Cúi đầu xuống dưới' },
 ];
 
 const DETECT_INTERVAL = 130; // ms giữa mỗi lần detect
@@ -146,7 +145,7 @@ const FaceEnrollModal: React.FC<Props> = ({ isOpen, onClose, employee, onDone })
     } catch {
       // góc này chưa rõ mặt → giữ nguyên bước, thử lại sau cooldown
     } finally {
-      await new Promise((r) => setTimeout(r, 650)); // cooldown tránh chụp trùng
+      await new Promise((r) => setTimeout(r, 300)); // cooldown tránh chụp trùng (đã rút cho nhanh)
       capturingRef.current = false;
     }
   };
