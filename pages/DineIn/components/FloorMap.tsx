@@ -134,12 +134,10 @@ const FloorMap: React.FC<FloorMapProps> = ({
 
         {/* ── Vách "Tường" 70cm (trái giữa), dày 17cm ── */}
         <rect x="0" y="250" width="70" height="17" fill={C.wallFill} stroke={C.fixtureStroke} strokeWidth="0.5" />
-        <text x="35" y="263" textAnchor="middle" fill={C.label} fontSize="11">Tường</text>
 
-        {/* ── Bếp (phải giữa–dưới): vách 170cm + quầy bếp chữ U ── */}
+        {/* ── Bếp (phải giữa–dưới): vách + quầy bếp chữ U ── */}
         <rect x="130" y="250" width="170" height="16" fill={C.wallFill} stroke={C.fixtureStroke} strokeWidth="0.5" />
-        <text x="215" y="262" textAnchor="middle" fill={C.label} fontSize="11">Tường</text>
-        {/* cạnh trái bếp chạy xuống (chừa khe 54cm) */}
+        {/* cạnh trái bếp chạy xuống */}
         <rect x="130" y="266" width="9" height="124" fill={C.wallFill} />
         {/* quầy bếp */}
         <rect x="175" y="290" width="125" height="140" fill={C.kitchen} stroke={C.kitchenStroke} strokeWidth="1.5" />
@@ -161,28 +159,10 @@ const FloorMap: React.FC<FloorMapProps> = ({
         <rect x="238" y="435" width="62" height="14" fill="url(#cq-hatch)" stroke={C.fixtureStroke} strokeWidth="1" />
         <line x1="269" y1="435" x2="269" y2="449" stroke={C.fixtureStroke} strokeWidth="1" />
 
-        {/* ── Nhãn phòng/cửa ── */}
+        {/* ── Nhãn phòng/cửa (giữ tên khu vực, đã bỏ nhãn kích thước cm) ── */}
         <text x="147" y="176" textAnchor="middle" fill={C.label} fontSize="11">Cửa sau</text>
         <text x="118" y="474" textAnchor="middle" fill={C.label} fontSize="11">Cửa chính</text>
         <text x="269" y="474" textAnchor="middle" fill={C.label} fontSize="11">Cửa sổ</text>
-
-        {/* ── Nhãn tường ngoài ── */}
-        <text x="10" y="200" textAnchor="middle" fill={C.dim} fontSize="10" transform="rotate(-90 10 200)">Tường 2</text>
-        <text x="10" y="392" textAnchor="middle" fill={C.dim} fontSize="10" transform="rotate(-90 10 392)">Tường 1</text>
-        <text x="352" y="200" textAnchor="middle" fill={C.dim} fontSize="10" transform="rotate(-90 352 200)">Tường 3</text>
-        <text x="352" y="360" textAnchor="middle" fill={C.dim} fontSize="10" transform="rotate(-90 352 360)">Tường 4</text>
-
-        {/* ── Nhãn kích thước ── */}
-        <text x="62" y="105" textAnchor="middle" fill={C.dim} fontSize="9">53 cm</text>
-        <text x="265" y="140" textAnchor="middle" fill={C.dim} fontSize="9">153 cm</text>
-        <text x="147" y="192" textAnchor="middle" fill={C.dim} fontSize="9">90 cm</text>
-        <text x="35" y="243" textAnchor="middle" fill={C.dim} fontSize="9">70 cm</text>
-        <text x="215" y="243" textAnchor="middle" fill={C.dim} fontSize="9">170 cm</text>
-        <text x="150" y="404" textAnchor="middle" fill={C.dim} fontSize="9">54 cm</text>
-        <text x="118" y="400" textAnchor="middle" fill={C.dim} fontSize="9">80 cm</text>
-        <text x="269" y="424" textAnchor="middle" fill={C.dim} fontSize="9">100 cm</text>
-        <text x="181" y="492" textAnchor="middle" fill={C.dim} fontSize="10">362 cm</text>
-        <text x="-10" y="70" textAnchor="middle" fill={C.dim} fontSize="9" transform="rotate(-90 -10 70)">117 cm</text>
 
         {/* ── Bàn ── */}
         {tables.map((t) => {
