@@ -35,6 +35,12 @@ export const useTables = (): UseTablesResult => {
     queryKey: qk.tables.all,
     queryFn: fetchTables,
     enabled: !!currentUser,
+    // Realtime chính qua socket `tables:changed`; 2 lớp fallback đảm bảo mọi máy
+    // luôn thấy hiện trạng bàn kể cả khi lỡ 1 event: refetch khi focus lại tab +
+    // poll nhẹ mỗi 20s (chỉ khi tab đang mở).
+    refetchOnWindowFocus: true,
+    refetchInterval: 20000,
+    refetchIntervalInBackground: false,
   });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: qk.tables.all });
