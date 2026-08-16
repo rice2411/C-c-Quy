@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { LayoutGrid, Map as MapIcon, Pencil, RefreshCw, Settings2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Box from '@/components/ui/Box';
@@ -12,10 +12,11 @@ import Tabs from '@/components/ui/Tabs';
 import { useTables } from '@/hooks/useTables';
 import { useOrders } from '@/hooks/useOrders';
 import {
-  DeliveryType, DiningTable, Order, OrderStatus, PaymentMethod, PaymentStatus, tableStatus,
+  DeliveryType, DiningTable, Order, OrderStatus, PaymentMethod, PaymentStatus,
+  tableStatus, tableOpenOrders,
 } from '@/types';
 import OrderForm from '@/pages/Orders/components/modals/OrderForm';
-import { getNextOrderNumber } from '@/services/orderService';
+import { getNextOrderNumber, fetchOrder } from '@/services/orderService';
 import FloorMap from './components/FloorMap';
 import TableGrid from './components/TableGrid';
 import TableStatusPanel from './components/TableStatusPanel';
@@ -57,9 +58,10 @@ const DineInPage: React.FC = () => {
   const [editMode, setEditMode] = useState(false);
   const [managing, setManaging] = useState(false);
 
-  // Panel trạng thái (bàn đang ngồi)
-  const [statusTable, setStatusTable] = useState<DiningTable | null>(null);
+  // Panel trạng thái (bàn đang ngồi) — giữ theo ID để bám dữ liệu bàn mới nhất.
+  const [statusTableId, setStatusTableId] = useState<string | null>(null);
   const [statusOpen, setStatusOpen] = useState(false);
+  const statusTable = statusTableId ? tables.find((t) => t.id === statusTableId) ?? null : null;
 
   // OrderForm (tạo/sửa đơn của bàn)
   const [formOpen, setFormOpen] = useState(false);
@@ -72,50 +74,63 @@ const DineInPage: React.FC = () => {
     [tables],
   );
 
-  // Click bàn: trống → OrderForm tạo đơn (mở bàn); đang ngồi → panel trạng thái.
-  const openTable = async (t: DiningTable) => {
-    if (tableStatus(t) === 'occupied') {
-      setStatusTable(t);
-      setStatusOpen(true);
-      return;
+  // Bàn đóng hết đơn → tự đóng panel trạng thái.
+  useEffect(() => {
+    if (statusOpen && statusTable && tableOpenOrders(statusTable).length === 0) {
+      setStatusOpen(false);
     }
+  }, [statusOpen, statusTable]);
+
+  // Mở OrderForm TẠO đơn mới cho 1 bàn (mở bàn / thêm đơn vào bàn).
+  const openCreateForm = async (tableId: string) => {
     setFormEditId(null);
-    setFormTableId(t.id);
-    // Lấy trước số đơn kế tiếp để hiển thị (BE vẫn tự sinh số chuẩn lúc lưu).
+    setFormTableId(tableId);
     let orderNumber: string | undefined;
     try { orderNumber = await getNextOrderNumber(); } catch { /* fallback N/A trong form */ }
     setFormInitial({ ...dineInSeed(), orderNumber });
     setFormOpen(true);
   };
 
-  // Sửa đơn của bàn đang ngồi (từ panel trạng thái).
-  const editOrder = (order: Order) => {
-    setStatusOpen(false);
-    setFormInitial(order);
-    setFormEditId(order.id);
-    setFormTableId(order.tableId ?? null);
-    setFormOpen(true);
+  // Click bàn: trống → tạo đơn (mở bàn); đang ngồi → panel trạng thái (danh sách đơn).
+  const openTable = (t: DiningTable) => {
+    if (tableStatus(t) === 'occupied') {
+      setStatusTableId(t.id);
+      setStatusOpen(true);
+    } else {
+      void openCreateForm(t.id);
+    }
+  };
+
+  // Sửa 1 đơn cụ thể của bàn (từ panel trạng thái) — nạp đơn đầy đủ rồi mở OrderForm.
+  const editOrderById = async (orderId: string) => {
+    try {
+      const order = await fetchOrder(orderId);
+      if (!order) { toast.error('Không tải được đơn'); return; }
+      setFormInitial(order);
+      setFormEditId(order.id);
+      setFormTableId(order.tableId ?? statusTableId);
+      setFormOpen(true);
+    } catch {
+      toast.error('Không tải được đơn');
+    }
   };
 
   const handleFormSave = async (data: any) => {
     const payload = { ...data, deliveryType: DeliveryType.DINE_IN, tableId: formTableId };
     if (formEditId) {
       await modifyOrder(formEditId, payload);
+      toast.success('Đã lưu đơn');
     } else {
       delete payload.orderNumber; // để BE tự sinh số đơn
       payload.seatedAt = new Date().toISOString();
       await createNewOrder(payload);
-      toast.success('Đã mở bàn');
+      toast.success('Đã thêm đơn vào bàn');
     }
     await refreshTables();
     setFormOpen(false);
   };
 
-  const handleSave = async (orderId: string, payload: any) => {
-    await modifyOrder(orderId, payload);
-    await refreshTables();
-  };
-  const handleCloseTable = async (orderId: string) => {
+  const handleCloseOrder = async (orderId: string) => {
     await closeTable(orderId);
     await refreshTables();
   };
@@ -195,14 +210,14 @@ const DineInPage: React.FC = () => {
         onCancel={() => setFormOpen(false)}
       />
 
-      {/* Trạng thái bàn đang ngồi */}
+      {/* Trạng thái bàn đang ngồi — danh sách đơn + thêm đơn */}
       <TableStatusPanel
         isOpen={statusOpen}
         table={statusTable}
         onClose={() => setStatusOpen(false)}
-        onEdit={editOrder}
-        onPay={handleSave}
-        onCloseTable={handleCloseTable}
+        onAddOrder={() => statusTableId && void openCreateForm(statusTableId)}
+        onEditOrder={editOrderById}
+        onCloseOrder={handleCloseOrder}
       />
 
       <TableManagePanel

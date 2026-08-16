@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import Box from '@/components/ui/Box';
-import { DiningTable, tableStatus } from '@/types';
+import { DiningTable, tableStatus, tableOpenOrders, tableSeatedAt } from '@/types';
 import { fmtDuration, useNowTick } from './time';
 
 /**
@@ -197,7 +197,7 @@ const FloorMap: React.FC<FloorMapProps> = ({
               <text x={W / 2} y="34" textAnchor="middle" fill="#ffffff" fontSize="10"
                 style={{ pointerEvents: 'none', opacity: 0.95 }}>
                 {occupied
-                  ? `${t.currentOrder?.guestCount ?? '?'}k · ${fmtDuration(t.currentOrder?.seatedAt, now)}`
+                  ? `${tableOpenOrders(t).length} đơn · ${fmtDuration(tableSeatedAt(t), now)}`
                   : `${t.seats} ghế`}
               </text>
             </g>

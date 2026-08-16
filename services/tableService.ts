@@ -1,6 +1,19 @@
 import { apiClient } from "@/services/api/client";
 import { DiningTable, DiningTableInput, DineInSession } from "@/types";
 
+const toOpenOrder = (o: any) => ({
+  id: typeof o?.id === "string" ? o.id : "",
+  orderNumber: o?.orderNumber ?? null,
+  guestCount: typeof o?.guestCount === "number" ? o.guestCount : null,
+  seatedAt: o?.seatedAt ?? null,
+  leftAt: o?.leftAt ?? null,
+  total: typeof o?.total === "number" ? o.total : 0,
+  paidAmount: typeof o?.paidAmount === "number" ? o.paidAmount : 0,
+  status: typeof o?.status === "string" ? o.status : "",
+  paymentStatus: typeof o?.paymentStatus === "string" ? o.paymentStatus : "",
+  itemCount: typeof o?.itemCount === "number" ? o.itemCount : 0,
+});
+
 /** Đọc dữ liệu bàn từ API — coi mọi field untrusted, có default an toàn. */
 const toTable = (r: any): DiningTable => ({
   id: typeof r?.id === "string" ? r.id : "",
@@ -10,24 +23,8 @@ const toTable = (r: any): DiningTable => ({
   seats: typeof r?.seats === "number" ? r.seats : 4,
   sortOrder: typeof r?.sortOrder === "number" ? r.sortOrder : 0,
   active: typeof r?.active === "boolean" ? r.active : true,
-  currentOrder: r?.currentOrder
-    ? {
-        id: typeof r.currentOrder.id === "string" ? r.currentOrder.id : "",
-        orderNumber: r.currentOrder.orderNumber ?? null,
-        guestCount:
-          typeof r.currentOrder.guestCount === "number" ? r.currentOrder.guestCount : null,
-        seatedAt: r.currentOrder.seatedAt ?? null,
-        leftAt: r.currentOrder.leftAt ?? null,
-        total: typeof r.currentOrder.total === "number" ? r.currentOrder.total : 0,
-        paidAmount:
-          typeof r.currentOrder.paidAmount === "number" ? r.currentOrder.paidAmount : 0,
-        status: typeof r.currentOrder.status === "string" ? r.currentOrder.status : "",
-        paymentStatus:
-          typeof r.currentOrder.paymentStatus === "string" ? r.currentOrder.paymentStatus : "",
-        itemCount:
-          typeof r.currentOrder.itemCount === "number" ? r.currentOrder.itemCount : 0,
-      }
-    : null,
+  currentOrders: Array.isArray(r?.currentOrders) ? r.currentOrders.map(toOpenOrder) : [],
+  currentOrder: r?.currentOrder ? toOpenOrder(r.currentOrder) : null,
 });
 
 /** Danh sách bàn (kèm đơn đang mở) — GET /dine-in/tables. */

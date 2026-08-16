@@ -43,7 +43,7 @@ export interface DineInSession {
   itemCount: number;
 }
 
-/** 1 bàn ăn tại chỗ + đơn đang mở (nếu có). */
+/** 1 bàn ăn tại chỗ + các đơn đang mở (nhiều đơn/bàn). */
 export interface DiningTable {
   id: string;
   name: string;
@@ -52,8 +52,27 @@ export interface DiningTable {
   seats: number;
   sortOrder: number;
   active: boolean;
+  /** Các đơn đang mở của bàn (sắp theo giờ vào tăng dần). */
+  currentOrders?: DineInOpenOrder[];
+  /** Đơn vào sớm nhất (tương thích ngược). */
   currentOrder?: DineInOpenOrder | null;
 }
+
+/** Các đơn đang mở của bàn (ưu tiên currentOrders, fallback currentOrder cũ). */
+export const tableOpenOrders = (t: DiningTable): DineInOpenOrder[] =>
+  t.currentOrders && t.currentOrders.length
+    ? t.currentOrders
+    : t.currentOrder
+      ? [t.currentOrder]
+      : [];
+
+/** Tổng tiền các đơn đang mở của bàn (VND). */
+export const tableTotal = (t: DiningTable): number =>
+  tableOpenOrders(t).reduce((s, o) => s + (o.total || 0), 0);
+
+/** Giờ vào sớm nhất trong các đơn đang mở (để đếm giờ). */
+export const tableSeatedAt = (t: DiningTable): string | null | undefined =>
+  tableOpenOrders(t)[0]?.seatedAt;
 
 /** Input tạo/sửa bàn (id vắng = tạo mới). */
 export interface DiningTableInput {
@@ -65,6 +84,6 @@ export interface DiningTableInput {
   sortOrder?: number;
 }
 
-/** Trạng thái bàn: có đơn chưa đóng (leftAt rỗng) → đang ngồi. */
+/** Trạng thái bàn: có ≥1 đơn đang mở → đang ngồi. */
 export const tableStatus = (t: DiningTable): TableStatus =>
-  t.currentOrder && !t.currentOrder.leftAt ? 'occupied' : 'available';
+  tableOpenOrders(t).length > 0 ? 'occupied' : 'available';

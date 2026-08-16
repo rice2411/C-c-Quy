@@ -3,7 +3,7 @@ import { Clock, Users, Utensils } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
 import Badge from '@/components/ui/Badge';
-import { DiningTable, tableStatus, tableStatusLabel } from '@/types';
+import { DiningTable, tableStatus, tableStatusLabel, tableOpenOrders, tableTotal, tableSeatedAt } from '@/types';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { fmtTime, fmtDurationClock, useNowTick } from './time';
 
@@ -17,7 +17,11 @@ const TableGrid: React.FC<{
   <Box layoutClassName="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
     {tables.map((t) => {
       const occupied = tableStatus(t) === 'occupied';
-      const co = t.currentOrder;
+      const orders = tableOpenOrders(t);
+      const seatedAt = tableSeatedAt(t);
+      const guests = orders.reduce((s, o) => s + (o.guestCount || 0), 0);
+      const items = orders.reduce((s, o) => s + (o.itemCount || 0), 0);
+      const ordNums = orders.map((o) => o.orderNumber).filter(Boolean).join(', ');
       return (
         <Box
           key={t.id}
@@ -51,22 +55,25 @@ const TableGrid: React.FC<{
             <Box layoutClassName="flex flex-col gap-1 mt-0.5">
               <Box layoutClassName="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                 <Typography textClassName="flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5" /> Vào {fmtTime(co?.seatedAt)}
+                  <Clock className="w-3.5 h-3.5" /> Vào {fmtTime(seatedAt)}
                 </Typography>
                 <Box layoutClassName="flex items-center gap-2">
                   <Typography textClassName="flex items-center gap-1">
-                    <Users className="w-3.5 h-3.5" /> {co?.guestCount ?? '—'}
+                    <Users className="w-3.5 h-3.5" /> {guests || '—'}
                   </Typography>
                   <Typography textClassName="flex items-center gap-1">
-                    <Utensils className="w-3.5 h-3.5" /> {co?.itemCount ?? 0}
+                    <Utensils className="w-3.5 h-3.5" /> {items}
                   </Typography>
                 </Box>
               </Box>
+              <Typography textClassName="text-[11px] font-medium text-amber-700 dark:text-amber-300 truncate">
+                {orders.length} đơn: {ordNums}
+              </Typography>
               <Typography textClassName="font-mono text-lg font-bold tabular-nums text-amber-700 dark:text-amber-300">
-                ⏱ {fmtDurationClock(co?.seatedAt, now)}
+                ⏱ {fmtDurationClock(seatedAt, now)}
               </Typography>
               <Typography textClassName="text-sm font-semibold text-slate-900 dark:text-white">
-                {formatVND(co?.total ?? 0)}
+                {formatVND(tableTotal(t))}
               </Typography>
             </Box>
           ) : (
