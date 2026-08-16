@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarDays, ChevronRight, Globe, MapPin, Package, Phone, Printer, Store, User } from 'lucide-react';
+import { CalendarDays, Check, ChevronRight, Globe, MapPin, Package, Phone, Printer, Store, User } from 'lucide-react';
 import { PAYMENT_STATUS_COLORS, STATUS_COLORS } from '@/constant/order';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
@@ -29,9 +29,19 @@ interface OrderListMobileProps {
   orders: Order[];
   onSelectOrder: (order: Order) => void;
   renderProductSummary: (order: Order) => React.ReactNode;
+  /** Chế độ chọn nhiều đơn (in bếp hàng loạt) — chạm đơn = tick chọn thay vì mở chi tiết. */
+  selectMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (order: Order) => void;
 }
 
-const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder }) => {
+const OrderListMobile: React.FC<OrderListMobileProps> = ({
+  orders,
+  onSelectOrder,
+  selectMode = false,
+  selectedIds,
+  onToggleSelect,
+}) => {
   const { t } = useLanguage();
   const { surchargeTags } = useSurchargeTags();
   const { products } = useProducts();
@@ -56,15 +66,28 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({ orders, onSelectOrder
       {orders.length > 0 ? (
         orders.map((order) => {
           const dlv = buildDeliveryBadge(order.deliveryDate, { status: order.status });
+          const isChecked = !!selectedIds?.has(order.id);
           return (
             <Card
               key={order.id}
               padding="none"
-              layoutClassName={`relative cursor-pointer overflow-hidden transition-all active:scale-[0.99] ${dlv.cardClass} ${order.isTest ? 'ring-2 ring-amber-400 ring-offset-1 dark:ring-amber-500 dark:ring-offset-slate-900' : ''}`}
+              layoutClassName={`relative cursor-pointer overflow-hidden transition-all active:scale-[0.99] ${dlv.cardClass} ${order.isTest ? 'ring-2 ring-amber-400 ring-offset-1 dark:ring-amber-500 dark:ring-offset-slate-900' : ''} ${selectMode && isChecked ? 'ring-2 ring-primary-500 ring-offset-1 dark:ring-offset-slate-900' : ''}`}
               borderClassName=""
               backgroundClassName=""
-              onClick={() => onSelectOrder(order)}
+              onClick={() => (selectMode ? onToggleSelect?.(order) : onSelectOrder(order))}
             >
+              {/* Ô tick chế độ chọn (in bếp hàng loạt) — góc trên trái */}
+              {selectMode ? (
+                <Box
+                  layoutClassName="absolute left-2 top-2 z-10 flex h-6 w-6 items-center justify-center"
+                  roundedClassName="rounded-md"
+                  backgroundClassName={isChecked ? 'bg-primary-600' : 'bg-white/90 dark:bg-slate-800/90'}
+                  borderClassName={isChecked ? 'border border-primary-600' : 'border border-slate-300 dark:border-slate-500'}
+                  shadowClassName="shadow-sm"
+                >
+                  {isChecked ? <Check className="h-4 w-4 text-white" /> : null}
+                </Box>
+              ) : null}
               {/* TEST RIBBON — chỉ hiện với đơn test */}
               {order.isTest ? (
                 <Box

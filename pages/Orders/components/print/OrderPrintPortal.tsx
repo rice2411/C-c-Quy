@@ -4,6 +4,7 @@ import Box from '@/components/ui/Box';
 import BillReceipt, { BillReceiptProps } from './BillReceipt';
 import KitchenTicket from './KitchenTicket';
 import { buildEscpos, sendToPrintAgent } from '@/utils/print/escpos';
+import { withTimeout, captureCanvas, CAPTURE_OPTS } from '@/utils/print/capture';
 
 export interface OrderPrintPortalProps extends BillReceiptProps {
   /** Chọn in gì: 'bill' = hoá đơn khách, 'kitchen' = phiếu bếp, 'both' = cả hai (mặc định). */
@@ -16,23 +17,6 @@ export interface OrderPrintPortalProps extends BillReceiptProps {
 
 const TRANSPARENT =
   'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
-
-/** Bọc timeout cho 1 promise — treo quá `ms` thì reject để chuỗi in không kẹt âm thầm. */
-function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const id = setTimeout(() => reject(new Error(`${label} quá lâu (>${ms / 1000}s)`)), ms);
-    p.then(
-      (v) => {
-        clearTimeout(id);
-        resolve(v);
-      },
-      (e) => {
-        clearTimeout(id);
-        reject(e);
-      },
-    );
-  });
-}
 
 /** Inline mọi ảnh (QR/logo) thành dataURL trước khi chụp → tránh canvas bị taint (CORS). */
 async function inlineImages(node: HTMLElement): Promise<void> {
@@ -71,47 +55,6 @@ async function inlineImages(node: HTMLElement): Promise<void> {
   );
 }
 
-/** Đợi 2 khung hình (layout đã paint xong) trước khi chụp. */
-function nextPaint(): Promise<void> {
-  return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
-}
-
-/** Canvas có hợp lệ không: đúng khổ + có đủ điểm đen (render hỏng = trắng trơn / kích thước 0). */
-function canvasLooksValid(c: HTMLCanvasElement): boolean {
-  if (!c.width || !c.height || c.width < 300) return false;
-  const ctx = c.getContext('2d');
-  if (!ctx) return false;
-  const { data } = ctx.getImageData(0, 0, c.width, c.height);
-  let dark = 0;
-  // mẫu thưa cho nhanh; bill/phiếu bếp thật luôn có hàng trăm điểm đen
-  for (let i = 0; i < data.length; i += 40) {
-    if (data[i + 3] >= 32 && data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114 < 160) {
-      if (++dark >= 50) return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Chụp node → canvas, TỰ CHỤP LẠI nếu canvas hỏng (html-to-image hay lỗi lần đầu / khi in liên tiếp).
- * Tất định hơn kiểu "warm-up 1 lần" — không phụ thuộc thứ tự in bill/bếp.
- */
-async function captureCanvas(
-  toCanvas: (n: HTMLElement, o: object) => Promise<HTMLCanvasElement>,
-  node: HTMLElement,
-  opts: object,
-  label: string,
-): Promise<HTMLCanvasElement> {
-  let last: HTMLCanvasElement | null = null;
-  for (let attempt = 0; attempt < 4; attempt++) {
-    await nextPaint();
-    last = await withTimeout(toCanvas(node, opts), 12000, `Chụp ${label}`);
-    if (canvasLooksValid(last)) return last;
-  }
-  // 4 lần vẫn hỏng → coi như lỗi để bung toast, KHÔNG gửi canvas rác ra máy in.
-  throw new Error(`${label} chụp hỏng (canvas trắng) sau nhiều lần thử`);
-}
-
 /**
  * Render OFF-SCREEN (không display:none để html-to-image chụp được) BILL KHÁCH + PHIẾU BẾP
  * ở khổ 384px (= 58mm), chụp → canvas → ESC/POS raster → gửi cầu nối in local (1 lần 2 tờ, tự cắt).
@@ -132,8 +75,8 @@ const OrderPrintPortal: React.FC<OrderPrintPortalProps> = ({ mode = 'both', onDo
         const { toCanvas } = await import('html-to-image');
         // skipFonts: KHÔNG cố inline @font-face của Google Fonts (cross-origin) — trước gây
         // SecurityError "Cannot access cssRules" spam console + chậm. Bill in đen trắng khổ
-        // nhiệt không cần web font, dùng font hệ thống là đủ nét.
-        const opts = { backgroundColor: '#ffffff', pixelRatio: 1, width: 384, skipFonts: true } as const;
+        // nhiệt không cần web font, dùng font hệ thống là đủ nét. (CAPTURE_OPTS ở utils/print/capture)
+        const opts = CAPTURE_OPTS;
         // Chỉ chụp tờ cần in theo mode → in bill / in bếp / cả hai. captureCanvas tự kiểm chứng +
         // chụp lại nếu canvas hỏng → tất định, không còn chuyện in tờ này thì tờ kia hỏng.
         const canvases: HTMLCanvasElement[] = [];

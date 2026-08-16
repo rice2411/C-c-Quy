@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, ChefHat } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { qk } from '@/hooks/queryKeys';
@@ -20,6 +21,7 @@ import OrderFiltersModal, { type OrderFiltersState } from '@/pages/Orders/compon
 import OrderCompareModal from '@/pages/Orders/components/modals/OrderCompareModal';
 import OrderFiltersToolbar from '@/pages/Orders/components/OrderFiltersToolbar';
 import OrderListMobile from '@/pages/Orders/components/mobile/OrderListMobile';
+import BatchKitchenPrintPortal from '@/pages/Orders/components/print/BatchKitchenPrintPortal';
 
 interface OrderListProps {
   orders: Order[];
@@ -358,6 +360,72 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions, c
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
+  // IN BẾP HÀNG LOẠT — bật chế độ chọn → tick nhiều đơn (giữ chọn qua các trang) →
+  // in tất cả phiếu bếp trong 1 luồng ESC/POS. selectedIds theo id đơn, print từ orders gốc.
+  // ─────────────────────────────────────────────────────────────────────────────
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [printOrders, setPrintOrders] = useState<Order[] | null>(null);
+  const printToastRef = React.useRef<string | null>(null);
+
+  const toggleSelect = (order: Order) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(order.id)) next.delete(order.id);
+      else next.add(order.id);
+      return next;
+    });
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  // Chọn tất cả đơn ĐANG LỌC (mọi trang). Đã chọn hết rồi → bỏ chọn hết.
+  const allFilteredSelected =
+    filteredOrders.length > 0 && filteredOrders.every((o) => selectedIds.has(o.id));
+  const toggleSelectAllFiltered = () => {
+    if (allFilteredSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredOrders.map((o) => o.id)));
+    }
+  };
+
+  const handleBatchPrintKitchen = () => {
+    if (printOrders) return; // đang in
+    const toPrint = orders.filter((o) => selectedIds.has(o.id));
+    if (toPrint.length === 0) {
+      toast.error('Chưa chọn đơn nào để in bếp');
+      return;
+    }
+    printToastRef.current = toast.loading(`Đang in bếp ${toPrint.length} đơn...`);
+    setPrintOrders(toPrint);
+  };
+
+  const dismissPrintToast = () => {
+    if (printToastRef.current) {
+      toast.dismiss(printToastRef.current);
+      printToastRef.current = null;
+    }
+  };
+
+  const handleBatchPrintDone = () => {
+    const n = printOrders?.length ?? 0;
+    setPrintOrders(null);
+    dismissPrintToast();
+    toast.success(`Đã gửi in bếp ${n} đơn`);
+    exitSelectMode();
+  };
+
+  const handleBatchPrintError = (msg: string) => {
+    setPrintOrders(null);
+    dismissPrintToast();
+    toast.error(`In bếp lỗi: ${msg}`);
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
   // Quick filter pills state + handlers
   // ─────────────────────────────────────────────────────────────────────────────
   const quickPills = {
@@ -606,17 +674,129 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onSelectOrder, actions, c
         }}
       />
 
+      {/* Thanh IN BẾP HÀNG LOẠT — tắt: 1 nút bật; bật: chọn + in nhiều đơn */}
+      {selectMode ? (
+        <Box
+          layoutClassName="flex shrink-0 flex-wrap items-center justify-between gap-2 px-4 py-2.5"
+          borderClassName="border-b border-primary-200 dark:border-primary-800"
+          backgroundClassName="bg-primary-50 dark:bg-primary-900/20"
+        >
+          <Box layoutClassName="flex items-center gap-3">
+            <Typography
+              as="span"
+              size="sm"
+              layoutClassName="font-semibold"
+              textClassName="text-primary-700 dark:text-primary-300"
+            >
+              🍳 Đã chọn {selectedIds.size} đơn
+            </Typography>
+            <Button
+              type="button"
+              onClick={toggleSelectAllFiltered}
+              variant="secondary"
+              disableVariantHover
+              disableVariantTextColor
+              borderClassName="border border-primary-300 dark:border-primary-700"
+              backgroundClassName="bg-transparent"
+              hoverClassName="hover:bg-primary-100 dark:hover:bg-primary-900/40"
+              textClassName="text-xs font-medium text-primary-700 dark:text-primary-300"
+              roundedClassName="rounded-lg"
+              sizeClassName="px-3 py-1"
+              stateClassName="transition-colors"
+            >
+              {allFilteredSelected ? 'Bỏ chọn tất cả' : `Chọn tất cả (${filteredOrders.length})`}
+            </Button>
+          </Box>
+          <Box layoutClassName="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={handleBatchPrintKitchen}
+              disabled={selectedIds.size === 0 || !!printOrders}
+              variant="primary"
+              disableVariantHover
+              disableVariantTextColor
+              backgroundClassName="bg-primary-600"
+              hoverClassName="hover:bg-primary-700"
+              textClassName="text-sm font-semibold text-white"
+              roundedClassName="rounded-lg"
+              layoutClassName="flex items-center"
+              sizeClassName="px-4 py-1.5"
+              stateClassName="transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              leftIcon={<ChefHat />}
+              iconClassName="mr-1.5 inline-flex [&_svg]:h-4 [&_svg]:w-4"
+            >
+              In bếp ({selectedIds.size})
+            </Button>
+            <Button
+              type="button"
+              onClick={exitSelectMode}
+              variant="secondary"
+              disableVariantHover
+              disableVariantTextColor
+              borderClassName="border border-slate-200 dark:border-slate-600"
+              backgroundClassName="bg-transparent"
+              hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+              textClassName="text-sm text-slate-600 dark:text-slate-300"
+              roundedClassName="rounded-lg"
+              sizeClassName="px-3 py-1.5"
+              stateClassName="transition-colors"
+            >
+              Thoát
+            </Button>
+          </Box>
+        </Box>
+      ) : (
+        <Box
+          layoutClassName="flex shrink-0 items-center justify-end px-4 py-2"
+          borderClassName="border-b border-slate-100 dark:border-slate-700"
+        >
+          <Button
+            type="button"
+            onClick={() => setSelectMode(true)}
+            variant="secondary"
+            disableVariantHover
+            disableVariantTextColor
+            borderClassName="border border-primary-200 dark:border-primary-800"
+            backgroundClassName="bg-transparent"
+            hoverClassName="hover:bg-primary-50 dark:hover:bg-primary-900/30"
+            textClassName="text-xs font-medium text-primary-700 dark:text-primary-300"
+            roundedClassName="rounded-lg"
+            layoutClassName="flex items-center"
+            sizeClassName="px-3 py-1.5"
+            stateClassName="transition-colors"
+            leftIcon={<ChefHat />}
+            iconClassName="mr-1.5 inline-flex [&_svg]:h-3.5 [&_svg]:w-3.5"
+          >
+            In bếp hàng loạt
+          </Button>
+        </Box>
+      )}
+
       <OrderListMobile
         orders={currentOrders}
         onSelectOrder={onSelectOrder}
         renderProductSummary={renderProductSummary}
+        selectMode={selectMode}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelect}
       />
 
       <OrderListDesktop
         orders={currentOrders}
         onSelectOrder={onSelectOrder}
         renderProductSummary={renderProductSummary}
+        selectMode={selectMode}
+        selectedIds={selectedIds}
+        onToggleSelect={toggleSelect}
       />
+
+      {printOrders ? (
+        <BatchKitchenPrintPortal
+          orders={printOrders}
+          onDone={handleBatchPrintDone}
+          onError={handleBatchPrintError}
+        />
+      ) : null}
 
       <OrderCompareModal
         isOpen={!!compareOpen}
