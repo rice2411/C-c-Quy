@@ -41,7 +41,7 @@ import {
   ClipboardList,
   Handshake,
   BriefcaseBusiness,
-  Croissant,
+  Store,
   ShoppingBag,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
@@ -454,7 +454,7 @@ export const navGroups: NavGroupConfig[] = [
   {
     key: "product",
     labelKey: "nav.productGroup",
-    icon: Croissant,
+    icon: Store,
     childPaths: [
       "/storage",
       "/recipes",
