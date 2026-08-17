@@ -8,7 +8,6 @@ import {
   Package,
   Users,
   Settings,
-  Settings2,
   TrendingUp,
   Coins,
   Wallet,
@@ -31,6 +30,19 @@ import {
   CalendarDays,
   Utensils,
   ChefHat,
+  PieChart,
+  BarChart3,
+  BookText,
+  Receipt,
+  Armchair,
+  Factory,
+  CalendarClock,
+  Cake,
+  ClipboardList,
+  Handshake,
+  BriefcaseBusiness,
+  Croissant,
+  ShoppingBag,
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import ZaloIcon from "@/components/ui/ZaloIcon";
@@ -99,14 +111,14 @@ export const routes: RouteConfig[] = [
     type: "page",
     path: "/finance/overview",
     labelKey: "nav.txOverview",
-    icon: LayoutDashboard,
+    icon: PieChart,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
     type: "page",
     path: "/finance/ledger",
     labelKey: "nav.txLedger",
-    icon: Coins,
+    icon: BookText,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -127,14 +139,14 @@ export const routes: RouteConfig[] = [
     type: "page",
     path: "/expenses/overview",
     labelKey: "nav.costOverview",
-    icon: LayoutDashboard,
+    icon: BarChart3,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
     type: "page",
     path: "/expenses/receipts",
     labelKey: "nav.stockReceipts",
-    icon: FileText,
+    icon: Receipt,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -148,7 +160,7 @@ export const routes: RouteConfig[] = [
     type: "page",
     path: "/expenses/assets",
     labelKey: "nav.costAssets",
-    icon: Boxes,
+    icon: Armchair,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -176,7 +188,7 @@ export const routes: RouteConfig[] = [
     type: "page",
     path: "/suppliers",
     labelKey: "nav.suppliers",
-    icon: Truck,
+    icon: Factory,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -190,7 +202,7 @@ export const routes: RouteConfig[] = [
     type: "page",
     path: "/shifts",
     labelKey: "nav.shifts",
-    icon: Settings2,
+    icon: CalendarClock,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -254,14 +266,14 @@ export const routes: RouteConfig[] = [
     type: "page",
     path: "/settings/product",
     labelKey: "nav.settingsProduct",
-    icon: Package,
+    icon: Cake,
     roles: [UserRole.SUPER_ADMIN],
   },
   {
     type: "page",
     path: "/settings/order",
     labelKey: "nav.settingsOrder",
-    icon: ShoppingCart,
+    icon: ClipboardList,
     roles: [UserRole.SUPER_ADMIN],
   },
   {
@@ -390,7 +402,7 @@ export const navGroups: NavGroupConfig[] = [
     // Bán hàng: vận chuyển + khuyến mãi (Đơn hàng để phẳng cho nhanh).
     key: "sales",
     labelKey: "nav.salesGroup",
-    icon: ShoppingCart,
+    icon: ShoppingBag,
     childPaths: [
       "/shipping",
       "/promotions",
@@ -409,7 +421,7 @@ export const navGroups: NavGroupConfig[] = [
     // Đối tác: khách hàng + nhà cung cấp.
     key: "partners",
     labelKey: "nav.partnersGroup",
-    icon: Users,
+    icon: Handshake,
     childPaths: [
       "/customers",
       "/suppliers",
@@ -419,7 +431,7 @@ export const navGroups: NavGroupConfig[] = [
     // Nhân sự: gom Nhân viên (lương) + Chấm công + Quản lý chấm công vào 1 nhóm.
     key: "hr",
     labelKey: "nav.hrGroup",
-    icon: Users,
+    icon: BriefcaseBusiness,
     childPaths: [
       "/employees",
       "/shifts",
@@ -442,7 +454,7 @@ export const navGroups: NavGroupConfig[] = [
   {
     key: "product",
     labelKey: "nav.productGroup",
-    icon: Boxes,
+    icon: Croissant,
     childPaths: [
       "/storage",
       "/recipes",
