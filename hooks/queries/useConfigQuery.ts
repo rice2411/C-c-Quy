@@ -111,6 +111,7 @@ export interface SaveZaloGroupsArgs {
     Pick<
       ZaloGroupsConfiguration,
       | 'mainGroupId'
+      | 'paymentGroupId'
       | 'mainNotifyOnCreate'
       | 'mainNotifyOnUpdate'
       | 'mainNotifyOnDelete'
