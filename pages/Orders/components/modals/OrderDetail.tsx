@@ -1864,26 +1864,27 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                               >
                                 {t('pos.backToHome')}
                               </Button>
-                              <Button
-                                type="button"
-                                onClick={() => void handleCopyQr()}
-                                disabled={qrCopying || !qrUrl}
-                                variant="secondary"
-                                leftIcon={<Copy />}
-                                iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-                                sizeClassName="px-3 py-2 text-xs"
-                                roundedClassName="rounded-lg"
-                                borderClassName="border border-slate-200 dark:border-slate-600"
-                                backgroundClassName="bg-white dark:bg-slate-800"
-                                layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
-                                disableVariantHover
-                              >
-                                {qrCopying
-                                  ? (t('qr.copying') || 'Đang copy...')
-                                  : isDepositQr
-                                    ? (t('qr.copyDeposit') || 'Copy QR cọc')
+                              {/* Nút copy QR chỉ cho thanh toán/còn lại — bỏ copy QR cọc theo yêu cầu. */}
+                              {!isDepositQr ? (
+                                <Button
+                                  type="button"
+                                  onClick={() => void handleCopyQr()}
+                                  disabled={qrCopying || !qrUrl}
+                                  variant="secondary"
+                                  leftIcon={<Copy />}
+                                  iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                                  sizeClassName="px-3 py-2 text-xs"
+                                  roundedClassName="rounded-lg"
+                                  borderClassName="border border-slate-200 dark:border-slate-600"
+                                  backgroundClassName="bg-white dark:bg-slate-800"
+                                  layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
+                                  disableVariantHover
+                                >
+                                  {qrCopying
+                                    ? (t('qr.copying') || 'Đang copy...')
                                     : (t('qr.copyPayment') || 'Copy QR thanh toán')}
-                              </Button>
+                                </Button>
+                              ) : null}
                             </Box>
                         </Box>
                      </Box>
