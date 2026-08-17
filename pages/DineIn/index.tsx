@@ -44,7 +44,7 @@ const dineInSeed = (): any => ({
   items: [],
   deliveryType: DeliveryType.DINE_IN,
   deliveryDate: todayStr(), // OrderForm bắt buộc ngày nhận — dine-in lấy hôm nay
-  status: OrderStatus.PENDING,
+  status: OrderStatus.DELIVERED, // đơn tại bàn mặc định XONG luôn — chỉ có time bàn đang chạy
   paymentStatus: PaymentStatus.UNPAID,
   paymentMethod: PaymentMethod.CASH,
 });
