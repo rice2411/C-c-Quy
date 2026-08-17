@@ -720,7 +720,13 @@ const StockReceiptsPage: React.FC = () => {
     const q = normalizeSearchText(receiptSearch);
     if (!q) return true;
     const importedLabel = formatImportedAt(row.createdAt);
+    // Tìm theo TIỀN: bỏ mọi ký tự không phải số → so khớp chuỗi số của total phiếu.
+    // "26" khớp 26.000/260.000..., "26000" khớp đúng. Chỉ áp dụng khi query có ≥2 chữ số.
+    const qDigits = receiptSearch.replace(/\D/g, '');
+    const amountDigits = String(Math.round(row.totalAmount || 0));
+    const amountMatch = qDigits.length >= 2 && amountDigits.includes(qDigits);
     return (
+      amountMatch ||
       normalizeSearchText(row.supplierNameRaw).includes(q) ||
       normalizeSearchText(row.receiptDate).includes(q) ||
       normalizeSearchText(row.createdAt).includes(q) ||
