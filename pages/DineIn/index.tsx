@@ -40,7 +40,7 @@ const todayStr = (): string => {
 
 /** initialData seed cho OrderForm khi MỞ BÀN (đơn tại quán mới). */
 const dineInSeed = (): any => ({
-  customer: { name: 'Khách tại quán', phone: '', address: '' },
+  customer: { name: '', phone: '', address: '' },
   items: [],
   deliveryType: DeliveryType.DINE_IN,
   deliveryDate: todayStr(), // OrderForm bắt buộc ngày nhận — dine-in lấy hôm nay
