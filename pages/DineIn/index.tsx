@@ -208,6 +208,7 @@ const DineInPage: React.FC = () => {
         initialData={formInitial}
         onSave={handleFormSave}
         onCancel={() => setFormOpen(false)}
+        dineIn
       />
 
       {/* Trạng thái bàn đang ngồi — danh sách đơn + thêm đơn */}

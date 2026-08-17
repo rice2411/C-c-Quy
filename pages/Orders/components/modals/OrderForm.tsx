@@ -46,6 +46,8 @@ interface OrderFormProps {
   initialData?: Order | null;
   onSave: (data: any) => Promise<void>;
   onCancel: () => void;
+  /** Mở từ trang order theo bàn: ẩn hình thức + ngày nhận (cứng DINE_IN + hôm nay). */
+  dineIn?: boolean;
 }
 
 export interface FormItem {
@@ -83,7 +85,7 @@ const Section: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </Card>
 );
 
-const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCancel }) => {
+const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCancel, dineIn = false }) => {
   const { t } = useLanguage();
   const { currentUser, userData } = useAuth();
   const { customers, createNewCustomer } = useCustomers();
@@ -608,8 +610,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         throw new Error("Customer name is required");
       }
 
+      // Order theo bàn: ngày nhận cứng = hôm nay (field bị ẩn). Ngược lại bắt buộc nhập.
+      const effectiveDeliveryDate = dineIn
+        ? (deliveryDate?.trim() || (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })())
+        : deliveryDate;
       // Bắt buộc deliveryDate — cần cho tính doanh thu theo ngày giao
-      if (!deliveryDate || !deliveryDate.trim()) {
+      if (!effectiveDeliveryDate || !effectiveDeliveryDate.trim()) {
         throw new Error("Ngày nhận hàng là bắt buộc");
       }
 
@@ -680,7 +686,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         total: total,
         depositAmount: Number(depositAmount) || 0,
         note: note,
-        deliveryDate: deliveryDate,
+        deliveryDate: effectiveDeliveryDate,
         deliveryTime: isDeliveryTimeEnabled && deliveryTime ? deliveryTime : undefined,
         status: status,
         paymentStatus: paymentStatus,
@@ -913,6 +919,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               address={address} setAddress={setAddress}
               deliveryType={deliveryType}
               setDeliveryType={setDeliveryType}
+              hideDeliveryType={dineIn}
               trackingNumber={trackingNumber}
               setTrackingNumber={setTrackingNumber}
               shippingCost={shippingCost}
@@ -923,6 +930,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               setCoachInfo={setCoachInfo}
             />
             <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2 min-w-0">
+              {!dineIn ? (
               <Field label="Ngày nhận hàng" htmlFor="order-form-delivery-date" required className="min-w-0 overflow-hidden">
                 <DatePicker
                   id="order-form-delivery-date"
@@ -931,6 +939,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
                   fullWidth
                 />
               </Field>
+              ) : null}
               <Field
                 htmlFor="order-form-delivery-time"
                 className="min-w-0 overflow-hidden"
