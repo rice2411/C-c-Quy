@@ -116,7 +116,6 @@ const ZaloSettingsTab: React.FC = () => {
   const [groupSearch, setGroupSearch] = useState('');
   const [saving, setSaving] = useState(false);
   const [mainGroupId, setMainGroupId] = useState('');
-  const [paymentGroupId, setPaymentGroupId] = useState('');
   const [mainNotifyOnCreate, setMainNotifyOnCreate] = useState(true);
   const [mainNotifyOnUpdate, setMainNotifyOnUpdate] = useState(true);
   const [mainNotifyOnDelete, setMainNotifyOnDelete] = useState(true);
@@ -142,7 +141,6 @@ const ZaloSettingsTab: React.FC = () => {
     if (!zaloConfig) return;
     setGroups(zaloConfig.groups);
     setMainGroupId(zaloConfig.mainGroupId ?? '');
-    setPaymentGroupId(zaloConfig.paymentGroupId ?? '');
     setMainNotifyOnCreate(zaloConfig.mainNotifyOnCreate !== false);
     setMainNotifyOnUpdate(zaloConfig.mainNotifyOnUpdate !== false);
     setMainNotifyOnDelete(zaloConfig.mainNotifyOnDelete !== false);
@@ -241,7 +239,6 @@ const ZaloSettingsTab: React.FC = () => {
       updatedBy: currentUser?.uid ?? null,
       mainSettings: {
         mainGroupId,
-        paymentGroupId,
         mainNotifyOnCreate,
         mainNotifyOnUpdate,
         mainNotifyOnDelete,
@@ -464,54 +461,6 @@ const ZaloSettingsTab: React.FC = () => {
 
   return (
     <Box layoutClassName="space-y-4">
-      {/* Nhóm hệ thống: ĐƠN HÀNG (tạo/sửa/xoá) & THANH TOÁN (webhook SePay) — tách hẳn 2 nhóm Zalo */}
-      <Card
-        padding="md"
-        borderClassName="border-slate-100 dark:border-slate-700"
-        backgroundClassName="bg-white dark:bg-slate-800"
-      >
-        <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white" layoutClassName="mb-1 uppercase tracking-wide">
-          Nhóm nhận thông báo
-        </Heading>
-        <Typography size="xs" variant="muted" layoutClassName="mb-4">
-          Tách riêng: đơn hàng gửi vào [Đơn hàng] Cúc Quy, thanh toán gửi vào [Thanh toán] Cúc Quy.
-        </Typography>
-        <Box layoutClassName="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {([
-            { label: 'Nhóm ĐƠN HÀNG', desc: 'Thông báo tạo/sửa/xoá đơn', val: mainGroupId, set: setMainGroupId },
-            { label: 'Nhóm THANH TOÁN', desc: 'Thông báo đã nhận thanh toán (SePay)', val: paymentGroupId, set: setPaymentGroupId },
-          ]).map((f) => (
-            <Box key={f.label} layoutClassName="space-y-1.5">
-              <Box layoutClassName="flex items-center justify-between gap-2">
-                <Typography size="xs" layoutClassName="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{f.label}</Typography>
-                <Button
-                  type="button"
-                  onClick={() => void handleTestGroup(f.val, f.label)}
-                  disabled={!f.val.trim() || testingGroupId === f.val.trim()}
-                  variant="secondary"
-                  borderClassName="border border-slate-200 dark:border-slate-600"
-                  backgroundClassName="bg-white dark:bg-slate-800"
-                  textClassName="text-xs font-semibold text-slate-700 dark:text-slate-200"
-                  sizeClassName="px-2.5 py-1"
-                  roundedClassName="rounded-md"
-                  disableVariantHover
-                  disableVariantTextColor
-                >
-                  {testingGroupId === f.val.trim() ? 'Đang gửi…' : 'Test'}
-                </Button>
-              </Box>
-              <Input
-                value={f.val}
-                onChange={(e) => f.set(e.target.value)}
-                placeholder="Dán hoặc nhập ID nhóm từ Zalo"
-                containerClassName="w-full"
-              />
-              <Typography size="xs" variant="muted">{f.desc}</Typography>
-            </Box>
-          ))}
-        </Box>
-      </Card>
-
       <FilterToolbar
         search={groupSearch}
         onSearchChange={setGroupSearch}
@@ -630,26 +579,21 @@ const ZaloSettingsTab: React.FC = () => {
                       </TableCell>
                       <TableCell layoutClassName="px-5 py-3.5">
                         {(() => {
-                          const on = [
-                            g.notifyOnCreate !== false ? 'Tạo' : null,
-                            g.notifyOnUpdate !== false ? 'Sửa' : null,
-                            g.notifyOnDelete !== false ? 'Xoá' : null,
-                          ].filter(Boolean) as string[];
-                          if (on.length === 0) return <Typography as="span" size="xs" variant="muted">Tắt</Typography>;
-                          if (on.length === 3) {
-                            return (
-                              <Badge size="sm" borderClassName="border-primary-200 dark:border-primary-800" backgroundClassName="bg-primary-50 dark:bg-primary-950/40" textClassName="text-primary-700 dark:text-primary-300">
-                                Tất cả
-                              </Badge>
-                            );
-                          }
+                          const hasOrder = g.notifyOnCreate !== false || g.notifyOnUpdate !== false || g.notifyOnDelete !== false;
+                          const hasPayment = g.notifyOnPayment === true;
+                          if (!hasOrder && !hasPayment) return <Typography as="span" size="xs" variant="muted">Tắt</Typography>;
                           return (
                             <Box layoutClassName="flex flex-wrap items-center gap-1">
-                              {on.map((l) => (
-                                <Badge key={l} size="sm" borderClassName="border-emerald-200 dark:border-emerald-800" backgroundClassName="bg-emerald-50 dark:bg-emerald-950/40" textClassName="text-emerald-700 dark:text-emerald-300">
-                                  {l}
+                              {hasOrder ? (
+                                <Badge size="sm" borderClassName="border-primary-200 dark:border-primary-800" backgroundClassName="bg-primary-50 dark:bg-primary-950/40" textClassName="text-primary-700 dark:text-primary-300">
+                                  Đơn hàng
                                 </Badge>
-                              ))}
+                              ) : null}
+                              {hasPayment ? (
+                                <Badge size="sm" borderClassName="border-amber-200 dark:border-amber-800" backgroundClassName="bg-amber-50 dark:bg-amber-950/40" textClassName="text-amber-700 dark:text-amber-300">
+                                  Thanh toán
+                                </Badge>
+                              ) : null}
                             </Box>
                           );
                         })()}
@@ -753,7 +697,8 @@ const ZaloSettingsTab: React.FC = () => {
                     ['Tạo đơn', activeGroup.notifyOnCreate !== false, 'notifyOnCreate'],
                     ['Sửa đơn', activeGroup.notifyOnUpdate !== false, 'notifyOnUpdate'],
                     ['Xoá đơn', activeGroup.notifyOnDelete !== false, 'notifyOnDelete'],
-                  ] as Array<[string, boolean, 'notifyOnCreate' | 'notifyOnUpdate' | 'notifyOnDelete']>).map(
+                    ['Thanh toán', activeGroup.notifyOnPayment === true, 'notifyOnPayment'],
+                  ] as Array<[string, boolean, 'notifyOnCreate' | 'notifyOnUpdate' | 'notifyOnDelete' | 'notifyOnPayment']>).map(
                     ([label, val, key]) => (
                       <Button
                         key={key}
