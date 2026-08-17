@@ -98,7 +98,6 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const [moreOpen, setMoreOpen] = useState(false);
   const isMobile = useIsMobile();
   const [posBusy, setPosBusy] = useState(false);
-  const [qrCopying, setQrCopying] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [printMode, setPrintMode] = useState<'bill' | 'kitchen' | null>(null);
   const printToastRef = useRef<string | null>(null);
@@ -210,10 +209,10 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   // Các khối QR hiện đồng thời: có cọc → [cọc, còn lại]; không cọc → [đủ]. Bỏ khối tiền = 0.
   const qrBlocks = (hasDeposit
     ? [
-        { key: 'deposit', label: t('pos.qrDeposit'), amount: depositAmt, isDeposit: true, showCopy: false },
-        { key: 'remainder', label: t('pos.qrRemaining'), amount: remainderAmt, isDeposit: false, showCopy: true },
+        { key: 'deposit', label: t('pos.qrDeposit'), amount: depositAmt, isDeposit: true },
+        { key: 'remainder', label: t('pos.qrRemaining'), amount: remainderAmt, isDeposit: false },
       ]
-    : [{ key: 'full', label: '', amount: finalTotal, isDeposit: false, showCopy: true }]
+    : [{ key: 'full', label: '', amount: finalTotal, isDeposit: false }]
   ).filter((b) => b.amount > 0);
   // QR cho card chia sẻ = luôn tổng đơn (không đổi theo toggle cọc).
   const shareDescription = currentOrder.orderNumber;
@@ -257,38 +256,6 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     finally { setPosBusy(false); }
   };
 
-  // Copy ảnh QR (thanh toán/còn lại) vào clipboard.
-  const handleCopyQr = async (url: string) => {
-    if (!url || qrCopying) return;
-    const canClipboard = typeof ClipboardItem !== 'undefined' && !!navigator.clipboard?.write;
-    if (!canClipboard) {
-      toast.error(t('detail.copyImageUnsupported') || 'Trình duyệt không hỗ trợ copy ảnh');
-      return;
-    }
-    setQrCopying(true);
-    try {
-      const res = await fetch(url, { mode: 'cors' });
-      const raw = await res.blob();
-      // Clipboard cần image/png → convert nếu QR trả JPG.
-      let png = raw;
-      if (raw.type !== 'image/png') {
-        const bmp = await createImageBitmap(raw);
-        const canvas = document.createElement('canvas');
-        canvas.width = bmp.width;
-        canvas.height = bmp.height;
-        canvas.getContext('2d')?.drawImage(bmp, 0, 0);
-        png = await new Promise<Blob>((resolve, reject) =>
-          canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png'),
-        );
-      }
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
-      toast.success(t('qr.copiedPayment') || 'Đã copy QR thanh toán');
-    } catch {
-      toast.error(t('detail.copyImageError') || 'Copy QR thất bại');
-    } finally {
-      setQrCopying(false);
-    }
-  };
 
   // Chụp thẻ thông tin gửi khách (ShareableOrderCard, off-screen) → ảnh PNG rồi
   // LUÔN mở MODAL PREVIEW (cả desktop lẫn mobile). Không tự copy, không tự đóng.
@@ -1832,27 +1799,6 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                               >
                                 {posBusy ? t('pos.qrPushing') : `${t('pos.pushToDevice')} · ${formatVND(blk.amount)}`}
                               </Button>
-                              {/* Nút copy QR chỉ cho thanh toán/còn lại — không copy QR cọc. */}
-                              {blk.showCopy ? (
-                                <Button
-                                  type="button"
-                                  onClick={() => void handleCopyQr(blkUrl)}
-                                  disabled={qrCopying || !blkUrl}
-                                  variant="secondary"
-                                  leftIcon={<Copy />}
-                                  iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-                                  sizeClassName="px-3 py-2 text-xs"
-                                  roundedClassName="rounded-lg"
-                                  borderClassName="border border-slate-200 dark:border-slate-600"
-                                  backgroundClassName="bg-white dark:bg-slate-800"
-                                  layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
-                                  disableVariantHover
-                                >
-                                  {qrCopying
-                                    ? (t('qr.copying') || 'Đang copy...')
-                                    : (t('qr.copyPayment') || 'Copy QR thanh toán')}
-                                </Button>
-                              ) : null}
                             </Box>
                         </Box>
                      </Box>
