@@ -97,7 +97,6 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   const [activeTab, setActiveTab] = useState<'details' | 'refund' | 'history' | 'tracking'>('details');
   const [moreOpen, setMoreOpen] = useState(false);
   const isMobile = useIsMobile();
-  const [qrMode, setQrMode] = useState<'deposit' | 'remainder'>('deposit');
   const [posBusy, setPosBusy] = useState(false);
   const [qrCopying, setQrCopying] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -197,20 +196,25 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         : []
   ).filter((s) => Number(s.amount) > 0);
 
-  // QR cọc / còn lại ngay trong chi tiết (khỏi vào Edit).
+  // QR cọc + còn lại hiển thị CÙNG LÚC trong 1 section (bỏ toggle tab).
   const depositAmt = Number(currentOrder.depositAmount) || 0;
   const paidAmt = Number(currentOrder.paidAmount) || 0;
   const hasDeposit = depositAmt > 0;
   const collected = Math.max(depositAmt, paidAmt);
   const remainderAmt = Math.max(0, finalTotal - collected);
-  const isDepositQr = hasDeposit && qrMode === 'deposit';
-  const qrAmount = isDepositQr ? depositAmt : (remainderAmt > 0 ? remainderAmt : finalTotal);
-  // Nội dung CK: mã đơn; cọc → prefix "C".
-  const description = `${isDepositQr ? 'C' : ''}${currentOrder.orderNumber}`;
   // Đơn TEST → QR trỏ vào TK test (MBBank 0776750418) để test thông luồng; đơn thường → TK active.
   const qrAccount = currentOrder.isTest ? TEST_PAYMENT_ACCOUNT : activeAccount;
-  // Không có TK (active/test) → qrUrl rỗng → section QR ẩn an toàn.
-  const qrUrl = qrAccount ? generateQRCodeImage(currentOrder.orderNumber, qrAmount, qrAccount, isDepositQr) : '';
+  // Nội dung CK: mã đơn; cọc → prefix "C". Thiếu TK → URL rỗng (section ẩn an toàn).
+  const buildQrUrl = (amount: number, isDeposit: boolean) =>
+    qrAccount ? generateQRCodeImage(currentOrder.orderNumber, amount, qrAccount, isDeposit) : '';
+  // Các khối QR hiện đồng thời: có cọc → [cọc, còn lại]; không cọc → [đủ]. Bỏ khối tiền = 0.
+  const qrBlocks = (hasDeposit
+    ? [
+        { key: 'deposit', label: t('pos.qrDeposit'), amount: depositAmt, isDeposit: true, showCopy: false },
+        { key: 'remainder', label: t('pos.qrRemaining'), amount: remainderAmt, isDeposit: false, showCopy: true },
+      ]
+    : [{ key: 'full', label: '', amount: finalTotal, isDeposit: false, showCopy: true }]
+  ).filter((b) => b.amount > 0);
   // QR cho card chia sẻ = luôn tổng đơn (không đổi theo toggle cọc).
   const shareDescription = currentOrder.orderNumber;
   const shareQrUrl = qrAccount ? generateQRCodeImage(currentOrder.orderNumber, finalTotal, qrAccount, false) : '';
@@ -234,9 +238,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   };
 
   // Đẩy QR (EMV) số tiền `amount` xuống máy POS/ESP32.
-  const handlePushPos = async (amount: number) => {
+  const handlePushPos = async (amount: number, isDeposit: boolean) => {
     if (!qrAccount || amount <= 0) return;
-    const emv = buildOrderEmvQr(currentOrder.orderNumber, amount, qrAccount, isDepositQr);
+    const emv = buildOrderEmvQr(currentOrder.orderNumber, amount, qrAccount, isDeposit);
     if (!emv) { toast.error(t('pos.qrBuildFailed')); return; }
     setPosBusy(true);
     try {
@@ -253,9 +257,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     finally { setPosBusy(false); }
   };
 
-  // Copy ảnh QR đang hiển thị (cọc / thanh toán tuỳ toggle) vào clipboard.
-  const handleCopyQr = async () => {
-    if (!qrUrl || qrCopying) return;
+  // Copy ảnh QR (thanh toán/còn lại) vào clipboard.
+  const handleCopyQr = async (url: string) => {
+    if (!url || qrCopying) return;
     const canClipboard = typeof ClipboardItem !== 'undefined' && !!navigator.clipboard?.write;
     if (!canClipboard) {
       toast.error(t('detail.copyImageUnsupported') || 'Trình duyệt không hỗ trợ copy ảnh');
@@ -263,7 +267,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
     }
     setQrCopying(true);
     try {
-      const res = await fetch(qrUrl, { mode: 'cors' });
+      const res = await fetch(url, { mode: 'cors' });
       const raw = await res.blob();
       // Clipboard cần image/png → convert nếu QR trả JPG.
       let png = raw;
@@ -278,7 +282,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         );
       }
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
-      toast.success(isDepositQr ? (t('qr.copiedDeposit') || 'Đã copy QR cọc') : (t('qr.copiedPayment') || 'Đã copy QR thanh toán'));
+      toast.success(t('qr.copiedPayment') || 'Đã copy QR thanh toán');
     } catch {
       toast.error(t('detail.copyImageError') || 'Copy QR thất bại');
     } finally {
@@ -1712,8 +1716,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                    </Box>
                 </Box>
 
-                {/* Payment QR Section — hiển thị khi có URL hợp lệ (config đủ số TK/bank); ẩn nếu thiếu để không vỡ ảnh */}
-                {qrUrl && qrAccount ? (
+                {/* Payment QR Section — gộp QR cọc + còn lại vào 1 section (bỏ toggle tab) */}
+                {qrAccount && qrBlocks.length > 0 ? (
                   <Box
                     layoutClassName="p-5 animate-fade-in"
                     backgroundClassName="bg-white dark:bg-slate-800"
@@ -1723,33 +1727,13 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                     stateClassName="transition-colors"
                   >
                      <Heading level={3} textClassName="text-sm font-semibold text-slate-900 dark:text-white" layoutClassName="mb-4 uppercase tracking-wide">{t('qr.sectionTitle')}</Heading>
-                     {hasDeposit ? (
-                       <Box layoutClassName="mb-3 inline-flex gap-1 rounded-lg p-1" backgroundClassName="bg-slate-100 dark:bg-slate-800">
-                         <Button
-                           type="button"
-                           onClick={() => setQrMode('deposit')}
-                           variant={isDepositQr ? 'primary' : 'ghost'}
-                           sizeClassName="px-3 py-1.5 text-xs"
-                           roundedClassName="rounded-md"
-                           shadowClassName=""
-                           disableVariantHover
-                         >
-                           {t('pos.qrDeposit')} · {formatVND(depositAmt)}
-                         </Button>
-                         <Button
-                           type="button"
-                           onClick={() => setQrMode('remainder')}
-                           variant={!isDepositQr ? 'primary' : 'ghost'}
-                           sizeClassName="px-3 py-1.5 text-xs"
-                           roundedClassName="rounded-md"
-                           shadowClassName=""
-                           disableVariantHover
-                         >
-                           {t('pos.qrRemaining')} · {formatVND(remainderAmt)}
-                         </Button>
-                       </Box>
-                     ) : null}
+                     <Box layoutClassName="space-y-4">
+                       {qrBlocks.map((blk) => {
+                         const blkUrl = buildQrUrl(blk.amount, blk.isDeposit);
+                         const blkDes = `${blk.isDeposit ? 'C' : ''}${currentOrder.orderNumber}`;
+                         return (
                      <Box
+                       key={blk.key}
                        layoutClassName="p-4 flex flex-col sm:flex-row gap-4 items-center sm:items-start"
                        backgroundClassName="bg-blue-50 dark:bg-blue-900/20"
                        borderClassName="border border-blue-100 dark:border-blue-800"
@@ -1763,7 +1747,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                           shadowClassName="shadow-sm"
                         >
                             <Image
-                              src={qrUrl}
+                              src={blkUrl}
                               alt="Payment QR"
                               layoutClassName="w-32 h-32 object-contain"
                             />
@@ -1772,7 +1756,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                         <Box layoutClassName="flex-1 space-y-2 w-full text-center sm:text-left">
                             <Box layoutClassName="flex items-center justify-center sm:justify-start gap-2 font-semibold" textClassName="text-blue-800 dark:text-blue-300">
                               <QrCode className="w-4 h-4" />
-                              <Typography as="span" size="inherit">{t('qr.title')}</Typography>
+                              <Typography as="span" size="inherit">{blk.label || t('qr.title')}</Typography>
                             </Box>
 
                             <Box layoutClassName="space-y-1" textClassName="text-sm text-slate-600 dark:text-slate-400">
@@ -1815,7 +1799,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                               >
                                   <Typography as="span" size="xs" layoutClassName="uppercase font-medium min-w-[60px]" textClassName="text-slate-500">{t('qr.amount')}</Typography>
                                   <Typography as="span" size="inherit" layoutClassName="font-bold" textClassName="text-primary-600 dark:text-primary-400">
-                                    {formatVND(qrAmount)}{hasDeposit ? (isDepositQr ? ` · ${t('pos.qrDeposit')}` : ` · ${t('pos.qrRemaining')}`) : ''}
+                                    {formatVND(blk.amount)}
                                   </Typography>
                               </Box>
                               <Box
@@ -1826,7 +1810,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                               >
                                   <Typography as="span" size="xs" layoutClassName="uppercase font-medium min-w-[60px]" textClassName="text-slate-500">{t('qr.content')}</Typography>
                                   <Typography as="span" size="inherit" layoutClassName="font-bold break-all" textClassName="text-slate-800 dark:text-slate-200">
-                                    {description}
+                                    {blkDes}
                                   </Typography>
                               </Box>
                             </Box>
@@ -1836,8 +1820,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                             <Box layoutClassName="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                               <Button
                                 type="button"
-                                onClick={() => void handlePushPos(qrAmount)}
-                                disabled={posBusy || qrAmount <= 0}
+                                onClick={() => void handlePushPos(blk.amount, blk.isDeposit)}
+                                disabled={posBusy || blk.amount <= 0}
                                 variant="primary"
                                 leftIcon={<MonitorSmartphone />}
                                 iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
@@ -1846,30 +1830,14 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                 layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
                                 disableVariantHover
                               >
-                                {posBusy ? t('pos.qrPushing') : `${t('pos.pushToDevice')} · ${formatVND(qrAmount)}`}
+                                {posBusy ? t('pos.qrPushing') : `${t('pos.pushToDevice')} · ${formatVND(blk.amount)}`}
                               </Button>
-                              <Button
-                                type="button"
-                                onClick={() => void handleCancelPos()}
-                                disabled={posBusy}
-                                variant="secondary"
-                                leftIcon={<Home />}
-                                iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-                                sizeClassName="px-3 py-2 text-xs"
-                                roundedClassName="rounded-lg"
-                                borderClassName="border border-slate-200 dark:border-slate-600"
-                                backgroundClassName="bg-white dark:bg-slate-800"
-                                layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
-                                disableVariantHover
-                              >
-                                {t('pos.backToHome')}
-                              </Button>
-                              {/* Nút copy QR chỉ cho thanh toán/còn lại — bỏ copy QR cọc theo yêu cầu. */}
-                              {!isDepositQr ? (
+                              {/* Nút copy QR chỉ cho thanh toán/còn lại — không copy QR cọc. */}
+                              {blk.showCopy ? (
                                 <Button
                                   type="button"
-                                  onClick={() => void handleCopyQr()}
-                                  disabled={qrCopying || !qrUrl}
+                                  onClick={() => void handleCopyQr(blkUrl)}
+                                  disabled={qrCopying || !blkUrl}
                                   variant="secondary"
                                   leftIcon={<Copy />}
                                   iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
@@ -1887,6 +1855,28 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                               ) : null}
                             </Box>
                         </Box>
+                     </Box>
+                         );
+                       })}
+                     </Box>
+                     {/* Nút về màn hình chờ POS — dùng chung cho cả section */}
+                     <Box layoutClassName="mt-3">
+                       <Button
+                         type="button"
+                         onClick={() => void handleCancelPos()}
+                         disabled={posBusy}
+                         variant="secondary"
+                         leftIcon={<Home />}
+                         iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                         sizeClassName="px-3 py-2 text-xs"
+                         roundedClassName="rounded-lg"
+                         borderClassName="border border-slate-200 dark:border-slate-600"
+                         backgroundClassName="bg-white dark:bg-slate-800"
+                         layoutClassName="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
+                         disableVariantHover
+                       >
+                         {t('pos.backToHome')}
+                       </Button>
                      </Box>
                   </Box>
                 ) : null}
