@@ -327,3 +327,101 @@ export const unlinkTransactionExpense = async (
   );
   return res.data;
 };
+
+// ─── Rải 1 GD tiền-ra ↔ NHIỀU phiếu nhập (transaction-first, quan hệ n:n) ─────
+
+/** 1 phiếu GD tiền-ra đang gắn (kèm alloc id để gỡ). */
+export interface TxReceiptAllocation {
+  id: string;
+  receiptId: string;
+  amount: number;
+  receiptTotal: number | null;
+  receiptDate: string | null;
+  supplier: string | null;
+  invoice: string | null;
+  receiptReconciled: boolean;
+}
+
+/** 1 phiếu ứng viên để rải. */
+export interface TxReceiptCandidate {
+  receiptId: string;
+  total: number | null;
+  paid: number;
+  remaining: number;
+  receiptDate: string | null;
+  supplier: string | null;
+  invoice: string | null;
+}
+
+/** Tổng hợp rải 1 GD tiền-ra ↔ nhiều phiếu nhập. */
+export interface TxReceiptAllocSummary {
+  transactionId: string;
+  txAmount: number;
+  allocated: number;
+  remaining: number;
+  allocations: TxReceiptAllocation[];
+  candidates: TxReceiptCandidate[];
+}
+
+const numN = (v: unknown): number | null =>
+  v == null ? null : typeof v === 'number' && Number.isFinite(v) ? v : Number(v) || 0;
+
+/** Chuẩn hoá summary trả từ API — coi mọi field untrusted (data-safety). */
+const mapTxReceiptAllocSummary = (r: unknown): TxReceiptAllocSummary => {
+  const o = (r ?? {}) as Record<string, unknown>;
+  const arr = (v: unknown): Record<string, unknown>[] =>
+    Array.isArray(v) ? (v as Record<string, unknown>[]) : [];
+  return {
+    transactionId: str(o.transactionId),
+    txAmount: num(o.txAmount),
+    allocated: num(o.allocated),
+    remaining: num(o.remaining),
+    allocations: arr(o.allocations).map((a) => ({
+      id: str(a.id),
+      receiptId: str(a.receiptId),
+      amount: num(a.amount),
+      receiptTotal: numN(a.receiptTotal),
+      receiptDate: typeof a.receiptDate === 'string' ? a.receiptDate : null,
+      supplier: typeof a.supplier === 'string' ? a.supplier : null,
+      invoice: typeof a.invoice === 'string' ? a.invoice : null,
+      receiptReconciled: a.receiptReconciled === true,
+    })),
+    candidates: arr(o.candidates).map((c) => ({
+      receiptId: str(c.receiptId),
+      total: numN(c.total),
+      paid: num(c.paid),
+      remaining: num(c.remaining),
+      receiptDate: typeof c.receiptDate === 'string' ? c.receiptDate : null,
+      supplier: typeof c.supplier === 'string' ? c.supplier : null,
+      invoice: typeof c.invoice === 'string' ? c.invoice : null,
+    })),
+  };
+};
+
+/** Summary rải 1 GD tiền-ra ↔ nhiều phiếu (đã gắn + phiếu ứng viên). */
+export const fetchTxReceiptAllocations = async (
+  transactionId: string,
+): Promise<TxReceiptAllocSummary> => {
+  const res = await apiClient.get<unknown>(`/transactions/${transactionId}/receipt-allocations`);
+  return mapTxReceiptAllocSummary(res.data);
+};
+
+/** Rải 1 GD tiền-ra vào NHIỀU phiếu 1 lượt (amount rỗng = auto = còn nợ phiếu). */
+export const addTxReceiptAllocations = async (
+  transactionId: string,
+  items: { receiptId: string; amount?: number | null }[],
+): Promise<TxReceiptAllocSummary> => {
+  const res = await apiClient.post<unknown>(
+    `/transactions/${transactionId}/receipt-allocations`,
+    { items },
+  );
+  return mapTxReceiptAllocSummary(res.data);
+};
+
+/** Gỡ 1 phân bổ GD↔phiếu (theo alloc id) → trả summary GD mới. */
+export const removeTxReceiptAllocation = async (
+  allocId: string,
+): Promise<TxReceiptAllocSummary> => {
+  const res = await apiClient.delete<unknown>(`/transactions/receipt-allocations/${allocId}`);
+  return mapTxReceiptAllocSummary(res.data);
+};

@@ -19,13 +19,9 @@ import {
   setTransactionExpense,
   unlinkTransactionExpense,
 } from '@/services/transactionService';
-import {
-  fetchReceiptsForReconcile,
-  reconcileReceipt,
-  type ReconcileReceiptItem,
-} from '@/services/stockReceiptService';
 import { fetchManualExpenses } from '@/services/manualExpenseService';
 import { ManualExpense } from '@/types';
+import TxReceiptAllocPanel from './TxReceiptAllocPanel';
 import BaseModal from '@/components/BaseModal';
 import Box from '@/components/ui/Box';
 import Badge from '@/components/ui/Badge';
@@ -53,7 +49,6 @@ const fmtDate = (v?: string | null): string => {
 
 const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: tx, onChanged }) => {
   const { orders } = useOrders();
-  const [receipts, setReceipts] = useState<ReconcileReceiptItem[]>([]);
   const [expenses, setExpenses] = useState<ManualExpense[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -77,8 +72,8 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
     if (!isOpen || !tx || !out || !unmatched) return;
     setShowAll(false);
     setLoading(true);
-    Promise.all([fetchReceiptsForReconcile(), fetchManualExpenses()])
-      .then(([r, e]) => { setReceipts(r); setExpenses(e); })
+    fetchManualExpenses()
+      .then((e) => setExpenses(e))
       .catch(() => toast.error('Không tải được danh sách ứng viên.'))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,13 +86,6 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
     const exact = unpaid.filter((o) => o.total === amt || o.depositAmount === amt);
     return (showAll ? unpaid : exact).slice(0, 40);
   }, [orders, tx, out, amt, showAll]);
-
-  const receiptCands = useMemo(() => {
-    if (!tx || !out) return [];
-    const free = receipts.filter((r) => !r.reconciled);
-    const exact = free.filter((r) => (r.totalAmount ?? 0) === amt);
-    return (showAll ? free : exact).slice(0, 40);
-  }, [receipts, tx, out, amt, showAll]);
 
   const expenseCands = useMemo(() => {
     if (!tx || !out) return [];
@@ -240,7 +228,10 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
                 Gỡ đối soát (về chưa khớp)
               </Button>
             ) : tx.status === 'stock' ? (
-              <Typography size="xs" variant="muted">Đã gắn phiếu nhập — gỡ/đổi phiếu ở trang Nhập kho.</Typography>
+              <Box layoutClassName="space-y-2">
+                <Typography size="xs" variant="muted">Giao dịch đã gắn phiếu nhập — có thể rải thêm / gỡ ngay tại đây.</Typography>
+                <TxReceiptAllocPanel txId={tx.id} onChanged={onChanged} />
+              </Box>
             ) : (
               <Typography size="xs" variant="muted">Trạng thái này không cần đối soát tay ở đây.</Typography>
             )}
@@ -371,25 +362,12 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
               </Button>
             </Box>
 
+            {/* Rải GD ra NHIỀU phiếu nhập (n:n, transaction-first) */}
             <Box layoutClassName="space-y-2">
               <Typography size="xs" layoutClassName="flex items-center gap-1.5 font-semibold uppercase" textClassName="text-slate-500 dark:text-slate-400">
-                <PackageOpen className="h-3.5 w-3.5" /> Phiếu nhập ({receiptCands.length})
+                <PackageOpen className="h-3.5 w-3.5" /> Rải vào phiếu nhập
               </Typography>
-              {receiptCands.length === 0 ? (
-                <Typography size="xs" variant="muted">Không có phiếu nhập phù hợp.</Typography>
-              ) : (
-                receiptCands.map((r) =>
-                  row(
-                    `rc-${r.receiptId}`,
-                    <Typography as="span" size="sm" layoutClassName="truncate font-semibold" textClassName="text-slate-800 dark:text-slate-100">
-                      {r.supplierName || 'Phiếu nhập'} · {formatVND(r.totalAmount ?? 0)}
-                    </Typography>,
-                    <>{fmtDate(r.receiptDate)}{r.invoiceNumber ? ` · ${r.invoiceNumber}` : ''}</>,
-                    () => run(`rc-${r.receiptId}`, () => reconcileReceipt(r.receiptId, tx.id), 'Đã gắn phiếu nhập.'),
-                    (r.totalAmount ?? 0) === amt,
-                  ),
-                )
-              )}
+              <TxReceiptAllocPanel txId={tx.id} onChanged={onChanged} />
             </Box>
 
             <Box layoutClassName="space-y-2">
