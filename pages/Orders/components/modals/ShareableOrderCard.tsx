@@ -27,6 +27,12 @@ export interface ShareableOrderCardProps {
   bankCode?: string;
   accountNumber?: string;
   accountHolder?: string;
+  /** QR CỌC (kèm luôn để đỡ phải copy/gửi nhiều lần). Rỗng → ẩn section cọc. */
+  depositQrUrl?: string;
+  /** Số tiền cọc (VND) cho section QR cọc. */
+  depositAmount?: number;
+  /** Nội dung CK cọc = "C" + mã đơn. */
+  depositDescription?: string;
 }
 
 /**
@@ -36,7 +42,7 @@ export interface ShareableOrderCardProps {
  * KHÔNG có nút thao tác. Sản phẩm hiển thị dạng text (không thumbnail) để né CORS ảnh.
  */
 const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardProps>(
-  ({ order, subtotal, finalTotal, shippingCost, surchargeLabel, deliveryLabel, paymentLabel, qrUrl, description, bankCode, accountNumber, accountHolder }, ref) => {
+  ({ order, subtotal, finalTotal, shippingCost, surchargeLabel, deliveryLabel, paymentLabel, qrUrl, description, bankCode, accountNumber, accountHolder, depositQrUrl, depositAmount, depositDescription }, ref) => {
     const c = order.customer;
     const { products } = useProducts();
     const itemRows = buildOrderItemRows(order.items, products);
@@ -180,19 +186,35 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
           })()}
         </Box>
 
-        {/* QR chuyển khoản */}
+        {/* QR chuyển khoản (tổng đơn) */}
         <Box layoutClassName="flex gap-4 border-t border-slate-200 pt-3">
           <Box layoutClassName="shrink-0 rounded-lg border border-slate-200 bg-white p-1.5">
             <Image src={qrUrl} alt="QR chuyển khoản" crossOrigin="anonymous" disableFade loading="eager" layoutClassName="h-28 w-28 object-contain" />
           </Box>
           <Box layoutClassName="flex-1 space-y-0.5 text-sm">
-            <Typography as="p" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-400">Chuyển khoản</Typography>
+            <Typography as="p" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-slate-400">{depositQrUrl ? 'Chuyển khoản đủ' : 'Chuyển khoản'}</Typography>
             <Typography as="p" size="sm" textClassName="text-slate-700"><Typography as="span" size="sm" layoutClassName="font-bold">{bankCode || '—'}</Typography>{accountNumber ? ` · ${accountNumber}` : ''}</Typography>
             <Typography as="p" size="sm" layoutClassName="font-bold" textClassName="text-slate-800">{(accountHolder || '').toUpperCase()}</Typography>
             <Typography as="p" size="sm" textClassName="text-slate-600">Số tiền: <Typography as="span" size="sm" layoutClassName="font-bold" textClassName="text-primary-600">{formatVND(finalTotal)}</Typography></Typography>
             <Typography as="p" size="sm" textClassName="text-slate-600">Nội dung: <Typography as="span" size="sm" layoutClassName="font-mono font-bold" textClassName="text-slate-800">{description}</Typography></Typography>
           </Box>
         </Box>
+
+        {/* QR CỌC — kèm luôn để khách cọc, khỏi phải gửi ảnh QR thứ 2 */}
+        {depositQrUrl ? (
+          <Box layoutClassName="flex gap-4 border-t border-slate-200 pt-3">
+            <Box layoutClassName="shrink-0 rounded-lg border border-amber-200 bg-white p-1.5">
+              <Image src={depositQrUrl} alt="QR cọc" crossOrigin="anonymous" disableFade loading="eager" layoutClassName="h-28 w-28 object-contain" />
+            </Box>
+            <Box layoutClassName="flex-1 space-y-0.5 text-sm">
+              <Typography as="p" size="xs" layoutClassName="font-semibold uppercase tracking-wide" textClassName="text-amber-500">Chuyển khoản cọc</Typography>
+              <Typography as="p" size="sm" textClassName="text-slate-700"><Typography as="span" size="sm" layoutClassName="font-bold">{bankCode || '—'}</Typography>{accountNumber ? ` · ${accountNumber}` : ''}</Typography>
+              <Typography as="p" size="sm" layoutClassName="font-bold" textClassName="text-slate-800">{(accountHolder || '').toUpperCase()}</Typography>
+              <Typography as="p" size="sm" textClassName="text-slate-600">Số tiền: <Typography as="span" size="sm" layoutClassName="font-bold" textClassName="text-amber-600">{formatVND(depositAmount || 0)}</Typography></Typography>
+              <Typography as="p" size="sm" textClassName="text-slate-600">Nội dung: <Typography as="span" size="sm" layoutClassName="font-mono font-bold" textClassName="text-slate-800">{depositDescription}</Typography></Typography>
+            </Box>
+          </Box>
+        ) : null}
       </Box>
     );
   },

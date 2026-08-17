@@ -214,6 +214,10 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
   // QR cho card chia sẻ = luôn tổng đơn (không đổi theo toggle cọc).
   const shareDescription = currentOrder.orderNumber;
   const shareQrUrl = qrAccount ? generateQRCodeImage(currentOrder.orderNumber, finalTotal, qrAccount, false) : '';
+  // QR CỌC kèm luôn trong card chia sẻ (đỡ phải gửi ảnh QR thứ 2). Chỉ khi có cọc & chưa thu đủ.
+  const shareDepositQrUrl = (qrAccount && hasDeposit && depositAmt > 0 && collected < finalTotal)
+    ? generateQRCodeImage(currentOrder.orderNumber, depositAmt, qrAccount, true) : '';
+  const shareDepositDescription = `C${currentOrder.orderNumber}`;
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -2612,6 +2616,9 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         bankCode={qrAccount?.bankCode}
         accountNumber={qrAccount?.accountNumber}
         accountHolder={qrAccount?.accountHolder}
+        depositQrUrl={shareDepositQrUrl}
+        depositAmount={depositAmt}
+        depositDescription={shareDepositDescription}
       />
     </Box>
     </>
