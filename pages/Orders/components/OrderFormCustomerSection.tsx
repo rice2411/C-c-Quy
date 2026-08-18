@@ -1,91 +1,16 @@
 import React, { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Bus, Globe, Package, Store, Truck, User } from 'lucide-react';
+import { Globe, Package, Store, Truck, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCustomers } from '@/hooks/useCustomers';
-import { fetchCoaches } from '@/services/coachService';
-import type { OrderCoachInfo } from '@/types/coach';
 import AddressMapInput, { type ShipInfoSnapshot } from '@/components/AddressMapInput';
 import AutocompleteInput, { AutocompleteOption } from '@/components/AutocompleteInput';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Field from '@/components/ui/Field';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import Typography from '@/components/ui/Typography';
 import Heading from '@/components/ui/Heading';
 import { DeliveryType } from '@/types';
-
-/** Picker chọn nhà xe đã lưu (dùng khi deliveryType = SHIP_COACH). */
-const CoachPicker: React.FC<{
-  coachInfo?: OrderCoachInfo | null;
-  setCoachInfo?: (c: OrderCoachInfo | null) => void;
-  shippingCost?: number;
-  onShipFeeChange?: (fee: number | null) => void;
-}> = ({ coachInfo, setCoachInfo, shippingCost, onShipFeeChange }) => {
-  const { data: coaches = [] } = useQuery({ queryKey: ['coaches'], queryFn: fetchCoaches });
-
-  // Nếu đơn cũ có nhà xe không còn trong danh bạ → thêm option ảo để không mất lựa chọn.
-  const options = useMemo(() => {
-    const list = coaches.map((c) => ({ id: c.id, label: c.route ? `${c.name} · ${c.route}` : c.name }));
-    if (coachInfo?.id && !coaches.some((c) => c.id === coachInfo.id)) {
-      list.unshift({ id: coachInfo.id, label: `${coachInfo.name} (đã lưu)` });
-    }
-    return list;
-  }, [coaches, coachInfo]);
-
-  const handlePick = (id: string) => {
-    if (!id) { setCoachInfo?.(null); return; }
-    const c = coaches.find((x) => x.id === id);
-    if (c) {
-      setCoachInfo?.({ id: c.id, name: c.name, phone: c.phone, route: c.route, pickupPoint: c.pickupPoint });
-      // Chưa nhập phí → điền phí gửi mặc định của nhà xe.
-      if ((!shippingCost || shippingCost === 0) && c.defaultFee) onShipFeeChange?.(c.defaultFee);
-    } else if (coachInfo?.id === id) {
-      // giữ nguyên coachInfo đã lưu
-    }
-  };
-
-  return (
-    <>
-      <Field label="Nhà xe" htmlFor="order-form-coach">
-        <Select
-          id="order-form-coach"
-          value={coachInfo?.id ?? ''}
-          onChange={(e) => handlePick(e.target.value)}
-        >
-          <option value="">— Chọn nhà xe —</option>
-          {options.map((o) => (
-            <option key={o.id} value={o.id}>{o.label}</option>
-          ))}
-        </Select>
-        {coaches.length === 0 ? (
-          <Typography as="p" size="xs" variant="muted" layoutClassName="mt-1">
-            Chưa có nhà xe nào. Thêm ở Cài đặt → Nhà xe.
-          </Typography>
-        ) : null}
-        {coachInfo ? (
-          <Typography as="p" size="xs" variant="muted" layoutClassName="mt-1">
-            {[coachInfo.phone, coachInfo.route, coachInfo.pickupPoint].filter(Boolean).join(' · ') || '—'}
-          </Typography>
-        ) : null}
-      </Field>
-      <Field label="Phí gửi xe khách" htmlFor="order-form-coach-fee">
-        <Input
-          id="order-form-coach-fee"
-          type="number"
-          min={0}
-          step={1000}
-          placeholder="0"
-          value={shippingCost ?? ''}
-          onChange={(e) => { const raw = e.target.value; onShipFeeChange?.(raw === '' ? null : Number(raw)); }}
-          leftIcon={<Package className="h-4 w-4" />}
-          leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
-        />
-      </Field>
-    </>
-  );
-};
 
 interface CustomerSectionProps {
   customerName: string;
@@ -104,8 +29,6 @@ interface CustomerSectionProps {
   onShipFeeChange?: (fee: number | null) => void;
   initialShipInfo?: ShipInfoSnapshot;
   onShipInfoChange?: (info: ShipInfoSnapshot | null) => void;
-  coachInfo?: OrderCoachInfo | null;
-  setCoachInfo?: (c: OrderCoachInfo | null) => void;
 }
 
 const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
@@ -124,8 +47,6 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
   onShipFeeChange,
   initialShipInfo,
   onShipInfoChange,
-  coachInfo,
-  setCoachInfo,
 }) => {
   const { t } = useLanguage();
   const { customers } = useCustomers();
@@ -214,7 +135,6 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
             {([
               { dt: DeliveryType.SHIP,          icon: <Truck className="h-4 w-4 shrink-0" />,  label: t('deliveryType.ship') },
               { dt: DeliveryType.SHIP_PROVINCE,  icon: <Globe className="h-4 w-4 shrink-0" />,  label: t('deliveryType.shipProvince') },
-              { dt: DeliveryType.SHIP_COACH,     icon: <Bus className="h-4 w-4 shrink-0" />,    label: t('deliveryType.shipCoach') },
               { dt: DeliveryType.PICKUP,         icon: <Store className="h-4 w-4 shrink-0" />,  label: t('deliveryType.pickup') },
             ]).map(({ dt, icon, label }) => {
               const active = deliveryType === dt;
@@ -300,16 +220,6 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
               </Field>
             ) : null}
           </>
-        ) : null}
-
-        {/* Ship xe khách: chọn nhà xe đã lưu + phí gửi */}
-        {deliveryType === DeliveryType.SHIP_COACH ? (
-          <CoachPicker
-            coachInfo={coachInfo}
-            setCoachInfo={setCoachInfo}
-            shippingCost={shippingCost}
-            onShipFeeChange={onShipFeeChange}
-          />
         ) : null}
       </Box>
     </Box>

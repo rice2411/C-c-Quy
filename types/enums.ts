@@ -22,7 +22,6 @@ export enum DeliveryType {
   SHIP = 'SHIP',
   PICKUP = 'PICKUP',
   SHIP_PROVINCE = 'SHIP_PROVINCE',
-  SHIP_COACH = 'SHIP_COACH',
   /** Ăn tại chỗ — đơn gắn bàn (dine-in). */
   DINE_IN = 'DINE_IN',
 }

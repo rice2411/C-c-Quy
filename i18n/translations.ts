@@ -78,7 +78,6 @@ export const translations = {
       settingsCategories: "Categories",
       settingsFlavors: "Flavors",
       settingsProduct: "Product settings",
-      settingsCoaches: "Coaches",
       signOut: "Sign Out",
       updateAvailable: "New version · Update",
       checkUpdate: "Reload latest",
@@ -652,7 +651,6 @@ export const translations = {
       ship: "Local delivery",
       pickup: "Customer pickup",
       shipProvince: "Province shipping",
-      shipCoach: "Coach shipping",
       dineIn: "Dine-in",
       noAddress: "No address"
     },
@@ -856,7 +854,6 @@ export const translations = {
       settingsCategories: "Danh mục",
       settingsFlavors: "Vị",
       settingsProduct: "Cài đặt sản phẩm",
-      settingsCoaches: "Nhà xe",
       signOut: "Đăng xuất",
       updateAvailable: "Có bản mới · Cập nhật",
       checkUpdate: "Tải lại bản mới nhất",
@@ -1430,7 +1427,6 @@ export const translations = {
       ship: "Giao tận nơi",
       pickup: "Khách tới lấy",
       shipProvince: "Ship tỉnh",
-      shipCoach: "Ship xe khách",
       dineIn: "Tại quán",
       noAddress: "Chưa có địa chỉ"
     },

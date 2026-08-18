@@ -69,7 +69,6 @@ export {
 export const orderAddressFallbackKey = (dt?: DeliveryType): string => {
   if (dt === DeliveryType.PICKUP) return 'deliveryType.pickup';
   if (dt === DeliveryType.SHIP_PROVINCE) return 'deliveryType.shipProvince';
-  if (dt === DeliveryType.SHIP_COACH) return 'deliveryType.shipCoach';
   if (dt === DeliveryType.DINE_IN) return 'deliveryType.dineIn';
   return 'deliveryType.noAddress';
 };
@@ -221,14 +220,6 @@ export interface Order {
   deliveryDate?: string;
   deliveryTime?: string;
   trackingNumber?: string;
-  /** Nhà xe đã chọn khi deliveryType = SHIP_COACH (snapshot). */
-  coachInfo?: {
-    id?: string;
-    name: string;
-    phone?: string;
-    route?: string;
-    pickupPoint?: string;
-  } | null;
   /** Link tra cứu vận đơn (3PL) — bấm để xem trạng thái mới nhất. */
   trackingLink?: string;
   /** Trạng thái vận chuyển từ file 3PL (đồng bộ lúc upload). */

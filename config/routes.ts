@@ -21,7 +21,6 @@ import {
   Monitor,
   MessageSquare,
   QrCode,
-  Bus,
   AlertTriangle,
   HeartPulse,
   Building2,
@@ -297,13 +296,6 @@ export const routes: RouteConfig[] = [
     icon: Monitor,
     roles: [UserRole.SUPER_ADMIN],
   },
-  {
-    type: "page",
-    path: "/settings/coaches",
-    labelKey: "nav.settingsCoaches",
-    icon: Bus,
-    roles: [UserRole.SUPER_ADMIN],
-  },
 ];
 
 export const storageTabRoutes: RouteConfig[] = [
@@ -476,7 +468,7 @@ export const navGroups: NavGroupConfig[] = [
     ],
   },
   {
-    // Cài đặt: mỗi mục 1 screen con (Đơn hàng/Thanh toán/Zalo/Màn hình/Nhà xe).
+    // Cài đặt: mỗi mục 1 screen con (Đơn hàng/Thanh toán/Zalo/Màn hình).
     key: "settings",
     labelKey: "nav.settingsGroup",
     icon: Settings,
@@ -485,7 +477,6 @@ export const navGroups: NavGroupConfig[] = [
       "/settings/sepay",
       "/settings/zalo",
       "/settings/screens",
-      "/settings/coaches",
     ],
   },
 ];
