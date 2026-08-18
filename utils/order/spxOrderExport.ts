@@ -6,6 +6,14 @@ import { getOrderTotal } from '@/utils/order/orderUtils';
 export type SpxAddressMode = 'new' | 'old';
 
 /**
+ * Sheet "địa chỉ mới" (2 cấp) của SPX nhận tên tỉnh KHÔNG có tiền tố hành chính:
+ * "Hà Nội" (không "Thành phố Hà Nội"), "Lạng Sơn" (không "Tỉnh Lạng Sơn").
+ * Chỉ áp dụng lúc GHI file — danh mục nội bộ (SPX_PROVINCES) vẫn giữ tên đầy đủ để matching.
+ */
+export const stripSpxProvincePrefix = (s: string): string =>
+  (s || '').replace(/^(Thành phố|Tỉnh)\s+/i, '').trim();
+
+/**
  * Địa chỉ đã giải sẵn cho 1 đơn (hệ CŨ, giải ở BE): `state` = Tỉnh ("TP. HỒ CHÍ MINH"),
  * `city` = Quận/Huyện, `ward` = Xã/Phường. Khi xuất vào sheet "địa chỉ mới" chỉ dùng state + ward.
  */
@@ -103,12 +111,13 @@ const buildRow = (
   }
 
   // 2 cấp — sheet "Tạo đơn (địa chỉ mới)" (A..AC, 29 cột). Hệ MỚI: D=Tỉnh, E=Phường/Xã (KHÔNG Quận).
-  const province = resolved?.province ?? '';
+  // SPX bắt tên tỉnh KHÔNG tiền tố → bỏ "Thành phố"/"Tỉnh" khi ghi (vd "Hà Nội", "Hồ Chí Minh").
+  const province = stripSpxProvincePrefix(resolved?.province ?? '');
   return [
     orderCode,      // A Mã đơn hàng (mã đơn shop, thay STT)
     name,           // B Tên
     phone,          // C SĐT
-    province,       // D Tỉnh (hệ mới, vd "Thành phố Hồ Chí Minh")
+    province,       // D Tỉnh (hệ mới, vd "Hà Nội" — KHÔNG tiền tố "Thành phố")
     ward,           // E Phường/Xã (hệ mới, vd "Phường An Đông")
     detailAddress,  // F Địa chỉ chi tiết
     '',             // G Lưu ý địa chỉ
