@@ -11,18 +11,15 @@ import {
   useCalendarEvents,
   useCalendarMutations,
 } from '@/hooks/queries/useCalendarQuery';
-import { CalendarEvent, CalendarEventType } from '@/types/calendar';
+import { CalendarEvent } from '@/types/calendar';
 import DayEventsPanel from './components/DayEventsPanel';
 import { MONTH_LABELS_VI, WEEKDAY_LABELS, monthMatrix, toISO } from './dateUtil';
-import { eventAccent, TYPE_LABELS } from './eventStyle';
-
-const ALL_TYPES: CalendarEventType[] = ['order', 'shift', 'custom', 'attendance'];
+import { eventAccent } from './eventStyle';
 
 const ShiftsCalendarPage: React.FC = () => {
   const today = useMemo(() => new Date(), []);
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() });
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [visible, setVisible] = useState<Set<CalendarEventType>>(new Set(ALL_TYPES));
 
   const weeks = useMemo(() => monthMatrix(cursor.year, cursor.month), [cursor]);
   const rangeFrom = toISO(weeks[0][0]);
@@ -32,10 +29,10 @@ const ShiftsCalendarPage: React.FC = () => {
 
   const todayISO = toISO(today);
 
-  // Gom TẤT CẢ event theo ngày (panel dùng bản đầy đủ).
+  // TẠM THỜI: lịch chỉ hiển thị đăng ký ca (event type 'shift'); ẩn order/custom/attendance.
   const allByDate = useMemo(() => {
     const m = new Map<string, CalendarEvent[]>();
-    events.forEach((e) => {
+    events.filter((e) => e.type === 'shift').forEach((e) => {
       const arr = m.get(e.date);
       if (arr) arr.push(e);
       else m.set(e.date, [e]);
@@ -49,14 +46,6 @@ const ShiftsCalendarPage: React.FC = () => {
       return { year: d.getFullYear(), month: d.getMonth() };
     });
 
-  const toggleType = (t: CalendarEventType) =>
-    setVisible((prev) => {
-      const next = new Set(prev);
-      if (next.has(t)) next.delete(t);
-      else next.add(t);
-      return next;
-    });
-
   const selectedEvents = selectedDate ? allByDate.get(selectedDate) ?? [] : [];
 
   return (
@@ -66,7 +55,7 @@ const ShiftsCalendarPage: React.FC = () => {
         <Box layoutClassName="flex items-center gap-2">
           <CalendarDays className="h-5 w-5 text-primary-500" />
           <Heading level={1} textClassName="text-lg font-bold text-slate-900 dark:text-white">
-            Lịch
+            Lịch đăng ký ca
           </Heading>
           {loading ? <Spinner size="sm" textClassName="text-primary-400" /> : null}
         </Box>
@@ -91,36 +80,6 @@ const ShiftsCalendarPage: React.FC = () => {
             </IconButton>
           </Box>
         </Box>
-      </Box>
-
-      {/* Lọc theo loại */}
-      <Box layoutClassName="flex flex-wrap items-center gap-2">
-        {TYPE_LABELS.map((t) => {
-          const on = visible.has(t.type);
-          return (
-            <Button
-              key={t.type}
-              type="button"
-              variant={on ? 'secondary' : 'ghost'}
-              size="sm"
-              onClick={() => toggleType(t.type)}
-            >
-              <Box layoutClassName="flex items-center gap-1.5">
-                <Box
-                  layoutClassName="h-2.5 w-2.5 rounded-full"
-                  backgroundClassName={on ? t.dotClassName : 'bg-slate-300 dark:bg-slate-600'}
-                />
-                <Typography
-                  as="span"
-                  size="xs"
-                  textClassName={on ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'}
-                >
-                  {t.label}
-                </Typography>
-              </Box>
-            </Button>
-          );
-        })}
       </Box>
 
       {/* Calendar */}
@@ -152,7 +111,7 @@ const ShiftsCalendarPage: React.FC = () => {
                   const iso = toISO(d);
                   const inMonth = d.getMonth() === cursor.month;
                   const isToday = iso === todayISO;
-                  const dayEvents = (allByDate.get(iso) ?? []).filter((e) => visible.has(e.type));
+                  const dayEvents = allByDate.get(iso) ?? [];
                   const shown = dayEvents.slice(0, 3);
                   const extra = dayEvents.length - shown.length;
                   return (
