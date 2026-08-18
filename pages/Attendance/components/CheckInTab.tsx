@@ -59,6 +59,9 @@ const CheckInTab: React.FC = () => {
   const isCheckedIn = nextKind === 'out';
   const curShift = status?.currentShift ?? null;
   const todayShifts = status?.todayShifts ?? [];
+  // Đối chiếu đăng ký ↔ đã làm hôm nay (đăng ký công): ca hợp lệ + công.
+  const today = status?.today ?? null;
+  const dayShift = (code: string) => today?.shifts.find((x) => x.code === code) ?? null;
 
   // Ở MẠNG NGOÀI (hoặc quán chưa cấu hình) → TRANG LỖI toàn màn, KHÔNG header/badge/camera.
   if (!ipOk) {
@@ -133,11 +136,28 @@ const CheckInTab: React.FC = () => {
         </Box>
       </Box>
 
+      {/* Tổng công hôm nay theo ca ĐĂNG KÝ (đăng ký công) */}
+      {today && (
+        <Box
+          layoutClassName="flex flex-wrap items-center justify-between gap-2 rounded-xl px-3 py-2.5"
+          borderClassName="border border-primary-200 dark:border-primary-800"
+          backgroundClassName="bg-primary-50/60 dark:bg-primary-900/20"
+        >
+          <Typography as="span" size="sm" textClassName="text-slate-700 dark:text-slate-200">
+            Công hôm nay (ca đã đăng ký + đã làm):
+          </Typography>
+          <Typography as="span" size="sm" layoutClassName="font-bold tabular-nums" textClassName="text-primary-600 dark:text-primary-400">
+            {today.cong} công
+          </Typography>
+        </Box>
+      )}
+
       {/* Trạng thái hôm nay theo TỪNG CA (highlight ca sắp chấm) */}
       <Box layoutClassName="flex flex-col gap-2">
         {SHIFTS.map((s) => {
           const rec = todayShifts.find((t) => t.shift === s.value);
           const active = curShift === s.value;
+          const cs = dayShift(s.value);
           return (
             <Box
               key={s.value}
@@ -160,6 +180,38 @@ const CheckInTab: React.FC = () => {
                 <Typography as="span" size="xs" textClassName="text-slate-400 dark:text-slate-500">
                   {s.time}
                 </Typography>
+                {cs && cs.status !== 'off' && (
+                  <Box
+                    layoutClassName="mt-0.5 inline-flex w-fit items-center px-1.5 py-0.5"
+                    roundedClassName="rounded"
+                    backgroundClassName={
+                      cs.status === 'valid'
+                        ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                        : cs.status === 'unregistered'
+                          ? 'bg-rose-100 dark:bg-rose-900/30'
+                          : 'bg-amber-100 dark:bg-amber-900/30'
+                    }
+                  >
+                    <Typography
+                      as="span"
+                      size="xs"
+                      layoutClassName="font-semibold"
+                      textClassName={
+                        cs.status === 'valid'
+                          ? 'text-emerald-700 dark:text-emerald-300'
+                          : cs.status === 'unregistered'
+                            ? 'text-rose-700 dark:text-rose-300'
+                            : 'text-amber-700 dark:text-amber-300'
+                      }
+                    >
+                      {cs.status === 'valid'
+                        ? '✓ hợp lệ'
+                        : cs.status === 'unregistered'
+                          ? 'chưa đăng ký · không tính'
+                          : 'đã đăng ký'}
+                    </Typography>
+                  </Box>
+                )}
               </Box>
               <Box layoutClassName="flex items-center gap-4">
                 <Box layoutClassName="flex flex-col items-end">

@@ -1,11 +1,37 @@
-import React from 'react';
-import { Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clock, Fingerprint, CalendarCheck } from 'lucide-react';
 import Box from '@/components/ui/Box';
+import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
 import CheckInTab from './components/CheckInTab';
+import RegisterTab from './components/RegisterTab';
 
-/** Màn CHẤM CÔNG (Vào ca / Tan ca) cho nhân viên. Quản lý mặt/IP/lịch sử ở màn riêng /attendance/manage. */
+type Tab = 'check' | 'register';
+
+/** Màn CHẤM CÔNG cho NV: Chấm công (Face ID) + Đăng ký ca (đăng ký công tuần sau). */
 const AttendancePage: React.FC = () => {
+  const [tab, setTab] = useState<Tab>('check');
+
+  const tabBtn = (value: Tab, label: string, icon: React.ReactNode) => (
+    <Button
+      type="button"
+      onClick={() => setTab(value)}
+      variant={tab === value ? 'primary' : 'secondary'}
+      leftIcon={icon}
+      iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+      sizeClassName="px-3.5 py-1.5 text-sm"
+      roundedClassName="rounded-lg"
+      borderClassName={tab === value ? 'border border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
+      backgroundClassName={tab === value ? 'bg-primary-600' : 'bg-white dark:bg-slate-800'}
+      textClassName={tab === value ? 'font-medium text-white' : 'text-slate-700 dark:text-slate-200'}
+      layoutClassName="inline-flex items-center gap-1.5"
+      disableVariantHover
+      disableVariantTextColor
+    >
+      {label}
+    </Button>
+  );
+
   return (
     <Box layoutClassName="flex h-full flex-col gap-4 p-4 sm:p-6">
       <Box layoutClassName="flex items-center gap-2">
@@ -15,8 +41,13 @@ const AttendancePage: React.FC = () => {
         </Heading>
       </Box>
 
+      <Box layoutClassName="flex gap-2">
+        {tabBtn('check', 'Chấm công', <Fingerprint />)}
+        {tabBtn('register', 'Đăng ký ca', <CalendarCheck />)}
+      </Box>
+
       <Box layoutClassName="flex-1 overflow-y-auto">
-        <CheckInTab />
+        {tab === 'check' ? <CheckInTab /> : <RegisterTab />}
       </Box>
     </Box>
   );

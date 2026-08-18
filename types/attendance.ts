@@ -59,7 +59,59 @@ export interface AttendanceStatus {
   todayOut: string | null;
   todayCount: number;
   todayShifts: AttendanceShiftStatus[]; // vào/ra từng ca hôm nay
+  today?: AttendanceDayCompute | null; // đối chiếu đăng ký ↔ đã làm hôm nay (ca hợp lệ + công)
 }
+
+/** 1 ca theo compute đăng-ký↔đã-làm của 1 ngày. */
+export type SpxDayShiftStatus = 'valid' | 'missed' | 'unregistered' | 'off';
+export interface AttendanceDayShift {
+  code: AttendanceShift;
+  name: string;
+  congFactor: number;
+  registered: boolean;
+  worked: boolean;
+  valid: boolean;
+  status: SpxDayShiftStatus;
+}
+
+/** Kết quả đối chiếu đăng ký ↔ đã làm cho 1 NV/ngày (đăng ký công). */
+export interface AttendanceDayCompute {
+  employeeId: string;
+  date: string; // yyyy-mm-dd
+  in: string | null;
+  out: string | null;
+  cong: number;
+  shifts: AttendanceDayShift[];
+}
+
+/** Định nghĩa 1 ca (từ work_shift_list). */
+export interface WorkShiftDef {
+  code: AttendanceShift;
+  name: string;
+  startTime: string; // HH:MM
+  endTime: string; // HH:MM
+  congFactor: number;
+  sortOrder: number;
+  weekdays: number[]; // ISO dow 1=T2..7=CN
+  active: boolean;
+}
+
+/** Kết quả GET /attendance/my-shifts (lưới đăng ký ca). */
+export interface MyShiftWeek {
+  employee: EmployeeRef;
+  shifts: WorkShiftDef[];
+  week: Record<string, string[]>; // { 'yyyy-mm-dd': ['ca1','ca2'] }
+}
+
+/** Nhãn trạng thái ca (compute). */
+export const DAY_SHIFT_STATUS_LABELS: { value: SpxDayShiftStatus; label: string }[] = [
+  { value: 'valid', label: 'Hợp lệ' },
+  { value: 'missed', label: 'Vắng (đã đăng ký)' },
+  { value: 'unregistered', label: 'Chưa đăng ký' },
+  { value: 'off', label: 'Không đăng ký' },
+];
+export const dayShiftStatusLabel = (s?: SpxDayShiftStatus | null): string =>
+  DAY_SHIFT_STATUS_LABELS.find((x) => x.value === s)?.label ?? '—';
 
 /** Kết quả GET /attendance/me. */
 export interface AttendanceMe {

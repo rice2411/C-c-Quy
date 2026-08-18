@@ -6,9 +6,53 @@ import {
   AttendanceMe,
   AttendanceOverviewRow,
   AttendanceRecord,
+  AttendanceDayCompute,
+  MyShiftWeek,
 } from '@/types/attendance';
 
 const BASE = '/attendance';
+
+// ---- Đăng ký công (NV tự đăng ký ca) ----
+
+/** Ca đang bật + đăng ký ca của NV trong khoảng ngày (lưới đăng ký). */
+export async function fetchMyShiftWeek(from: string, to: string): Promise<MyShiftWeek> {
+  const res = await apiClient.get<MyShiftWeek>(`${BASE}/my-shifts`, { params: { from, to } });
+  const d = (res.data ?? {}) as any;
+  return {
+    employee: d?.employee ?? null,
+    shifts: Array.isArray(d?.shifts)
+      ? d.shifts.filter((s: any) => s?.active !== false)
+      : [],
+    week: d?.week && typeof d.week === 'object' ? d.week : {},
+  };
+}
+
+/** NV tự đăng ký ca CỦA MÌNH cho 1 ngày tương lai (thay trọn ngày). */
+export async function registerMyShift(
+  workDate: string,
+  shiftCodes: string[],
+): Promise<{ workDate: string; shiftCodes: string[] }> {
+  const res = await apiClient.put<{ workDate: string; shiftCodes: string[] }>(
+    `${BASE}/my-shifts`,
+    { workDate, shiftCodes },
+  );
+  const d = (res.data ?? {}) as any;
+  return {
+    workDate: String(d?.workDate ?? workDate),
+    shiftCodes: Array.isArray(d?.shiftCodes) ? d.shiftCodes : [],
+  };
+}
+
+/** Đối chiếu đăng ký ↔ đã làm (ca hợp lệ + công) cho 1 NV/ngày — admin. */
+export async function fetchDayCompute(
+  employeeId: string,
+  date?: string,
+): Promise<AttendanceDayCompute | null> {
+  const res = await apiClient.get<AttendanceDayCompute>(`${BASE}/day-compute`, {
+    params: { employeeId, ...(date ? { date } : {}) },
+  });
+  return (res.data as AttendanceDayCompute) ?? null;
+}
 
 // ---- type-guard (dữ liệu API là untrusted) ----
 function num(v: unknown): number | null {
