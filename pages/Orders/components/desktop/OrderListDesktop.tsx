@@ -248,6 +248,33 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                               🚚 Ship tỉnh
                             </Badge>
                           ) : null}
+                          {order.deliveryType === DeliveryType.SHIP_PROVINCE ? (
+                            <Badge
+                              size="sm"
+                              layoutClassName="px-2 py-0.5 text-[11px] font-semibold"
+                              borderClassName="border-transparent"
+                              backgroundClassName={
+                                order.spxStatus === 'matched'
+                                  ? 'bg-emerald-100 dark:bg-emerald-900/40'
+                                  : order.spxStatus === 'partial'
+                                    ? 'bg-amber-100 dark:bg-amber-900/40'
+                                    : 'bg-rose-100 dark:bg-rose-900/40'
+                              }
+                              textClassName={
+                                order.spxStatus === 'matched'
+                                  ? 'text-emerald-700 dark:text-emerald-300'
+                                  : order.spxStatus === 'partial'
+                                    ? 'text-amber-700 dark:text-amber-300'
+                                    : 'text-rose-700 dark:text-rose-300'
+                              }
+                            >
+                              {order.spxStatus === 'matched'
+                                ? '📍 Địa chỉ mịn'
+                                : order.spxStatus === 'partial'
+                                  ? '📍 Thiếu địa chỉ'
+                                  : '📍 Chưa khớp'}
+                            </Badge>
+                          ) : null}
                           {order.trackingNumber ? (
                             order.trackingLink ? (
                               <a

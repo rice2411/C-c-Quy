@@ -40,6 +40,7 @@ import { useProducts } from '@/hooks/queries/useProductsQuery';
 import { UserRole } from '@/types/user';
 import { orderAddressFallbackKey, surchargeTagLabel, reconcileMethodLabel, refundCategoryLabel } from '@/types/order';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
+import SpxAddressPanel from '../SpxAddressPanel';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { allocateSurcharge, generateQRCodeImage, getOrderTotal } from '@/utils/order/orderUtils';
 import { buildOrderEmvQr } from '@/utils/order/vietQrEmv';
@@ -1017,6 +1018,10 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                         {currentOrder.customer.city && <Typography as="p" size="inherit" textClassName="text-slate-500 dark:text-slate-400">{currentOrder.customer.city}, {currentOrder.customer.country}</Typography>}
                       </Box>
                     </Box>
+                    {/* Địa chỉ SPX đã "làm mịn" — chỉ đơn ship tỉnh (dùng để xuất file tạo đơn SPX). */}
+                    {currentOrder.deliveryType === DeliveryType.SHIP_PROVINCE && (
+                      <SpxAddressPanel order={currentOrder} onUpdated={setLocalOrder} />
+                    )}
                   </Box>
                 </Box>
 

@@ -247,4 +247,34 @@ export interface Order {
   refundedBy?: string;
   /** Lịch sử hoàn tiền (mới→cũ) — mỗi lần giảm SL trên đơn PAID sinh 1 bản ghi. */
   refunds?: OrderRefund[];
+  // ── Địa chỉ SPX đã "làm mịn" (resolve 1 lần lúc tạo/sửa → xuất tái dùng) ──
+  /** Tỉnh chuẩn danh mục SPX cũ (vd "HÀ NỘI", "TP. HỒ CHÍ MINH"). */
+  spxState?: string | null;
+  /** Quận/Huyện chuẩn danh mục SPX cũ. */
+  spxCity?: string | null;
+  /** Xã/Phường chuẩn danh mục SPX cũ. */
+  spxWard?: string | null;
+  /** Địa chỉ chi tiết (số nhà + đường) — mặc định = address gốc. */
+  spxDetail?: string | null;
+  /** Trạng thái làm mịn: đủ 3 cấp / thiếu / chưa khớp. */
+  spxStatus?: SpxAddressStatus | null;
+  /** true = user đã sửa tay → auto-resolve KHÔNG ghi đè. */
+  spxManual?: boolean;
+  /** Snapshot địa chỉ gốc đã resolve — đổi thì mới chạy lại. */
+  spxSource?: string | null;
+  /** ISO thời điểm resolve gần nhất. */
+  spxResolvedAt?: string | null;
 }
+
+/** Trạng thái "làm mịn" địa chỉ SPX của đơn. */
+export type SpxAddressStatus = 'matched' | 'partial' | 'unmatched';
+
+export const SPX_ADDRESS_STATUSES: { value: SpxAddressStatus; label: string }[] = [
+  { value: 'matched', label: 'Địa chỉ mịn' },
+  { value: 'partial', label: 'Thiếu một phần' },
+  { value: 'unmatched', label: 'Chưa khớp' },
+];
+
+/** Nhãn hiển thị trạng thái làm mịn địa chỉ (types-convention). */
+export const spxAddressStatusLabel = (s?: SpxAddressStatus | null): string =>
+  SPX_ADDRESS_STATUSES.find((x) => x.value === s)?.label ?? 'Chưa làm mịn';

@@ -68,10 +68,26 @@ const SpxExportModal: React.FC<Props> = ({ isOpen, onClose, orders }) => {
         const addrs = eligible.map((o) =>
           [o.customer.address, o.customer.city].filter(Boolean).join(', '),
         );
-        const old = await resolveSpxOldAddresses(addrs, useAi);
-        resolved = old.map((r) => ({ state: r.state, city: r.city, ward: r.ward }));
-        filled = old.filter((r) => r.state && r.city && r.ward).length;
-        label = 'Tỉnh+Quận+Xã';
+        // TÁI DÙNG bản đã "làm mịn" lưu sẵn (spxStatus='matched' + địa chỉ chưa đổi) → khỏi gọi AI lại.
+        const arr = eligible.map((o, i) =>
+          o.spxStatus === 'matched' && (o.spxSource ?? '') === addrs[i]
+            ? { state: o.spxState ?? '', city: o.spxCity ?? '', ward: o.spxWard ?? '' }
+            : { state: '', city: '', ward: '' },
+        );
+        const missIdx = arr
+          .map((r, i) => (!r.state || !r.city || !r.ward ? i : -1))
+          .filter((i) => i >= 0);
+        if (missIdx.length > 0) {
+          const got = await resolveSpxOldAddresses(missIdx.map((i) => addrs[i]), useAi);
+          missIdx.forEach((oi, k) => {
+            const g = got[k];
+            if (g) arr[oi] = { state: g.state, city: g.city, ward: g.ward };
+          });
+        }
+        resolved = arr.map((r) => ({ state: r.state, city: r.city, ward: r.ward }));
+        filled = arr.filter((r) => r.state && r.city && r.ward).length;
+        const reused = eligible.length - missIdx.length;
+        label = `Tỉnh+Quận+Xã · tái dùng ${reused}/${eligible.length}`;
       } else {
         // Hệ MỚI 2 cấp (danh mục 2025 + AI): Tỉnh + Phường/Xã (KHÔNG Quận).
         const nw = await resolveSpxAddresses(eligible, useAi);

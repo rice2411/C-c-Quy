@@ -1,4 +1,4 @@
-import { Order } from "@/types";
+import { Order, DeliveryType } from "@/types";
 import { UserRole } from "@/types/user";
 import { apiClient } from "@/services/api/client";
 import { resolveZaloGroupIdsForOrderEvent } from "./configurationService";
@@ -62,6 +62,9 @@ export const addOrder = async (orderData: Order): Promise<void> => {
     throw error;
   }
 
+  // ── Làm mịn địa chỉ SPX: nền, không chặn (đơn ship tỉnh) ──
+  triggerSpxResolve(created);
+
   // ── Zalo: FIRE-AND-FORGET (không chặn caller) ──
   void (async () => {
     try {
@@ -105,6 +108,9 @@ export const updateOrder = async (
     console.error("Error updating order:", error);
     throw error;
   }
+
+  // ── Làm mịn địa chỉ SPX: nền, không chặn (BE bỏ qua nếu địa chỉ chưa đổi) ──
+  triggerSpxResolve({ ...updated, id: orderId });
 
   // ── Zalo update: FIRE-AND-FORGET (không chặn caller) ──
   const changes: any[] = Array.isArray(updated?.changes) ? updated.changes : [];
@@ -443,6 +449,64 @@ export const resolveSpxOldAddresses = async (
         };
       })
     : [];
+};
+
+/**
+ * Làm mịn địa chỉ SPX cho 1 đơn: BE resolve Tỉnh/Quận/Xã (danh mục cũ + AI) → lưu trên đơn.
+ * force=true (nút "Làm mịn lại") luôn chạy; false (auto) bỏ qua nếu đã sửa tay / địa chỉ chưa đổi.
+ * Trả order đã cập nhật (có spxState/spxCity/spxWard/spxStatus).
+ */
+export const resolveOrderSpx = async (id: string, force = false): Promise<Order> => {
+  const res = await apiClient.post(`/orders/${id}/resolve-spx`, { force });
+  return res.data as Order;
+};
+
+/** Lưu địa chỉ SPX user CHỌN TAY (dropdown Tỉnh/Quận/Xã) — BE set spx_manual=true. */
+export const setOrderSpxAddress = async (
+  id: string,
+  patch: { state?: string; city?: string; ward?: string; detail?: string },
+): Promise<Order> => {
+  const res = await apiClient.patch(`/orders/${id}/spx-address`, patch);
+  return res.data as Order;
+};
+
+/**
+ * Đơn ship tỉnh → nền làm mịn địa chỉ SPX (FIRE-AND-FORGET, không chặn caller).
+ * BE tự bỏ qua nếu địa chỉ chưa đổi hoặc user đã sửa tay.
+ */
+const triggerSpxResolve = (order: { id?: string; deliveryType?: string } | undefined): void => {
+  if (!order?.id || order.deliveryType !== DeliveryType.SHIP_PROVINCE) return;
+  void resolveOrderSpx(String(order.id), false).catch((e) => {
+    console.error("Auto resolve SPX address error (ignored):", e);
+  });
+};
+
+/** Danh mục hành chính CŨ của SPX (Tỉnh → Quận/Huyện → Xã/Phường) cho dropdown sửa tay. */
+export interface SpxOldCatalog {
+  states: string[];
+  citiesByState: Record<string, string[]>;
+  wardsByCity: Record<string, string[]>;
+}
+
+let spxOldCatalogCache: SpxOldCatalog | null = null;
+
+/** Lấy danh mục 3 cấp cũ (cache 1 lần cho phiên). Dùng cho dropdown sửa tay ở chi tiết đơn. */
+export const fetchSpxOldCatalog = async (): Promise<SpxOldCatalog> => {
+  if (spxOldCatalogCache) return spxOldCatalogCache;
+  const res = await apiClient.get("/orders/spx-old-catalog");
+  const d = (res.data ?? {}) as Partial<SpxOldCatalog>;
+  spxOldCatalogCache = {
+    states: Array.isArray(d.states) ? d.states : [],
+    citiesByState:
+      d.citiesByState && typeof d.citiesByState === "object"
+        ? (d.citiesByState as Record<string, string[]>)
+        : {},
+    wardsByCity:
+      d.wardsByCity && typeof d.wardsByCity === "object"
+        ? (d.wardsByCity as Record<string, string[]>)
+        : {},
+  };
+  return spxOldCatalogCache;
 };
 
 export interface TrackingEvent { time: number; label: string; location?: string }
