@@ -21,8 +21,6 @@ import {
   Monitor,
   MessageSquare,
   QrCode,
-  AlertTriangle,
-  HeartPulse,
   Building2,
   Clock,
   UserCheck,
@@ -249,20 +247,6 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/system/errors",
-    labelKey: "nav.systemErrors",
-    icon: AlertTriangle,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  },
-  {
-    type: "page",
-    path: "/system/health",
-    labelKey: "nav.systemHealth",
-    icon: HeartPulse,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  },
-  {
-    type: "page",
     path: "/settings/product",
     labelKey: "nav.settingsProduct",
     icon: Cake,
@@ -463,8 +447,6 @@ export const navGroups: NavGroupConfig[] = [
       "/notifications",
       "/system/traffic",
       "/system/logs",
-      "/system/errors",
-      "/system/health",
     ],
   },
   {

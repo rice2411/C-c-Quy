@@ -30,8 +30,6 @@ const AttendancePage = lazy(() => import("./pages/Attendance/index"));
 const AttendanceManagePage = lazy(() => import("./pages/Attendance/ManagePage"));
 const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
 const SystemLogsPage = lazy(() => import("./pages/System/Requests/index"));
-const SystemErrorsPage = lazy(() => import("./pages/System/Errors/index"));
-const SystemHealthPage = lazy(() => import("./pages/System/Health/index"));
 const NotificationsPage = lazy(() => import("./pages/Notifications/index"));
 const OrderSettingsTab = lazy(() => import("./pages/Settings/OrderSettingsTab"));
 const SepaySettingsTab = lazy(() => import("./pages/Settings/SepaySettingsTab"));
@@ -242,22 +240,6 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/system/logs")?.roles}>
             <SystemLogsPage />
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="system/errors"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/system/errors")?.roles}>
-            <SystemErrorsPage />
-          </RoleBasedRoute>
-        }
-      />
-      <Route
-        path="system/health"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/system/health")?.roles}>
-            <SystemHealthPage />
           </RoleBasedRoute>
         }
       />
