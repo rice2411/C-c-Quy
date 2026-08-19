@@ -6,7 +6,6 @@ import { Carrier, CarrierType } from '@/services/carrierService';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
-import Badge from '@/components/ui/Badge';
 import Input from '@/components/ui/Input';
 import Label from '@/components/ui/Label';
 import IconButton from '@/components/ui/IconButton';
@@ -23,11 +22,16 @@ const emptyForm: Form = { type: 'express', name: '', phone: '', route: '', stati
 const CarriersPage: React.FC = () => {
   const { carriers, loading } = useCarriers();
   const { save, remove, saving } = useCarrierMutations();
+  const [tab, setTab] = useState<CarrierType>('express');
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
 
-  const openCreate = () => { setEditId(null); setForm(emptyForm); setOpen(true); };
+  const coachList = carriers.filter((c) => c.type === 'coach');
+  const expressList = carriers.filter((c) => c.type !== 'coach');
+  const list = tab === 'coach' ? coachList : expressList;
+
+  const openCreate = () => { setEditId(null); setForm({ ...emptyForm, type: tab }); setOpen(true); };
   const openEdit = (c: Carrier) => {
     setEditId(c.id);
     setForm({ type: c.type, name: c.name, phone: c.phone ?? '', route: c.route ?? '', station: c.station ?? '', note: c.note ?? '', active: c.active });
@@ -95,29 +99,57 @@ const CarriersPage: React.FC = () => {
         </Button>
       </Box>
 
+      {/* Tab: Chuyển phát (truyền thống) / Nhà xe (xe khách) */}
+      <Box layoutClassName="flex items-center gap-1 rounded-xl p-1" backgroundClassName="bg-slate-100 dark:bg-slate-800/60">
+        {([
+          { key: 'express' as CarrierType, label: 'Chuyển phát', icon: <Truck className="h-4 w-4" />, count: expressList.length },
+          { key: 'coach' as CarrierType, label: 'Nhà xe', icon: <Bus className="h-4 w-4" />, count: coachList.length },
+        ]).map((tb) => {
+          const on = tab === tb.key;
+          return (
+            <Button
+              key={tb.key}
+              type="button"
+              onClick={() => setTab(tb.key)}
+              variant={on ? 'primary' : 'ghost'}
+              leftIcon={tb.icon}
+              iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+              layoutClassName="inline-flex flex-1 items-center justify-center gap-1.5"
+              sizeClassName="px-3 py-2 text-sm"
+              roundedClassName="rounded-lg"
+              backgroundClassName={on ? 'bg-white dark:bg-slate-700' : 'bg-transparent'}
+              shadowClassName={on ? 'shadow-sm' : ''}
+              textClassName={on ? 'font-semibold text-slate-900 dark:text-white' : 'font-medium text-slate-500 dark:text-slate-400'}
+              disableVariantHover
+            >
+              {tb.label} ({tb.count})
+            </Button>
+          );
+        })}
+      </Box>
+
       {loading ? (
         <Box layoutClassName="flex items-center gap-2 py-8"><Spinner /><Typography size="sm" variant="muted">Đang tải…</Typography></Box>
-      ) : carriers.length === 0 ? (
+      ) : list.length === 0 ? (
         <Box layoutClassName="flex flex-col items-center gap-2 py-12 text-center">
-          <Truck className="h-10 w-10 text-slate-300 dark:text-slate-600" />
-          <Typography size="sm" variant="muted">Chưa có đơn vị vận chuyển nào.</Typography>
+          {tab === 'coach' ? <Bus className="h-10 w-10 text-slate-300 dark:text-slate-600" /> : <Truck className="h-10 w-10 text-slate-300 dark:text-slate-600" />}
+          <Typography size="sm" variant="muted">{tab === 'coach' ? 'Chưa có nhà xe nào.' : 'Chưa có đơn vị chuyển phát nào.'}</Typography>
         </Box>
       ) : (
         <Box layoutClassName="overflow-x-auto rounded-xl" borderClassName="border border-slate-200 dark:border-slate-700">
-          <Box layoutClassName="min-w-[720px]">
+          <Box layoutClassName="min-w-[560px]">
           <Table>
             <TableHead>
               <TableRow>
                 <TableHeaderCell layoutClassName="px-4 py-3 text-left">Đơn vị</TableHeaderCell>
-                <TableHeaderCell layoutClassName="px-3 py-3 text-left">Dạng</TableHeaderCell>
                 <TableHeaderCell layoutClassName="px-3 py-3 text-left">Liên hệ</TableHeaderCell>
-                <TableHeaderCell layoutClassName="px-3 py-3 text-left">Tuyến / Bến đỗ</TableHeaderCell>
+                {tab === 'coach' && <TableHeaderCell layoutClassName="px-3 py-3 text-left">Tuyến / Bến đỗ</TableHeaderCell>}
                 <TableHeaderCell layoutClassName="px-3 py-3 text-center">Bật</TableHeaderCell>
                 <TableHeaderCell layoutClassName="px-3 py-3 text-right">Thao tác</TableHeaderCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {carriers.map((c) => {
+              {list.map((c) => {
                 const isCoach = c.type === 'coach';
                 return (
                   <TableRow key={c.id}>
@@ -130,11 +162,6 @@ const CarriersPage: React.FC = () => {
                       </Box>
                     </TableCell>
                     <TableCell layoutClassName="px-3 py-2.5">
-                      <Badge size="sm" layoutClassName="px-2 py-0.5 text-[11px]" borderClassName="border-transparent" backgroundClassName={isCoach ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-primary-100 dark:bg-primary-900/30'} textClassName={isCoach ? 'text-amber-700 dark:text-amber-300' : 'text-primary-700 dark:text-primary-300'}>
-                        {isCoach ? 'Xe khách' : 'Truyền thống'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell layoutClassName="px-3 py-2.5">
                       {c.phone ? (
                         <Box layoutClassName="flex items-center gap-1">
                           <Phone className="h-3.5 w-3.5 text-slate-400" />
@@ -142,6 +169,7 @@ const CarriersPage: React.FC = () => {
                         </Box>
                       ) : <Typography size="sm" variant="muted">—</Typography>}
                     </TableCell>
+                    {tab === 'coach' && (
                     <TableCell layoutClassName="px-3 py-2.5">
                       {isCoach && (c.route || c.station) ? (
                         <Box layoutClassName="flex flex-col gap-0.5">
@@ -150,6 +178,7 @@ const CarriersPage: React.FC = () => {
                         </Box>
                       ) : <Typography size="sm" variant="muted">—</Typography>}
                     </TableCell>
+                    )}
                     <TableCell layoutClassName="px-3 py-2.5 text-center">
                       <Switch checked={c.active} onCheckedChange={(v) => void toggleActive(c, v)} aria-label={`Bật/tắt ${c.name}`} />
                     </TableCell>
