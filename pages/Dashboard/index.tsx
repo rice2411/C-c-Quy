@@ -5,7 +5,12 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/hooks/useOrders';
+import { useTransactions } from '@/hooks/queries/useTransactionsQuery';
 import { getOrderRevenueDate, getOrderTotal } from '@/utils/order/orderUtils';
+
+/** Tiền RA "cá nhân/rút vốn/nội bộ" (không tính chi phí quán). Mặc định coi là chi phí (category rỗng → cost). */
+const isPersonalOut = (expenseCategory?: string | null, costExcluded?: boolean): boolean =>
+  costExcluded === true || ['personal', 'owner', 'internal'].includes(expenseCategory ?? '');
 import DashboardSection from '@/pages/Dashboard/components/DashboardSection';
 import DashboardRangeControl from '@/pages/Dashboard/components/DashboardRangeControl';
 import DashboardAlerts from '@/pages/Dashboard/components/DashboardAlerts';
@@ -31,6 +36,7 @@ const toLocalYMD = (d: Date): string =>
 
 const DashboardPage: React.FC = () => {
   const { orders, loading, refreshOrders } = useOrders();
+  const { transactions } = useTransactions();
   const { language } = useLanguage();
   const [timeRange, setTimeRange] = useState<TimeRange>('week');
   const [referenceDate, setReferenceDate] = useState<Date>(new Date());
@@ -130,47 +136,56 @@ const DashboardPage: React.FC = () => {
   }, [endDate]);
 
   const chartData = useMemo(() => {
-    const dataMap = new Map<string, number>();
+    type Bucket = { theoretical: number; actual: number; cost: number; personal: number };
+    const locale = language === 'vi' ? 'vi-VN' : 'en-US';
+    const keyOf = (d: Date): string =>
+      timeRange === 'year'
+        ? d.toLocaleDateString(locale, { month: 'short', year: 'numeric' })
+        : d.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
+
+    // Khởi tạo bucket rỗng theo kỳ (giữ thứ tự thời gian).
+    const order: string[] = [];
+    const map = new Map<string, Bucket>();
     const iterDate = new Date(startDate);
     let safeGuard = 0;
-
     while (iterDate <= endDate && safeGuard < 366) {
-      let key = '';
-      if (timeRange === 'year') {
-        key = iterDate.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', year: 'numeric' });
-        iterDate.setMonth(iterDate.getMonth() + 1);
-      } else {
-        key = iterDate.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', day: 'numeric' });
-        iterDate.setDate(iterDate.getDate() + 1);
-      }
-      if (!dataMap.has(key)) dataMap.set(key, 0);
+      const key = keyOf(iterDate);
+      if (!map.has(key)) { map.set(key, { theoretical: 0, actual: 0, cost: 0, personal: 0 }); order.push(key); }
+      if (timeRange === 'year') iterDate.setMonth(iterDate.getMonth() + 1);
+      else iterDate.setDate(iterDate.getDate() + 1);
       safeGuard++;
     }
 
-    // Mốc doanh thu: ưu tiên deliveryDate, fallback createdAt
-    const filtered = orders.filter(order => {
-      const d = getOrderRevenueDate(order);
-      return d != null && d >= startDate && d <= endDate;
+    // Doanh thu LÝ THUYẾT: mọi đơn (kể cả chưa thanh toán), trừ đơn huỷ — theo mốc doanh thu.
+    orders.forEach((o) => {
+      if (o.status === OrderStatus.CANCELLED) return;
+      const d = getOrderRevenueDate(o);
+      if (!d || d < startDate || d > endDate) return;
+      const b = map.get(keyOf(d));
+      if (b) b.theoretical += getOrderTotal(o);
     });
 
-    filtered.forEach(order => {
-      if (order.paymentStatus === PaymentStatus.PAID && order.status === OrderStatus.DELIVERED) {
-        const date = getOrderRevenueDate(order);
-        if (!date) return;
-        let key = '';
-        if (timeRange === 'year') {
-          key = date.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', year: 'numeric' });
-        } else {
-          key = date.toLocaleDateString(language === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', day: 'numeric' });
-        }
-        if (dataMap.has(key)) {
-          dataMap.set(key, (dataMap.get(key) || 0) + getOrderTotal(order));
-        }
+    // Tiền THỰC nhận (in) + chi phí ra (cost / cá nhân) — theo ngày giao dịch.
+    transactions.forEach((tx) => {
+      const raw = tx.transactionDate || tx.receivedAt;
+      if (!raw) return;
+      const d = new Date(raw);
+      if (isNaN(d.getTime()) || d < startDate || d > endDate) return;
+      const b = map.get(keyOf(d));
+      if (!b) return;
+      const amt = Number(tx.transferAmount) || 0;
+      if (tx.transferType === 'in') b.actual += amt;
+      else if (tx.transferType === 'out') {
+        if (isPersonalOut(tx.expenseCategory, tx.costExcluded)) b.personal += amt;
+        else b.cost += amt;
       }
     });
 
-    return Array.from(dataMap.entries()).map(([name, amount]) => ({ name, amount }));
-  }, [orders, startDate, endDate, timeRange, language]);
+    return order.map((name) => {
+      const b = map.get(name)!;
+      return { name, theoretical: b.theoretical, actual: b.actual, cost: b.cost, personal: b.personal, profit: b.actual - b.cost };
+    });
+  }, [orders, transactions, startDate, endDate, timeRange, language]);
 
   const recentOrdersForDashboard: Order[] = useMemo(
     () => [...orders].sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime()),
