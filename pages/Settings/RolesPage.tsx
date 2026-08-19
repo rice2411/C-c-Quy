@@ -23,6 +23,34 @@ const TOTAL_ACTIONS = PERMISSION_MODULES.reduce((s, m) => s + m.actions.length, 
 const grantedCount = (perms: RolePermissions): number =>
   PERMISSION_MODULES.reduce((s, m) => s + m.actions.filter((a) => perms?.[m.key]?.[a]).length, 0);
 
+// ── Màu riêng cho mỗi vai trò (avatar + accent) ──
+type RoleColor = { solid: string; soft: string; text: string; bar: string };
+const PALETTE: RoleColor[] = [
+  { solid: 'bg-blue-600',    soft: 'bg-blue-50 dark:bg-blue-900/20',       text: 'text-blue-700 dark:text-blue-300',       bar: 'bg-blue-500' },
+  { solid: 'bg-teal-600',    soft: 'bg-teal-50 dark:bg-teal-900/20',       text: 'text-teal-700 dark:text-teal-300',       bar: 'bg-teal-500' },
+  { solid: 'bg-amber-500',   soft: 'bg-amber-50 dark:bg-amber-900/20',     text: 'text-amber-700 dark:text-amber-300',     bar: 'bg-amber-500' },
+  { solid: 'bg-rose-600',    soft: 'bg-rose-50 dark:bg-rose-900/20',       text: 'text-rose-700 dark:text-rose-300',       bar: 'bg-rose-500' },
+  { solid: 'bg-indigo-600',  soft: 'bg-indigo-50 dark:bg-indigo-900/20',   text: 'text-indigo-700 dark:text-indigo-300',   bar: 'bg-indigo-500' },
+  { solid: 'bg-emerald-600', soft: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-300', bar: 'bg-emerald-500' },
+  { solid: 'bg-cyan-600',    soft: 'bg-cyan-50 dark:bg-cyan-900/20',       text: 'text-cyan-700 dark:text-cyan-300',       bar: 'bg-cyan-500' },
+  { solid: 'bg-orange-600',  soft: 'bg-orange-50 dark:bg-orange-900/20',   text: 'text-orange-700 dark:text-orange-300',   bar: 'bg-orange-500' },
+  { solid: 'bg-pink-600',    soft: 'bg-pink-50 dark:bg-pink-900/20',       text: 'text-pink-700 dark:text-pink-300',       bar: 'bg-pink-500' },
+  { solid: 'bg-violet-600',  soft: 'bg-violet-50 dark:bg-violet-900/20',   text: 'text-violet-700 dark:text-violet-300',   bar: 'bg-violet-500' },
+];
+const PURPLE: RoleColor = { solid: 'bg-purple-600', soft: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-700 dark:text-purple-300', bar: 'bg-purple-500' };
+const FIXED_COLORS: Record<string, RoleColor> = {
+  super_admin: PURPLE,
+  admin: PALETTE[0],       // xanh dương
+  staff: PALETTE[1],       // teal
+  colaborator: PALETTE[2], // hổ phách
+};
+const hashKey = (s: string): number => {
+  let h = 0;
+  for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+};
+const roleColor = (key: string): RoleColor => FIXED_COLORS[key] ?? PALETTE[hashKey(key) % PALETTE.length];
+
 /** Cài đặt → Quyền và Tính năng: chọn 1 quyền → bật/tắt từng hành động (Xem/Tạo/Sửa/Xóa) theo module. */
 const RolesPage: React.FC = () => {
   const { roles, loading } = useRoles();
@@ -121,21 +149,22 @@ const RolesPage: React.FC = () => {
                 const cnt = r.key === 'super_admin' ? TOTAL_ACTIONS : grantedCount(r.permissions ?? {});
                 const full = r.key === 'super_admin' || cnt === TOTAL_ACTIONS;
                 const editing = editingKey === r.key;
+                const c = roleColor(r.key);
                 return (
                   <Box
                     key={r.key}
                     role="button"
                     onClick={() => !editing && setSelectedKey(r.key)}
                     layoutClassName="group relative flex items-center gap-2.5 rounded-lg py-2 pl-3 pr-2"
-                    backgroundClassName={active ? 'bg-primary-50 dark:bg-primary-900/20' : 'bg-transparent'}
+                    backgroundClassName={active ? c.soft : 'bg-transparent'}
                     hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-800/60"
                     stateClassName="transition-colors"
                   >
-                    {active && <Box layoutClassName="absolute inset-y-1.5 left-0 w-1 rounded-full" backgroundClassName="bg-primary-500" />}
+                    {active && <Box layoutClassName="absolute inset-y-1.5 left-0 w-1 rounded-full" backgroundClassName={c.bar} />}
                     <Box
                       layoutClassName="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
-                      backgroundClassName={active ? 'bg-primary-600' : 'bg-slate-100 dark:bg-slate-700'}
-                      textClassName={active ? 'text-white' : 'text-slate-500 dark:text-slate-300'}
+                      backgroundClassName={c.solid}
+                      textClassName="text-white"
                     >
                       {(r.name || r.key).charAt(0).toUpperCase()}
                     </Box>
@@ -153,7 +182,7 @@ const RolesPage: React.FC = () => {
                         />
                       ) : (
                         <>
-                          <Typography as="p" size="sm" layoutClassName="truncate font-semibold" textClassName={active ? 'text-primary-800 dark:text-primary-200' : 'text-slate-800 dark:text-slate-100'}>
+                          <Typography as="p" size="sm" layoutClassName="truncate font-semibold" textClassName={active ? c.text : 'text-slate-800 dark:text-slate-100'}>
                             {r.name}
                           </Typography>
                           <Typography as="span" size="xs" textClassName={full ? 'text-purple-600 dark:text-purple-400' : 'text-slate-400 dark:text-slate-500'}>
@@ -201,7 +230,7 @@ const RolesPage: React.FC = () => {
               <>
                 <Box layoutClassName="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-700/70">
                   <Box layoutClassName="flex items-center gap-3">
-                    <Box layoutClassName="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold" backgroundClassName="bg-primary-600" textClassName="text-white">
+                    <Box layoutClassName="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold" backgroundClassName={roleColor(selected.key).solid} textClassName="text-white">
                       {(selected.name || selected.key).charAt(0).toUpperCase()}
                     </Box>
                     <Box>
