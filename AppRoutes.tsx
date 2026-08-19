@@ -20,8 +20,7 @@ const CostMaterialsPage = lazy(() => import("./pages/Materials/index"));
 const CostAssetsPage = lazy(() => import("./pages/CostHub/AssetsTab"));
 const CostOpexPage = lazy(() => import("./pages/CostHub/OpexTab"));
 const RecipesPage = lazy(() => import("./pages/Recipes/index"));
-const SuppliersPage = lazy(() => import("./pages/Suppliers/index"));
-const CustomersPage = lazy(() => import("./pages/Customers/index"));
+const PartnersPage = lazy(() => import("./pages/Partners/index"));
 const UsersPage = lazy(() => import("./pages/Users/index"));
 const EmployeesPage = lazy(() => import("./pages/Employees/index"));
 const WorkConfigPage = lazy(() => import("./pages/WorkConfig/index"));
@@ -159,27 +158,21 @@ const AppRoutes: React.FC = () => (
       <Route path="expenses/assets" element={<RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses/assets")?.roles}><CostAssetsPage /></RoleBasedRoute>} />
       <Route path="recipes" element={<RoleBasedRoute requiredRole={routes.find((r) => r.path === "/recipes")?.roles}><RecipesPage /></RoleBasedRoute>} />
       <Route path="expenses/opex" element={<RoleBasedRoute requiredRole={routes.find((r) => r.path === "/expenses/opex")?.roles}><CostOpexPage /></RoleBasedRoute>} />
-      {/* NCC = page riêng. */}
+      {/* Đối tác = hub gom Khách hàng + Nhà cung cấp + Đơn vị vận chuyển. */}
       <Route
-        path="suppliers"
+        path="partners"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/suppliers")?.roles}>
-            <SuppliersPage />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/partners")?.roles}>
+            <PartnersPage />
           </RoleBasedRoute>
         }
       />
-      {/* Link cũ → screen con tương ứng. */}
+      {/* Link cũ → hub Đối tác / screen con tương ứng. */}
+      <Route path="suppliers" element={<Navigate to="/partners" replace />} />
+      <Route path="customers" element={<Navigate to="/partners" replace />} />
       <Route path="stock-receipts" element={<Navigate to="/expenses/receipts" replace />} />
       <Route path="materials" element={<Navigate to="/expenses/materials" replace />} />
       <Route path="bill-import" element={<Navigate to="/expenses/receipts" replace />} />
-      <Route
-        path="customers"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/customers")?.roles}>
-            <CustomersPage />
-          </RoleBasedRoute>
-        }
-      />
       <Route
         path="users"
         element={

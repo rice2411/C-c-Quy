@@ -25,7 +25,7 @@ const MobileFooterNav: React.FC = () => {
     [accessibleRoutes]
   );
 
-  const mainTabs = ['/', '/orders', '/customers', '/storage'];
+  const mainTabs = ['/', '/orders', '/partners', '/storage'];
 
   // Cây nav: gom các route thuộc nhóm; lọc bỏ các tab chính khỏi menu "Thêm"
   const navTree = buildNavTree(userRole, screenVisibility, screenRoles);
@@ -46,8 +46,8 @@ const MobileFooterNav: React.FC = () => {
       icon: ShoppingCart,
     },
     {
-      id: '/customers',
-      label: t('nav.customers'),
+      id: '/partners',
+      label: t('nav.partners'),
       icon: Users,
     },
     {
