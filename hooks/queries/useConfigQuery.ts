@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ScreenConfiguration,
   ScreenVisibilityMap,
+  ScreenRolesMap,
   ZaloGroupConfig,
   ZaloGroupsConfiguration,
 } from '@/types';
@@ -53,6 +54,7 @@ export const useScreenConfigQuery = (): UseScreenConfigResult => {
 
 export interface SaveScreenConfigArgs {
   screenVisibility: ScreenVisibilityMap;
+  screenRoles: ScreenRolesMap;
   updatedBy?: string;
 }
 
@@ -64,11 +66,11 @@ export interface UseSaveScreenConfigResult {
 export const useSaveScreenConfig = (): UseSaveScreenConfigResult => {
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: ({ screenVisibility, updatedBy }: SaveScreenConfigArgs) =>
-      saveScreenConfiguration(screenVisibility, updatedBy),
-    onSuccess: (_data, { screenVisibility }) => {
+    mutationFn: ({ screenVisibility, screenRoles, updatedBy }: SaveScreenConfigArgs) =>
+      saveScreenConfiguration(screenVisibility, screenRoles, updatedBy),
+    onSuccess: (_data, { screenVisibility, screenRoles }) => {
       // Cập nhật cache ngay (tránh nháy data cũ) + invalidate đồng bộ server.
-      queryClient.setQueryData<ScreenConfiguration>(qk.screenConfig.all, { screenVisibility });
+      queryClient.setQueryData<ScreenConfiguration>(qk.screenConfig.all, { screenVisibility, screenRoles });
       queryClient.invalidateQueries({ queryKey: qk.screenConfig.all });
     },
   });

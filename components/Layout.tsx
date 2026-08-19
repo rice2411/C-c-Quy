@@ -19,7 +19,7 @@ const Layout: React.FC = () => {
   const { currentUser, userData, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const { screenVisibility, isScreenEnabled } = useScreenConfig();
+  const { screenVisibility, screenRoles, isScreenEnabled } = useScreenConfig();
   const ping = useSystemPing();
 
   // PWA: phát hiện bản web mới → cho user bấm cập nhật (reload lấy asset + dữ liệu mới nhất).
@@ -108,7 +108,7 @@ const Layout: React.FC = () => {
   const userRole = userData?.role || storedUser?.role;
   
   
-  const navTree = buildNavTree(userRole, screenVisibility);
+  const navTree = buildNavTree(userRole, screenVisibility, screenRoles);
   // Tách cho mega menu: route lẻ (cột "Chính") + các nhóm (mỗi nhóm 1 cột)
   const megaStandalone = navTree.flatMap((n) => (n.type === 'route' ? [n.route] : []));
   const megaGroups = navTree.flatMap((n) => (n.type === 'group' ? [n] : []));

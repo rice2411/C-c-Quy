@@ -1,15 +1,17 @@
 import React, { createContext, useContext, useMemo } from 'react';
-import { ScreenVisibilityMap } from '@/types';
+import { ScreenVisibilityMap, ScreenRolesMap } from '@/types';
 import { useSaveScreenConfig, useScreenConfigQuery } from '@/hooks/queries/useConfigQuery';
 import { useAuth } from './AuthContext';
 
 interface ScreenConfigContextType {
   screenVisibility: ScreenVisibilityMap;
+  screenRoles: ScreenRolesMap;
   loading: boolean;
   saving: boolean;
   refresh: () => Promise<void>;
   isScreenEnabled: (path: string) => boolean;
-  saveVisibility: (nextVisibility: ScreenVisibilityMap) => Promise<void>;
+  /** Lưu cả visibility + role override. */
+  saveConfig: (nextVisibility: ScreenVisibilityMap, nextRoles: ScreenRolesMap) => Promise<void>;
 }
 
 const ScreenConfigContext = createContext<ScreenConfigContextType | undefined>(undefined);
@@ -33,19 +35,25 @@ export const ScreenConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { save, saving } = useSaveScreenConfig();
 
   const screenVisibility = config?.screenVisibility ?? {};
+  const screenRoles = config?.screenRoles ?? {};
 
   const value = useMemo<ScreenConfigContextType>(
     () => ({
       screenVisibility,
+      screenRoles,
       loading,
       saving,
       refresh: refetch,
       isScreenEnabled: (path: string) => screenVisibility[path] !== false,
-      saveVisibility: async (nextVisibility: ScreenVisibilityMap) => {
-        await save({ screenVisibility: nextVisibility, updatedBy: currentUser?.uid });
+      saveConfig: async (nextVisibility: ScreenVisibilityMap, nextRoles: ScreenRolesMap) => {
+        await save({
+          screenVisibility: nextVisibility,
+          screenRoles: nextRoles,
+          updatedBy: currentUser?.uid,
+        });
       },
     }),
-    [screenVisibility, loading, saving, refetch, save, currentUser?.uid]
+    [screenVisibility, screenRoles, loading, saving, refetch, save, currentUser?.uid]
   );
 
   return <ScreenConfigContext.Provider value={value}>{children}</ScreenConfigContext.Provider>;

@@ -1,24 +1,31 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useScreenConfig } from '@/contexts/ScreenConfigContext';
 import { UserRole } from '@/types/user';
 
 interface RoleBasedRouteProps {
   children: React.ReactNode;
-  requiredRole?: UserRole | UserRole[]; // Role hoặc array roles được phép truy cập
+  requiredRole?: UserRole | UserRole[]; // Role mặc định (hard-code) được phép truy cập
   fallbackPath?: string; // Path để redirect nếu không có quyền
 }
 
-const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ 
-  children, 
+const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({
+  children,
   requiredRole,
   fallbackPath = '/'
 }) => {
   const { userData } = useAuth();
+  const { screenRoles } = useScreenConfig();
   const location = useLocation();
-  
-  // Nếu không có requiredRole, cho phép tất cả user đã đăng nhập
-  if (!requiredRole) {
+
+  // Override role theo config (Cài đặt → Màn hình) cho path hiện tại; không có → dùng mặc định.
+  const override = screenRoles[location.pathname];
+  const effectiveRole: UserRole | UserRole[] | undefined =
+    override && override.length ? (override as UserRole[]) : requiredRole;
+
+  // Nếu không có role yêu cầu, cho phép tất cả user đã đăng nhập
+  if (!effectiveRole) {
     return <>{children}</>;
   }
 
@@ -34,9 +41,9 @@ const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({
   const userRole = userData.role;
 
   // Kiểm tra quyền truy cập
-  const hasPermission = Array.isArray(requiredRole)
-    ? requiredRole.includes(userRole)
-    : requiredRole === userRole;
+  const hasPermission = Array.isArray(effectiveRole)
+    ? effectiveRole.includes(userRole)
+    : effectiveRole === userRole;
 
   if (!hasPermission) {
     // Redirect về trang không có quyền hoặc dashboard

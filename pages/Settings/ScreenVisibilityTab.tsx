@@ -3,7 +3,8 @@ import { Save, Settings } from 'lucide-react';
 import { getRouteConfigKey, routes, storageTabRoutes } from '@/config/routes';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
-import { ScreenVisibilityMap } from '@/types';
+import { ScreenVisibilityMap, ScreenRolesMap } from '@/types';
+import { UserRole } from '@/types/user';
 import toast from 'react-hot-toast';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
@@ -14,21 +15,34 @@ import Spinner from '@/components/ui/Spinner';
 import Switch from '@/components/ui/Switch';
 import Typography from '@/components/ui/Typography';
 
-/** Tab "Màn hình" của Cài đặt — bật/tắt hiển thị các màn hình trên menu. Là 1 route /settings/screens. */
+/** Các role có thể gán cho màn (chỉnh trực tiếp thay vì hard-code trong routes.ts). */
+const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
+  { value: UserRole.SUPER_ADMIN, label: 'Super admin' },
+  { value: UserRole.ADMIN, label: 'Admin' },
+  { value: UserRole.COLABORATOR, label: 'CTV' },
+  { value: UserRole.STAFF, label: 'Nhân viên' },
+];
+
+const sameSet = (a: string[], b: string[]): boolean =>
+  a.length === b.length && a.every((x) => b.includes(x));
+
+/** Tab "Màn hình" của Cài đặt — bật/tắt hiển thị + chỉnh ROLE được truy cập mỗi màn. Route /settings/screens. */
 const ScreenVisibilityTab: React.FC = () => {
   const { t } = useLanguage();
-  const { screenVisibility, loading, saving, saveVisibility } = useScreenConfig();
+  const { screenVisibility, screenRoles, loading, saving, saveConfig } = useScreenConfig();
   const [draftVisibility, setDraftVisibility] = useState<ScreenVisibilityMap>({});
+  const [draftRoles, setDraftRoles] = useState<ScreenRolesMap>({});
 
   useEffect(() => {
     setDraftVisibility(screenVisibility);
-  }, [screenVisibility]);
+    setDraftRoles(screenRoles);
+  }, [screenVisibility, screenRoles]);
 
-  // Loại trừ chính các route Cài đặt (/settings/*) khỏi danh sách — tránh tự tắt trang cài đặt.
-  const pageItems = useMemo(() => {
-    return routes.filter((route) => !route.path.startsWith('/settings') && route.path !== '/');
-  }, []);
-
+  // Loại trừ chính các route Cài đặt (/settings/*) + Dashboard khỏi danh sách — tránh tự khoá mình ra.
+  const pageItems = useMemo(
+    () => routes.filter((route) => !route.path.startsWith('/settings') && route.path !== '/'),
+    [],
+  );
   const tabItems = useMemo(() => storageTabRoutes, []);
 
   const childTabsByParent = useMemo(() => {
@@ -40,13 +54,21 @@ const ScreenVisibilityTab: React.FC = () => {
     }, {});
   }, [tabItems]);
 
+  /** Role hiệu lực đang chỉnh cho 1 màn (override draft, else mặc định route.roles). */
+  const rolesOf = (key: string, def: UserRole[]): UserRole[] =>
+    (draftRoles[key] as UserRole[] | undefined) ?? def;
+
   const hasChanged = useMemo(() => {
     const allItems = [...pageItems, ...tabItems];
     return allItems.some((item) => {
       const key = getRouteConfigKey(item);
-      return (draftVisibility[key] !== false) !== (screenVisibility[key] !== false);
+      const visChanged = (draftVisibility[key] !== false) !== (screenVisibility[key] !== false);
+      const savedRoles = screenRoles[key] ?? item.roles;
+      const rolesChanged = !sameSet(rolesOf(key, item.roles), savedRoles);
+      return visChanged || rolesChanged;
     });
-  }, [draftVisibility, pageItems, tabItems, screenVisibility]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftVisibility, draftRoles, pageItems, tabItems, screenVisibility, screenRoles]);
 
   const handleToggle = (configKey: string) => {
     setDraftVisibility((prev) => ({
@@ -55,14 +77,74 @@ const ScreenVisibilityTab: React.FC = () => {
     }));
   };
 
+  const toggleRole = (key: string, def: UserRole[], role: UserRole) => {
+    setDraftRoles((prev) => {
+      const cur = prev[key] ?? def;
+      const next = cur.includes(role) ? cur.filter((r) => r !== role) : [...cur, role];
+      return { ...prev, [key]: next };
+    });
+  };
+
   const handleSave = async () => {
+    // Gửi FULL visibility (mọi màn) + roles CHỈ nơi khác mặc định (BE: mảng rỗng → dùng mặc định).
+    const allItems = [...pageItems, ...tabItems];
+    const visPayload: ScreenVisibilityMap = { ...draftVisibility };
+    const rolesPayload: ScreenRolesMap = {};
+    allItems.forEach((item) => {
+      const key = getRouteConfigKey(item);
+      visPayload[key] = draftVisibility[key] !== false;
+      const eff = rolesOf(key, item.roles);
+      if (!sameSet(eff, item.roles)) rolesPayload[key] = eff;
+    });
     try {
-      await saveVisibility(draftVisibility);
+      await saveConfig(visPayload, rolesPayload);
       toast.success('Đã lưu cấu hình màn hình');
     } catch (error) {
-      console.error('Failed to save screen visibility', error);
+      console.error('Failed to save screen config', error);
       toast.error('Không thể lưu cấu hình màn hình');
     }
+  };
+
+  /** Hàng chip chọn role được phép truy cập 1 màn. */
+  const roleChips = (key: string, def: UserRole[]) => {
+    const cur = rolesOf(key, def);
+    const overridden = draftRoles[key] !== undefined && !sameSet(cur, def);
+    return (
+      <Box layoutClassName="flex flex-wrap items-center gap-1.5">
+        <Typography size="xs" variant="muted">Quyền:</Typography>
+        {ROLE_OPTIONS.map((r) => {
+          const on = cur.includes(r.value);
+          return (
+            <Button
+              key={r.value}
+              type="button"
+              onClick={() => toggleRole(key, def, r.value)}
+              variant={on ? 'primary' : 'secondary'}
+              sizeClassName="px-2 py-0.5 text-[11px]"
+              roundedClassName="rounded"
+              borderClassName={on ? 'border border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
+              backgroundClassName={on ? 'bg-primary-600' : 'bg-white dark:bg-slate-800'}
+              textClassName={on ? 'font-medium text-white' : 'text-slate-500 dark:text-slate-400'}
+              disableVariantHover
+              disableVariantTextColor
+            >
+              {r.label}
+            </Button>
+          );
+        })}
+        {overridden && (
+          <Badge
+            size="sm"
+            layoutClassName="px-1.5 py-0.5 text-[10px]"
+            borderClassName="border-transparent"
+            backgroundClassName="bg-amber-100 dark:bg-amber-900/30"
+            textClassName="text-amber-700 dark:text-amber-300"
+          >
+            đã đổi
+          </Badge>
+        )}
+      </Box>
+    );
   };
 
   if (loading) {
@@ -83,7 +165,7 @@ const ScreenVisibilityTab: React.FC = () => {
         <Box>
           <Heading level={2} textClassName="text-xl font-semibold">Quản lý màn hình</Heading>
           <Typography size="sm" variant="muted" layoutClassName="mt-1">
-            Bật/tắt quyền hiển thị các màn hình trên menu điều hướng.
+            Bật/tắt hiển thị + chọn role được truy cập từng màn (thay vì cố định trong code).
           </Typography>
         </Box>
         <Button
@@ -140,6 +222,7 @@ const ScreenVisibilityTab: React.FC = () => {
                   aria-label={`Toggle ${pageConfigKey}`}
                 />
               </Box>
+              {roleChips(pageConfigKey, page.roles)}
 
               {childTabs.map((tab) => {
                 const tabConfigKey = getRouteConfigKey(tab);
@@ -147,33 +230,36 @@ const ScreenVisibilityTab: React.FC = () => {
                 return (
                   <Box
                     key={tabConfigKey}
-                    layoutClassName="ml-6 flex items-center justify-between gap-4 border-l-2 pl-4"
+                    layoutClassName="ml-6 space-y-2 border-l-2 pl-4"
                     borderClassName="border-slate-200 dark:border-slate-700"
                   >
-                    <Box layoutClassName="min-w-0 py-1">
-                      <Box layoutClassName="flex items-center gap-2">
-                        <Typography size="sm" layoutClassName="font-medium" textClassName="text-slate-800 dark:text-slate-100">
-                          {t(tab.labelKey)}
+                    <Box layoutClassName="flex items-center justify-between gap-4">
+                      <Box layoutClassName="min-w-0 py-1">
+                        <Box layoutClassName="flex items-center gap-2">
+                          <Typography size="sm" layoutClassName="font-medium" textClassName="text-slate-800 dark:text-slate-100">
+                            {t(tab.labelKey)}
+                          </Typography>
+                          <Badge
+                            size="sm"
+                            layoutClassName="px-2 py-0.5 text-[10px] uppercase"
+                            borderClassName="border-transparent"
+                            backgroundClassName="bg-blue-50 dark:bg-blue-900/20"
+                            textClassName="text-blue-600 dark:text-blue-300"
+                          >
+                            tab
+                          </Badge>
+                        </Box>
+                        <Typography size="xs" variant="muted" layoutClassName="mt-0.5">
+                          {tab.parentPath} / {tab.tabId}
                         </Typography>
-                        <Badge
-                          size="sm"
-                          layoutClassName="px-2 py-0.5 text-[10px] uppercase"
-                          borderClassName="border-transparent"
-                          backgroundClassName="bg-blue-50 dark:bg-blue-900/20"
-                          textClassName="text-blue-600 dark:text-blue-300"
-                        >
-                          tab
-                        </Badge>
                       </Box>
-                      <Typography size="xs" variant="muted" layoutClassName="mt-0.5">
-                        {tab.parentPath} / {tab.tabId}
-                      </Typography>
+                      <Switch
+                        checked={tabEnabled}
+                        onCheckedChange={() => handleToggle(tabConfigKey)}
+                        aria-label={`Toggle ${tabConfigKey}`}
+                      />
                     </Box>
-                    <Switch
-                      checked={tabEnabled}
-                      onCheckedChange={() => handleToggle(tabConfigKey)}
-                      aria-label={`Toggle ${tabConfigKey}`}
-                    />
+                    {roleChips(tabConfigKey, tab.roles)}
                   </Box>
                 );
               })}

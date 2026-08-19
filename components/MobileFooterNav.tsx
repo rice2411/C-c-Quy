@@ -12,14 +12,14 @@ const MobileFooterNav: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { userData } = useAuth();
-  const { screenVisibility } = useScreenConfig();
+  const { screenVisibility, screenRoles } = useScreenConfig();
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const storedUser = React.useMemo(() => getUserFromLocalStorage(), []);
   const userRole = userData?.role || storedUser?.role;
-  const accessibleRoutes = getAccessibleRoutes(userRole, screenVisibility);
+  const accessibleRoutes = getAccessibleRoutes(userRole, screenVisibility, screenRoles);
   const routeByPath = React.useMemo(
     () => Object.fromEntries(accessibleRoutes.map((route) => [route.path, route])),
     [accessibleRoutes]
@@ -28,7 +28,7 @@ const MobileFooterNav: React.FC = () => {
   const mainTabs = ['/', '/orders', '/customers', '/storage'];
 
   // Cây nav: gom các route thuộc nhóm; lọc bỏ các tab chính khỏi menu "Thêm"
-  const navTree = buildNavTree(userRole, screenVisibility);
+  const navTree = buildNavTree(userRole, screenVisibility, screenRoles);
   const moreNodes = navTree.filter(
     (node) => node.type === 'group' || !mainTabs.includes(node.route.path)
   );

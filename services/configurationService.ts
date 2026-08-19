@@ -13,6 +13,7 @@ import { apiClient } from '@/services/api/client';
 import {
   ScreenConfiguration,
   ScreenVisibilityMap,
+  ScreenRolesMap,
   ZaloGroupConfig,
   ZaloGroupsConfiguration,
   ZaloOrderEventType,
@@ -33,14 +34,18 @@ export class CollaboratorZaloGroupMissingError extends Error {
 
 export const fetchScreenConfiguration = async (): Promise<ScreenConfiguration> => {
   const { data } = await apiClient.get<ScreenConfiguration>('/configurations/screen');
-  return data ?? { screenVisibility: {} };
+  return {
+    screenVisibility: data?.screenVisibility ?? {},
+    screenRoles: data?.screenRoles ?? {},
+  };
 };
 
 export const saveScreenConfiguration = async (
   screenVisibility: ScreenVisibilityMap,
+  screenRoles: ScreenRolesMap,
   updatedBy?: string
 ): Promise<void> => {
-  await apiClient.put('/configurations/screen', { screenVisibility, updatedBy });
+  await apiClient.put('/configurations/screen', { screenVisibility, screenRoles, updatedBy });
 };
 
 export const fetchZaloGroupsConfiguration = async (): Promise<ZaloGroupsConfiguration> => {

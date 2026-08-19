@@ -43,7 +43,7 @@ import {
 } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import ZaloIcon from "@/components/ui/ZaloIcon";
-import { ScreenVisibilityMap } from "@/types";
+import { ScreenVisibilityMap, ScreenRolesMap } from "@/types";
 
 export type RouteType = "page" | "tab";
 
@@ -63,6 +63,28 @@ export const getRouteConfigKey = (route: RouteConfig): string => {
     return `${route.parentPath}#${route.tabId}`;
   }
   return route.path;
+};
+
+/**
+ * Role được phép truy cập 1 route: ưu tiên OVERRIDE từ config (Cài đặt → Màn hình),
+ * nếu không có thì dùng mặc định `route.roles` (hard-code). Chỉnh được ở /settings/screens.
+ */
+export const effectiveRoles = (
+  route: RouteConfig,
+  screenRoles: ScreenRolesMap = {},
+): UserRole[] => {
+  const ov = screenRoles[getRouteConfigKey(route)];
+  return ov && ov.length ? (ov as UserRole[]) : route.roles;
+};
+
+/** Role được phép cho 1 path (dùng ở route guard). undefined nếu path không thuộc routes. */
+export const rolesForPath = (
+  path: string,
+  screenRoles: ScreenRolesMap = {},
+): UserRole[] | undefined => {
+  const ov = screenRoles[path];
+  if (ov && ov.length) return ov as UserRole[];
+  return routes.find((r) => r.path === path)?.roles;
 };
 
 /**
@@ -300,13 +322,14 @@ export const storageTabRoutes: RouteConfig[] = [
 export const hasRoutePermission = (
   routePath: string,
   userRole: UserRole | undefined,
+  screenRoles: ScreenRolesMap = {},
 ): boolean => {
   if (!userRole) return false;
 
   const route = routes.find((r) => r.path === routePath);
   if (!route) return false;
 
-  return route.roles.includes(userRole);
+  return effectiveRoles(route, screenRoles).includes(userRole);
 };
 
 /**
@@ -343,6 +366,7 @@ const normalizeRole = (
 export const getAccessibleRoutes = (
   userRole: UserRole | string | undefined,
   screenVisibility: ScreenVisibilityMap = {},
+  screenRoles: ScreenRolesMap = {},
 ): RouteConfig[] => {
   const normalizedRole = normalizeRole(userRole);
 
@@ -351,7 +375,7 @@ export const getAccessibleRoutes = (
   }
 
   return routes
-    .filter((route) => route.roles.includes(normalizedRole))
+    .filter((route) => effectiveRoles(route, screenRoles).includes(normalizedRole))
     .map((route) => {
       const configKey = getRouteConfigKey(route);
       const disabledByConfig = screenVisibility[configKey] === false;
@@ -474,8 +498,9 @@ export type NavNode =
 export const buildNavTree = (
   userRole: UserRole | string | undefined,
   screenVisibility: ScreenVisibilityMap = {},
+  screenRoles: ScreenRolesMap = {},
 ): NavNode[] => {
-  const accessible = getAccessibleRoutes(userRole, screenVisibility);
+  const accessible = getAccessibleRoutes(userRole, screenVisibility, screenRoles);
   const pathToGroup = new Map<string, NavGroupConfig>();
   navGroups.forEach((g) => g.childPaths.forEach((p) => pathToGroup.set(p, g)));
 
@@ -504,11 +529,12 @@ export const buildNavTree = (
 export const getAccessibleStorageTabs = (
   userRole: UserRole | string | undefined,
   screenVisibility: ScreenVisibilityMap = {},
+  screenRoles: ScreenRolesMap = {},
 ): RouteConfig[] => {
   const normalizedRole = normalizeRole(userRole);
   if (!normalizedRole) return [];
   return storageTabRoutes
-    .filter((tab) => tab.roles.includes(normalizedRole))
+    .filter((tab) => effectiveRoles(tab, screenRoles).includes(normalizedRole))
     .map((tab) => {
       const configKey = getRouteConfigKey(tab);
       const disabledByConfig = screenVisibility[configKey] === false;

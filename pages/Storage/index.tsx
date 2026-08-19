@@ -16,7 +16,7 @@ import Typography from '@/components/ui/Typography';
 
 const InventoryPage: React.FC = () => {
   const { userData } = useAuth();
-  const { screenVisibility } = useScreenConfig();
+  const { screenVisibility, screenRoles } = useScreenConfig();
   const storedUser = React.useMemo(() => getUserFromLocalStorage(), []);
   const userRole = userData?.role || storedUser?.role;
   const { orders } = useOrders();
@@ -58,8 +58,8 @@ const InventoryPage: React.FC = () => {
   }, [products, searchTerm]);
 
   const accessibleTabs = useMemo(() => {
-    return getAccessibleStorageTabs(userRole, screenVisibility);
-  }, [userRole, screenVisibility]);
+    return getAccessibleStorageTabs(userRole, screenVisibility, screenRoles);
+  }, [userRole, screenVisibility, screenRoles]);
 
   useEffect(() => {
     if (accessibleTabs.length === 0) return;
