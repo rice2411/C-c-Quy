@@ -1,202 +1,226 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Truck, Bus, Plus, Trash2, Check, Phone, Route as RouteIcon, MapPin } from 'lucide-react';
+import { Truck, Bus, Plus, Trash2, Pencil, Phone, Route as RouteIcon, MapPin } from 'lucide-react';
 import { useCarriers, useCarrierMutations } from '@/hooks/queries/useCarriersQuery';
-import { CarrierType } from '@/services/carrierService';
+import { Carrier, CarrierType } from '@/services/carrierService';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
+import Badge from '@/components/ui/Badge';
 import Input from '@/components/ui/Input';
+import Label from '@/components/ui/Label';
 import IconButton from '@/components/ui/IconButton';
 import Switch from '@/components/ui/Switch';
 import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
+import BaseSlidePanel from '@/components/BaseSlidePanel';
 
-type Draft = { name: string; phone: string; note: string; route: string; station: string };
+type Form = { type: CarrierType; name: string; phone: string; route: string; station: string; note: string; active: boolean };
+const emptyForm: Form = { type: 'express', name: '', phone: '', route: '', station: '', note: '', active: true };
 
-/** Danh bạ Đơn vị vận chuyển — 2 dạng: Truyền thống (express) & Gửi xe khách (coach). */
+/** Danh bạ Đơn vị vận chuyển — bảng + panel trượt để thêm/sửa. 2 dạng: Truyền thống & Gửi xe khách. */
 const CarriersPage: React.FC = () => {
   const { carriers, loading } = useCarriers();
   const { save, remove, saving } = useCarrierMutations();
-  const [drafts, setDrafts] = useState<Record<string, Draft>>({});
+  const [open, setOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [form, setForm] = useState<Form>(emptyForm);
 
-  // form thêm mới
-  const [nt, setNt] = useState<CarrierType>('express');
-  const [nName, setNName] = useState('');
-  const [nPhone, setNPhone] = useState('');
-  const [nRoute, setNRoute] = useState('');
-  const [nStation, setNStation] = useState('');
-
-  useEffect(() => {
-    setDrafts(Object.fromEntries(carriers.map((c) => [c.id, {
-      name: c.name, phone: c.phone ?? '', note: c.note ?? '', route: c.route ?? '', station: c.station ?? '',
-    }])));
-  }, [carriers]);
-
-  const setField = (id: string, k: keyof Draft, v: string) =>
-    setDrafts((p) => ({ ...p, [id]: { ...p[id], [k]: v } }));
-
-  const changed = (id: string) => {
-    const c = carriers.find((x) => x.id === id);
-    const d = drafts[id];
-    if (!c || !d) return false;
-    return d.name !== c.name || d.phone !== (c.phone ?? '') || d.note !== (c.note ?? '')
-      || d.route !== (c.route ?? '') || d.station !== (c.station ?? '');
+  const openCreate = () => { setEditId(null); setForm(emptyForm); setOpen(true); };
+  const openEdit = (c: Carrier) => {
+    setEditId(c.id);
+    setForm({ type: c.type, name: c.name, phone: c.phone ?? '', route: c.route ?? '', station: c.station ?? '', note: c.note ?? '', active: c.active });
+    setOpen(true);
   };
+  const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
 
-  const saveRow = async (id: string, type: CarrierType) => {
-    const d = drafts[id];
-    if (!d?.name.trim()) return;
+  const submit = async () => {
+    if (!form.name.trim()) { toast.error('Nhập tên đơn vị.'); return; }
     try {
-      await save({ id, type, name: d.name.trim(), phone: d.phone.trim() || null, note: d.note.trim() || null, route: d.route.trim() || null, station: d.station.trim() || null });
-      toast.success('Đã lưu');
+      await save({
+        ...(editId ? { id: editId } : {}),
+        type: form.type,
+        name: form.name.trim(),
+        phone: form.phone.trim() || null,
+        route: form.type === 'coach' ? (form.route.trim() || null) : null,
+        station: form.type === 'coach' ? (form.station.trim() || null) : null,
+        note: form.note.trim() || null,
+        active: form.active,
+      });
+      toast.success(editId ? 'Đã lưu' : 'Đã thêm đơn vị vận chuyển');
+      setOpen(false);
     } catch (e) { toast.error(e instanceof Error ? e.message : 'Lưu thất bại'); }
   };
-  const toggleActive = async (id: string, active: boolean) => {
-    const c = carriers.find((x) => x.id === id);
-    if (!c) return;
-    try { await save({ id, type: c.type, name: c.name, phone: c.phone, note: c.note, route: c.route, station: c.station, active }); }
+
+  const toggleActive = async (c: Carrier, active: boolean) => {
+    try { await save({ id: c.id, type: c.type, name: c.name, phone: c.phone, route: c.route, station: c.station, note: c.note, active }); }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Lỗi'); }
-  };
-  const add = async () => {
-    if (!nName.trim()) return;
-    try {
-      await save({ type: nt, name: nName.trim(), phone: nPhone.trim() || null, route: nt === 'coach' ? (nRoute.trim() || null) : null, station: nt === 'coach' ? (nStation.trim() || null) : null });
-      setNName(''); setNPhone(''); setNRoute(''); setNStation('');
-      toast.success('Đã thêm đơn vị vận chuyển');
-    } catch (e) { toast.error(e instanceof Error ? e.message : 'Thêm thất bại'); }
   };
   const del = async (id: string) => {
     try { await remove(id); toast.success('Đã xoá'); }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Xoá thất bại'); }
   };
 
-  const express = carriers.filter((c) => c.type !== 'coach');
-  const coach = carriers.filter((c) => c.type === 'coach');
-
   const typeBtn = (v: CarrierType, label: string, icon: React.ReactNode) => (
     <Button
-      type="button"
-      onClick={() => setNt(v)}
-      variant={nt === v ? 'primary' : 'secondary'}
-      leftIcon={icon}
-      iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-      sizeClassName="px-3 py-1.5 text-sm"
-      roundedClassName="rounded-lg"
-      borderClassName={nt === v ? 'border border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
-      backgroundClassName={nt === v ? 'bg-primary-600' : 'bg-white dark:bg-slate-800'}
-      textClassName={nt === v ? 'font-medium text-white' : 'text-slate-600 dark:text-slate-300'}
-      layoutClassName="inline-flex items-center gap-1.5"
-      disableVariantHover
-      disableVariantTextColor
+      type="button" onClick={() => set('type', v)}
+      variant={form.type === v ? 'primary' : 'secondary'}
+      leftIcon={icon} iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+      sizeClassName="flex-1 px-3 py-2 text-sm" roundedClassName="rounded-lg"
+      borderClassName={form.type === v ? 'border border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
+      backgroundClassName={form.type === v ? 'bg-primary-600' : 'bg-white dark:bg-slate-800'}
+      textClassName={form.type === v ? 'font-medium text-white' : 'text-slate-600 dark:text-slate-300'}
+      layoutClassName="inline-flex items-center justify-center gap-1.5"
+      disableVariantHover disableVariantTextColor
     >
       {label}
     </Button>
   );
 
-  const carrierRow = (c: (typeof carriers)[number]) => {
-    const d = drafts[c.id] ?? { name: c.name, phone: c.phone ?? '', note: c.note ?? '', route: c.route ?? '', station: c.station ?? '' };
-    const isCoach = c.type === 'coach';
-    return (
-      <Card key={c.id} padding="none" borderClassName="border border-slate-200 dark:border-slate-700" roundedClassName="rounded-xl" layoutClassName="flex flex-wrap items-center gap-x-2 gap-y-1 p-2.5" backgroundClassName={c.active ? 'bg-white dark:bg-slate-800' : 'bg-slate-50 dark:bg-slate-800/40'}>
-        <Box layoutClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" backgroundClassName={isCoach ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-primary-100 dark:bg-primary-900/30'}>
-          {isCoach ? <Bus className="h-4 w-4 text-amber-600 dark:text-amber-400" /> : <Truck className="h-4 w-4 text-primary-600 dark:text-primary-400" />}
-        </Box>
-        <Input value={d.name} onChange={(e) => setField(c.id, 'name', e.target.value)} placeholder={isCoach ? 'Tên nhà xe' : 'Tên đơn vị'} sizeClassName="w-40 min-w-0 px-2 py-1 text-sm" borderClassName="border border-transparent" backgroundClassName="bg-transparent" textClassName="font-semibold text-slate-800 dark:text-slate-100" />
-        <Box layoutClassName="flex items-center gap-1">
-          <Phone className="h-3.5 w-3.5 text-slate-400" />
-          <Input value={d.phone} onChange={(e) => setField(c.id, 'phone', e.target.value)} placeholder="SĐT" sizeClassName="w-28 px-1.5 py-1 text-sm" borderClassName="border border-transparent" backgroundClassName="bg-transparent" textClassName="text-slate-600 dark:text-slate-300" />
-        </Box>
-        {isCoach && (
-          <>
-            <Box layoutClassName="flex items-center gap-1">
-              <RouteIcon className="h-3.5 w-3.5 text-slate-400" />
-              <Input value={d.route} onChange={(e) => setField(c.id, 'route', e.target.value)} placeholder="Tuyến" sizeClassName="w-40 px-1.5 py-1 text-sm" borderClassName="border border-transparent" backgroundClassName="bg-transparent" textClassName="text-slate-600 dark:text-slate-300" />
-            </Box>
-            <Box layoutClassName="flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5 text-slate-400" />
-              <Input value={d.station} onChange={(e) => setField(c.id, 'station', e.target.value)} placeholder="Bến đỗ" sizeClassName="w-40 px-1.5 py-1 text-sm" borderClassName="border border-transparent" backgroundClassName="bg-transparent" textClassName="text-slate-600 dark:text-slate-300" />
-            </Box>
-          </>
-        )}
-        <Input value={d.note} onChange={(e) => setField(c.id, 'note', e.target.value)} placeholder="Ghi chú" sizeClassName="min-w-0 flex-1 px-2 py-1 text-sm" borderClassName="border border-transparent" backgroundClassName="bg-transparent" textClassName="text-slate-500 dark:text-slate-400" />
-        <Box layoutClassName="ml-auto flex items-center gap-1.5">
-          {changed(c.id) && (
-            <IconButton type="button" label="Lưu" onClick={() => void saveRow(c.id, c.type)} disabled={saving} variant="ghost" textClassName="text-emerald-600" hoverClassName="hover:text-emerald-700"><Check className="h-4 w-4" /></IconButton>
-          )}
-          <Switch checked={c.active} onCheckedChange={(v) => void toggleActive(c.id, v)} aria-label={`Bật/tắt ${c.name}`} />
-          <IconButton type="button" label="Xoá" onClick={() => void del(c.id)} disabled={saving} variant="ghost" textClassName="text-rose-400" hoverClassName="hover:text-rose-600"><Trash2 className="h-4 w-4" /></IconButton>
-        </Box>
-      </Card>
-    );
-  };
-
-  const groupHeader = (label: string, icon: React.ReactNode, count: number) => (
-    <Box layoutClassName="flex items-center gap-2 pt-1">
-      {icon}
-      <Typography size="xs" layoutClassName="font-bold uppercase tracking-wider" textClassName="text-slate-500 dark:text-slate-400">{label}</Typography>
-      <Typography size="xs" variant="muted">({count})</Typography>
-      <Box layoutClassName="h-px flex-1" backgroundClassName="bg-slate-100 dark:bg-slate-700/60" />
-    </Box>
-  );
-
   return (
     <Box layoutClassName="space-y-4">
-      <Box layoutClassName="flex items-center gap-2.5">
-        <Box layoutClassName="flex h-9 w-9 items-center justify-center rounded-xl" backgroundClassName="bg-primary-100 dark:bg-primary-900/30">
-          <Truck className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+      <Box layoutClassName="flex flex-wrap items-center justify-between gap-3">
+        <Box layoutClassName="flex items-center gap-2.5">
+          <Box layoutClassName="flex h-9 w-9 items-center justify-center rounded-xl" backgroundClassName="bg-primary-100 dark:bg-primary-900/30">
+            <Truck className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+          </Box>
+          <Box>
+            <Heading level={1} textClassName="text-lg font-bold text-slate-900 dark:text-white">Đơn vị vận chuyển</Heading>
+            <Typography as="p" size="xs" variant="muted">Đơn vị truyền thống (SPX, J&T…) và gửi xe khách (nhà xe, bến đỗ).</Typography>
+          </Box>
         </Box>
-        <Box>
-          <Heading level={1} textClassName="text-lg font-bold text-slate-900 dark:text-white">Đơn vị vận chuyển</Heading>
-          <Typography as="p" size="xs" variant="muted">Đơn vị truyền thống (SPX, J&T…) và gửi xe khách (nhà xe, bến đỗ).</Typography>
-        </Box>
+        <Button type="button" onClick={openCreate} variant="primary" leftIcon={<Plus />} iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4" sizeClassName="px-3.5 py-2 text-sm" roundedClassName="rounded-lg" backgroundClassName="bg-primary-600" hoverClassName="hover:bg-primary-700" textClassName="font-medium text-white" layoutClassName="inline-flex items-center gap-1.5" disableVariantHover>
+          Thêm đơn vị
+        </Button>
       </Box>
-
-      {/* Thêm mới — chọn dạng */}
-      <Card padding="md" borderClassName="border border-slate-200 dark:border-slate-700" roundedClassName="rounded-xl" layoutClassName="space-y-2.5 p-3">
-        <Box layoutClassName="flex flex-wrap items-center gap-2">
-          {typeBtn('express', 'Truyền thống', <Truck />)}
-          {typeBtn('coach', 'Gửi xe khách', <Bus />)}
-        </Box>
-        <Box layoutClassName="flex flex-wrap items-center gap-2">
-          <Input value={nName} onChange={(e) => setNName(e.target.value)} placeholder={nt === 'coach' ? 'Tên nhà xe (vd Phương Trang)' : 'Tên đơn vị (vd SPX, GHTK)'} sizeClassName="w-52 min-w-0 px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-lg" onKeyDown={(e) => { if (e.key === 'Enter') void add(); }} />
-          <Input value={nPhone} onChange={(e) => setNPhone(e.target.value)} placeholder="Số điện thoại" sizeClassName="w-40 px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-lg" onKeyDown={(e) => { if (e.key === 'Enter') void add(); }} />
-          {nt === 'coach' && (
-            <>
-              <Input value={nRoute} onChange={(e) => setNRoute(e.target.value)} placeholder="Tuyến (Sài Gòn – Đà Lạt)" sizeClassName="w-48 px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-lg" onKeyDown={(e) => { if (e.key === 'Enter') void add(); }} />
-              <Input value={nStation} onChange={(e) => setNStation(e.target.value)} placeholder="Bến đỗ / điểm gửi" sizeClassName="w-48 px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-lg" onKeyDown={(e) => { if (e.key === 'Enter') void add(); }} />
-            </>
-          )}
-          <Button type="button" onClick={() => void add()} disabled={saving || !nName.trim()} variant="primary" leftIcon={<Plus />} iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4" sizeClassName="px-3.5 py-1.5 text-sm" roundedClassName="rounded-lg" backgroundClassName="bg-primary-600" hoverClassName="hover:bg-primary-700" textClassName="font-medium text-white" layoutClassName="inline-flex items-center gap-1.5" disableVariantHover>
-            Thêm
-          </Button>
-        </Box>
-      </Card>
 
       {loading ? (
         <Box layoutClassName="flex items-center gap-2 py-8"><Spinner /><Typography size="sm" variant="muted">Đang tải…</Typography></Box>
       ) : carriers.length === 0 ? (
-        <Box layoutClassName="flex flex-col items-center gap-2 py-10 text-center">
+        <Box layoutClassName="flex flex-col items-center gap-2 py-12 text-center">
           <Truck className="h-10 w-10 text-slate-300 dark:text-slate-600" />
-          <Typography size="sm" variant="muted">Chưa có đơn vị vận chuyển nào. Thêm ở trên.</Typography>
+          <Typography size="sm" variant="muted">Chưa có đơn vị vận chuyển nào.</Typography>
         </Box>
       ) : (
-        <Box layoutClassName="space-y-3">
-          {express.length > 0 && (
-            <Box layoutClassName="space-y-2">
-              {groupHeader('Đơn vị truyền thống', <Truck className="h-4 w-4 text-primary-500" />, express.length)}
-              {express.map(carrierRow)}
-            </Box>
-          )}
-          {coach.length > 0 && (
-            <Box layoutClassName="space-y-2">
-              {groupHeader('Gửi xe khách', <Bus className="h-4 w-4 text-amber-500" />, coach.length)}
-              {coach.map(carrierRow)}
-            </Box>
-          )}
+        <Box layoutClassName="overflow-x-auto rounded-xl" borderClassName="border border-slate-200 dark:border-slate-700">
+          <Box layoutClassName="min-w-[720px]">
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeaderCell layoutClassName="px-4 py-3 text-left">Đơn vị</TableHeaderCell>
+                <TableHeaderCell layoutClassName="px-3 py-3 text-left">Dạng</TableHeaderCell>
+                <TableHeaderCell layoutClassName="px-3 py-3 text-left">Liên hệ</TableHeaderCell>
+                <TableHeaderCell layoutClassName="px-3 py-3 text-left">Tuyến / Bến đỗ</TableHeaderCell>
+                <TableHeaderCell layoutClassName="px-3 py-3 text-center">Bật</TableHeaderCell>
+                <TableHeaderCell layoutClassName="px-3 py-3 text-right">Thao tác</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {carriers.map((c) => {
+                const isCoach = c.type === 'coach';
+                return (
+                  <TableRow key={c.id}>
+                    <TableCell layoutClassName="px-4 py-2.5">
+                      <Box layoutClassName="flex items-center gap-2.5">
+                        <Box layoutClassName="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" backgroundClassName={isCoach ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-primary-100 dark:bg-primary-900/30'}>
+                          {isCoach ? <Bus className="h-4 w-4 text-amber-600 dark:text-amber-400" /> : <Truck className="h-4 w-4 text-primary-600 dark:text-primary-400" />}
+                        </Box>
+                        <Typography size="sm" layoutClassName="font-semibold" textClassName={c.active ? 'text-slate-800 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}>{c.name}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell layoutClassName="px-3 py-2.5">
+                      <Badge size="sm" layoutClassName="px-2 py-0.5 text-[11px]" borderClassName="border-transparent" backgroundClassName={isCoach ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-primary-100 dark:bg-primary-900/30'} textClassName={isCoach ? 'text-amber-700 dark:text-amber-300' : 'text-primary-700 dark:text-primary-300'}>
+                        {isCoach ? 'Xe khách' : 'Truyền thống'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell layoutClassName="px-3 py-2.5">
+                      {c.phone ? (
+                        <Box layoutClassName="flex items-center gap-1">
+                          <Phone className="h-3.5 w-3.5 text-slate-400" />
+                          <Typography size="sm" textClassName="text-slate-600 dark:text-slate-300">{c.phone}</Typography>
+                        </Box>
+                      ) : <Typography size="sm" variant="muted">—</Typography>}
+                    </TableCell>
+                    <TableCell layoutClassName="px-3 py-2.5">
+                      {isCoach && (c.route || c.station) ? (
+                        <Box layoutClassName="flex flex-col gap-0.5">
+                          {c.route && <Box layoutClassName="flex items-center gap-1"><RouteIcon className="h-3 w-3 text-slate-400" /><Typography size="xs" textClassName="text-slate-600 dark:text-slate-300">{c.route}</Typography></Box>}
+                          {c.station && <Box layoutClassName="flex items-center gap-1"><MapPin className="h-3 w-3 text-slate-400" /><Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">{c.station}</Typography></Box>}
+                        </Box>
+                      ) : <Typography size="sm" variant="muted">—</Typography>}
+                    </TableCell>
+                    <TableCell layoutClassName="px-3 py-2.5 text-center">
+                      <Switch checked={c.active} onCheckedChange={(v) => void toggleActive(c, v)} aria-label={`Bật/tắt ${c.name}`} />
+                    </TableCell>
+                    <TableCell layoutClassName="px-3 py-2.5">
+                      <Box layoutClassName="flex items-center justify-end gap-1">
+                        <IconButton type="button" label="Sửa" onClick={() => openEdit(c)} variant="ghost" textClassName="text-slate-400" hoverClassName="hover:text-primary-600"><Pencil className="h-4 w-4" /></IconButton>
+                        <IconButton type="button" label="Xoá" onClick={() => void del(c.id)} disabled={saving} variant="ghost" textClassName="text-rose-400" hoverClassName="hover:text-rose-600"><Trash2 className="h-4 w-4" /></IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+          </Box>
         </Box>
       )}
+
+      {/* Panel trượt thêm/sửa */}
+      <BaseSlidePanel
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        title={editId ? 'Sửa đơn vị vận chuyển' : 'Thêm đơn vị vận chuyển'}
+        maxWidth="md"
+        footer={
+          <Box layoutClassName="flex justify-end gap-2">
+            <Button type="button" onClick={() => setOpen(false)} variant="secondary" sizeClassName="px-4 py-2 text-sm" roundedClassName="rounded-lg" borderClassName="border border-slate-200 dark:border-slate-600" backgroundClassName="bg-white dark:bg-slate-800" textClassName="text-slate-700 dark:text-slate-200">Huỷ</Button>
+            <Button type="button" onClick={() => void submit()} disabled={saving || !form.name.trim()} variant="primary" sizeClassName="px-4 py-2 text-sm" roundedClassName="rounded-lg" backgroundClassName="bg-primary-600" hoverClassName="hover:bg-primary-700" textClassName="font-medium text-white" disableVariantHover>
+              {editId ? 'Lưu' : 'Thêm'}
+            </Button>
+          </Box>
+        }
+      >
+        <Box layoutClassName="space-y-4">
+          <Box layoutClassName="space-y-1.5">
+            <Label className="mb-0">Dạng đơn vị</Label>
+            <Box layoutClassName="flex gap-2">
+              {typeBtn('express', 'Truyền thống', <Truck />)}
+              {typeBtn('coach', 'Gửi xe khách', <Bus />)}
+            </Box>
+          </Box>
+          <Box layoutClassName="space-y-1.5">
+            <Label className="mb-0">{form.type === 'coach' ? 'Tên nhà xe' : 'Tên đơn vị'}</Label>
+            <Input value={form.name} onChange={(e) => set('name', e.target.value)} placeholder={form.type === 'coach' ? 'vd Phương Trang' : 'vd SPX, J&T, GHTK'} sizeClassName="w-full px-3 py-2 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-lg" />
+          </Box>
+          <Box layoutClassName="space-y-1.5">
+            <Label className="mb-0">Số điện thoại</Label>
+            <Input value={form.phone} onChange={(e) => set('phone', e.target.value)} placeholder="Số điện thoại liên hệ" sizeClassName="w-full px-3 py-2 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-lg" />
+          </Box>
+          {form.type === 'coach' && (
+            <>
+              <Box layoutClassName="space-y-1.5">
+                <Label className="mb-0">Tuyến chạy</Label>
+                <Input value={form.route} onChange={(e) => set('route', e.target.value)} placeholder="vd Sài Gòn – Đà Lạt" sizeClassName="w-full px-3 py-2 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-lg" />
+              </Box>
+              <Box layoutClassName="space-y-1.5">
+                <Label className="mb-0">Bến đỗ / điểm gửi</Label>
+                <Input value={form.station} onChange={(e) => set('station', e.target.value)} placeholder="vd Bến xe Miền Đông" sizeClassName="w-full px-3 py-2 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-lg" />
+              </Box>
+            </>
+          )}
+          <Box layoutClassName="space-y-1.5">
+            <Label className="mb-0">Ghi chú</Label>
+            <Input value={form.note} onChange={(e) => set('note', e.target.value)} placeholder="Ghi chú (tuỳ chọn)" sizeClassName="w-full px-3 py-2 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-lg" />
+          </Box>
+          <Box layoutClassName="flex items-center justify-between rounded-lg px-3 py-2" borderClassName="border border-slate-200 dark:border-slate-700">
+            <Typography size="sm" textClassName="text-slate-700 dark:text-slate-200">Đang hoạt động</Typography>
+            <Switch checked={form.active} onCheckedChange={(v) => set('active', v)} aria-label="Bật/tắt hoạt động" />
+          </Box>
+        </Box>
+      </BaseSlidePanel>
     </Box>
   );
 };
