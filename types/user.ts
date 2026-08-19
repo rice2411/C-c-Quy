@@ -18,6 +18,14 @@ export interface UserData {
   zaloCtvGroupChatId?: string | null;
 }
 
+/** Vai trò động (quản lý ở Cài đặt → Màn hình). key lưu ở users.role + screen_visibility.roles. */
+export interface Role {
+  key: string;
+  name: string;
+  sortOrder: number;
+  builtIn: boolean;
+}
+
 export enum UserRole {
   SUPER_ADMIN = 'super_admin',
   ADMIN = 'admin',

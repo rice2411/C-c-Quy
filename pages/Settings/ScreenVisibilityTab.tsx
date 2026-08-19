@@ -3,8 +3,10 @@ import { Save, Settings } from 'lucide-react';
 import { getRouteConfigKey, routes, storageTabRoutes } from '@/config/routes';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
+import { useRoles } from '@/hooks/queries/useRolesQuery';
 import { ScreenVisibilityMap, ScreenRolesMap } from '@/types';
 import { UserRole } from '@/types/user';
+import RoleManagerCard from './RoleManagerCard';
 import toast from 'react-hot-toast';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
@@ -15,14 +17,6 @@ import Spinner from '@/components/ui/Spinner';
 import Switch from '@/components/ui/Switch';
 import Typography from '@/components/ui/Typography';
 
-/** Các role có thể gán cho màn (chỉnh trực tiếp thay vì hard-code trong routes.ts). */
-const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
-  { value: UserRole.SUPER_ADMIN, label: 'Super admin' },
-  { value: UserRole.ADMIN, label: 'Admin' },
-  { value: UserRole.COLABORATOR, label: 'CTV' },
-  { value: UserRole.STAFF, label: 'Nhân viên' },
-];
-
 const sameSet = (a: string[], b: string[]): boolean =>
   a.length === b.length && a.every((x) => b.includes(x));
 
@@ -30,8 +24,15 @@ const sameSet = (a: string[], b: string[]): boolean =>
 const ScreenVisibilityTab: React.FC = () => {
   const { t } = useLanguage();
   const { screenVisibility, screenRoles, loading, saving, saveConfig } = useScreenConfig();
+  const { roles } = useRoles();
   const [draftVisibility, setDraftVisibility] = useState<ScreenVisibilityMap>({});
   const [draftRoles, setDraftRoles] = useState<ScreenRolesMap>({});
+
+  // Options role cho chip phân quyền màn — lấy từ danh sách vai trò ĐỘNG.
+  const roleOptions = useMemo(
+    () => roles.map((r) => ({ value: r.key as UserRole, label: r.name })),
+    [roles],
+  );
 
   useEffect(() => {
     setDraftVisibility(screenVisibility);
@@ -112,7 +113,7 @@ const ScreenVisibilityTab: React.FC = () => {
     return (
       <Box layoutClassName="flex flex-wrap items-center gap-1.5">
         <Typography size="xs" variant="muted">Quyền:</Typography>
-        {ROLE_OPTIONS.map((r) => {
+        {roleOptions.map((r) => {
           const on = cur.includes(r.value);
           return (
             <Button
@@ -187,6 +188,8 @@ const ScreenVisibilityTab: React.FC = () => {
           {saving ? (t('form.saving') || 'Đang lưu...') : (t('form.save') || 'Lưu')}
         </Button>
       </Box>
+
+      <RoleManagerCard />
 
       <Card
         padding="none"

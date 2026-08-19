@@ -2,6 +2,7 @@ import React from 'react';
 import { formatDateOnly } from '@/utils/format/dateUtil';
 import { CheckCircle, XCircle, Edit2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useRoles } from '@/hooks/queries/useRolesQuery';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
@@ -47,6 +48,8 @@ const UserCard: React.FC<UserCardProps> = ({
   onStatusChange
 }) => {
   const { t } = useLanguage();
+  const { roles } = useRoles();
+  const assignableRoles = roles.filter((r) => r.key !== 'super_admin');
 
   return (
     <Card
@@ -160,9 +163,9 @@ const UserCard: React.FC<UserCardProps> = ({
               textClassName="text-slate-900 dark:text-white"
               autoFocus
             >
-              <option value={UserRole.ADMIN}>{t('users.role.admin')}</option>
-              <option value={UserRole.COLABORATOR}>{t('users.role.colaborator')}</option>
-              <option value={UserRole.STAFF}>{t('users.role.staff')}</option>
+              {assignableRoles.map((r) => (
+                <option key={r.key} value={r.key}>{r.name}</option>
+              ))}
             </Select>
             <IconButton
               type="button"
