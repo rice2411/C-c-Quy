@@ -36,6 +36,8 @@ export interface Carrier {
   sortOrder: number;
   /** Số đơn (chưa huỷ) đã gửi qua hãng này — chỉ đọc (BE tính). */
   orderCount: number;
+  /** Phân bố tỉnh đích đã ship qua hãng — chỉ đọc (BE tính). */
+  provinces: { province: string; count: number }[];
 }
 
 const BASE = '/carriers';
@@ -69,6 +71,11 @@ const toCarrier = (r: any): Carrier => ({
   active: r?.active !== false,
   sortOrder: typeof r?.sortOrder === 'number' ? r.sortOrder : 100,
   orderCount: typeof r?.orderCount === 'number' ? r.orderCount : 0,
+  provinces: Array.isArray(r?.provinces)
+    ? r.provinces
+        .map((p: any) => ({ province: typeof p?.province === 'string' ? p.province : 'Khác', count: typeof p?.count === 'number' ? p.count : 0 }))
+        .filter((p: { count: number }) => p.count > 0)
+    : [],
 });
 
 export const fetchCarriers = async (): Promise<Carrier[]> => {

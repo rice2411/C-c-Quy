@@ -167,13 +167,14 @@ const CarriersPage: React.FC = () => {
         </Box>
       ) : (
         <Box layoutClassName="overflow-x-auto rounded-xl" borderClassName="border border-slate-200 dark:border-slate-700">
-          <Box layoutClassName="min-w-[560px]">
+          <Box layoutClassName={tab === 'coach' ? 'min-w-[820px]' : 'min-w-[560px]'}>
           <Table>
             <TableHead>
               <TableRow>
                 <TableHeaderCell layoutClassName="px-4 py-3 text-left">Đơn vị</TableHeaderCell>
                 <TableHeaderCell layoutClassName="px-3 py-3 text-left">Liên hệ</TableHeaderCell>
                 {tab === 'coach' && <TableHeaderCell layoutClassName="px-3 py-3 text-left">Tuyến / Bến đỗ</TableHeaderCell>}
+                {tab === 'coach' && <TableHeaderCell layoutClassName="px-3 py-3 text-left">Đã ship theo tỉnh</TableHeaderCell>}
                 {tab !== 'coach' && <TableHeaderCell layoutClassName="px-3 py-3 text-center">Số đơn đã gửi</TableHeaderCell>}
                 <TableHeaderCell layoutClassName="px-3 py-3 text-center">Bật</TableHeaderCell>
                 <TableHeaderCell layoutClassName="px-3 py-3 text-right">Thao tác</TableHeaderCell>
@@ -214,6 +215,22 @@ const CarriersPage: React.FC = () => {
                           {c.offices.length > 0 && <Box layoutClassName="flex items-center gap-1"><MapPin className="h-3 w-3 text-slate-400" /><Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">{c.offices.length} văn phòng</Typography></Box>}
                         </Box>
                       ) : <Typography size="sm" variant="muted">—</Typography>}
+                    </TableCell>
+                    )}
+                    {tab === 'coach' && (
+                    <TableCell layoutClassName="px-3 py-2.5">
+                      {c.orderCount > 0 ? (
+                        <Box layoutClassName="flex flex-col gap-1">
+                          <Typography size="xs" layoutClassName="font-semibold" textClassName="text-slate-700 dark:text-slate-200">{c.orderCount} đơn đã ship</Typography>
+                          <Box layoutClassName="flex flex-wrap gap-1">
+                            {c.provinces.map((p) => (
+                              <Box key={p.province} layoutClassName="inline-flex items-center px-1.5 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-amber-50 dark:bg-amber-900/20">
+                                <Typography as="span" size="xs" textClassName="text-amber-700 dark:text-amber-300">{p.province} · {p.count}</Typography>
+                              </Box>
+                            ))}
+                          </Box>
+                        </Box>
+                      ) : <Typography size="sm" variant="muted">Chưa có đơn</Typography>}
                     </TableCell>
                     )}
                     {tab !== 'coach' && (
