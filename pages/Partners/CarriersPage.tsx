@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Truck, Bus, Plus, Trash2, Pencil, Phone, Route as RouteIcon, MapPin } from 'lucide-react';
+import { Truck, Bus, Plus, Trash2, Pencil, Phone, Route as RouteIcon, MapPin, X } from 'lucide-react';
 import { useCarriers, useCarrierMutations } from '@/hooks/queries/useCarriersQuery';
 import { Carrier, CarrierType } from '@/services/carrierService';
 import Box from '@/components/ui/Box';
@@ -15,8 +15,12 @@ import Spinner from '@/components/ui/Spinner';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 
-type Form = { type: CarrierType; name: string; phone: string; route: string; station: string; note: string; active: boolean };
-const emptyForm: Form = { type: 'express', name: '', phone: '', route: '', station: '', note: '', active: true };
+type OfficeForm = { name: string; address: string; landmark: string; phone: string };
+type RouteForm = { from: string; to: string; price: string; departTime: string; arriveTime: string; note: string };
+type Form = { type: CarrierType; name: string; phone: string; note: string; active: boolean; offices: OfficeForm[]; routes: RouteForm[] };
+const emptyForm: Form = { type: 'express', name: '', phone: '', note: '', active: true, offices: [], routes: [] };
+const emptyOffice: OfficeForm = { name: '', address: '', landmark: '', phone: '' };
+const emptyRoute: RouteForm = { from: '', to: '', price: '', departTime: '', arriveTime: '', note: '' };
 
 /** Danh bạ Đơn vị vận chuyển — bảng + panel trượt để thêm/sửa. 2 dạng: Truyền thống & Gửi xe khách. */
 const CarriersPage: React.FC = () => {
@@ -34,22 +38,47 @@ const CarriersPage: React.FC = () => {
   const openCreate = () => { setEditId(null); setForm({ ...emptyForm, type: tab }); setOpen(true); };
   const openEdit = (c: Carrier) => {
     setEditId(c.id);
-    setForm({ type: c.type, name: c.name, phone: c.phone ?? '', route: c.route ?? '', station: c.station ?? '', note: c.note ?? '', active: c.active });
+    setForm({
+      type: c.type, name: c.name, phone: c.phone ?? '', note: c.note ?? '', active: c.active,
+      offices: (c.offices ?? []).map((o) => ({ name: o.name ?? '', address: o.address ?? '', landmark: o.landmark ?? '', phone: o.phone ?? '' })),
+      routes: (c.routes ?? []).map((r) => ({ from: r.from ?? '', to: r.to ?? '', price: r.price != null ? String(r.price) : '', departTime: r.departTime ?? '', arriveTime: r.arriveTime ?? '', note: r.note ?? '' })),
+    });
     setOpen(true);
   };
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm((f) => ({ ...f, [k]: v }));
 
+  // Văn phòng (coach) — dòng lặp thêm/xoá.
+  const addOffice = () => setForm((f) => ({ ...f, offices: [...f.offices, { ...emptyOffice }] }));
+  const setOffice = (i: number, k: keyof OfficeForm, v: string) => setForm((f) => ({ ...f, offices: f.offices.map((o, idx) => (idx === i ? { ...o, [k]: v } : o)) }));
+  const removeOffice = (i: number) => setForm((f) => ({ ...f, offices: f.offices.filter((_, idx) => idx !== i) }));
+  // Tuyến (coach) — dòng lặp thêm/xoá.
+  const addRoute = () => setForm((f) => ({ ...f, routes: [...f.routes, { ...emptyRoute }] }));
+  const setRoute = (i: number, k: keyof RouteForm, v: string) => setForm((f) => ({ ...f, routes: f.routes.map((r, idx) => (idx === i ? { ...r, [k]: v } : r)) }));
+  const removeRoute = (i: number) => setForm((f) => ({ ...f, routes: f.routes.filter((_, idx) => idx !== i) }));
+
   const submit = async () => {
     if (!form.name.trim()) { toast.error('Nhập tên đơn vị.'); return; }
+    const offices = form.type === 'coach'
+      ? form.offices
+          .map((o) => ({ name: o.name.trim() || undefined, address: o.address.trim(), landmark: o.landmark.trim() || undefined, phone: o.phone.trim() || undefined }))
+          .filter((o) => o.address)
+      : [];
+    const routes = form.type === 'coach'
+      ? form.routes
+          .map((r) => ({ from: r.from.trim(), to: r.to.trim(), price: r.price.trim() ? Number(r.price) : undefined, departTime: r.departTime.trim() || undefined, arriveTime: r.arriveTime.trim() || undefined, note: r.note.trim() || undefined }))
+          .filter((r) => r.from || r.to)
+      : [];
     try {
       await save({
         ...(editId ? { id: editId } : {}),
         type: form.type,
         name: form.name.trim(),
         phone: form.phone.trim() || null,
-        route: form.type === 'coach' ? (form.route.trim() || null) : null,
-        station: form.type === 'coach' ? (form.station.trim() || null) : null,
+        route: null,
+        station: null,
         note: form.note.trim() || null,
+        offices,
+        routes,
         active: form.active,
       });
       toast.success(editId ? 'Đã lưu' : 'Đã thêm đơn vị vận chuyển');
@@ -58,6 +87,7 @@ const CarriersPage: React.FC = () => {
   };
 
   const toggleActive = async (c: Carrier, active: boolean) => {
+    // Không gửi offices/routes → BE giữ nguyên (chỉ đổi active).
     try { await save({ id: c.id, type: c.type, name: c.name, phone: c.phone, route: c.route, station: c.station, note: c.note, active }); }
     catch (e) { toast.error(e instanceof Error ? e.message : 'Lỗi'); }
   };
@@ -172,10 +202,16 @@ const CarriersPage: React.FC = () => {
                     </TableCell>
                     {tab === 'coach' && (
                     <TableCell layoutClassName="px-3 py-2.5">
-                      {isCoach && (c.route || c.station) ? (
+                      {isCoach && (c.routes.length > 0 || c.offices.length > 0) ? (
                         <Box layoutClassName="flex flex-col gap-0.5">
-                          {c.route && <Box layoutClassName="flex items-center gap-1"><RouteIcon className="h-3 w-3 text-slate-400" /><Typography size="xs" textClassName="text-slate-600 dark:text-slate-300">{c.route}</Typography></Box>}
-                          {c.station && <Box layoutClassName="flex items-center gap-1"><MapPin className="h-3 w-3 text-slate-400" /><Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">{c.station}</Typography></Box>}
+                          {c.routes.slice(0, 2).map((r, i) => (
+                            <Box key={i} layoutClassName="flex items-center gap-1">
+                              <RouteIcon className="h-3 w-3 text-slate-400" />
+                              <Typography size="xs" textClassName="text-slate-600 dark:text-slate-300">{r.from} → {r.to}{r.price != null ? ` · ${r.price.toLocaleString('vi-VN')}đ` : ''}</Typography>
+                            </Box>
+                          ))}
+                          {c.routes.length > 2 && <Typography size="xs" variant="muted">+{c.routes.length - 2} tuyến</Typography>}
+                          {c.offices.length > 0 && <Box layoutClassName="flex items-center gap-1"><MapPin className="h-3 w-3 text-slate-400" /><Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">{c.offices.length} văn phòng</Typography></Box>}
                         </Box>
                       ) : <Typography size="sm" variant="muted">—</Typography>}
                     </TableCell>
@@ -238,13 +274,51 @@ const CarriersPage: React.FC = () => {
           </Box>
           {form.type === 'coach' && (
             <>
-              <Box layoutClassName="space-y-1.5">
-                <Label className="mb-0">Tuyến chạy</Label>
-                <Input value={form.route} onChange={(e) => set('route', e.target.value)} placeholder="vd Sài Gòn – Đà Lạt" sizeClassName="w-full px-3 py-2 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-lg" />
+              {/* Văn phòng gửi/nhận — dòng lặp */}
+              <Box layoutClassName="space-y-2">
+                <Box layoutClassName="flex items-center justify-between">
+                  <Label className="mb-0">Văn phòng gửi / nhận</Label>
+                  <Button type="button" onClick={addOffice} variant="ghost" leftIcon={<Plus />} iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5" sizeClassName="px-2 py-1 text-xs" roundedClassName="rounded-md" backgroundClassName="bg-slate-100 dark:bg-slate-800" textClassName="font-medium text-slate-600 dark:text-slate-300" layoutClassName="inline-flex items-center gap-1">Thêm VP</Button>
+                </Box>
+                {form.offices.length === 0 ? (
+                  <Typography size="xs" variant="muted">Chưa có văn phòng nào.</Typography>
+                ) : form.offices.map((o, i) => (
+                  <Box key={i} layoutClassName="space-y-2 rounded-lg p-3" borderClassName="border border-slate-200 dark:border-slate-700" backgroundClassName="bg-slate-50 dark:bg-slate-800/40">
+                    <Box layoutClassName="flex items-center gap-2">
+                      <Input value={o.name} onChange={(e) => setOffice(i, 'name', e.target.value)} placeholder="Tên VP (vd VP1)" sizeClassName="w-32 px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-md" />
+                      <Input value={o.phone} onChange={(e) => setOffice(i, 'phone', e.target.value)} placeholder="SĐT" sizeClassName="flex-1 px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-md" />
+                      <IconButton type="button" label="Xoá VP" onClick={() => removeOffice(i)} variant="ghost" textClassName="text-rose-400" hoverClassName="hover:text-rose-600"><X className="h-4 w-4" /></IconButton>
+                    </Box>
+                    <Input value={o.address} onChange={(e) => setOffice(i, 'address', e.target.value)} placeholder="Địa chỉ" sizeClassName="w-full px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-md" />
+                    <Input value={o.landmark} onChange={(e) => setOffice(i, 'landmark', e.target.value)} placeholder="Mốc gần (vd gần BX Mỹ Đình)" sizeClassName="w-full px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-md" />
+                  </Box>
+                ))}
               </Box>
-              <Box layoutClassName="space-y-1.5">
-                <Label className="mb-0">Bến đỗ / điểm gửi</Label>
-                <Input value={form.station} onChange={(e) => set('station', e.target.value)} placeholder="vd Bến xe Miền Đông" sizeClassName="w-full px-3 py-2 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-lg" />
+
+              {/* Tuyến chạy — dòng lặp */}
+              <Box layoutClassName="space-y-2">
+                <Box layoutClassName="flex items-center justify-between">
+                  <Label className="mb-0">Tuyến chạy</Label>
+                  <Button type="button" onClick={addRoute} variant="ghost" leftIcon={<Plus />} iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5" sizeClassName="px-2 py-1 text-xs" roundedClassName="rounded-md" backgroundClassName="bg-slate-100 dark:bg-slate-800" textClassName="font-medium text-slate-600 dark:text-slate-300" layoutClassName="inline-flex items-center gap-1">Thêm tuyến</Button>
+                </Box>
+                {form.routes.length === 0 ? (
+                  <Typography size="xs" variant="muted">Chưa có tuyến nào.</Typography>
+                ) : form.routes.map((r, i) => (
+                  <Box key={i} layoutClassName="space-y-2 rounded-lg p-3" borderClassName="border border-slate-200 dark:border-slate-700" backgroundClassName="bg-slate-50 dark:bg-slate-800/40">
+                    <Box layoutClassName="flex items-center gap-2">
+                      <Input value={r.from} onChange={(e) => setRoute(i, 'from', e.target.value)} placeholder="Điểm đi (Huế)" sizeClassName="flex-1 px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-md" />
+                      <Typography as="span" size="sm" variant="muted">→</Typography>
+                      <Input value={r.to} onChange={(e) => setRoute(i, 'to', e.target.value)} placeholder="Điểm đến (Hải Phòng)" sizeClassName="flex-1 px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-md" />
+                      <IconButton type="button" label="Xoá tuyến" onClick={() => removeRoute(i)} variant="ghost" textClassName="text-rose-400" hoverClassName="hover:text-rose-600"><X className="h-4 w-4" /></IconButton>
+                    </Box>
+                    <Box layoutClassName="grid grid-cols-3 gap-2">
+                      <Input value={r.price} onChange={(e) => setRoute(i, 'price', e.target.value)} type="number" placeholder="Giá (VND)" sizeClassName="w-full px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-md" />
+                      <Input value={r.departTime} onChange={(e) => setRoute(i, 'departTime', e.target.value)} placeholder="Giờ chạy (17h)" sizeClassName="w-full px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-md" />
+                      <Input value={r.arriveTime} onChange={(e) => setRoute(i, 'arriveTime', e.target.value)} placeholder="Giờ tới (5h sáng)" sizeClassName="w-full px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-md" />
+                    </Box>
+                    <Input value={r.note} onChange={(e) => setRoute(i, 'note', e.target.value)} placeholder="Ghi chú tuyến (điểm nhận, loại hàng…)" sizeClassName="w-full px-2.5 py-1.5 text-sm" borderClassName="border border-slate-200 dark:border-slate-600" roundedClassName="rounded-md" />
+                  </Box>
+                ))}
               </Box>
             </>
           )}
