@@ -302,6 +302,13 @@ export const routes: RouteConfig[] = [
     icon: Monitor,
     roles: [UserRole.SUPER_ADMIN],
   },
+  {
+    type: "page",
+    path: "/settings/roles",
+    labelKey: "nav.settingsRoles",
+    icon: ShieldCheck,
+    roles: [UserRole.SUPER_ADMIN],
+  },
 ];
 
 export const storageTabRoutes: RouteConfig[] = [
@@ -483,6 +490,7 @@ export const navGroups: NavGroupConfig[] = [
       "/settings/sepay",
       "/settings/zalo",
       "/settings/screens",
+      "/settings/roles",
     ],
   },
 ];

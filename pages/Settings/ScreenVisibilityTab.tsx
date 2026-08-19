@@ -6,7 +6,6 @@ import { useScreenConfig } from '@/contexts/ScreenConfigContext';
 import { useRoles } from '@/hooks/queries/useRolesQuery';
 import { ScreenVisibilityMap, ScreenRolesMap } from '@/types';
 import { UserRole } from '@/types/user';
-import RoleManagerCard from './RoleManagerCard';
 import toast from 'react-hot-toast';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
@@ -188,8 +187,6 @@ const ScreenVisibilityTab: React.FC = () => {
           {saving ? (t('form.saving') || 'Đang lưu...') : (t('form.save') || 'Lưu')}
         </Button>
       </Box>
-
-      <RoleManagerCard />
 
       <Card
         padding="none"
