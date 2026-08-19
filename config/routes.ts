@@ -197,12 +197,25 @@ export const routes: RouteConfig[] = [
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
-    // Đối tác: gom Khách hàng + Nhà cung cấp + Đơn vị vận chuyển (1 hub, lọc theo loại).
     type: "page",
-    path: "/partners",
-    labelKey: "nav.partners",
-    icon: Handshake,
+    path: "/partners/customers",
+    labelKey: "nav.customers",
+    icon: Users,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.COLABORATOR],
+  },
+  {
+    type: "page",
+    path: "/partners/suppliers",
+    labelKey: "nav.suppliers",
+    icon: Factory,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/partners/carriers",
+    labelKey: "nav.partnersCarriers",
+    icon: Truck,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
     type: "page",
@@ -416,6 +429,17 @@ export const navGroups: NavGroupConfig[] = [
     childPaths: [
       "/finance/overview",
       "/finance/ledger",
+    ],
+  },
+  {
+    // Đối tác: Khách hàng + Nhà cung cấp + Đơn vị vận chuyển.
+    key: "partners",
+    labelKey: "nav.partnersGroup",
+    icon: Handshake,
+    childPaths: [
+      "/partners/customers",
+      "/partners/suppliers",
+      "/partners/carriers",
     ],
   },
   {

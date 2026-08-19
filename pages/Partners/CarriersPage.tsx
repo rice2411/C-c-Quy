@@ -5,6 +5,7 @@ import { useCarriers, useCarrierMutations } from '@/hooks/queries/useCarriersQue
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import Heading from '@/components/ui/Heading';
 import Input from '@/components/ui/Input';
 import IconButton from '@/components/ui/IconButton';
 import Switch from '@/components/ui/Switch';
@@ -59,6 +60,16 @@ const CarriersPage: React.FC = () => {
 
   return (
     <Box layoutClassName="space-y-4">
+      <Box layoutClassName="flex items-center gap-2.5">
+        <Box layoutClassName="flex h-9 w-9 items-center justify-center rounded-xl" backgroundClassName="bg-primary-100 dark:bg-primary-900/30">
+          <Truck className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+        </Box>
+        <Box>
+          <Heading level={1} textClassName="text-lg font-bold text-slate-900 dark:text-white">Đơn vị vận chuyển</Heading>
+          <Typography as="p" size="xs" variant="muted">Danh bạ đối tác giao hàng (SPX, GHTK, Ahamove…).</Typography>
+        </Box>
+      </Box>
+
       {/* Thêm mới */}
       <Card padding="md" borderClassName="border border-slate-200 dark:border-slate-700" roundedClassName="rounded-xl" layoutClassName="flex flex-wrap items-center gap-2 p-3">
         <Truck className="h-5 w-5 text-primary-500" />
