@@ -2,12 +2,14 @@ import React, { useMemo } from 'react';
 import { Globe, Package, Store, Truck, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCustomers } from '@/hooks/useCustomers';
+import { useCarriers } from '@/hooks/queries/useCarriersQuery';
 import AddressMapInput, { type ShipInfoSnapshot } from '@/components/AddressMapInput';
 import AutocompleteInput, { AutocompleteOption } from '@/components/AutocompleteInput';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Field from '@/components/ui/Field';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import Typography from '@/components/ui/Typography';
 import Heading from '@/components/ui/Heading';
 import { DeliveryType } from '@/types';
@@ -25,6 +27,9 @@ interface CustomerSectionProps {
   hideDeliveryType?: boolean;
   trackingNumber?: string;
   setTrackingNumber?: (val: string) => void;
+  /** ĐVVC đã gửi (carriers.id) — thống kê số đơn theo hãng. */
+  carrierId?: string;
+  setCarrierId?: (val: string) => void;
   shippingCost?: number;
   onShipFeeChange?: (fee: number | null) => void;
   initialShipInfo?: ShipInfoSnapshot;
@@ -43,6 +48,8 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
   hideDeliveryType,
   trackingNumber,
   setTrackingNumber,
+  carrierId,
+  setCarrierId,
   shippingCost,
   onShipFeeChange,
   initialShipInfo,
@@ -50,6 +57,12 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
 }) => {
   const { t } = useLanguage();
   const { customers } = useCustomers();
+  const { carriers } = useCarriers();
+  // Chỉ ĐVVC chuyển phát (express) đang bật — dùng cho dropdown chọn hãng đã gửi.
+  const expressCarriers = useMemo(
+    () => carriers.filter((c) => c.type !== 'coach' && (c.active || c.id === carrierId)),
+    [carriers, carrierId]
+  );
 
   const normalize = (str: string) => str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
@@ -217,6 +230,27 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
                   leftIcon={<Truck className="h-4 w-4" />}
                   leftIconClassName="[&_svg]:h-4 [&_svg]:w-4"
                 />
+              </Field>
+            ) : null}
+
+            {/* ĐVVC đã gửi — thống kê số đơn theo hãng (danh bạ Đối tác → Chuyển phát). */}
+            {setCarrierId ? (
+              <Field label="Đơn vị vận chuyển" htmlFor="order-form-carrier">
+                <Box layoutClassName="relative">
+                  <Truck className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Select
+                    id="order-form-carrier"
+                    fullWidth
+                    sizeClassName="pl-9"
+                    value={carrierId ?? ''}
+                    onChange={(e) => setCarrierId(e.target.value)}
+                  >
+                    <option value="">— Chưa chọn hãng —</option>
+                    {expressCarriers.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </Select>
+                </Box>
               </Field>
             ) : null}
           </>

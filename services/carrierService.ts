@@ -14,6 +14,8 @@ export interface Carrier {
   station: string | null; // bến đỗ / điểm gửi-nhận (xe khách)
   active: boolean;
   sortOrder: number;
+  /** Số đơn (chưa huỷ) đã gửi qua hãng này — chỉ đọc (BE tính). */
+  orderCount: number;
 }
 
 const BASE = '/carriers';
@@ -28,6 +30,7 @@ const toCarrier = (r: any): Carrier => ({
   station: typeof r?.station === 'string' ? r.station : null,
   active: r?.active !== false,
   sortOrder: typeof r?.sortOrder === 'number' ? r.sortOrder : 100,
+  orderCount: typeof r?.orderCount === 'number' ? r.orderCount : 0,
 });
 
 export const fetchCarriers = async (): Promise<Carrier[]> => {

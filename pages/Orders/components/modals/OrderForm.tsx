@@ -169,6 +169,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const [isDeliveryTimeEnabled, setIsDeliveryTimeEnabled] = useState<boolean>(false);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>(DeliveryType.SHIP);
   const [trackingNumber, setTrackingNumber] = useState('');   // mã vận đơn (ship tỉnh)
+  const [carrierId, setCarrierId] = useState('');             // ĐVVC đã gửi (carriers.id)
   // Đơn hàng test — dùng để test tính năng. Khi bật, Zalo message sẽ có banner === ĐƠN HÀNG TEST ===
   const [isTest, setIsTest] = useState<boolean>(false);
 
@@ -227,6 +228,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPaymentMethod(initialData.paymentMethod || PaymentMethod.BANKING);
       setDeliveryType(initialData.deliveryType || DeliveryType.SHIP);
       setTrackingNumber(initialData.trackingNumber || '');
+      setCarrierId(initialData.carrierId || '');
       setShippingCost(initialData.shippingCost || 0);
       setShipInfo(initialData.shipInfo ?? null);
       setIsTest(!!initialData.isTest);
@@ -303,6 +305,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setPaymentMethod(PaymentMethod.BANKING); // mặc định: chuyển khoản
       setDeliveryType(DeliveryType.SHIP);
       setTrackingNumber('');
+      setCarrierId('');
       setItems([]);
       loadedSnapRef.current = new Map();
       setIsTest(false);
@@ -689,6 +692,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         paymentMethod: paymentMethod,
         deliveryType: deliveryType,
         trackingNumber: deliveryType === DeliveryType.SHIP_PROVINCE ? trackingNumber.trim() : '',
+        // ĐVVC đã gửi: chỉ gắn cho đơn giao (ship/ship tỉnh); tới lấy / dine-in → rỗng.
+        carrierId: (deliveryType === DeliveryType.SHIP || deliveryType === DeliveryType.SHIP_PROVINCE) ? carrierId : '',
         isTest: isTest,
         createdBy: currentUser.uid,
         ...(commissionAmount !== undefined && { commissionAmount }),
@@ -917,6 +922,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               hideDeliveryType={dineIn}
               trackingNumber={trackingNumber}
               setTrackingNumber={setTrackingNumber}
+              carrierId={carrierId}
+              setCarrierId={setCarrierId}
               shippingCost={shippingCost}
               onShipFeeChange={(fee) => { if (fee != null) setShippingCost(fee); }}
               initialShipInfo={shipInfo ?? undefined}

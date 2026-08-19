@@ -144,6 +144,7 @@ const CarriersPage: React.FC = () => {
                 <TableHeaderCell layoutClassName="px-4 py-3 text-left">Đơn vị</TableHeaderCell>
                 <TableHeaderCell layoutClassName="px-3 py-3 text-left">Liên hệ</TableHeaderCell>
                 {tab === 'coach' && <TableHeaderCell layoutClassName="px-3 py-3 text-left">Tuyến / Bến đỗ</TableHeaderCell>}
+                {tab !== 'coach' && <TableHeaderCell layoutClassName="px-3 py-3 text-center">Số đơn đã gửi</TableHeaderCell>}
                 <TableHeaderCell layoutClassName="px-3 py-3 text-center">Bật</TableHeaderCell>
                 <TableHeaderCell layoutClassName="px-3 py-3 text-right">Thao tác</TableHeaderCell>
               </TableRow>
@@ -177,6 +178,13 @@ const CarriersPage: React.FC = () => {
                           {c.station && <Box layoutClassName="flex items-center gap-1"><MapPin className="h-3 w-3 text-slate-400" /><Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">{c.station}</Typography></Box>}
                         </Box>
                       ) : <Typography size="sm" variant="muted">—</Typography>}
+                    </TableCell>
+                    )}
+                    {tab !== 'coach' && (
+                    <TableCell layoutClassName="px-3 py-2.5 text-center">
+                      <Box layoutClassName="inline-flex min-w-[2.25rem] items-center justify-center px-2 py-0.5" roundedClassName="rounded-full" backgroundClassName={c.orderCount > 0 ? 'bg-primary-100 dark:bg-primary-900/30' : 'bg-slate-100 dark:bg-slate-800'}>
+                        <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName={c.orderCount > 0 ? 'text-primary-700 dark:text-primary-300' : 'text-slate-400 dark:text-slate-500'}>{c.orderCount}</Typography>
+                      </Box>
                     </TableCell>
                     )}
                     <TableCell layoutClassName="px-3 py-2.5 text-center">

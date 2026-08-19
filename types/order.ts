@@ -264,6 +264,11 @@ export interface Order {
   spxSource?: string | null;
   /** ISO thời điểm resolve gần nhất. */
   spxResolvedAt?: string | null;
+  // ── ĐVVC đã gửi (danh bạ carriers) — để thống kê số đơn theo hãng ──
+  /** id hãng vận chuyển (carriers.id) đơn được gửi qua. */
+  carrierId?: string | null;
+  /** Tên hãng vận chuyển (BE join sẵn, chỉ để hiển thị). */
+  carrierName?: string | null;
 }
 
 /** Trạng thái "làm mịn" địa chỉ SPX của đơn. */
