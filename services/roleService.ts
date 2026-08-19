@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/api/client';
-import { Role } from '@/types/user';
+import { Role, RolePermissions } from '@/types/user';
 
 const BASE = '/configurations/roles';
 
@@ -8,6 +8,10 @@ const toRole = (r: any): Role => ({
   name: typeof r?.name === 'string' ? r.name : '',
   sortOrder: typeof r?.sortOrder === 'number' ? r.sortOrder : 100,
   builtIn: r?.builtIn === true,
+  permissions:
+    r?.permissions && typeof r.permissions === 'object'
+      ? (r.permissions as RolePermissions)
+      : {},
 });
 
 /** Danh sách vai trò (động). */
@@ -23,6 +27,18 @@ export const saveRole = async (input: {
   sortOrder?: number;
 }): Promise<Role[]> => {
   const { data } = await apiClient.put<any[]>(BASE, input);
+  return Array.isArray(data) ? data.map(toRole) : [];
+};
+
+/** Lưu ma trận phân quyền (module×hành động) của 1 role → trả danh sách sau lưu. */
+export const setRolePermissions = async (
+  key: string,
+  permissions: RolePermissions,
+): Promise<Role[]> => {
+  const { data } = await apiClient.put<any[]>(
+    `${BASE}/${encodeURIComponent(key)}/permissions`,
+    { permissions },
+  );
   return Array.isArray(data) ? data.map(toRole) : [];
 };
 
