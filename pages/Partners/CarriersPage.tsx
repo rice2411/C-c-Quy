@@ -183,7 +183,7 @@ const CarriersPage: React.FC = () => {
           </Box>
         }
       >
-        <Box layoutClassName="space-y-4">
+        <Box layoutClassName="space-y-4 p-6">
           <Box layoutClassName="space-y-1.5">
             <Label className="mb-0">Dạng đơn vị</Label>
             <Box layoutClassName="flex gap-2">
