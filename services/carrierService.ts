@@ -1,11 +1,17 @@
 import { apiClient } from '@/services/api/client';
 
+/** Dạng ĐVVC: express = truyền thống (SPX/J&T…), coach = gửi xe khách (nhà xe). */
+export type CarrierType = 'express' | 'coach';
+
 /** Đơn vị vận chuyển (danh bạ đối tác giao hàng). */
 export interface Carrier {
   id: string;
   name: string;
   phone: string | null;
   note: string | null;
+  type: CarrierType;
+  route: string | null;   // tuyến (xe khách)
+  station: string | null; // bến đỗ / điểm gửi-nhận (xe khách)
   active: boolean;
   sortOrder: number;
 }
@@ -17,6 +23,9 @@ const toCarrier = (r: any): Carrier => ({
   name: typeof r?.name === 'string' ? r.name : '',
   phone: typeof r?.phone === 'string' ? r.phone : null,
   note: typeof r?.note === 'string' ? r.note : null,
+  type: r?.type === 'coach' ? 'coach' : 'express',
+  route: typeof r?.route === 'string' ? r.route : null,
+  station: typeof r?.station === 'string' ? r.station : null,
   active: r?.active !== false,
   sortOrder: typeof r?.sortOrder === 'number' ? r.sortOrder : 100,
 });
@@ -31,6 +40,9 @@ export const saveCarrier = async (input: {
   name: string;
   phone?: string | null;
   note?: string | null;
+  type?: CarrierType;
+  route?: string | null;
+  station?: string | null;
   active?: boolean;
 }): Promise<Carrier[]> => {
   const { data } = await apiClient.put<any[]>(BASE, input);

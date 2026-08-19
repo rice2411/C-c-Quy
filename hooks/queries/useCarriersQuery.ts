@@ -18,13 +18,13 @@ export const useCarrierMutations = () => {
     queryClient.invalidateQueries({ queryKey: KEY });
   };
   const saveM = useMutation({
-    mutationFn: (input: { id?: string; name: string; phone?: string | null; note?: string | null; active?: boolean }) =>
+    mutationFn: (input: { id?: string; name: string; phone?: string | null; note?: string | null; type?: 'express' | 'coach'; route?: string | null; station?: string | null; active?: boolean }) =>
       saveCarrier(input),
     onSuccess,
   });
   const delM = useMutation({ mutationFn: (id: string) => deleteCarrier(id), onSuccess });
   return {
-    save: (input: { id?: string; name: string; phone?: string | null; note?: string | null; active?: boolean }) => saveM.mutateAsync(input),
+    save: (input: { id?: string; name: string; phone?: string | null; note?: string | null; type?: 'express' | 'coach'; route?: string | null; station?: string | null; active?: boolean }) => saveM.mutateAsync(input),
     remove: (id: string) => delM.mutateAsync(id),
     saving: saveM.isPending || delM.isPending,
   };
