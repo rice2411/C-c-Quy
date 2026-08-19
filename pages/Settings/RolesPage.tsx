@@ -43,6 +43,11 @@ const RolesPage: React.FC = () => {
 
   const isSuper = selectedKey === 'super_admin';
   const dirty = !eq(draft, savedPerms);
+  // Toàn quyền: super_admin, HOẶC mọi hành động của mọi module đều được bật.
+  const isFullAccess = useMemo(
+    () => isSuper || PERMISSION_MODULES.every((m) => m.actions.every((a) => draft[m.key]?.[a] === true)),
+    [isSuper, draft],
+  );
 
   const toggle = (moduleKey: string, action: PermAction) => {
     if (isSuper) return;
@@ -177,9 +182,9 @@ const RolesPage: React.FC = () => {
                 <Typography size="sm" layoutClassName="font-semibold" textClassName="text-slate-800 dark:text-slate-100">
                   {selected ? `Tính năng · ${selected.name}` : 'Chọn một vai trò'}
                 </Typography>
-                {isSuper && (
+                {isFullAccess && (
                   <Badge size="sm" layoutClassName="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px]" borderClassName="border-transparent" backgroundClassName="bg-purple-100 dark:bg-purple-900/30" textClassName="text-purple-700 dark:text-purple-300">
-                    <Lock className="h-3 w-3" /> luôn full quyền
+                    <Lock className="h-3 w-3" /> Toàn Quyền Truy Cập
                   </Badge>
                 )}
               </Box>
