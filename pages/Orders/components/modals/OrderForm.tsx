@@ -170,6 +170,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
   const [deliveryType, setDeliveryType] = useState<DeliveryType>(DeliveryType.SHIP);
   const [trackingNumber, setTrackingNumber] = useState('');   // mã vận đơn (ship tỉnh)
   const [carrierId, setCarrierId] = useState('');             // ĐVVC đã gửi (carriers.id)
+  const [carrierRoute, setCarrierRoute] = useState('');       // tuyến nhà xe (coach)
   // Đơn hàng test — dùng để test tính năng. Khi bật, Zalo message sẽ có banner === ĐƠN HÀNG TEST ===
   const [isTest, setIsTest] = useState<boolean>(false);
 
@@ -229,6 +230,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setDeliveryType(initialData.deliveryType || DeliveryType.SHIP);
       setTrackingNumber(initialData.trackingNumber || '');
       setCarrierId(initialData.carrierId || '');
+      setCarrierRoute(initialData.carrierRoute || '');
       setShippingCost(initialData.shippingCost || 0);
       setShipInfo(initialData.shipInfo ?? null);
       setIsTest(!!initialData.isTest);
@@ -306,6 +308,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
       setDeliveryType(DeliveryType.SHIP);
       setTrackingNumber('');
       setCarrierId('');
+      setCarrierRoute('');
       setItems([]);
       loadedSnapRef.current = new Map();
       setIsTest(false);
@@ -694,6 +697,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         trackingNumber: deliveryType === DeliveryType.SHIP_PROVINCE ? trackingNumber.trim() : '',
         // ĐVVC đã gửi: chỉ gắn cho đơn giao (ship/ship tỉnh); tới lấy / dine-in → rỗng.
         carrierId: (deliveryType === DeliveryType.SHIP || deliveryType === DeliveryType.SHIP_PROVINCE) ? carrierId : '',
+        // Tuyến nhà xe: chỉ gửi khi có chọn ĐVVC (coach mới có tuyến); else rỗng.
+        carrierRoute: (deliveryType === DeliveryType.SHIP || deliveryType === DeliveryType.SHIP_PROVINCE) && carrierId ? carrierRoute : '',
         isTest: isTest,
         createdBy: currentUser.uid,
         ...(commissionAmount !== undefined && { commissionAmount }),
@@ -924,6 +929,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
               setTrackingNumber={setTrackingNumber}
               carrierId={carrierId}
               setCarrierId={setCarrierId}
+              carrierRoute={carrierRoute}
+              setCarrierRoute={setCarrierRoute}
               shippingCost={shippingCost}
               onShipFeeChange={(fee) => { if (fee != null) setShippingCost(fee); }}
               initialShipInfo={shipInfo ?? undefined}

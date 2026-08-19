@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Truck, Bus, Plus, Trash2, Pencil, Phone, Route as RouteIcon, MapPin, X } from 'lucide-react';
+import { Truck, Bus, Plus, Trash2, Pencil, Phone, Route as RouteIcon, MapPin, X, ListChecks } from 'lucide-react';
 import { useCarriers, useCarrierMutations } from '@/hooks/queries/useCarriersQuery';
+import { useOrders } from '@/hooks/useOrders';
 import { Carrier, CarrierType } from '@/services/carrierService';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -25,15 +26,32 @@ const emptyRoute: RouteForm = { from: '', to: '', price: '', departTime: '', arr
 /** Danh bạ Đơn vị vận chuyển — bảng + panel trượt để thêm/sửa. 2 dạng: Truyền thống & Gửi xe khách. */
 const CarriersPage: React.FC = () => {
   const { carriers, loading } = useCarriers();
+  const { orders } = useOrders();
   const { save, remove, saving } = useCarrierMutations();
   const [tab, setTab] = useState<CarrierType>('express');
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
+  // Nhà xe đang xem "đơn theo tuyến" (null = đóng).
+  const [routeView, setRouteView] = useState<Carrier | null>(null);
 
   const coachList = carriers.filter((c) => c.type === 'coach');
   const expressList = carriers.filter((c) => c.type !== 'coach');
   const list = tab === 'coach' ? coachList : expressList;
+
+  // Đơn của nhà xe đang xem, gom theo tuyến (đơn chưa huỷ). Tuyến định nghĩa sẵn hiện cả khi 0 đơn.
+  const routeGroups = useMemo(() => {
+    if (!routeView) return [] as { route: string; orders: typeof orders }[];
+    const mine = orders.filter((o) => o.carrierId === routeView.id && o.status !== 'CANCELLED');
+    const map = new Map<string, typeof orders>();
+    (routeView.routes ?? []).forEach((r) => map.set(`${r.from} → ${r.to}`, []));
+    mine.forEach((o) => {
+      const key = o.carrierRoute || 'Chưa gán tuyến';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(o);
+    });
+    return Array.from(map.entries()).map(([route, os]) => ({ route, orders: os }));
+  }, [routeView, orders]);
 
   const openCreate = () => { setEditId(null); setForm({ ...emptyForm, type: tab }); setOpen(true); };
   const openEdit = (c: Carrier) => {
@@ -245,6 +263,7 @@ const CarriersPage: React.FC = () => {
                     </TableCell>
                     <TableCell layoutClassName="px-3 py-2.5">
                       <Box layoutClassName="flex items-center justify-end gap-1">
+                        {isCoach && <IconButton type="button" label="Đơn theo tuyến" onClick={() => setRouteView(c)} variant="ghost" textClassName="text-amber-500" hoverClassName="hover:text-amber-600"><ListChecks className="h-4 w-4" /></IconButton>}
                         <IconButton type="button" label="Sửa" onClick={() => openEdit(c)} variant="ghost" textClassName="text-slate-400" hoverClassName="hover:text-primary-600"><Pencil className="h-4 w-4" /></IconButton>
                         <IconButton type="button" label="Xoá" onClick={() => void del(c.id)} disabled={saving} variant="ghost" textClassName="text-rose-400" hoverClassName="hover:text-rose-600"><Trash2 className="h-4 w-4" /></IconButton>
                       </Box>
@@ -347,6 +366,50 @@ const CarriersPage: React.FC = () => {
             <Typography size="sm" textClassName="text-slate-700 dark:text-slate-200">Đang hoạt động</Typography>
             <Switch checked={form.active} onCheckedChange={(v) => set('active', v)} aria-label="Bật/tắt hoạt động" />
           </Box>
+        </Box>
+      </BaseSlidePanel>
+
+      {/* Panel: đơn của nhà xe gom theo tuyến */}
+      <BaseSlidePanel
+        isOpen={!!routeView}
+        onClose={() => setRouteView(null)}
+        title={routeView ? `Đơn theo tuyến · ${routeView.name}` : 'Đơn theo tuyến'}
+        maxWidth="lg"
+      >
+        <Box layoutClassName="space-y-4 p-6">
+          {routeGroups.length === 0 ? (
+            <Typography size="sm" variant="muted">Nhà xe này chưa có tuyến & chưa có đơn nào.</Typography>
+          ) : routeGroups.map((g) => (
+            <Box key={g.route} layoutClassName="space-y-2 rounded-xl p-3" borderClassName="border border-slate-200 dark:border-slate-700">
+              <Box layoutClassName="flex items-center gap-2">
+                <RouteIcon className="h-4 w-4 text-amber-500" />
+                <Typography size="sm" layoutClassName="font-semibold" textClassName="text-slate-800 dark:text-slate-100">{g.route}</Typography>
+                <Box layoutClassName="inline-flex items-center px-2 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-amber-100 dark:bg-amber-900/30">
+                  <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-amber-700 dark:text-amber-300">{g.orders.length} đơn</Typography>
+                </Box>
+              </Box>
+              {g.orders.length === 0 ? (
+                <Typography size="xs" variant="muted">Chưa có đơn.</Typography>
+              ) : (
+                <Box layoutClassName="flex flex-col gap-1.5">
+                  {g.orders.map((o) => (
+                    <Box key={o.id} layoutClassName="flex items-center justify-between gap-2 rounded-lg px-3 py-2" backgroundClassName="bg-slate-50 dark:bg-slate-800/40">
+                      <Box layoutClassName="min-w-0">
+                        <Box layoutClassName="flex items-center gap-2">
+                          <Typography size="sm" layoutClassName="font-semibold" textClassName="text-slate-800 dark:text-slate-100">{o.orderNumber}</Typography>
+                          <Typography size="xs" variant="muted">{o.customer?.name || '—'}</Typography>
+                        </Box>
+                        <Typography size="xs" variant="muted" layoutClassName="truncate">{o.customer?.address || 'Chưa có địa chỉ'}</Typography>
+                      </Box>
+                      <Box layoutClassName="inline-flex shrink-0 items-center px-2 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-slate-200 dark:bg-slate-700">
+                        <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-300">{o.status}</Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Box>
+          ))}
         </Box>
       </BaseSlidePanel>
     </Box>

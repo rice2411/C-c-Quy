@@ -269,6 +269,8 @@ export interface Order {
   carrierId?: string | null;
   /** Tên hãng vận chuyển (BE join sẵn, chỉ để hiển thị). */
   carrierName?: string | null;
+  /** Tuyến của nhà xe đơn đi (vd "Huế → Hải Phòng") — chỉ với ĐVVC dạng coach. */
+  carrierRoute?: string | null;
 }
 
 /** Trạng thái "làm mịn" địa chỉ SPX của đơn. */

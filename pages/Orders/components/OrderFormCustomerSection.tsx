@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Globe, Package, Store, Truck, User } from 'lucide-react';
+import { Globe, Package, Route as RouteIcon, Store, Truck, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useCarriers } from '@/hooks/queries/useCarriersQuery';
@@ -30,6 +30,9 @@ interface CustomerSectionProps {
   /** ĐVVC đã gửi (carriers.id) — thống kê số đơn theo hãng. */
   carrierId?: string;
   setCarrierId?: (val: string) => void;
+  /** Tuyến nhà xe (coach) — vd "Huế → Hải Phòng". */
+  carrierRoute?: string;
+  setCarrierRoute?: (val: string) => void;
   shippingCost?: number;
   onShipFeeChange?: (fee: number | null) => void;
   initialShipInfo?: ShipInfoSnapshot;
@@ -50,6 +53,8 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
   setTrackingNumber,
   carrierId,
   setCarrierId,
+  carrierRoute,
+  setCarrierRoute,
   shippingCost,
   onShipFeeChange,
   initialShipInfo,
@@ -58,11 +63,16 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
   const { t } = useLanguage();
   const { customers } = useCustomers();
   const { carriers } = useCarriers();
-  // Chỉ ĐVVC chuyển phát (express) đang bật — dùng cho dropdown chọn hãng đã gửi.
-  const expressCarriers = useMemo(
-    () => carriers.filter((c) => c.type !== 'coach' && (c.active || c.id === carrierId)),
+  // ĐVVC đang bật (giữ hãng đã chọn dù bị tắt) — tách chuyển phát / nhà xe cho dropdown.
+  const availCarriers = useMemo(
+    () => carriers.filter((c) => c.active || c.id === carrierId),
     [carriers, carrierId]
   );
+  const expressCarriers = useMemo(() => availCarriers.filter((c) => c.type !== 'coach'), [availCarriers]);
+  const coachCarriers = useMemo(() => availCarriers.filter((c) => c.type === 'coach'), [availCarriers]);
+  // Nhà xe đang chọn → danh sách tuyến để chọn tuyến đi.
+  const selectedCarrier = useMemo(() => carriers.find((c) => c.id === carrierId), [carriers, carrierId]);
+  const carrierRoutes = selectedCarrier?.type === 'coach' ? (selectedCarrier.routes ?? []) : [];
 
   const normalize = (str: string) => str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
@@ -233,7 +243,7 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
               </Field>
             ) : null}
 
-            {/* ĐVVC đã gửi — thống kê số đơn theo hãng (danh bạ Đối tác → Chuyển phát). */}
+            {/* ĐVVC đã gửi — chuyển phát (SPX/J&T…) hoặc nhà xe (coach) → thống kê số đơn theo hãng. */}
             {setCarrierId ? (
               <Field label="Đơn vị vận chuyển" htmlFor="order-form-carrier">
                 <Box layoutClassName="relative">
@@ -243,12 +253,37 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
                     fullWidth
                     sizeClassName="pl-9"
                     value={carrierId ?? ''}
-                    onChange={(e) => setCarrierId(e.target.value)}
+                    onChange={(e) => { setCarrierId(e.target.value); setCarrierRoute?.(''); }}
                   >
                     <option value="">— Chưa chọn hãng —</option>
                     {expressCarriers.map((c) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
+                    {coachCarriers.map((c) => (
+                      <option key={c.id} value={c.id}>🚌 {c.name}</option>
+                    ))}
+                  </Select>
+                </Box>
+              </Field>
+            ) : null}
+
+            {/* Tuyến nhà xe — chỉ hiện khi hãng đã chọn là nhà xe (coach) có tuyến. */}
+            {setCarrierRoute && carrierRoutes.length > 0 ? (
+              <Field label="Tuyến nhà xe" htmlFor="order-form-carrier-route">
+                <Box layoutClassName="relative">
+                  <RouteIcon className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Select
+                    id="order-form-carrier-route"
+                    fullWidth
+                    sizeClassName="pl-9"
+                    value={carrierRoute ?? ''}
+                    onChange={(e) => setCarrierRoute(e.target.value)}
+                  >
+                    <option value="">— Chưa chọn tuyến —</option>
+                    {carrierRoutes.map((r, i) => {
+                      const label = `${r.from} → ${r.to}`;
+                      return <option key={i} value={label}>{label}{r.price != null ? ` · ${r.price.toLocaleString('vi-VN')}đ` : ''}</option>;
+                    })}
                   </Select>
                 </Box>
               </Field>
