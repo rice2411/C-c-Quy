@@ -23,7 +23,6 @@ import DashboardOrderStatus from '@/pages/Dashboard/components/DashboardOrderSta
 import DashboardPaymentMethods from '@/pages/Dashboard/components/DashboardPaymentMethods';
 import DashboardTopProducts from '@/pages/Dashboard/components/DashboardTopProducts';
 import DashboardTopCustomers from '@/pages/Dashboard/components/DashboardTopCustomers';
-import DashboardTopCollaborators from '@/pages/Dashboard/components/DashboardTopCollaborators';
 import DashboardRecentOrders from '@/pages/Dashboard/components/DashboardRecentOrders';
 import DashboardRecentTransactions from '@/pages/Dashboard/components/DashboardRecentTransactions';
 import DashboardRecentUsers from '@/pages/Dashboard/components/DashboardRecentUsers';
@@ -232,41 +231,44 @@ const DashboardPage: React.FC = () => {
         compareText={`vs ${prevRangeLabel}`}
       />
 
-      {/* DẢI 1 — Biểu đồ (2/3) + Giao dịch gần đây (1/3) */}
+      {/* Cảnh báo cần xử lý (tự ẩn khi không có) */}
+      <DashboardAlerts orders={orders} />
+
+      {/* BÁN HÀNG — biểu đồ doanh thu (2/3) + top sản phẩm bán chạy (1/3) */}
       <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Box layoutClassName="lg:col-span-2">
           <DashboardChart data={chartData} isDarkMode={isDarkMode} />
         </Box>
-        <DashboardRecentTransactions />
+        <DashboardTopProducts orders={orders} startDate={startDate} endDate={endDate} />
       </Box>
 
-      {/* DẢI 2 — Lợi nhuận & chi phí (2/3) + Top sản phẩm (1/3) */}
+      {/* TÀI CHÍNH — lợi nhuận & chi phí (2/3) + giao dịch gần đây (1/3) */}
       <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Box layoutClassName="lg:col-span-2">
           <DashboardProfit fromISO={toLocalYMD(startDate)} toISO={toLocalYMD(endDate)} isDarkMode={isDarkMode} />
         </Box>
-        <DashboardTopProducts orders={orders} startDate={startDate} endDate={endDate} />
+        <DashboardRecentTransactions />
       </Box>
 
-      {/* CHI TIẾT KHÁC — các widget còn lại, để ở cuối */}
-      <DashboardSection title="Chi tiết khác">
-        <DashboardAlerts orders={orders} />
-        <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <DashboardToday orders={orders} />
-          <DashboardGoalProgress orders={orders} />
-        </Box>
+      {/* VẬN HÀNH — trạng thái đơn, phương thức TT, hôm nay, mục tiêu */}
+      <DashboardSection title="Vận hành">
         <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <DashboardOrderStatus orders={orders} startDate={startDate} endDate={endDate} isDarkMode={isDarkMode} />
           <DashboardPaymentMethods orders={orders} startDate={startDate} endDate={endDate} isDarkMode={isDarkMode} />
         </Box>
         <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <DashboardTopCustomers orders={orders} startDate={startDate} endDate={endDate} />
-          <DashboardTopCollaborators startDate={startDate} endDate={endDate} />
+          <DashboardToday orders={orders} />
+          <DashboardGoalProgress orders={orders} />
         </Box>
+      </DashboardSection>
+
+      {/* KHÁCH HÀNG & HOẠT ĐỘNG GẦN ĐÂY */}
+      <DashboardSection title="Khách hàng & hoạt động gần đây">
         <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <DashboardRecentOrders orders={recentOrdersForDashboard} />
+          <DashboardTopCustomers orders={orders} startDate={startDate} endDate={endDate} />
           <DashboardRecentUsers />
         </Box>
+        <DashboardRecentOrders orders={recentOrdersForDashboard} />
       </DashboardSection>
     </Box>
   );
