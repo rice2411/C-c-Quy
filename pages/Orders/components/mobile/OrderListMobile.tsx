@@ -8,7 +8,7 @@ import { useCarriers } from '@/hooks/queries/useCarriersQuery';
 import { orderAddressFallbackKey, surchargeTagLabel } from '@/types/order';
 import { Order } from '@/types';
 import { DeliveryType } from '@/types/enums';
-import { orderItemsTotalQty } from '@/pages/Orders/orderItemRows';
+import { orderItemsCountLabel } from '@/pages/Orders/orderItemRows';
 
 const isFreeShip = (order: Order) => {
   if (order.shippingCost && order.shippingCost > 0) return false;
@@ -51,7 +51,7 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({
   const coachIds = React.useMemo(() => new Set(carriers.filter((c) => c.type === 'coach').map((c) => c.id)), [carriers]);
   const isCoachOrder = (o: Order) => !!o.carrierId && coachIds.has(o.carrierId);
 
-  const getItemCount = (order: Order) => orderItemsTotalQty(order.items);
+  const getItemCount = (order: Order) => orderItemsCountLabel(order.items);
 
   const getOrderImage = (order: Order) => {
     const first = order.items?.[0];
@@ -200,7 +200,7 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({
                   <Box layoutClassName="mt-1.5">
                     <Box layoutClassName="mb-1 flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                       <Package className="h-3 w-3 shrink-0" />
-                      <span className="font-medium">{getItemCount(order)} món</span>
+                      <span className="font-medium">{getItemCount(order)}</span>
                       {order.items?.find((i) => i.packagingOption)?.packagingOption ? (
                         <Badge
                           size="sm"

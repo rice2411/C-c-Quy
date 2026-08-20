@@ -18,7 +18,7 @@ import { useCarriers } from '@/hooks/queries/useCarriersQuery';
 import { orderAddressFallbackKey, surchargeTagLabel } from '@/types/order';
 import { Order } from '@/types';
 import { DeliveryType } from '@/types/enums';
-import { orderItemsTotalQty } from '@/pages/Orders/orderItemRows';
+import { orderItemsCountLabel } from '@/pages/Orders/orderItemRows';
 
 /** FREE SHIP = ship cost 0 và là đơn giao (SHIP/SHIP_PROVINCE, hoặc đơn cũ có địa chỉ) */
 const isFreeShip = (order: Order) => {
@@ -78,7 +78,7 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
         {orders.length > 0 ? (
           orders.map((order) => {
             const dlv = buildDeliveryBadge(order.deliveryDate, { status: order.status });
-            const totalItems = orderItemsTotalQty(order.items);
+            const itemCountLabel = orderItemsCountLabel(order.items);
             const isChecked = !!selectedIds?.has(order.id);
             return (
               <Card
@@ -227,7 +227,7 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                     <Box layoutClassName="mt-2">
                       <Box layoutClassName="mb-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                         <Package className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                        <span className="font-medium">{totalItems} món</span>
+                        <span className="font-medium">{itemCountLabel}</span>
                         {order.items?.find((i) => i.packagingOption)?.packagingOption ? (
                           <Badge
                             size="sm"

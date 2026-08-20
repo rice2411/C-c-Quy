@@ -31,6 +31,19 @@ export const orderItemsTotalQty = (items: OrderItem[]): number =>
     return sum + (it.quantity || 0);
   }, 0);
 
+/**
+ * Nhãn số lượng đơn hiển thị trên card — rõ SỐ SẢN PHẨM vs SỐ CÁI:
+ *   1 loại  → "N cái"        (vd 10 cái)
+ *   ≥2 loại → "M SP · N cái" (vd 2 SP · 11 cái)
+ * Thay cho "N món" cũ (gộp cái nhưng gọi là "món" → dễ nhầm khi đơn nhiều sản phẩm).
+ */
+export const orderItemsCountLabel = (items: OrderItem[]): string => {
+  const list = items ?? [];
+  const pieces = orderItemsTotalQty(list);
+  const products = new Set(list.map((it) => it.productId || it.id)).size;
+  return products > 1 ? `${products} SP · ${pieces} cái` : `${pieces} cái`;
+};
+
 export const buildOrderItemRows = (items: OrderItem[], products: Product[]): OrderItemRow[] => {
   return (items ?? []).flatMap((it) => {
     const product = products.find((p) => p.id === it.productId);
