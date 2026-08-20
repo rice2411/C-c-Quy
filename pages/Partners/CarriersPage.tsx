@@ -400,6 +400,7 @@ const CarriersPage: React.FC = () => {
                           <Typography size="xs" variant="muted">{o.customer?.name || '—'}</Typography>
                         </Box>
                         <Typography size="xs" variant="muted" layoutClassName="truncate">{o.customer?.address || 'Chưa có địa chỉ'}</Typography>
+                        {o.carrierOffice ? <Typography size="xs" textClassName="text-amber-600 dark:text-amber-400">VP nhận: {o.carrierOffice}</Typography> : null}
                       </Box>
                       <Box layoutClassName="inline-flex shrink-0 items-center px-2 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-slate-200 dark:bg-slate-700">
                         <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-300">{o.status}</Typography>

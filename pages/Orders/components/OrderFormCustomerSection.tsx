@@ -33,6 +33,9 @@ interface CustomerSectionProps {
   /** Tuyến nhà xe (coach) — vd "Huế → Hải Phòng". */
   carrierRoute?: string;
   setCarrierRoute?: (val: string) => void;
+  /** Văn phòng nhận (coach) — vd "VP1 Hà Nội". */
+  carrierOffice?: string;
+  setCarrierOffice?: (val: string) => void;
   shippingCost?: number;
   onShipFeeChange?: (fee: number | null) => void;
   initialShipInfo?: ShipInfoSnapshot;
@@ -55,6 +58,8 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
   setCarrierId,
   carrierRoute,
   setCarrierRoute,
+  carrierOffice,
+  setCarrierOffice,
   shippingCost,
   onShipFeeChange,
   initialShipInfo,
@@ -73,6 +78,7 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
   // Nhà xe đang chọn → danh sách tuyến để chọn tuyến đi.
   const selectedCarrier = useMemo(() => carriers.find((c) => c.id === carrierId), [carriers, carrierId]);
   const carrierRoutes = selectedCarrier?.type === 'coach' ? (selectedCarrier.routes ?? []) : [];
+  const carrierOffices = selectedCarrier?.type === 'coach' ? (selectedCarrier.offices ?? []) : [];
 
   const normalize = (str: string) => str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
@@ -253,7 +259,7 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
                     fullWidth
                     sizeClassName="pl-9"
                     value={carrierId ?? ''}
-                    onChange={(e) => { setCarrierId(e.target.value); setCarrierRoute?.(''); }}
+                    onChange={(e) => { setCarrierId(e.target.value); setCarrierRoute?.(''); setCarrierOffice?.(''); }}
                   >
                     <option value="">— Chưa chọn hãng —</option>
                     {expressCarriers.map((c) => (
@@ -283,6 +289,29 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
                     {carrierRoutes.map((r, i) => {
                       const label = `${r.from} → ${r.to}`;
                       return <option key={i} value={label}>{label}{r.price != null ? ` · ${r.price.toLocaleString('vi-VN')}đ` : ''}</option>;
+                    })}
+                  </Select>
+                </Box>
+              </Field>
+            ) : null}
+
+            {/* Văn phòng nhận — chỉ hiện khi hãng chọn là nhà xe (coach) có văn phòng. */}
+            {setCarrierOffice && carrierOffices.length > 0 ? (
+              <Field label="Văn phòng nhận" htmlFor="order-form-carrier-office">
+                <Box layoutClassName="relative">
+                  <Store className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Select
+                    id="order-form-carrier-office"
+                    fullWidth
+                    sizeClassName="pl-9"
+                    value={carrierOffice ?? ''}
+                    onChange={(e) => setCarrierOffice(e.target.value)}
+                  >
+                    <option value="">— Chưa chọn văn phòng —</option>
+                    {carrierOffices.map((o, i) => {
+                      const val = o.name || o.address;
+                      const label = [o.name, o.address].filter(Boolean).join(' — ') || `VP ${i + 1}`;
+                      return <option key={i} value={val}>{label}{o.landmark ? ` (${o.landmark})` : ''}</option>;
                     })}
                   </Select>
                 </Box>

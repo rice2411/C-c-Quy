@@ -271,6 +271,8 @@ export interface Order {
   carrierName?: string | null;
   /** Tuyến của nhà xe đơn đi (vd "Huế → Hải Phòng") — chỉ với ĐVVC dạng coach. */
   carrierRoute?: string | null;
+  /** Văn phòng nhận của nhà xe (vd "VP1 Hà Nội") — chỉ với ĐVVC dạng coach. */
+  carrierOffice?: string | null;
 }
 
 /** Trạng thái "làm mịn" địa chỉ SPX của đơn. */
