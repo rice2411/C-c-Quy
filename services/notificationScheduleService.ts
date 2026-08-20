@@ -1,6 +1,6 @@
 import { apiClient } from '@/services/api/client';
 
-export type ScheduleType = 'daily_summary' | 'production_tomorrow';
+export type ScheduleType = 'daily_summary' | 'production_tomorrow' | 'delivery_today_tomorrow';
 
 export interface NotificationSchedule {
   id: string;
@@ -45,6 +45,7 @@ export const deleteSchedule = async (id: string): Promise<void> => {
 export const SCHEDULE_TYPE_LABEL: Record<ScheduleType, string> = {
   daily_summary: 'Tổng kết hôm nay',
   production_tomorrow: 'Sản xuất ngày mai',
+  delivery_today_tomorrow: 'Đơn giao hôm nay + ngày mai',
 };
 
 /** Thứ trong tuần (0=CN). */
