@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Globe, Package, Route as RouteIcon, Store, Truck, User } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Bus, Globe, Package, Route as RouteIcon, Store, Truck, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useCarriers } from '@/hooks/queries/useCarriersQuery';
@@ -79,6 +79,20 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
   const selectedCarrier = useMemo(() => carriers.find((c) => c.id === carrierId), [carriers, carrierId]);
   const carrierRoutes = selectedCarrier?.type === 'coach' ? (selectedCarrier.routes ?? []) : [];
   const carrierOffices = selectedCarrier?.type === 'coach' ? (selectedCarrier.offices ?? []) : [];
+  const hasCoach = useMemo(() => carriers.some((c) => c.type === 'coach'), [carriers]);
+  // Hình thức vận chuyển: 'express' (chuyển phát) | 'coach' (xe khách) — tách hẳn, không gộp dropdown.
+  const [carrierMode, setCarrierMode] = useState<'express' | 'coach'>('express');
+  // Sync mode theo hãng đã chọn (khi sửa đơn / load lại).
+  useEffect(() => {
+    if (selectedCarrier) setCarrierMode(selectedCarrier.type === 'coach' ? 'coach' : 'express');
+  }, [selectedCarrier?.id]);
+  const modeCarriers = carrierMode === 'coach' ? coachCarriers : expressCarriers;
+  const pickMode = (m: 'express' | 'coach') => {
+    setCarrierMode(m);
+    setCarrierId?.('');
+    setCarrierRoute?.('');
+    setCarrierOffice?.('');
+  };
 
   const normalize = (str: string) => str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
 
@@ -249,28 +263,57 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
               </Field>
             ) : null}
 
-            {/* ĐVVC đã gửi — chuyển phát (SPX/J&T…) hoặc nhà xe (coach) → thống kê số đơn theo hãng. */}
+            {/* Hình thức vận chuyển — TÁCH HẲN chuyển phát / xe khách (không gộp chung dropdown). */}
             {setCarrierId ? (
-              <Field label="Đơn vị vận chuyển" htmlFor="order-form-carrier">
-                <Box layoutClassName="relative">
-                  <Truck className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Select
-                    id="order-form-carrier"
-                    fullWidth
-                    sizeClassName="pl-9"
-                    value={carrierId ?? ''}
-                    onChange={(e) => { setCarrierId(e.target.value); setCarrierRoute?.(''); setCarrierOffice?.(''); }}
-                  >
-                    <option value="">— Chưa chọn hãng —</option>
-                    {expressCarriers.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                    {coachCarriers.map((c) => (
-                      <option key={c.id} value={c.id}>🚌 {c.name}</option>
-                    ))}
-                  </Select>
-                </Box>
-              </Field>
+              <>
+                {hasCoach ? (
+                  <Field label="Hình thức vận chuyển" htmlFor="order-form-carrier-mode">
+                    <Box layoutClassName="flex gap-2" id="order-form-carrier-mode">
+                      <Button
+                        type="button" onClick={() => pickMode('express')}
+                        variant={carrierMode === 'express' ? 'primary' : 'secondary'}
+                        leftIcon={<Truck />} iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                        sizeClassName="flex-1 px-3 py-2 text-sm" roundedClassName="rounded-lg"
+                        borderClassName={carrierMode === 'express' ? 'border border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
+                        backgroundClassName={carrierMode === 'express' ? 'bg-primary-600' : 'bg-white dark:bg-slate-800'}
+                        textClassName={carrierMode === 'express' ? 'font-medium text-white' : 'text-slate-600 dark:text-slate-300'}
+                        layoutClassName="inline-flex items-center justify-center gap-1.5"
+                        disableVariantHover disableVariantTextColor
+                      >Chuyển phát</Button>
+                      <Button
+                        type="button" onClick={() => pickMode('coach')}
+                        variant={carrierMode === 'coach' ? 'primary' : 'secondary'}
+                        leftIcon={<Bus />} iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                        sizeClassName="flex-1 px-3 py-2 text-sm" roundedClassName="rounded-lg"
+                        borderClassName={carrierMode === 'coach' ? 'border border-amber-500' : 'border border-slate-200 dark:border-slate-600'}
+                        backgroundClassName={carrierMode === 'coach' ? 'bg-amber-500' : 'bg-white dark:bg-slate-800'}
+                        textClassName={carrierMode === 'coach' ? 'font-medium text-white' : 'text-slate-600 dark:text-slate-300'}
+                        layoutClassName="inline-flex items-center justify-center gap-1.5"
+                        disableVariantHover disableVariantTextColor
+                      >Xe khách</Button>
+                    </Box>
+                  </Field>
+                ) : null}
+                <Field label={carrierMode === 'coach' ? 'Nhà xe' : 'Đơn vị chuyển phát'} htmlFor="order-form-carrier">
+                  <Box layoutClassName="relative">
+                    {carrierMode === 'coach'
+                      ? <Bus className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      : <Truck className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />}
+                    <Select
+                      id="order-form-carrier"
+                      fullWidth
+                      sizeClassName="pl-9"
+                      value={carrierId ?? ''}
+                      onChange={(e) => { setCarrierId(e.target.value); setCarrierRoute?.(''); setCarrierOffice?.(''); }}
+                    >
+                      <option value="">{carrierMode === 'coach' ? '— Chưa chọn nhà xe —' : '— Chưa chọn đơn vị —'}</option>
+                      {modeCarriers.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </Select>
+                  </Box>
+                </Field>
+              </>
             ) : null}
 
             {/* Tuyến nhà xe — chỉ hiện khi hãng đã chọn là nhà xe (coach) có tuyến. */}
