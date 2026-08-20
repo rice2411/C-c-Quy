@@ -1,6 +1,7 @@
 import { UserRole } from "@/types/user";
 import {
   LayoutDashboard,
+  Target,
   ShoppingCart,
   Boxes,
   FileText,
@@ -96,6 +97,13 @@ export const routes: RouteConfig[] = [
     path: "/",
     labelKey: "nav.dashboard",
     icon: LayoutDashboard,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/goals",
+    labelKey: "nav.goals",
+    icon: Target,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {

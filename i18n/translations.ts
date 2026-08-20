@@ -10,6 +10,7 @@ export const translations = {
     },
     nav: {
       dashboard: "Dashboard",
+      goals: "Goals",
       orders: "Orders",
       dineIn: "Dine-in tables",
       shipping: "Shipping",
@@ -789,6 +790,7 @@ export const translations = {
     },
     nav: {
       dashboard: "Tổng quan",
+      goals: "Mục tiêu",
       orders: "Đơn hàng",
       dineIn: "Order theo bàn",
       shipping: "Vận chuyển",
