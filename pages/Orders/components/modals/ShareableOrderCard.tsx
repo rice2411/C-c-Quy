@@ -4,6 +4,7 @@ import { surchargeTagLabel } from '@/types/surchargeTag';
 import { formatVND } from '@/utils/format/currencyUtil';
 import { getDepositInfo } from '@/utils/order/orderUtils';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
+import { useCarriers } from '@/hooks/queries/useCarriersQuery';
 import { buildOrderItemRows } from '@/pages/Orders/orderItemRows';
 import Box from '@/components/ui/Box';
 import Typography from '@/components/ui/Typography';
@@ -45,7 +46,21 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
   ({ order, subtotal, finalTotal, shippingCost, surchargeLabel, deliveryLabel, paymentLabel, qrUrl, description, bankCode, accountNumber, accountHolder, depositQrUrl, depositAmount, depositDescription }, ref) => {
     const c = order.customer;
     const { products } = useProducts();
+    const { carriers } = useCarriers();
     const itemRows = buildOrderItemRows(order.items, products);
+
+    // VP nhận (xe khách): đổi TÊN vp → địa chỉ cụ thể (+ mốc gần, SĐT) từ danh bạ nhà xe.
+    const carrier = order.carrierId ? carriers.find((cr) => cr.id === order.carrierId) : undefined;
+    const office = order.carrierOffice
+      ? carrier?.offices?.find((o) => (o.name || o.address) === order.carrierOffice)
+      : undefined;
+    const officeText = office
+      ? [
+          [office.name, office.address].filter(Boolean).join(' — '),
+          office.landmark ? `(${office.landmark})` : '',
+          office.phone ? `SĐT ${office.phone}` : '',
+        ].filter(Boolean).join(' · ')
+      : (order.carrierOffice || '');
     const rowClass = 'flex items-center justify-between gap-3';
     // Phụ thu nhiều dòng (fallback đơn cũ = 1 dòng từ surchargeAmount/tag).
     const surchargeRows = (
@@ -95,7 +110,7 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
           {/* Ship tỉnh gửi xe khách: nhà xe + tuyến + VP nhận (chỉ đơn coach mới có route/office). */}
           {order.carrierName && (order.carrierRoute || order.carrierOffice) ? infoRow('Nhà xe', order.carrierName) : null}
           {order.carrierRoute ? infoRow('Tuyến', order.carrierRoute) : null}
-          {order.carrierOffice ? infoRow('VP nhận', order.carrierOffice) : null}
+          {officeText ? infoRow('VP nhận', officeText) : null}
           {paymentLabel ? infoRow('Thanh toán', paymentLabel) : null}
           {deliveryDateText ? infoRow('Ngày giao', deliveryDateText) : null}
         </Box>
