@@ -1,7 +1,5 @@
 import { apiClient } from "@/services/api/client";
-import { fetchPaymentAccounts } from "@/services/configurationService";
 import { Order, OrderFieldChange } from "@/types";
-import { generateQRCodeImage, getOrderTotal } from "@/utils/order/orderUtils";
 import {
   DailySummaryStats,
   formatDailySummaryMessage,
@@ -24,17 +22,6 @@ const postTextToGroups = async (groupIds: string[], message: string) => {
   await apiClient.post('/zalo/send', { groupIds, message });
 };
 
-const postImageToGroups = async (
-  groupIds: string[],
-  body: { caption: string; image_url: string[]; message: string },
-) => {
-  await apiClient.post('/zalo/send', {
-    groupIds,
-    message: body.message,
-    image: { caption: body.caption, image_url: body.image_url },
-  });
-};
-
 export const sendZaloMessage = async (message: string) => {
   // Khong truyen groupIds → BE dung ZALO_MAIN_GROUP_ID tu env (giong logic cu).
   try {
@@ -47,31 +34,12 @@ export const sendZaloMessage = async (message: string) => {
 
 export const sendNewOrderZaloNotifications = async (order: any, groupIds: string[]) => {
   if (groupIds.length === 0) return;
+  // Chỉ gửi TEXT thông báo đơn mới — KHÔNG kèm QR thanh toán vào nhóm.
   const message = formatOrderMessage(order);
-
-  const orderNumber = order?.orderNumber || order?.id;
-  const amount = getOrderTotal(order);
-  // Non-React: không dùng hook → fetch list TK trước, chọn TK active (find isActive,
-  // fallback item đầu). Rỗng → không có QR → gửi text-only. des = "SEVQR <orderNumber>".
-  const accounts = await fetchPaymentAccounts();
-  const activeAccount = accounts.find((a) => a.isActive) ?? accounts[0] ?? null;
-  const qrUrl =
-    orderNumber && amount && activeAccount
-      ? generateQRCodeImage(orderNumber, amount, activeAccount)
-      : '';
-  if (!qrUrl) {
-    await postTextToGroups(groupIds, message);
-    return;
-  }
   try {
-    await postImageToGroups(groupIds, {
-      caption: `QR thanh toan don ${orderNumber}`,
-      image_url: [qrUrl],
-      message,
-    });
+    await postTextToGroups(groupIds, message);
   } catch (error: any) {
-    console.error("Loi gui Zalo + QR:", error.response?.data || error.message);
-    try { await postTextToGroups(groupIds, message); } catch {}
+    console.error("Loi gui Zalo:", error.response?.data || error.message);
     throw error;
   }
 };
