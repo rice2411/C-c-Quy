@@ -10,7 +10,6 @@ import DashboardSection from '@/pages/Dashboard/components/DashboardSection';
 import DashboardRangeControl from '@/pages/Dashboard/components/DashboardRangeControl';
 import DashboardAlerts from '@/pages/Dashboard/components/DashboardAlerts';
 import DashboardToday from '@/pages/Dashboard/components/DashboardToday';
-import DashboardGoalProgress from '@/pages/Dashboard/components/DashboardGoalProgress';
 import DashboardKpiCockpit from '@/pages/Dashboard/components/DashboardKpiCockpit';
 import DashboardChart from '@/pages/Dashboard/components/DashboardChart';
 import DashboardOrderStatus from '@/pages/Dashboard/components/DashboardOrderStatus';
@@ -197,16 +196,13 @@ const DashboardPage: React.FC = () => {
         <DashboardTopProducts orders={orders} startDate={startDate} endDate={endDate} />
       </Box>
 
-      {/* VẬN HÀNH — trạng thái đơn, phương thức TT, hôm nay, mục tiêu */}
+      {/* VẬN HÀNH — trạng thái đơn, phương thức TT, hôm nay (mục tiêu chuyển sang màn /goals) */}
       <DashboardSection title="Vận hành">
         <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <DashboardOrderStatus orders={orders} startDate={startDate} endDate={endDate} isDarkMode={isDarkMode} />
           <DashboardPaymentMethods orders={orders} startDate={startDate} endDate={endDate} isDarkMode={isDarkMode} />
         </Box>
-        <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <DashboardToday orders={orders} />
-          <DashboardGoalProgress orders={orders} />
-        </Box>
+        <DashboardToday orders={orders} />
       </DashboardSection>
 
       {/* KHÁCH HÀNG & HOẠT ĐỘNG GẦN ĐÂY */}
