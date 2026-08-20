@@ -92,6 +92,10 @@ const ShareableOrderCard = React.forwardRef<HTMLDivElement, ShareableOrderCardPr
           {c.phone ? infoRow('SĐT', c.phone) : null}
           {deliveryLabel ? infoRow('Hình thức', deliveryLabel) : null}
           {c.address ? infoRow('Địa chỉ', `${c.address}${c.city ? `, ${c.city}` : ''}`) : null}
+          {/* Ship tỉnh gửi xe khách: nhà xe + tuyến + VP nhận (chỉ đơn coach mới có route/office). */}
+          {order.carrierName && (order.carrierRoute || order.carrierOffice) ? infoRow('Nhà xe', order.carrierName) : null}
+          {order.carrierRoute ? infoRow('Tuyến', order.carrierRoute) : null}
+          {order.carrierOffice ? infoRow('VP nhận', order.carrierOffice) : null}
           {paymentLabel ? infoRow('Thanh toán', paymentLabel) : null}
           {deliveryDateText ? infoRow('Ngày giao', deliveryDateText) : null}
         </Box>
