@@ -264,8 +264,8 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
               </Field>
             ) : null}
 
-            {/* Hình thức vận chuyển — TÁCH HẲN chuyển phát / xe khách (không gộp chung dropdown). */}
-            {setCarrierId ? (
+            {/* Hình thức vận chuyển — CHỈ khi ship tỉnh (nội thành/tới lấy không cần ĐVVC). */}
+            {setCarrierId && deliveryType === DeliveryType.SHIP_PROVINCE ? (
               <>
                 {hasCoach ? (
                   <Field label="Hình thức vận chuyển" htmlFor="order-form-carrier-mode">
@@ -313,7 +313,7 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
             ) : null}
 
             {/* Tuyến nhà xe — chỉ hiện khi hãng đã chọn là nhà xe (coach) có tuyến. */}
-            {setCarrierRoute && carrierRoutes.length > 0 ? (
+            {setCarrierRoute && carrierRoutes.length > 0 && deliveryType === DeliveryType.SHIP_PROVINCE ? (
               <Field label="Tuyến nhà xe" htmlFor="order-form-carrier-route">
                 <Select
                   id="order-form-carrier-route"
@@ -332,7 +332,7 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
             ) : null}
 
             {/* Văn phòng nhận — chỉ hiện khi hãng chọn là nhà xe (coach) có văn phòng. */}
-            {setCarrierOffice && carrierOffices.length > 0 ? (
+            {setCarrierOffice && carrierOffices.length > 0 && deliveryType === DeliveryType.SHIP_PROVINCE ? (
               <Field label="Văn phòng nhận" htmlFor="order-form-carrier-office">
                 <Select
                   id="order-form-carrier-office"

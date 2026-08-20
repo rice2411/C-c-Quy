@@ -698,11 +698,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ isOpen, initialData, onSave, onCa
         paymentMethod: paymentMethod,
         deliveryType: deliveryType,
         trackingNumber: deliveryType === DeliveryType.SHIP_PROVINCE ? trackingNumber.trim() : '',
-        // ĐVVC đã gửi: chỉ gắn cho đơn giao (ship/ship tỉnh); tới lấy / dine-in → rỗng.
-        carrierId: (deliveryType === DeliveryType.SHIP || deliveryType === DeliveryType.SHIP_PROVINCE) ? carrierId : '',
-        // Tuyến + văn phòng nhà xe: chỉ gửi khi có chọn ĐVVC (coach mới có); else rỗng.
-        carrierRoute: (deliveryType === DeliveryType.SHIP || deliveryType === DeliveryType.SHIP_PROVINCE) && carrierId ? carrierRoute : '',
-        carrierOffice: (deliveryType === DeliveryType.SHIP || deliveryType === DeliveryType.SHIP_PROVINCE) && carrierId ? carrierOffice : '',
+        // ĐVVC + tuyến + VP: CHỈ cho đơn ship tỉnh (nội thành/tới lấy/dine-in → rỗng).
+        carrierId: deliveryType === DeliveryType.SHIP_PROVINCE ? carrierId : '',
+        carrierRoute: deliveryType === DeliveryType.SHIP_PROVINCE && carrierId ? carrierRoute : '',
+        carrierOffice: deliveryType === DeliveryType.SHIP_PROVINCE && carrierId ? carrierOffice : '',
         isTest: isTest,
         createdBy: currentUser.uid,
         ...(commissionAmount !== undefined && { commissionAmount }),
