@@ -62,14 +62,21 @@ export const buildOrderItemRows = (items: OrderItem[], products: Product[]): Ord
         const sizeLbl = sc.name;
         const img = (product ? sizeImage(product, sc.name) : undefined) || it.image || product?.image;
         if (sc.units && sc.units.length) {
-          // Combo THẬT (mỗi phần nhiều cái) → mỗi phần 1 hàng riêng (#index + vị của phần).
+          // Combo THẬT (mỗi phần nhiều cái) → GỘP các phần GIỐNG NHAU (cùng bộ vị) thành
+          // 1 hàng ×N; chỉ tách hàng khi phần có bộ vị khác nhau. (Trước: liệt kê #1..#N.)
           if (isCombo) {
-            return sc.units.map((unit, u) => {
+            const groups: { fl: string; count: number }[] = [];
+            sc.units.forEach((unit) => {
               const fl = groupFlavors(unit).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
-              const meta = [`${sizeLbl}${sc.qty > 1 ? ` #${u + 1}` : ''}`];
+              const ex = groups.find((g) => g.fl === fl);
+              if (ex) ex.count += 1;
+              else groups.push({ fl, count: 1 });
+            });
+            return groups.map(({ fl, count }, gi) => {
+              const meta = [sizeLbl];
               if (fl) meta.push(`Vị: ${fl}`);
               meta.push(...packMeta);
-              return { key: `${it.id}-s-${sc.name}-${u}`, img, name: it.name, meta, qty: 1 };
+              return { key: `${it.id}-s-${sc.name}-g${gi}`, img, name: it.name, meta, qty: count };
             });
           }
           // Đơn lẻ (mỗi phần 1 cái) → GỘP tất cả vị vào 1 hàng, không liệt kê từng cái.
