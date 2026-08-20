@@ -4,6 +4,7 @@ import { PAYMENT_STATUS_COLORS, STATUS_COLORS } from '@/constant/order';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
+import { useCarriers } from '@/hooks/queries/useCarriersQuery';
 import { orderAddressFallbackKey, surchargeTagLabel } from '@/types/order';
 import { Order } from '@/types';
 import { DeliveryType } from '@/types/enums';
@@ -45,6 +46,10 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({
   const { t } = useLanguage();
   const { surchargeTags } = useSurchargeTags();
   const { products } = useProducts();
+  const { carriers } = useCarriers();
+  // Đơn nhà xe (coach) không có mã vận đơn → ẩn "chưa có mã VĐ".
+  const coachIds = React.useMemo(() => new Set(carriers.filter((c) => c.type === 'coach').map((c) => c.id)), [carriers]);
+  const isCoachOrder = (o: Order) => !!o.carrierId && coachIds.has(o.carrierId);
 
   const getItemCount = (order: Order) => orderItemsTotalQty(order.items);
 
@@ -237,9 +242,9 @@ const OrderListMobile: React.FC<OrderListMobileProps> = ({
                               {order.trackingNumber}
                             </Typography>
                           )
-                        ) : (
+                        ) : !isCoachOrder(order) ? (
                           <Typography as="span" size="xs" textClassName="text-slate-400 dark:text-slate-500">chưa có mã VĐ</Typography>
-                        )}
+                        ) : null}
                         {order.trackingStatus ? (
                           <Typography as="span" size="xs" variant="muted">· {order.trackingStatus}</Typography>
                         ) : null}

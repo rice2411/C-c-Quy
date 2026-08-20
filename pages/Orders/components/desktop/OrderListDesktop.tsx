@@ -14,6 +14,7 @@ import { PAYMENT_METHOD_COLORS, PAYMENT_STATUS_COLORS, STATUS_COLORS } from '@/c
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useSurchargeTags } from '@/hooks/queries/useSurchargeTagsQuery';
 import { useProducts } from '@/hooks/queries/useProductsQuery';
+import { useCarriers } from '@/hooks/queries/useCarriersQuery';
 import { orderAddressFallbackKey, surchargeTagLabel } from '@/types/order';
 import { Order } from '@/types';
 import { DeliveryType } from '@/types/enums';
@@ -57,6 +58,10 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
   const { t } = useLanguage();
   const { surchargeTags } = useSurchargeTags();
   const { products } = useProducts();
+  const { carriers } = useCarriers();
+  // Đơn gửi nhà xe (coach) → không có SPX/mã vận đơn nên ẩn badge khớp + "chưa có mã VĐ".
+  const coachIds = React.useMemo(() => new Set(carriers.filter((c) => c.type === 'coach').map((c) => c.id)), [carriers]);
+  const isCoachOrder = (o: Order) => !!o.carrierId && coachIds.has(o.carrierId);
 
   const getOrderImage = (order: Order) => {
     const first = order.items?.[0];
@@ -248,7 +253,7 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                               🚚 Ship tỉnh
                             </Badge>
                           ) : null}
-                          {order.deliveryType === DeliveryType.SHIP_PROVINCE ? (
+                          {order.deliveryType === DeliveryType.SHIP_PROVINCE && !isCoachOrder(order) ? (
                             <Badge
                               size="sm"
                               layoutClassName="px-2 py-0.5 text-[11px] font-semibold"
@@ -291,9 +296,9 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                                 {order.trackingNumber}
                               </Typography>
                             )
-                          ) : (
+                          ) : !isCoachOrder(order) ? (
                             <Typography as="span" size="xs" textClassName="text-slate-400 dark:text-slate-500">chưa có mã VĐ</Typography>
-                          )}
+                          ) : null}
                           {order.trackingStatus ? (
                             <Typography as="span" size="xs" variant="muted">· {order.trackingStatus}</Typography>
                           ) : null}
