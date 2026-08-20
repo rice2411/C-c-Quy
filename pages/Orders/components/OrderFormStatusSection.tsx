@@ -150,7 +150,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
             >
               {Object.values(OrderStatus).map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {t(`orders.statusLabels.${s}`)}
                 </option>
               ))}
             </Select>
@@ -167,7 +167,7 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
           >
             {Object.values(PaymentStatus).map((s) => (
               <option key={s} value={s}>
-                {s}
+                {t(`orders.paymentStatusLabels.${s}`)}
               </option>
             ))}
           </Select>

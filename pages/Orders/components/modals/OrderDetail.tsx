@@ -594,7 +594,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
             layoutClassName="px-2.5 py-0.5 text-xs font-medium"
             backgroundClassName={STATUS_COLORS[currentOrder.status]}
           >
-            {currentOrder.status}
+            {t(`orders.statusLabels.${currentOrder.status}`)}
           </Badge>
           <Badge
             size="sm"

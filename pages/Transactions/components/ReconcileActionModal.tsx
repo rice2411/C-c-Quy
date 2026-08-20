@@ -9,6 +9,7 @@ import {
   LEDGER_STATUS_META,
 } from '@/types/transaction';
 import { formatVND } from '@/utils/format/currencyUtil';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/hooks/useOrders';
 import { reconcileOrderTransaction } from '@/services/orderService';
 import {
@@ -48,6 +49,7 @@ const fmtDate = (v?: string | null): string => {
 };
 
 const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: tx, onChanged }) => {
+  const { t } = useLanguage();
   const { orders } = useOrders();
   const [expenses, setExpenses] = useState<ManualExpense[]>([]);
   const [loading, setLoading] = useState(false);
@@ -271,7 +273,7 @@ const ReconcileActionModal: React.FC<Props> = ({ isOpen, onClose, transaction: t
                       <Typography as="span" size="sm" layoutClassName="font-mono font-semibold" textClassName="text-primary-700 dark:text-primary-300">
                         {o.orderNumber || o.id}
                       </Typography>,
-                      <>{formatVND(o.total)} · {o.paymentStatus}</>,
+                      <>{formatVND(o.total)} · {t(`orders.paymentStatusLabels.${o.paymentStatus}`)}</>,
                       () => run(o.id, () => reconcileOrderTransaction(o.id, tx.id), `Đã khớp GD với đơn ${o.orderNumber || ''}.`),
                       o.total === amt || o.depositAmount === amt,
                     ),

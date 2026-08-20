@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import { Truck, Bus, Plus, Trash2, Pencil, Phone, Route as RouteIcon, MapPin, X, ListChecks } from 'lucide-react';
 import { useCarriers, useCarrierMutations } from '@/hooks/queries/useCarriersQuery';
 import { useOrders } from '@/hooks/useOrders';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Carrier, CarrierType } from '@/services/carrierService';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -25,6 +26,7 @@ const emptyRoute: RouteForm = { from: '', to: '', price: '', departTime: '', arr
 
 /** Danh bạ Đơn vị vận chuyển — bảng + panel trượt để thêm/sửa. 2 dạng: Truyền thống & Gửi xe khách. */
 const CarriersPage: React.FC = () => {
+  const { t } = useLanguage();
   const { carriers, loading } = useCarriers();
   const { orders } = useOrders();
   const { save, remove, saving } = useCarrierMutations();
@@ -403,7 +405,7 @@ const CarriersPage: React.FC = () => {
                         {o.carrierOffice ? <Typography size="xs" textClassName="text-amber-600 dark:text-amber-400">VP nhận: {o.carrierOffice}</Typography> : null}
                       </Box>
                       <Box layoutClassName="inline-flex shrink-0 items-center px-2 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-slate-200 dark:bg-slate-700">
-                        <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-300">{o.status}</Typography>
+                        <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-300">{t(`orders.statusLabels.${o.status}`)}</Typography>
                       </Box>
                     </Box>
                   ))}
