@@ -11,6 +11,7 @@ import ThemeToggle from './ThemeToggle';
 import Spinner from '@/components/ui/Spinner';
 import toast from 'react-hot-toast';
 import MobileFooterNav from './MobileFooterNav';
+import ZaloShareQueueHost from './ZaloShareQueueHost';
 import { useSystemPing } from '@/hooks/useSystemPing';
 import NotificationBell from './NotificationBell';
 
@@ -435,6 +436,9 @@ const Layout: React.FC = () => {
         {/* Mobile Footer Navigation */}
         <MobileFooterNav />
       </div>
+
+      {/* Hàng đợi gửi ảnh đơn mới vào Zalo (render off-screen, xử lý nền) */}
+      <ZaloShareQueueHost />
     </div>
   );
 };

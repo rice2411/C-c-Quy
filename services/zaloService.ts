@@ -22,6 +22,20 @@ const postTextToGroups = async (groupIds: string[], message: string) => {
   await apiClient.post('/zalo/send', { groupIds, message });
 };
 
+/** Gửi ẢNH đơn (đã upload → URL) kèm message vào nhóm — dùng cho hàng đợi ảnh đơn mới. */
+export const sendZaloOrderImage = async (
+  groupIds: string[],
+  message: string,
+  caption: string,
+  imageUrl: string,
+) => {
+  await apiClient.post('/zalo/send', {
+    groupIds,
+    message,
+    image: { caption, image_url: [imageUrl] },
+  });
+};
+
 export const sendZaloMessage = async (message: string) => {
   // Khong truyen groupIds → BE dung ZALO_MAIN_GROUP_ID tu env (giong logic cu).
   try {

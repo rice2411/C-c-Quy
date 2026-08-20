@@ -3,10 +3,10 @@ import { UserRole } from "@/types/user";
 import { apiClient } from "@/services/api/client";
 import { resolveZaloGroupIdsForOrderEvent } from "./configurationService";
 import {
-  sendNewOrderZaloNotifications,
   sendOrderDeleteNotification,
   sendOrderUpdateNotification,
 } from "./zaloService";
+import { enqueueOrderShare } from "./zaloShareQueue";
 
 /** Nem khi CTV co cap nhat don khong phai do ho tao (FE van can de so message). */
 export const ORDER_EDIT_DENIED = "ORDER_EDIT_DENIED";
@@ -72,7 +72,9 @@ export const addOrder = async (orderData: Order): Promise<void> => {
         (orderData.createdBy as string | undefined) ??
         (created?.createdBy as string | undefined);
       const zaloGroupIds = await resolveZaloGroupIdsForOrderEvent("create", createdByUid);
-      await sendNewOrderZaloNotifications(created, zaloGroupIds);
+      // Đơn mới → đẩy HÀNG ĐỢI gửi ẢNH thẻ chia sẻ vào Zalo (ZaloShareQueueHost xử lý
+      // nền: render → chụp → upload → gửi; lỗi thì fallback text). Không chặn tạo đơn.
+      enqueueOrderShare(created, zaloGroupIds);
     } catch (notifErr) {
       console.error("New order Zalo notify error (ignored):", notifErr);
     }
