@@ -18,7 +18,6 @@ import DashboardToday from '@/pages/Dashboard/components/DashboardToday';
 import DashboardGoalProgress from '@/pages/Dashboard/components/DashboardGoalProgress';
 import DashboardKpiCockpit from '@/pages/Dashboard/components/DashboardKpiCockpit';
 import DashboardChart from '@/pages/Dashboard/components/DashboardChart';
-import DashboardProfit from '@/pages/Dashboard/components/DashboardProfit';
 import DashboardOrderStatus from '@/pages/Dashboard/components/DashboardOrderStatus';
 import DashboardPaymentMethods from '@/pages/Dashboard/components/DashboardPaymentMethods';
 import DashboardTopProducts from '@/pages/Dashboard/components/DashboardTopProducts';
@@ -242,14 +241,6 @@ const DashboardPage: React.FC = () => {
         <DashboardTopProducts orders={orders} startDate={startDate} endDate={endDate} />
       </Box>
 
-      {/* TÀI CHÍNH — lợi nhuận & chi phí (2/3) + giao dịch gần đây (1/3) */}
-      <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Box layoutClassName="lg:col-span-2">
-          <DashboardProfit fromISO={toLocalYMD(startDate)} toISO={toLocalYMD(endDate)} isDarkMode={isDarkMode} />
-        </Box>
-        <DashboardRecentTransactions />
-      </Box>
-
       {/* VẬN HÀNH — trạng thái đơn, phương thức TT, hôm nay, mục tiêu */}
       <DashboardSection title="Vận hành">
         <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -268,7 +259,10 @@ const DashboardPage: React.FC = () => {
           <DashboardTopCustomers orders={orders} startDate={startDate} endDate={endDate} />
           <DashboardRecentUsers />
         </Box>
-        <DashboardRecentOrders orders={recentOrdersForDashboard} />
+        <Box layoutClassName="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <DashboardRecentOrders orders={recentOrdersForDashboard} />
+          <DashboardRecentTransactions />
+        </Box>
       </DashboardSection>
     </Box>
   );
