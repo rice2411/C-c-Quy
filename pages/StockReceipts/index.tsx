@@ -31,7 +31,7 @@ import BillImportSourceModal from '@/pages/StockReceipts/BillImportSourceModal';
 import BillImportQueueModal from '@/pages/StockReceipts/BillImportQueueModal';
 import { isAutoSavable, billDedupKey, type BillJob } from '@/pages/StockReceipts/billQueue';
 import type { UiProgressStage } from '@/pages/StockReceipts/constants';
-import { fileToBase64NoPrefix } from '@/utils/io/fileUtil';
+import { compressImageFile } from '@/utils/io/imageCompress';
 import { formatImportedAt } from '@/utils/format/dateUtil';
 import { normalizeSearchText, bestMaterialMatch } from '@/utils/format/stringUtil';
 import type { ImportedMaterialSummary } from '@/types/billReceipt';
@@ -206,9 +206,9 @@ const StockReceiptsPage: React.FC = () => {
       setBusy(true);
       setProgressStage('prepare');
       try {
-        const b64 = await fileToBase64NoPrefix(file);
+        const { base64: b64, mimeType: b64Mime } = await compressImageFile(file);
         setUploadedImageBase64(b64);
-        setUploadedImageMimeType(file.type || null);
+        setUploadedImageMimeType(b64Mime || null);
         const result = await runBillImportPipeline(b64, {
           onProgress: (stage) => setProgressStage(stage),
         });
@@ -304,9 +304,9 @@ const StockReceiptsPage: React.FC = () => {
         return url;
       });
       try {
-        const b64 = await fileToBase64NoPrefix(file);
+        const { base64: b64, mimeType: b64Mime } = await compressImageFile(file);
         setUploadedImageBase64(b64);
-        setUploadedImageMimeType(file.type || null);
+        setUploadedImageMimeType(b64Mime || null);
       } catch (e) {
         console.error(e);
         toast.error(e instanceof Error ? e.message : String(e));
@@ -490,7 +490,7 @@ const StockReceiptsPage: React.FC = () => {
       if (!file) return;
       patchJob(job.id, { status: 'ocr', progressStage: 'prepare', error: undefined });
       try {
-        const b64 = await fileToBase64NoPrefix(file);
+        const { base64: b64, mimeType: b64Mime } = await compressImageFile(file);
         const result = await runBillImportPipeline(b64, {
           onProgress: (stage) => patchJob(job.id, { progressStage: stage }),
         });
@@ -516,7 +516,7 @@ const StockReceiptsPage: React.FC = () => {
           validation: result.validation,
           ocrText: result.ocrText,
           imageBase64: b64,
-          imageMimeType: file.type || null,
+          imageMimeType: b64Mime || null,
           supplierId: supMatch ? supMatch.item.id : null,
           supplierContact: supplierContactVal,
           confidence: result.validation.confidence ?? 0,
