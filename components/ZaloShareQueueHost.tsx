@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { uploadImage } from '@/services/imageService';
 import { sendZaloOrderImage, sendNewOrderZaloNotifications } from '@/services/zaloService';
-import { formatOrderMessage } from '@/utils/zalo/zaloUtil';
 import { dequeueOrderShare, setZaloShareListener, type ZaloShareJob } from '@/services/zaloShareQueue';
 import { captureShareCard } from '@/utils/order/captureShareCard';
 import { generateQRCodeImage, getOrderTotal } from '@/utils/order/orderUtils';
@@ -47,7 +46,9 @@ const ZaloShareQueueHost: React.FC = () => {
     if (!job) return;
     let cancelled = false;
     const run = async () => {
-      const message = formatOrderMessage(job.order);
+      // Text kèm ảnh = gọn: icon xanh + ĐƠN MỚI + mã đơn (chi tiết đã nằm trong ảnh).
+      const num = job.order?.orderNumber || job.order?.id || '';
+      const message = `🟢 ĐƠN MỚI · ${num}`;
       try {
         // Chờ thẻ + ảnh render xong (font/ảnh SP) trước khi chụp.
         await new Promise((r) => setTimeout(r, 450));
