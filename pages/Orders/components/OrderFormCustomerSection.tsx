@@ -92,6 +92,7 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
     setCarrierId?.('');
     setCarrierRoute?.('');
     setCarrierOffice?.('');
+    if (m === 'coach') setTrackingNumber?.('');  // xe khách không có mã vận đơn
   };
 
   const normalize = (str: string) => str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
@@ -250,7 +251,7 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
               </Field>
             ) : null}
 
-            {deliveryType === DeliveryType.SHIP_PROVINCE && setTrackingNumber ? (
+            {deliveryType === DeliveryType.SHIP_PROVINCE && setTrackingNumber && carrierMode !== 'coach' ? (
               <Field label="Mã vận đơn" htmlFor="order-form-tracking-number">
                 <Input
                   id="order-form-tracking-number"
