@@ -7,7 +7,7 @@
  */
 import { useMemo } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { DollarSign, TrendingUp, ArrowLeftRight, Wallet, ShoppingCart } from 'lucide-react';
+import { DollarSign, TrendingUp, ArrowLeftRight, ShoppingCart } from 'lucide-react';
 import { useRevenueReport } from '@/hooks/queries/useTransactionsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 
@@ -93,16 +93,6 @@ export const useKpis = ({ from, to, prevFrom, prevTo }: UseKpisParams): UseKpisR
         icon: ArrowLeftRight,
         tone: 'blue',
         to: '/finance/ledger',
-      },
-      {
-        key: 'expenses',
-        label: 'Chi phí vận hành',
-        display: formatVND(report.totalExpenses),
-        deltaPct: pct(report.totalExpenses, p?.totalExpenses ?? 0),
-        invert: true, // chi phí giảm = tốt
-        icon: Wallet,
-        tone: 'amber',
-        to: '/expenses/overview',
       },
       {
         key: 'orders',
