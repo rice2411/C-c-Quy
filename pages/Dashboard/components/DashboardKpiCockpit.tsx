@@ -19,7 +19,7 @@ const DashboardKpiCockpit: React.FC<DashboardKpiCockpitProps> = ({
   fromISO, toISO, prevFromISO, prevToISO, compareText,
 }) => {
   const { items, loading } = useKpis({ from: fromISO, to: toISO, prevFrom: prevFromISO, prevTo: prevToISO });
-  return <KpiGrid items={items} loading={loading} compareText={compareText} />;
+  return <KpiGrid items={items} loading={loading} compareText={compareText} columnsClassName="grid-cols-2 sm:grid-cols-3 xl:grid-cols-5" />;
 };
 
 export default DashboardKpiCockpit;

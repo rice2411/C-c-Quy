@@ -7,7 +7,7 @@
  */
 import { useMemo } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { DollarSign, TrendingUp, ArrowLeftRight, Wallet, ShoppingCart, Coins } from 'lucide-react';
+import { DollarSign, TrendingUp, ArrowLeftRight, Wallet, ShoppingCart } from 'lucide-react';
 import { useRevenueReport } from '@/hooks/queries/useTransactionsQuery';
 import { formatVND } from '@/utils/format/currencyUtil';
 
@@ -112,15 +112,6 @@ export const useKpis = ({ from, to, prevFrom, prevTo }: UseKpisParams): UseKpisR
         icon: ShoppingCart,
         tone: 'violet',
         to: '/orders',
-      },
-      {
-        key: 'commission',
-        label: 'Hoa hồng',
-        display: formatVND(report.totalCommission),
-        deltaPct: pct(report.totalCommission, p?.totalCommission ?? 0),
-        icon: Coins,
-        tone: 'rose',
-        to: '/commission',
       },
     ];
   }, [report, prev]);
