@@ -10,10 +10,8 @@ import { formatVND } from "@/utils/format/currencyUtil";
 
 export interface DashboardChartPoint {
   name: string;
-  theoretical: number;
-  actual: number;
+  revenue: number;
   cost: number;
-  personal: number;
   profit: number;
 }
 
@@ -24,11 +22,9 @@ interface DashboardChartProps {
 
 /** Các đường của biểu đồ doanh thu (khớp key trong chartData ở index.tsx). */
 const SERIES = [
-  { key: "theoretical", label: "DT lý thuyết", color: "#94a3b8", desc: "Tổng giá trị đơn trong kỳ, KỂ CẢ đơn chưa thanh toán (trừ đơn huỷ)." },
-  { key: "actual", label: "DT thực tế", color: "#4abab9", desc: "Tiền THỰC NHẬN (giao dịch tiền vào) theo ngày." },
-  { key: "cost", label: "Chi phí (nhập/vận hành)", color: "#f97316", desc: "Tiền ra là chi phí quán: nhập hàng, thuê, điện, lương…" },
-  { key: "personal", label: "Chi phí cá nhân", color: "#a855f7", desc: "Tiền ra cá nhân / rút vốn / nội bộ — KHÔNG tính chi phí quán." },
-  { key: "profit", label: "Lợi nhuận", color: "#22c55e", desc: "= Doanh thu thực tế − Chi phí (nhập/vận hành)." },
+  { key: "revenue", label: "Doanh thu", color: "#4abab9", desc: "Doanh thu theo đơn giao trong kỳ (đã trừ hoàn/giảm giá)." },
+  { key: "cost", label: "Chi phí (nhập/vận hành)", color: "#f97316", desc: "Giá vốn nhập hàng + chi phí vận hành + khấu hao (khớp báo cáo P&L)." },
+  { key: "profit", label: "Lợi nhuận", color: "#22c55e", desc: "= Doanh thu − chi phí. Lãi kế toán, khớp Tổng quan/KPI." },
 ];
 
 const DashboardChart: React.FC<DashboardChartProps> = ({ data, isDarkMode }) => {
@@ -42,7 +38,7 @@ const DashboardChart: React.FC<DashboardChartProps> = ({ data, isDarkMode }) => 
       return next;
     });
   const visibleSeries = SERIES.filter((s) => !hidden.has(s.key));
-  const hasData = data.some((d) => d.theoretical || d.actual || d.cost || d.personal);
+  const hasData = data.some((d) => d.revenue || d.cost || d.profit);
 
   return (
     <Box

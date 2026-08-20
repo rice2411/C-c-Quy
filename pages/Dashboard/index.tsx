@@ -1,16 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { RefreshCw } from 'lucide-react';
-import { Order, OrderStatus, PaymentStatus } from '@/types';
+import { Order } from '@/types';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/hooks/useOrders';
-import { useTransactions } from '@/hooks/queries/useTransactionsQuery';
-import { getOrderRevenueDate, getOrderTotal } from '@/utils/order/orderUtils';
-
-/** Tiền RA "cá nhân/rút vốn/nội bộ" (không tính chi phí quán). Mặc định coi là chi phí (category rỗng → cost). */
-const isPersonalOut = (expenseCategory?: string | null, costExcluded?: boolean): boolean =>
-  costExcluded === true || ['personal', 'owner', 'internal'].includes(expenseCategory ?? '');
+import { useRevenueReport } from '@/hooks/queries/useTransactionsQuery';
 import DashboardSection from '@/pages/Dashboard/components/DashboardSection';
 import DashboardRangeControl from '@/pages/Dashboard/components/DashboardRangeControl';
 import DashboardAlerts from '@/pages/Dashboard/components/DashboardAlerts';
@@ -34,7 +29,6 @@ const toLocalYMD = (d: Date): string =>
 
 const DashboardPage: React.FC = () => {
   const { orders, loading, refreshOrders } = useOrders();
-  const { transactions } = useTransactions();
   const { language } = useLanguage();
   const [timeRange, setTimeRange] = useState<TimeRange>('week');
   const [referenceDate, setReferenceDate] = useState<Date>(new Date());
@@ -133,57 +127,19 @@ const DashboardPage: React.FC = () => {
     return endDate.getTime() >= today.getTime();
   }, [endDate]);
 
+  // Biểu đồ theo hệ P&L (khớp Tổng quan/KPI): Doanh thu / Chi phí (nhập+vận hành+khấu hao) /
+  // Lợi nhuận — lấy thẳng từ revenue_report (server) để "Lợi nhuận" là LÃI KẾ TOÁN thật,
+  // không còn trộn dòng tiền như trước.
+  const { report: chartReport } = useRevenueReport({ from: toLocalYMD(startDate), to: toLocalYMD(endDate) });
   const chartData = useMemo(() => {
-    type Bucket = { theoretical: number; actual: number; cost: number; personal: number };
-    const locale = language === 'vi' ? 'vi-VN' : 'en-US';
-    const keyOf = (d: Date): string =>
-      timeRange === 'year'
-        ? d.toLocaleDateString(locale, { month: 'short', year: 'numeric' })
-        : d.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
-
-    // Khởi tạo bucket rỗng theo kỳ (giữ thứ tự thời gian).
-    const order: string[] = [];
-    const map = new Map<string, Bucket>();
-    const iterDate = new Date(startDate);
-    let safeGuard = 0;
-    while (iterDate <= endDate && safeGuard < 366) {
-      const key = keyOf(iterDate);
-      if (!map.has(key)) { map.set(key, { theoretical: 0, actual: 0, cost: 0, personal: 0 }); order.push(key); }
-      if (timeRange === 'year') iterDate.setMonth(iterDate.getMonth() + 1);
-      else iterDate.setDate(iterDate.getDate() + 1);
-      safeGuard++;
-    }
-
-    // Doanh thu LÝ THUYẾT: mọi đơn (kể cả chưa thanh toán), trừ đơn huỷ — theo mốc doanh thu.
-    orders.forEach((o) => {
-      if (o.status === OrderStatus.CANCELLED) return;
-      const d = getOrderRevenueDate(o);
-      if (!d || d < startDate || d > endDate) return;
-      const b = map.get(keyOf(d));
-      if (b) b.theoretical += getOrderTotal(o);
-    });
-
-    // Tiền THỰC nhận (in) + chi phí ra (cost / cá nhân) — theo ngày giao dịch.
-    transactions.forEach((tx) => {
-      const raw = tx.transactionDate || tx.receivedAt;
-      if (!raw) return;
-      const d = new Date(raw);
-      if (isNaN(d.getTime()) || d < startDate || d > endDate) return;
-      const b = map.get(keyOf(d));
-      if (!b) return;
-      const amt = Number(tx.transferAmount) || 0;
-      if (tx.transferType === 'in') b.actual += amt;
-      else if (tx.transferType === 'out') {
-        if (isPersonalOut(tx.expenseCategory, tx.costExcluded)) b.personal += amt;
-        else b.cost += amt;
-      }
-    });
-
-    return order.map((name) => {
-      const b = map.get(name)!;
-      return { name, theoretical: b.theoretical, actual: b.actual, cost: b.cost, personal: b.personal, profit: b.actual - b.cost };
-    });
-  }, [orders, transactions, startDate, endDate, timeRange, language]);
+    if (!chartReport) return [];
+    return chartReport.series.map((p) => ({
+      name: p.label,
+      revenue: p.revenue,
+      cost: (p.stockIn ?? 0) + (p.opex ?? 0) + (p.depreciation ?? 0),
+      profit: p.profit,
+    }));
+  }, [chartReport]);
 
   const recentOrdersForDashboard: Order[] = useMemo(
     () => [...orders].sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime()),
