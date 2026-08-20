@@ -296,23 +296,18 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
                   </Field>
                 ) : null}
                 <Field label={carrierMode === 'coach' ? 'Nhà xe' : 'Đơn vị chuyển phát'} htmlFor="order-form-carrier">
-                  <Box layoutClassName="relative">
-                    {carrierMode === 'coach'
-                      ? <Bus className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      : <Truck className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />}
-                    <Select
-                      id="order-form-carrier"
-                      fullWidth
-                      sizeClassName="pl-9"
-                      value={carrierId ?? ''}
-                      onChange={(e) => { setCarrierId(e.target.value); setCarrierRoute?.(''); setCarrierOffice?.(''); }}
-                    >
-                      <option value="">{carrierMode === 'coach' ? '— Chưa chọn nhà xe —' : '— Chưa chọn đơn vị —'}</option>
-                      {modeCarriers.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </Select>
-                  </Box>
+                  <Select
+                    id="order-form-carrier"
+                    fullWidth
+                    leftIcon={carrierMode === 'coach' ? <Bus /> : <Truck />}
+                    value={carrierId ?? ''}
+                    onChange={(e) => { setCarrierId(e.target.value); setCarrierRoute?.(''); setCarrierOffice?.(''); }}
+                  >
+                    <option value="">{carrierMode === 'coach' ? '— Chưa chọn nhà xe —' : '— Chưa chọn đơn vị —'}</option>
+                    {modeCarriers.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </Select>
                 </Field>
               </>
             ) : null}
@@ -320,45 +315,39 @@ const OrderFormCustomerSection: React.FC<CustomerSectionProps> = ({
             {/* Tuyến nhà xe — chỉ hiện khi hãng đã chọn là nhà xe (coach) có tuyến. */}
             {setCarrierRoute && carrierRoutes.length > 0 ? (
               <Field label="Tuyến nhà xe" htmlFor="order-form-carrier-route">
-                <Box layoutClassName="relative">
-                  <RouteIcon className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Select
-                    id="order-form-carrier-route"
-                    fullWidth
-                    sizeClassName="pl-9"
-                    value={carrierRoute ?? ''}
-                    onChange={(e) => setCarrierRoute(e.target.value)}
-                  >
-                    <option value="">— Chưa chọn tuyến —</option>
-                    {carrierRoutes.map((r, i) => {
-                      const label = `${r.from} → ${r.to}`;
-                      return <option key={i} value={label}>{label}{r.price != null ? ` · ${r.price.toLocaleString('vi-VN')}đ` : ''}</option>;
-                    })}
-                  </Select>
-                </Box>
+                <Select
+                  id="order-form-carrier-route"
+                  fullWidth
+                  leftIcon={<RouteIcon />}
+                  value={carrierRoute ?? ''}
+                  onChange={(e) => setCarrierRoute(e.target.value)}
+                >
+                  <option value="">— Chưa chọn tuyến —</option>
+                  {carrierRoutes.map((r, i) => {
+                    const label = `${r.from} → ${r.to}`;
+                    return <option key={i} value={label}>{label}{r.price != null ? ` · ${r.price.toLocaleString('vi-VN')}đ` : ''}</option>;
+                  })}
+                </Select>
               </Field>
             ) : null}
 
             {/* Văn phòng nhận — chỉ hiện khi hãng chọn là nhà xe (coach) có văn phòng. */}
             {setCarrierOffice && carrierOffices.length > 0 ? (
               <Field label="Văn phòng nhận" htmlFor="order-form-carrier-office">
-                <Box layoutClassName="relative">
-                  <Store className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <Select
-                    id="order-form-carrier-office"
-                    fullWidth
-                    sizeClassName="pl-9"
-                    value={carrierOffice ?? ''}
-                    onChange={(e) => setCarrierOffice(e.target.value)}
-                  >
-                    <option value="">— Chưa chọn văn phòng —</option>
-                    {carrierOffices.map((o, i) => {
-                      const val = o.name || o.address;
-                      const label = [o.name, o.address].filter(Boolean).join(' — ') || `VP ${i + 1}`;
-                      return <option key={i} value={val}>{label}{o.landmark ? ` (${o.landmark})` : ''}</option>;
-                    })}
-                  </Select>
-                </Box>
+                <Select
+                  id="order-form-carrier-office"
+                  fullWidth
+                  leftIcon={<Store />}
+                  value={carrierOffice ?? ''}
+                  onChange={(e) => setCarrierOffice(e.target.value)}
+                >
+                  <option value="">— Chưa chọn văn phòng —</option>
+                  {carrierOffices.map((o, i) => {
+                    const val = o.name || o.address;
+                    const label = [o.name, o.address].filter(Boolean).join(' — ') || `VP ${i + 1}`;
+                    return <option key={i} value={val}>{label}{o.landmark ? ` (${o.landmark})` : ''}</option>;
+                  })}
+                </Select>
               </Field>
             ) : null}
           </>

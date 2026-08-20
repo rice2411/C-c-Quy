@@ -22,6 +22,8 @@ export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectE
   sizeClassName?: string;
   stateClassName?: string;
   textClassName?: string;
+  /** Icon trái trong ô — tự chừa padding, không đổi chiều cao (thay cho absolute icon + pl-9). */
+  leftIcon?: React.ReactNode;
 }
 
 /** Ghép mọi con của <option> thành 1 chuỗi label. */
@@ -62,7 +64,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>((props, _ref) =>
   const {
     size, error, fullWidth: _fullWidth, searchable, className: _className,
     layoutClassName, backgroundClassName, borderClassName, focusClassName: _focus,
-    sizeClassName, stateClassName: _state, textClassName,
+    sizeClassName, stateClassName: _state, textClassName, leftIcon,
     children, value, onChange, disabled, id, 'aria-label': ariaLabel,
   } = props;
 
@@ -89,6 +91,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>((props, _ref) =>
       borderClassName={borderClassName}
       textClassName={textClassName}
       sizeClassName={sizeClassName}
+      leftIcon={leftIcon}
     />
   );
 });

@@ -158,39 +158,33 @@ const OrderFormStatusSection: React.FC<OrderStatusSectionProps> = ({
         </Field>
 
         <Field label={t('detail.payment')} htmlFor="order-form-payment-status">
-          <Box layoutClassName="relative">
-            <CreditCard className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Select
-              id="order-form-payment-status"
-              fullWidth
-              sizeClassName="pl-9"
-              value={paymentStatus}
-              onChange={(e) => setPaymentStatus(e.target.value as PaymentStatus)}
-            >
-              {Object.values(PaymentStatus).map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </Select>
-          </Box>
+          <Select
+            id="order-form-payment-status"
+            fullWidth
+            leftIcon={<CreditCard />}
+            value={paymentStatus}
+            onChange={(e) => setPaymentStatus(e.target.value as PaymentStatus)}
+          >
+            {Object.values(PaymentStatus).map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </Select>
         </Field>
       </Box>
 
       <Field label={t('paymentMethod.label')} htmlFor="order-form-payment-method">
-        <Box layoutClassName="relative">
-          <Wallet className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Select
-            id="order-form-payment-method"
-            fullWidth
-            sizeClassName="pl-9"
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-          >
-            <option value={PaymentMethod.CASH}>{t('paymentMethod.cash')}</option>
-            <option value={PaymentMethod.BANKING}>{t('paymentMethod.banking')}</option>
-          </Select>
-        </Box>
+        <Select
+          id="order-form-payment-method"
+          fullWidth
+          leftIcon={<Wallet />}
+          value={paymentMethod}
+          onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+        >
+          <option value={PaymentMethod.CASH}>{t('paymentMethod.cash')}</option>
+          <option value={PaymentMethod.BANKING}>{t('paymentMethod.banking')}</option>
+        </Select>
       </Field>
 
       <Field label={t('form.deposit')} htmlFor="order-form-deposit">

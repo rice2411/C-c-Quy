@@ -46,6 +46,8 @@ interface BaseProps {
   textClassName?: string;
   sizeClassName?: string;
   containerClassName?: string;
+  /** Icon trái trong trigger — tự chừa padding (pl-9), KHÔNG đụng chiều cao mặc định. */
+  leftIcon?: React.ReactNode;
 }
 
 type DropdownProps =
@@ -64,7 +66,7 @@ const Dropdown: React.FC<DropdownProps> = (props) => {
     disabled = false, error = false, size = 'md', id, ariaLabel, align = 'left',
     maxHeight = 280, clearable = false,
     layoutClassName, backgroundClassName, borderClassName, roundedClassName, textClassName,
-    sizeClassName, containerClassName,
+    sizeClassName, containerClassName, leftIcon,
   } = props;
   const multiple = props.multiple === true;
   const selected: string[] = multiple
@@ -202,6 +204,7 @@ const Dropdown: React.FC<DropdownProps> = (props) => {
     backgroundClassName ?? 'bg-slate-50 dark:bg-slate-700',
     textClassName ?? 'text-slate-900 dark:text-white',
     sizeClassName ?? sizeClasses[size],
+    leftIcon ? 'pl-9' : '',
     layoutClassName ?? '',
   ].filter(Boolean).join(' ');
 
@@ -295,6 +298,11 @@ const Dropdown: React.FC<DropdownProps> = (props) => {
         onKeyDown={onKeyDown}
         className={triggerCls}
       >
+        {leftIcon ? (
+          <span className="pointer-events-none absolute left-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center text-slate-400 [&_svg]:h-4 [&_svg]:w-4">
+            {leftIcon}
+          </span>
+        ) : null}
         <span className={`block min-w-0 flex-1 truncate text-left ${hasValue ? '' : 'text-slate-400 dark:text-slate-500'}`}>
           {triggerLabel ?? placeholder}
         </span>
