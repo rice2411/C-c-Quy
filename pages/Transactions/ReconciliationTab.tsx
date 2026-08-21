@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Coins, GitCompareArrows, Inbox, Link2, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Coins, GitCompareArrows, Inbox, Link2, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { LedgerFilters, LedgerTransaction } from '@/types';
 import { useLedger } from '@/hooks/queries/useTransactionsQuery';
@@ -14,10 +14,9 @@ import {
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
+import FilterToolbar, { type ToolbarPill } from '@/components/shared/FilterToolbar';
 import LedgerDesktopTable from './components/ledger/LedgerDesktopTable';
 import LedgerMobileList from './components/ledger/LedgerMobileList';
 import ReconcileSyncModal from './components/ReconcileSyncModal';
@@ -122,45 +121,59 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
     finally { setExpApplying(false); }
   };
 
+  const pills: ToolbarPill[] = [
+    {
+      id: 'unmatched',
+      label: 'Chỉ chưa khớp',
+      active: onlyUnmatched,
+      onClick: () => setOnlyUnmatched((v) => !v),
+      icon: Link2,
+    },
+    {
+      id: 'in',
+      label: 'Tiền vào',
+      active: type === 'in',
+      onClick: () => setType(type === 'in' ? '' : 'in'),
+      icon: ArrowDownCircle,
+    },
+    {
+      id: 'out',
+      label: 'Tiền ra',
+      active: type === 'out',
+      onClick: () => setType(type === 'out' ? '' : 'out'),
+      icon: ArrowUpCircle,
+    },
+  ];
+
+  const syncActions = (
+    <>
+      <Button type="button" variant="secondary" sizeClassName="px-3 py-2 text-xs" layoutClassName="inline-flex items-center gap-1.5"
+        leftIcon={<GitCompareArrows className="h-4 w-4" />} onClick={openSync}>
+        Đồng bộ với đơn
+      </Button>
+      <Button type="button" variant="secondary" sizeClassName="px-3 py-2 text-xs" layoutClassName="inline-flex items-center gap-1.5"
+        leftIcon={<Coins className="h-4 w-4" />} onClick={openExp}>
+        Đồng bộ chi phí
+      </Button>
+    </>
+  );
+
   return (
     <Box layoutClassName="space-y-4">
-      {/* Header + nút đồng bộ hàng loạt */}
-      <Box layoutClassName="flex flex-wrap items-center justify-between gap-2">
-        <Typography size="sm" variant="muted">
-          Click 1 giao dịch để chọn đối soát. Hoặc dùng đồng bộ tự động (gợi ý cặp 1-1).
-        </Typography>
-        <Box layoutClassName="flex items-center gap-2">
-          <Button type="button" variant="secondary" sizeClassName="px-3 py-2 text-xs" layoutClassName="inline-flex items-center gap-1.5"
-            leftIcon={<GitCompareArrows className="h-4 w-4" />} onClick={openSync}>
-            Đồng bộ với đơn
-          </Button>
-          <Button type="button" variant="secondary" sizeClassName="px-3 py-2 text-xs" layoutClassName="inline-flex items-center gap-1.5"
-            leftIcon={<Coins className="h-4 w-4" />} onClick={openExp}>
-            Đồng bộ chi phí
-          </Button>
-        </Box>
-      </Box>
+      <Typography size="sm" variant="muted">
+        Click 1 giao dịch để chọn đối soát. Hoặc dùng đồng bộ tự động (gợi ý cặp 1-1).
+      </Typography>
 
-      {/* Filter đơn giản */}
-      <Box layoutClassName="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-        <Box layoutClassName="min-w-0 flex-1 sm:min-w-[200px]">
-          <Input value={search} onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm nội dung, mã đơn, số TK..." leftIcon={<Search className="h-4 w-4 text-slate-400" />} roundedClassName="rounded-lg" />
-        </Box>
-        <Select size="sm" value={type || ''} onChange={(e) => setType((e.target.value || '') as LedgerFilters['type'])}
-          layoutClassName="w-full rounded-lg sm:w-auto" sizeClassName="px-3">
-          <option value="">Tất cả loại</option>
-          <option value="in">Tiền vào</option>
-          <option value="out">Tiền ra</option>
-        </Select>
-        <Button type="button" onClick={() => setOnlyUnmatched((v) => !v)} variant="ghost"
-          disableVariantHover disableVariantTextColor roundedClassName="rounded-lg" sizeClassName="px-3 py-2 text-xs"
-          layoutClassName="inline-flex items-center gap-1.5" borderClassName="border border-slate-200 dark:border-slate-600"
-          backgroundClassName={onlyUnmatched ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-white dark:bg-slate-800'}
-          textClassName={onlyUnmatched ? 'font-semibold text-amber-700 dark:text-amber-300' : 'font-medium text-slate-500 dark:text-slate-400'}>
-          <Link2 className="h-3.5 w-3.5" /> Chỉ chưa khớp
-        </Button>
-      </Box>
+      {/* Filter chuẩn (giống Sổ giao dịch / Orders) */}
+      <FilterToolbar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Tìm nội dung, mã đơn, số TK..."
+        pills={pills}
+        actions={syncActions}
+        showClearAll={Boolean(search || type || !onlyUnmatched)}
+        onClearAll={() => { setSearch(''); setType(''); setOnlyUnmatched(true); }}
+      />
 
       {loading ? (
         <Box layoutClassName="flex flex-1 items-center justify-center py-16"><Spinner size="lg" textClassName="text-primary-500" /></Box>
