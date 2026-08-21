@@ -10,7 +10,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ImportedMaterialSummary,
-  MaterialStock,
   ImportedSupplierSummary,
   SavedStockReceiptDetail,
   SavedStockReceiptSummary,
@@ -23,7 +22,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { qk } from '@/hooks/queryKeys';
 import {
   fetchImportedMaterials,
-  fetchMaterialStock,
   fetchImportedSuppliers,
   fetchMaterialMergeSuggestions,
   fetchMaterialMergeSuggestionsAi,
@@ -92,17 +90,6 @@ export const useImportedMaterials = (): UseImportedMaterialsResult => {
       await query.refetch();
     },
   };
-};
-
-/** Tồn dư (neo kiểm kê) — keyed by materialId ở component. */
-export const useMaterialStock = (): { data: MaterialStock[]; loading: boolean } => {
-  const { currentUser } = useAuth();
-  const query = useQuery({
-    queryKey: qk.stockReceipt.stockEstimate,
-    queryFn: fetchMaterialStock,
-    enabled: !!currentUser,
-  });
-  return { data: query.data ?? [], loading: query.isLoading };
 };
 
 export interface UseMaterialPriceOptionsResult {

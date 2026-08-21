@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { GitMerge, Package, Plus, ShoppingBag, TrendingUp, Truck, X } from 'lucide-react';
-import type { ImportedMaterialSummary, MaterialStock } from '@/types/billReceipt';
+import type { ImportedMaterialSummary } from '@/types/billReceipt';
 import { createMaterial, mergeMaterials } from '@/services/stockReceiptService';
 import StatsBanner from '@/components/ui/StatsBanner';
 import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/StockReceipts/dateFilter';
@@ -17,9 +17,7 @@ import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
 import AutocompleteInput, { type AutocompleteOption } from '@/components/AutocompleteInput';
-import { useImportedSuppliers, useMaterialStock } from '@/hooks/queries/useStockReceiptQuery';
-import StockRemainCell from '@/pages/StockReceipts/components/StockRemainCell';
-import StocktakeModal from '@/pages/StockReceipts/components/StocktakeModal';
+import { useImportedSuppliers } from '@/hooks/queries/useStockReceiptQuery';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import { formatDateISO, parseDateValue } from '@/utils/format/dateUtil';
@@ -102,16 +100,6 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
     () => suppliers.map((s) => ({ id: s.id, label: s.name })),
     [suppliers],
   );
-
-  // Tồn dư ước tính theo công thức (BOM) — map theo materialId.
-  const { data: stockList } = useMaterialStock();
-  const stockMap = useMemo(() => {
-    const m = new Map<string, MaterialStock>();
-    stockList.forEach((s) => m.set(s.materialId, s));
-    return m;
-  }, [stockList]);
-  // Modal kiểm kê cho 1 NVL.
-  const [stkMat, setStkMat] = useState<{ id: string; name: string; unit: string } | null>(null);
 
   // Apply period filter first, then sort
   const periodFiltered = useMemo(
@@ -389,7 +377,6 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
                     <TableHeaderCell layoutClassName="sticky top-0 z-20 p-2 text-right bg-white dark:bg-slate-800">Số lần</TableHeaderCell>
                     <TableHeaderCell layoutClassName="sticky top-0 z-20 p-2 text-left bg-white dark:bg-slate-800">NCC gần nhất</TableHeaderCell>
                     <TableHeaderCell layoutClassName="sticky top-0 z-20 p-2 text-left bg-white dark:bg-slate-800">Nhập lần cuối</TableHeaderCell>
-                    <TableHeaderCell layoutClassName="sticky top-0 z-20 p-2 text-left bg-white dark:bg-slate-800">Còn dư (ước tính)</TableHeaderCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -421,25 +408,6 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
                           <Box layoutClassName="flex items-center gap-1.5">
                             <Box layoutClassName="h-2 w-2 shrink-0" roundedClassName="rounded-full" backgroundClassName={tier.dotClassName} title={tier.label} />
                             <Typography as="span" size="xs" variant="muted">{row.lastReceiptDate ? formatDateISO(row.lastReceiptDate) : '—'}</Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell layoutClassName="p-2">
-                          <Box layoutClassName="flex items-center gap-2">
-                            <StockRemainCell stock={stockMap.get(row.id)} />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              onClick={() => setStkMat({ id: row.id, name: row.name, unit: row.canonicalUnit || '' })}
-                              sizeClassName="px-1.5 py-0.5 text-[10px]"
-                              layoutClassName="shrink-0"
-                              roundedClassName="rounded"
-                              borderClassName="border border-slate-200 dark:border-slate-600"
-                              textClassName="font-medium text-slate-500 hover:text-primary-600 dark:text-slate-400"
-                              disableVariantHover
-                              disableVariantTextColor
-                            >
-                              Kiểm kê
-                            </Button>
                           </Box>
                         </TableCell>
                       </TableRow>
@@ -522,16 +490,6 @@ const BillImportMaterialsTab: React.FC<BillImportMaterialsTabProps> = ({
           void onRefresh();
         }}
       />
-
-      {stkMat && (
-        <StocktakeModal
-          isOpen={!!stkMat}
-          onClose={() => setStkMat(null)}
-          materialId={stkMat.id}
-          materialName={stkMat.name}
-          unit={stkMat.unit}
-        />
-      )}
     </Box>
   );
 };

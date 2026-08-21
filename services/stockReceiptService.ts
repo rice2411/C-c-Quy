@@ -9,8 +9,6 @@
 import { apiClient } from '@/services/api/client';
 import type {
   ImportedMaterialSummary,
-
-  MaterialStock,
   ImportedSupplierSummary,
   SavedStockReceiptDetail,
   SavedStockReceiptSummary,
@@ -92,40 +90,6 @@ export async function fetchImportedSuppliers(): Promise<ImportedSupplierSummary[
 export async function fetchImportedMaterials(): Promise<ImportedMaterialSummary[]> {
   const res = await apiClient.get<ImportedMaterialSummary[]>(`${BASE}/materials`);
   return res.data;
-}
-
-/** Tồn dư (neo kiểm kê) → GET /stock-receipts/materials/stock-estimate. */
-export async function fetchMaterialStock(): Promise<MaterialStock[]> {
-  const res = await apiClient.get<unknown[]>(`${BASE}/materials/stock-estimate`);
-  const numOrNull = (v: unknown): number | null =>
-    typeof v === 'number' && Number.isFinite(v) ? v : null;
-  return Array.isArray(res.data)
-    ? res.data.map((raw) => {
-        const r = (raw ?? {}) as Record<string, unknown>;
-        return {
-          materialId: typeof r.materialId === 'string' ? r.materialId : '',
-          unit: typeof r.unit === 'string' ? r.unit : null,
-          hasStocktake: r.hasStocktake === true,
-          stocktakeDate: typeof r.stocktakeDate === 'string' ? r.stocktakeDate : null,
-          stocktakeQty: numOrNull(r.stocktakeQty),
-          importedAfter: numOrNull(r.importedAfter),
-          consumedAfter: numOrNull(r.consumedAfter),
-          remainingUnit: numOrNull(r.remainingUnit),
-          remainingGrams: numOrNull(r.remainingGrams),
-        };
-      })
-    : [];
-}
-
-
-/** Ghi 1 lần kiểm kê NVL → POST /stock-receipts/materials/:id/stocktake. */
-export async function recordStocktake(
-  materialId: string,
-  countedQty: number,
-  countDate?: string,
-  note?: string,
-): Promise<void> {
-  await apiClient.post(`${BASE}/materials/${materialId}/stocktake`, { countedQty, countDate, note });
 }
 
 
