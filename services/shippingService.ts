@@ -3,6 +3,8 @@ import { apiClient } from '@/services/api/client';
 /** Chỉ số 1 đơn vị vận chuyển (DVVC). */
 export interface CarrierStat {
   carrier: string;
+  /** Loại ĐVVC: 'express' (SPX/GHTK…) hoặc 'coach' (xe khách/nhà xe). */
+  carrierType: string;
   orders: number;
   revenue: number;
   aov: number;
@@ -26,9 +28,8 @@ export interface StuckOrder {
   ageDays: number;
 }
 
-/** Phân bố theo tỉnh của 1 DVVC. */
-export interface CarrierProvince {
-  carrier: string;
+/** Phủ TOÀN BỘ tỉnh/thành (kể cả tỉnh chưa có đơn) — thống kê ship theo tỉnh. */
+export interface ProvinceCoverage {
   province: string;
   orders: number;
   delivered: number;
@@ -39,7 +40,7 @@ export interface CarrierProvince {
 export interface ShippingAnalytics {
   carriers: CarrierStat[];
   stuckOrders: StuckOrder[];
-  byProvince: CarrierProvince[];
+  provinceCoverage: ProvinceCoverage[];
   generatedAt: string;
 }
 
@@ -62,6 +63,7 @@ export const fetchShippingAnalytics = async (range?: ShippingRange): Promise<Shi
   return {
     carriers: arr(d.carriers).map((c) => ({
       carrier: String(c.carrier ?? ''),
+      carrierType: String(c.carrier_type ?? 'express'),
       orders: num(c.orders),
       revenue: num(c.revenue),
       aov: num(c.aov),
@@ -85,8 +87,7 @@ export const fetchShippingAnalytics = async (range?: ShippingRange): Promise<Shi
       shippedDate: String(o.shipped_date ?? ''),
       ageDays: num(o.age_days),
     })),
-    byProvince: arr(d.byProvince).map((p) => ({
-      carrier: String(p.carrier ?? ''),
+    provinceCoverage: arr(d.provinceCoverage).map((p) => ({
       province: String(p.province ?? ''),
       orders: num(p.orders),
       delivered: num(p.delivered),

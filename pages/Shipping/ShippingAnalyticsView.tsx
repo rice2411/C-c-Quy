@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Truck, Wallet, Clock, AlertTriangle, MapPin, CheckCircle2 } from 'lucide-react';
+import { Truck, Bus, Wallet, Clock, AlertTriangle, MapPin, CheckCircle2 } from 'lucide-react';
 import {
   ShippingAnalytics,
   ShippingRange,
@@ -36,10 +36,6 @@ const computeRange = (preset: RangePreset): ShippingRange => {
   return { from: fmtDate(from), to: fmtDate(to) };
 };
 
-const HIST_LABELS: [keyof CarrierStat['histogram'], string][] = [
-  ['d1', '≤1 ngày'], ['d2', '2 ngày'], ['d3', '3 ngày'], ['d4', '4 ngày'], ['d5p', '5+ ngày'],
-];
-
 /** Chip nhỏ hiển thị 1 chỉ số trạng thái. */
 const StatChip: React.FC<{ label: string; value: number; tone: 'ok' | 'warn' | 'muted' }> = ({ label, value, tone }) => {
   const bg =
@@ -57,66 +53,37 @@ const StatChip: React.FC<{ label: string; value: number; tone: 'ok' | 'warn' | '
   );
 };
 
-/** Thẻ chỉ số 1 DVVC. */
+/** Thẻ chỉ số 1 DVVC — gọn: tên (+ badge xe khách), số đơn, doanh thu, TB giao, chip trạng thái. */
 const CarrierCard: React.FC<{ c: CarrierStat }> = ({ c }) => {
-  const maxH = Math.max(1, c.histogram.d1, c.histogram.d2, c.histogram.d3, c.histogram.d4, c.histogram.d5p);
+  const isCoach = c.carrierType === 'coach';
   return (
-    <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
+    <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-2.5">
       <Box layoutClassName="flex items-center justify-between gap-2">
-        <Typography as="span" size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold" textClassName="text-slate-900 dark:text-white">
-          <Truck className="h-4 w-4 text-cyan-500" /> {c.carrier}
+        <Typography as="span" size="sm" layoutClassName="inline-flex min-w-0 items-center gap-1.5 font-semibold" textClassName="text-slate-900 dark:text-white">
+          {isCoach ? <Bus className="h-4 w-4 shrink-0 text-amber-500" /> : <Truck className="h-4 w-4 shrink-0 text-cyan-500" />}
+          <Typography as="span" size="sm" layoutClassName="truncate">{c.carrier}</Typography>
+          {isCoach ? (
+            <Typography as="span" size="xs" layoutClassName="shrink-0 rounded-full px-1.5 py-0.5 font-medium" backgroundClassName="bg-amber-50 dark:bg-amber-950/40" textClassName="text-amber-700 dark:text-amber-300">
+              xe khách
+            </Typography>
+          ) : null}
         </Typography>
-        <Typography as="span" size="xs" variant="muted">{c.orders} đơn</Typography>
+        <Typography as="span" size="xs" variant="muted" layoutClassName="shrink-0 tabular-nums">{c.orders} đơn</Typography>
       </Box>
 
-      <Box layoutClassName="grid grid-cols-3 gap-2">
-        <Box layoutClassName="space-y-0.5">
-          <Typography as="span" size="xs" variant="muted" layoutClassName="inline-flex items-center gap-1"><Wallet className="h-3 w-3" /> Doanh thu</Typography>
-          <Typography as="p" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">{formatVND(c.revenue)}</Typography>
-        </Box>
-        <Box layoutClassName="space-y-0.5">
-          <Typography as="span" size="xs" variant="muted">Giá trị TB/đơn</Typography>
-          <Typography as="p" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">{formatVND(c.aov)}</Typography>
-        </Box>
-        <Box layoutClassName="space-y-0.5">
-          <Typography as="span" size="xs" variant="muted">Phí ship TB</Typography>
-          <Typography as="p" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">{formatVND(c.shipAvg)}</Typography>
-        </Box>
+      <Box layoutClassName="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <Typography as="span" size="sm" layoutClassName="inline-flex items-center gap-1 font-semibold" textClassName="text-slate-900 dark:text-white">
+          <Wallet className="h-3.5 w-3.5 text-slate-400" /> {formatVND(c.revenue)}
+        </Typography>
+        <Typography as="span" size="xs" variant="muted" layoutClassName="inline-flex items-center gap-1">
+          <Clock className="h-3.5 w-3.5" /> {c.durCount > 0 ? `TB ${c.avgDays}n giao (${c.durCount} đơn)` : 'chưa đủ mốc giao'}
+        </Typography>
       </Box>
 
       <Box layoutClassName="flex flex-wrap gap-2">
         <StatChip label="Đã giao" value={c.delivered} tone="ok" />
         <StatChip label="Đang giao" value={c.inTransit} tone="muted" />
         <StatChip label="Kẹt ≥4 ngày" value={c.stuck} tone={c.stuck > 0 ? 'warn' : 'muted'} />
-      </Box>
-
-      <Box layoutClassName="space-y-1.5">
-        <Typography as="span" size="xs" layoutClassName="inline-flex items-center gap-1 font-semibold uppercase tracking-wide" textClassName="text-slate-500 dark:text-slate-400">
-          <Clock className="h-3 w-3" /> Thời gian giao (nhận → giao xong)
-        </Typography>
-        {c.durCount > 0 ? (
-          <>
-            <Typography as="p" size="xs" variant="muted">
-              TB {c.avgDays} ngày · nhanh {c.minDays} · lâu {c.maxDays} · {c.durCount} đơn có mốc
-            </Typography>
-            <Box layoutClassName="space-y-1">
-              {HIST_LABELS.map(([k, lbl]) => {
-                const n = c.histogram[k];
-                return (
-                  <Box key={k} layoutClassName="flex items-center gap-2">
-                    <Typography as="span" size="xs" layoutClassName="w-16 shrink-0" textClassName="text-slate-500 dark:text-slate-400">{lbl}</Typography>
-                    <Box layoutClassName="relative h-3.5 min-w-0 flex-1 overflow-hidden rounded" backgroundClassName="bg-slate-100 dark:bg-slate-700/50">
-                      <Box layoutClassName="h-full rounded bg-cyan-400 dark:bg-cyan-500" style={{ width: `${Math.round((n / maxH) * 100)}%` }} />
-                    </Box>
-                    <Typography as="span" size="xs" layoutClassName="w-6 shrink-0 text-right tabular-nums" textClassName="text-slate-600 dark:text-slate-300">{n}</Typography>
-                  </Box>
-                );
-              })}
-            </Box>
-          </>
-        ) : (
-          <Typography as="p" size="xs" variant="muted">Chưa có đơn nào đủ mốc nhận + giao.</Typography>
-        )}
       </Box>
     </Card>
   );
@@ -145,9 +112,10 @@ const ShippingAnalyticsView: React.FC = () => {
   }, [preset]);
 
   const provinceRows = useMemo(() => {
-    const rows = data?.byProvince ?? [];
+    const rows = data?.provinceCoverage ?? [];
     const maxOrders = Math.max(1, ...rows.map((r) => r.orders));
-    return { rows, maxOrders };
+    const withOrders = rows.filter((r) => r.orders > 0).length;
+    return { rows, maxOrders, withOrders };
   }, [data]);
 
   return (
@@ -203,28 +171,42 @@ const ShippingAnalyticsView: React.FC = () => {
 
           {provinceRows.rows.length > 0 ? (
             <Card padding="md" borderClassName="border-slate-200 dark:border-slate-700" layoutClassName="space-y-3">
-              <Typography as="span" size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold" textClassName="text-slate-900 dark:text-white">
-                <MapPin className="h-4 w-4 text-violet-500" /> Phân bố theo tỉnh (đơn ship tỉnh)
-              </Typography>
-              <Box layoutClassName="max-h-80 space-y-1.5 overflow-y-auto">
-                {provinceRows.rows.map((p, i) => (
-                  <Box key={`${p.carrier}-${p.province}-${i}`} layoutClassName="flex items-center gap-2">
-                    <Typography as="span" size="xs" layoutClassName="w-28 shrink-0 truncate font-medium" textClassName="text-slate-700 dark:text-slate-200">{p.province}</Typography>
-                    <Box layoutClassName="relative h-4 min-w-0 flex-1 overflow-hidden rounded" backgroundClassName="bg-slate-100 dark:bg-slate-700/50">
-                      <Box layoutClassName="h-full rounded bg-violet-400 dark:bg-violet-500" style={{ width: `${Math.max(4, Math.round((p.orders / provinceRows.maxOrders) * 100))}%` }} />
-                    </Box>
-                    <Typography as="span" size="xs" layoutClassName="inline-flex w-40 shrink-0 items-center justify-end gap-1 text-right tabular-nums" textClassName="text-slate-600 dark:text-slate-300">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-500" />{p.delivered}/{p.orders} · {p.avgDays === null ? '—' : `${p.avgDays}n`}
-                    </Typography>
-                  </Box>
-                ))}
+              <Box layoutClassName="flex flex-wrap items-center justify-between gap-2">
+                <Typography as="span" size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold" textClassName="text-slate-900 dark:text-white">
+                  <MapPin className="h-4 w-4 text-violet-500" /> Thống kê theo tỉnh (toàn bộ tỉnh/thành)
+                </Typography>
+                <Typography as="span" size="xs" variant="muted">
+                  Đã có đơn: {provinceRows.withOrders}/{provinceRows.rows.length} tỉnh
+                </Typography>
               </Box>
-              <Typography as="p" size="xs" variant="muted">Số đã giao / tổng đơn · thời gian giao TB (ngày). DVVC chính hiện tại: SPX.</Typography>
+              <Box layoutClassName="max-h-96 space-y-1 overflow-y-auto pr-1">
+                {provinceRows.rows.map((p) => {
+                  const empty = p.orders === 0;
+                  return (
+                    <Box key={p.province} layoutClassName="flex items-center gap-2">
+                      <Typography as="span" size="xs" layoutClassName="w-28 shrink-0 truncate font-medium" textClassName={empty ? 'text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'}>{p.province}</Typography>
+                      <Box layoutClassName="relative h-4 min-w-0 flex-1 overflow-hidden rounded" backgroundClassName="bg-slate-100 dark:bg-slate-700/50">
+                        {empty ? null : (
+                          <Box layoutClassName="h-full rounded bg-violet-400 dark:bg-violet-500" style={{ width: `${Math.max(4, Math.round((p.orders / provinceRows.maxOrders) * 100))}%` }} />
+                        )}
+                      </Box>
+                      {empty ? (
+                        <Typography as="span" size="xs" layoutClassName="w-40 shrink-0 text-right tabular-nums" textClassName="text-slate-400 dark:text-slate-500">0 đơn</Typography>
+                      ) : (
+                        <Typography as="span" size="xs" layoutClassName="inline-flex w-40 shrink-0 items-center justify-end gap-1 text-right tabular-nums" textClassName="text-slate-600 dark:text-slate-300">
+                          <CheckCircle2 className="h-3 w-3 text-emerald-500" />{p.delivered}/{p.orders} · {p.avgDays === null ? '—' : `${p.avgDays}n`}
+                        </Typography>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+              <Typography as="p" size="xs" variant="muted">Số đã giao / tổng đơn ship tỉnh · thời gian giao TB (ngày). Liệt kê toàn bộ tỉnh kể cả tỉnh chưa có đơn.</Typography>
             </Card>
           ) : null}
 
           <Typography as="p" size="xs" variant="muted">
-            DVVC nhận diện từ mã vận đơn (SPX = Shopee Express). Đơn chưa có mã gộp nhóm "Chưa có mã / Tự giao".
+            ĐVVC lấy từ hãng đã gán cho đơn (gồm cả xe khách/nhà xe); đơn chưa gán suy từ mã vận đơn, còn lại gộp "Chưa gán / Tự giao".
           </Typography>
         </>
       )}
