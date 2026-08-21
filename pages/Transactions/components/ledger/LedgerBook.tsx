@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { LedgerFilters, LedgerTransaction } from '@/types';
-import { useLedger, useLedgerSeries } from '@/hooks/queries/useTransactionsQuery';
+import { useLedger } from '@/hooks/queries/useTransactionsQuery';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -10,7 +10,6 @@ import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
 import LedgerSummaryBar from './LedgerSummaryBar';
 import LedgerFilterBar from './LedgerFilterBar';
-import LedgerFlowChart from './LedgerFlowChart';
 import LedgerDesktopTable from './LedgerDesktopTable';
 import LedgerMobileList from './LedgerMobileList';
 import TransactionDetailModal from '../TransactionDetailModal';
@@ -28,7 +27,7 @@ const formatDate = (dateStr: string): string => {
   }
 };
 
-/** Sổ giao dịch thống nhất: summary + chart + filter + bảng phân trang server-side. */
+/** Sổ giao dịch thống nhất: summary + filter (chuẩn như Orders) + bảng phân trang server-side. */
 const LedgerBook: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, toDate }) => {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -61,7 +60,6 @@ const LedgerBook: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, 
   }), [fromDate, toDate, type, status, category, gateway, debouncedSearch, page]);
 
   const { data, loading, isFetching, error, refetch } = useLedger(filters);
-  const { series } = useLedgerSeries(fromDate, toDate ? `${toDate.slice(0, 10)} 23:59:59` : '');
 
   useEffect(() => {
     if (error) toast.error('Không tải được sổ giao dịch');
@@ -86,8 +84,6 @@ const LedgerBook: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, 
   return (
     <Box layoutClassName="space-y-4">
       <LedgerSummaryBar summary={data.summary} />
-
-      <LedgerFlowChart series={series} fromDate={fromDate} toDate={toDate} />
 
       <LedgerFilterBar
         filters={filters}

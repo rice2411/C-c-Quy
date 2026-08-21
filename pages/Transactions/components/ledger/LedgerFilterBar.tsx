@@ -1,10 +1,9 @@
 import React, { useMemo } from 'react';
-import { Search, RefreshCw } from 'lucide-react';
+import { RefreshCw, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
 import { LedgerFilters, LedgerStatus, LEDGER_STATUS_META, EXPENSE_CATEGORIES } from '@/types';
-import Box from '@/components/ui/Box';
-import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import IconButton from '@/components/ui/IconButton';
+import FilterToolbar, { type ToolbarPill } from '@/components/shared/FilterToolbar';
 
 interface LedgerFilterBarProps {
   filters: LedgerFilters;
@@ -22,7 +21,10 @@ interface LedgerFilterBarProps {
 const IN_STATUSES: LedgerStatus[] = ['matched', 'shopee', 'external', 'unmatched'];
 const OUT_STATUSES: LedgerStatus[] = ['refund', 'settled', 'expense', 'stock', 'excluded', 'unmatched'];
 
-/** Toolbar lọc sổ: tìm kiếm + loại (thu/chi) + trạng thái + danh mục + ngân hàng. */
+/**
+ * Toolbar lọc sổ giao dịch — dùng chung FilterToolbar (chuẩn như trang Đơn hàng):
+ * tìm kiếm + pill nhanh Tiền vào/Tiền ra + dropdown trạng thái/danh mục/ngân hàng.
+ */
 const LedgerFilterBar: React.FC<LedgerFilterBarProps> = ({
   filters, search, gatewayOptions, isFetching,
   onSearchChange, onTypeChange, onStatusChange, onCategoryChange, onGatewayChange, onRefresh,
@@ -34,90 +36,107 @@ const LedgerFilterBar: React.FC<LedgerFilterBarProps> = ({
     return [...IN_STATUSES, ...OUT_STATUSES.filter((s) => s !== 'unmatched')];
   }, [filters.type]);
 
-  const selectLayout = 'rounded-lg';
+  // Pill nhanh: Tiền vào / Tiền ra (loại trừ nhau, bấm lại để bỏ).
+  const pills: ToolbarPill[] = [
+    {
+      id: 'in',
+      label: 'Tiền vào',
+      active: filters.type === 'in',
+      onClick: () => onTypeChange(filters.type === 'in' ? '' : 'in'),
+      icon: ArrowDownCircle,
+    },
+    {
+      id: 'out',
+      label: 'Tiền ra',
+      active: filters.type === 'out',
+      onClick: () => onTypeChange(filters.type === 'out' ? '' : 'out'),
+      icon: ArrowUpCircle,
+    },
+  ];
+
+  const selectLayout = 'rounded-lg w-full sm:w-auto';
   const selectSize = 'px-3';
 
+  const hasAnyFilter = Boolean(
+    filters.type || filters.status || filters.category || filters.gateway || search,
+  );
+
   return (
-    <Box layoutClassName="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-      <Box layoutClassName="min-w-0 flex-1 sm:min-w-[200px]">
-        <Input
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Tìm nội dung, mã đơn, số TK..."
-          leftIcon={<Search className="h-4 w-4 text-slate-400" />}
-          roundedClassName="rounded-lg"
-        />
-      </Box>
+    <FilterToolbar
+      search={search}
+      onSearchChange={onSearchChange}
+      searchPlaceholder="Tìm nội dung, mã đơn, số TK..."
+      pills={pills}
+      customFilters={
+        <>
+          <Select
+            size="sm"
+            value={filters.status || ''}
+            onChange={(e) => onStatusChange((e.target.value || '') as LedgerFilters['status'])}
+            layoutClassName={selectLayout}
+            sizeClassName={selectSize}
+          >
+            <option value="">Mọi trạng thái</option>
+            {statusOptions.map((s) => (
+              <option key={s} value={s}>{LEDGER_STATUS_META[s].label}</option>
+            ))}
+          </Select>
 
-      <Select
-        size="sm"
-        value={filters.type || ''}
-        onChange={(e) => onTypeChange((e.target.value || '') as LedgerFilters['type'])}
-        layoutClassName={`${selectLayout} w-full sm:w-auto`}
-        sizeClassName={selectSize}
-      >
-        <option value="">Tất cả loại</option>
-        <option value="in">Tiền vào</option>
-        <option value="out">Tiền ra</option>
-      </Select>
+          <Select
+            size="sm"
+            value={filters.category || ''}
+            onChange={(e) => onCategoryChange(e.target.value)}
+            layoutClassName={selectLayout}
+            sizeClassName={selectSize}
+          >
+            <option value="">Mọi danh mục</option>
+            {EXPENSE_CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>{c.label}</option>
+            ))}
+          </Select>
 
-      <Select
-        size="sm"
-        value={filters.status || ''}
-        onChange={(e) => onStatusChange((e.target.value || '') as LedgerFilters['status'])}
-        layoutClassName={`${selectLayout} w-full sm:w-auto`}
-        sizeClassName={selectSize}
-      >
-        <option value="">Mọi trạng thái</option>
-        {statusOptions.map((s) => (
-          <option key={s} value={s}>{LEDGER_STATUS_META[s].label}</option>
-        ))}
-      </Select>
-
-      <Select
-        size="sm"
-        value={filters.category || ''}
-        onChange={(e) => onCategoryChange(e.target.value)}
-        layoutClassName={`${selectLayout} w-full sm:w-auto`}
-        sizeClassName={selectSize}
-      >
-        <option value="">Mọi danh mục</option>
-        {EXPENSE_CATEGORIES.map((c) => (
-          <option key={c.value} value={c.value}>{c.label}</option>
-        ))}
-      </Select>
-
-      {gatewayOptions.length > 0 && (
-        <Select
-          size="sm"
-          value={filters.gateway || ''}
-          onChange={(e) => onGatewayChange(e.target.value)}
-          layoutClassName={`${selectLayout} w-full sm:w-auto`}
-          sizeClassName={selectSize}
+          {gatewayOptions.length > 0 && (
+            <Select
+              size="sm"
+              value={filters.gateway || ''}
+              onChange={(e) => onGatewayChange(e.target.value)}
+              layoutClassName={selectLayout}
+              sizeClassName={selectSize}
+            >
+              <option value="">Mọi ngân hàng</option>
+              {gatewayOptions.map((g) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </Select>
+          )}
+        </>
+      }
+      actions={
+        <IconButton
+          type="button"
+          label="Làm mới"
+          onClick={onRefresh}
+          disabled={isFetching}
+          variant="secondary"
+          layoutClassName="rounded-lg p-2.5"
+          backgroundClassName="bg-white dark:bg-slate-800"
+          borderClassName="border border-slate-200 dark:border-slate-700"
+          textClassName="text-slate-600 dark:text-slate-400"
+          hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+          stateClassName="transition-colors disabled:opacity-50"
         >
-          <option value="">Mọi ngân hàng</option>
-          {gatewayOptions.map((g) => (
-            <option key={g} value={g}>{g}</option>
-          ))}
-        </Select>
-      )}
-
-      <IconButton
-        type="button"
-        label="Làm mới"
-        onClick={onRefresh}
-        disabled={isFetching}
-        variant="secondary"
-        layoutClassName="rounded-lg p-2.5"
-        backgroundClassName="bg-white dark:bg-slate-800"
-        borderClassName="border border-slate-200 dark:border-slate-700"
-        textClassName="text-slate-600 dark:text-slate-400"
-        hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
-        stateClassName="transition-colors disabled:opacity-50"
-      >
-        <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-      </IconButton>
-    </Box>
+          <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+        </IconButton>
+      }
+      showClearAll={hasAnyFilter}
+      onClearAll={() => {
+        onTypeChange('');
+        onStatusChange('');
+        onCategoryChange('');
+        onGatewayChange('');
+        onSearchChange('');
+      }}
+    />
   );
 };
 
