@@ -1,6 +1,10 @@
 import { apiClient } from '@/services/api/client';
 
-export type ScheduleType = 'daily_summary' | 'production_tomorrow' | 'delivery_today_tomorrow';
+export type ScheduleType =
+  | 'daily_summary'
+  | 'production_tomorrow'
+  | 'delivery_today_tomorrow'
+  | 'delivery_by_day';
 
 export interface NotificationSchedule {
   id: string;
@@ -46,6 +50,7 @@ export const SCHEDULE_TYPE_LABEL: Record<ScheduleType, string> = {
   daily_summary: 'Tổng kết hôm nay',
   production_tomorrow: 'Sản xuất ngày mai',
   delivery_today_tomorrow: 'Đơn giao hôm nay + ngày mai',
+  delivery_by_day: 'Đơn cần giao (gom theo ngày, 3 ngày tới)',
 };
 
 /** Thứ trong tuần (0=CN). */
