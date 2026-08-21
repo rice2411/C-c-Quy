@@ -9,7 +9,7 @@ import Typography from '@/components/ui/Typography';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 import FilterToolbar, { type ToolbarOption, type ToolbarPill } from '@/components/shared/FilterToolbar';
 import StatsBanner from '@/components/ui/StatsBanner';
-import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/StockReceipts/dateFilter';
+import DateRangePicker, { computePresetRange, type DatePreset, toISO } from '@/components/ui/DateRangePicker';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { parseDateValue } from '@/utils/format/dateUtil';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
@@ -86,22 +86,26 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
   // (1) state — mặc định sort theo ngày lên hệ thống (createdAt) mới nhất trước.
   const [sortKey, setSortKey] = useState<SortKey>('created');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
-  const [period, setPeriod] = useState<DatePeriod>('all');
+  const [range, setRange] = useState(() => {
+    const r = computePresetRange('month');
+    return { from: r.from, to: r.to, preset: 'month' as DatePreset };
+  });
   const [reconcileOpen, setReconcileOpen] = useState(false);
   // Pill lọc nhanh (giống trang Đơn hàng): đối soát + nguồn tạo phiếu.
   const [unreconciledOnly, setUnreconciledOnly] = useState(false);
   const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'ocr'>('all');
 
-  // (2a) memo: lọc kỳ — ngày phiếu = receiptDate || createdAt (dùng filterByPeriod như NCC).
-  // Bọc mỗi phiếu thành { row, lastReceiptDate } để tái dùng helper rồi map ngược về row gốc.
+  // (2a) memo: lọc theo KHOẢNG ngày (DateRangePicker) — ngày phiếu = receiptDate || createdAt.
+  // parseDateValue trả null nếu chuỗi không parse được (vd "29/06/2026") → guard tránh vỡ trang;
+  // so khớp theo chuỗi ISO yyyy-mm-dd (lexicographic) trong [from, to] bao gồm 2 đầu.
   const periodFilteredReceipts = useMemo(() => {
-    type Wrapped = { row: SavedStockReceiptSummary; lastReceiptDate?: string };
-    const wrapped: Wrapped[] = filteredReceipts.map((row) => ({
-      row,
-      lastReceiptDate: row.receiptDate ?? row.createdAt ?? undefined,
-    }));
-    return filterByPeriod(wrapped, period).map((w) => w.row);
-  }, [filteredReceipts, period]);
+    return filteredReceipts.filter((row) => {
+      const d = parseDateValue(row.receiptDate) ?? parseDateValue(row.createdAt);
+      if (!d || Number.isNaN(d.getTime())) return false;
+      const iso = toISO(d);
+      return iso >= range.from && iso <= range.to;
+    });
+  }, [filteredReceipts, range.from, range.to]);
 
   // (2a') memo: lọc theo pill nhanh — đối soát + nguồn tạo phiếu.
   // reconciled có thể undefined (BE bổ sung song song) → coi như CHƯA đối soát.
@@ -189,8 +193,25 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
     },
   ];
 
+  // Chọn khoảng ngày (DateRangePicker) — mirror TransactionsLayout: preset đổi cả 2 đầu,
+  // chỉnh tay 1 đầu → chuyển sang 'custom'.
+  const applyPreset = (p: DatePreset) => {
+    if (p !== 'custom') {
+      const r = computePresetRange(p);
+      setRange({ from: r.from, to: r.to, preset: p });
+    } else {
+      setRange((prev) => ({ ...prev, preset: 'custom' }));
+    }
+  };
+  const setFrom = (v: string) => setRange((prev) => ({ ...prev, from: v, preset: 'custom' }));
+  const setTo = (v: string) => setRange((prev) => ({ ...prev, to: v, preset: 'custom' }));
+
+  const anyFilterActive =
+    Boolean(receiptSearch) || unreconciledOnly || sourceFilter !== 'all' || range.preset !== 'month';
+
   const clearAll = () => {
-    setPeriod('all');
+    const r = computePresetRange('month');
+    setRange({ from: r.from, to: r.to, preset: 'month' });
     setUnreconciledOnly(false);
     setSourceFilter('all');
     onReceiptSearchChange('');
@@ -234,13 +255,20 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
         search={receiptSearch}
         onSearchChange={onReceiptSearchChange}
         searchPlaceholder={t('billImport.receiptsSearch')}
-        period={period}
-        periodOptions={PERIOD_OPTIONS as ToolbarOption[]}
-        onPeriodChange={(v) => setPeriod(v as DatePeriod)}
         sortBy={sortValue}
         sortOptions={SORT_OPTIONS}
         onSortChange={onSortSelect}
         pills={pills}
+        viewToggle={
+          <DateRangePicker
+            fromDate={range.from}
+            toDate={range.to}
+            preset={range.preset}
+            onApplyPreset={applyPreset}
+            onFromChange={setFrom}
+            onToChange={setTo}
+          />
+        }
         actions={
           <>
             <Button
@@ -281,6 +309,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
           </Typography>
         }
         onClearAll={clearAll}
+        showClearAll={anyFilterActive}
       />
 
         {sortedReceipts.length === 0 ? (
