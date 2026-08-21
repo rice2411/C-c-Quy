@@ -53,16 +53,29 @@ export async function runBillImportPipeline(
 
   let data: unknown;
   try {
-    // apiClient đã bóc envelope → data = { ocrText, structured, validation }.
-    // OCR (Google Vision) + 2 lượt AI + tối đa 3 lần retry Vision khi "deadline
-    // exceeded" (ảnh bill nặng) → 1 request có thể chạy > 30s. Nới timeout riêng
-    // cho lời gọi này (120s) để FE không tự huỷ giữa lúc BE đang retry.
-    const res = await apiClient.post(
-      '/stock-receipts/process-bill',
+    // JOB NỀN (tránh 520 qua Cloudflare Tunnel với request OCR dài):
+    // 1) Upload ảnh → BE trả jobId NGAY (kết nối chỉ giữ ~lúc upload).
+    const startRes = await apiClient.post(
+      '/stock-receipts/process-bill/start',
       { imageBase64: imageBase64NoPrefix },
-      { timeout: 120000 },
+      { timeout: 30000 },
     );
-    data = res.data;
+    const jobId = (startRes.data as { jobId?: string })?.jobId;
+    if (!jobId) throw new Error('Không tạo được tác vụ OCR bill.');
+
+    // 2) Poll kết quả (mỗi 1.5s, tối đa ~150s). Mỗi poll nhẹ + nhanh nên không đụng
+    //    trần 100s của Cloudflare như request đồng bộ cũ.
+    const POLL_MS = 1500;
+    const deadline = Date.now() + 150_000;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      await new Promise((r) => setTimeout(r, POLL_MS));
+      const res = await apiClient.get(`/stock-receipts/process-bill/${jobId}`, { timeout: 20000 });
+      const job = res.data as { status: string; result: unknown; error?: string };
+      if (job.status === 'done') { data = job.result; break; }
+      if (job.status === 'error') throw new Error(job.error || 'OCR bill thất bại.');
+      if (Date.now() > deadline) throw new Error('OCR bill quá lâu — thử lại hoặc dùng ảnh nhẹ hơn.');
+    }
   } finally {
     timers.forEach(clearTimeout);
   }
