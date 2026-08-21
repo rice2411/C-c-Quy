@@ -5,7 +5,6 @@ import { expenseCategoryTag } from '@/types/transaction';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
-import Card from '@/components/ui/Card';
 import Typography from '@/components/ui/Typography';
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from '@/components/ui/Table';
 import ExpenseTag from '../ExpenseTag';
@@ -21,12 +20,7 @@ interface LedgerDesktopTableProps {
 const LedgerDesktopTable: React.FC<LedgerDesktopTableProps> = ({ transactions, formatDate, onRowClick }) => {
   if (!transactions.length) return null;
   return (
-    <Card
-      padding="none"
-      layoutClassName="hidden flex-1 flex-col overflow-hidden lg:flex"
-      borderClassName="border-slate-100 dark:border-slate-700"
-      backgroundClassName="bg-white dark:bg-slate-800"
-    >
+    <Box layoutClassName="hidden flex-1 flex-col overflow-hidden lg:flex">
       <Box layoutClassName="flex-1 overflow-x-auto">
         <Table>
           <TableHead
@@ -127,7 +121,7 @@ const LedgerDesktopTable: React.FC<LedgerDesktopTableProps> = ({ transactions, f
           </TableBody>
         </Table>
       </Box>
-    </Card>
+    </Box>
   );
 };
 

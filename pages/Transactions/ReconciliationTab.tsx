@@ -164,37 +164,45 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
         Click 1 giao dịch để chọn đối soát. Hoặc dùng đồng bộ tự động (gợi ý cặp 1-1).
       </Typography>
 
-      {/* Filter chuẩn (giống Sổ giao dịch / Orders) */}
-      <FilterToolbar
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Tìm nội dung, mã đơn, số TK..."
-        pills={pills}
-        actions={syncActions}
-        showClearAll={Boolean(search || type || !onlyUnmatched)}
-        onClearAll={() => { setSearch(''); setType(''); setOnlyUnmatched(true); }}
-      />
-
-      {loading ? (
-        <Box layoutClassName="flex flex-1 items-center justify-center py-16"><Spinner size="lg" textClassName="text-primary-500" /></Box>
-      ) : data.items.length === 0 ? (
-        <Box layoutClassName="flex flex-col items-center justify-center gap-3 py-16" textClassName="text-slate-400 dark:text-slate-500">
-          <Box layoutClassName="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-            <Inbox className="h-8 w-8 opacity-40" />
-          </Box>
-          <Typography size="sm" variant="muted">
-            {onlyUnmatched ? 'Không còn giao dịch nào chưa khớp 🎉' : 'Không có giao dịch phù hợp'}
-          </Typography>
+      {/* 1 card bọc toolbar + bảng (giống Orders) */}
+      <Card padding="none" layoutClassName="flex flex-col overflow-hidden">
+        <Box
+          layoutClassName="p-4 sm:p-5"
+          borderClassName="border-b border-slate-100 dark:border-slate-700"
+        >
+          <FilterToolbar
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Tìm nội dung, mã đơn, số TK..."
+            pills={pills}
+            actions={syncActions}
+            showClearAll={Boolean(search || type || !onlyUnmatched)}
+            onClearAll={() => { setSearch(''); setType(''); setOnlyUnmatched(true); }}
+          />
         </Box>
-      ) : (
-        <>
-          <LedgerMobileList transactions={data.items} formatDate={formatDate} onRowClick={setSelected} />
-          <LedgerDesktopTable transactions={data.items} formatDate={formatDate} onRowClick={setSelected} />
 
-          <Card padding="none" layoutClassName="flex items-center justify-between gap-3 px-4 py-3"
-            backgroundClassName="bg-white dark:bg-slate-800" borderClassName="border-slate-100 dark:border-slate-700">
-            <Typography as="span" size="xs" variant="muted">{fromIdx}–{toIdx} / {data.total} giao dịch</Typography>
-            <Box layoutClassName="flex items-center gap-2">
+        {loading ? (
+          <Box layoutClassName="flex flex-1 items-center justify-center py-16"><Spinner size="lg" textClassName="text-primary-500" /></Box>
+        ) : data.items.length === 0 ? (
+          <Box layoutClassName="flex flex-col items-center justify-center gap-3 py-16" textClassName="text-slate-400 dark:text-slate-500">
+            <Box layoutClassName="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+              <Inbox className="h-8 w-8 opacity-40" />
+            </Box>
+            <Typography size="sm" variant="muted">
+              {onlyUnmatched ? 'Không còn giao dịch nào chưa khớp 🎉' : 'Không có giao dịch phù hợp'}
+            </Typography>
+          </Box>
+        ) : (
+          <>
+            <Box layoutClassName="p-3 lg:hidden">
+              <LedgerMobileList transactions={data.items} formatDate={formatDate} onRowClick={setSelected} />
+            </Box>
+            <LedgerDesktopTable transactions={data.items} formatDate={formatDate} onRowClick={setSelected} />
+
+            <Box layoutClassName="flex items-center justify-between gap-3 px-4 py-3"
+              borderClassName="border-t border-slate-100 dark:border-slate-700">
+              <Typography as="span" size="xs" variant="muted">{fromIdx}–{toIdx} / {data.total} giao dịch</Typography>
+              <Box layoutClassName="flex items-center gap-2">
               <Button type="button" variant="ghost" disableVariantHover disableVariantTextColor disabled={page === 0 || isFetching}
                 onClick={() => setPage((p) => Math.max(0, p - 1))} layoutClassName="flex items-center gap-1" roundedClassName="rounded-lg"
                 sizeClassName="px-2.5 py-1.5 text-xs" borderClassName="border border-slate-200 dark:border-slate-600"
@@ -211,9 +219,10 @@ const ReconciliationTab: React.FC<{ fromDate: string; toDate: string }> = ({ fro
                 Sau <ChevronRight className="h-3.5 w-3.5" />
               </Button>
             </Box>
-          </Card>
-        </>
-      )}
+            </Box>
+          </>
+        )}
+      </Card>
 
       {/* Modal chọn đối soát cho 1 GD */}
       <ReconcileActionModal

@@ -85,45 +85,52 @@ const LedgerBook: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, 
     <Box layoutClassName="space-y-4">
       <LedgerSummaryBar summary={data.summary} />
 
-      <LedgerFilterBar
-        filters={filters}
-        search={search}
-        gatewayOptions={gatewayOptions}
-        isFetching={isFetching}
-        onSearchChange={setSearch}
-        onTypeChange={setType}
-        onStatusChange={setStatus}
-        onCategoryChange={setCategory}
-        onGatewayChange={setGateway}
-        onRefresh={handleRefresh}
-      />
-
-      {loading ? (
-        <Box layoutClassName="flex flex-1 items-center justify-center py-16">
-          <Spinner size="lg" textClassName="text-primary-500" />
+      {/* 1 card bọc toolbar + bảng (giống Orders) */}
+      <Card padding="none" layoutClassName="flex flex-col overflow-hidden">
+        <Box
+          layoutClassName="p-4 sm:p-5"
+          borderClassName="border-b border-slate-100 dark:border-slate-700"
+        >
+          <LedgerFilterBar
+            filters={filters}
+            search={search}
+            gatewayOptions={gatewayOptions}
+            isFetching={isFetching}
+            onSearchChange={setSearch}
+            onTypeChange={setType}
+            onStatusChange={setStatus}
+            onCategoryChange={setCategory}
+            onGatewayChange={setGateway}
+            onRefresh={handleRefresh}
+          />
         </Box>
-      ) : data.items.length === 0 ? (
-        <Box layoutClassName="flex flex-1 flex-col items-center justify-center gap-3 py-16" textClassName="text-slate-400 dark:text-slate-500">
-          <Box layoutClassName="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-            <Inbox className="h-8 w-8 opacity-40" />
+
+        {loading ? (
+          <Box layoutClassName="flex flex-1 items-center justify-center py-16">
+            <Spinner size="lg" textClassName="text-primary-500" />
           </Box>
-          <Typography size="sm" variant="muted">Không có giao dịch phù hợp bộ lọc</Typography>
-        </Box>
-      ) : (
-        <>
-          <LedgerMobileList transactions={data.items} formatDate={formatDate} onRowClick={setSelected} />
-          <LedgerDesktopTable transactions={data.items} formatDate={formatDate} onRowClick={setSelected} />
+        ) : data.items.length === 0 ? (
+          <Box layoutClassName="flex flex-1 flex-col items-center justify-center gap-3 py-16" textClassName="text-slate-400 dark:text-slate-500">
+            <Box layoutClassName="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
+              <Inbox className="h-8 w-8 opacity-40" />
+            </Box>
+            <Typography size="sm" variant="muted">Không có giao dịch phù hợp bộ lọc</Typography>
+          </Box>
+        ) : (
+          <>
+            <Box layoutClassName="p-3 lg:hidden">
+              <LedgerMobileList transactions={data.items} formatDate={formatDate} onRowClick={setSelected} />
+            </Box>
+            <LedgerDesktopTable transactions={data.items} formatDate={formatDate} onRowClick={setSelected} />
 
-          {/* Phân trang */}
-          <Card
-            padding="none"
-            layoutClassName="flex items-center justify-between gap-3 px-4 py-3"
-            backgroundClassName="bg-white dark:bg-slate-800"
-            borderClassName="border-slate-100 dark:border-slate-700"
-          >
-            <Typography as="span" size="xs" variant="muted">
-              {from}–{to} / {data.total} giao dịch
-            </Typography>
+            {/* Phân trang (footer trong card) */}
+            <Box
+              layoutClassName="flex items-center justify-between gap-3 px-4 py-3"
+              borderClassName="border-t border-slate-100 dark:border-slate-700"
+            >
+              <Typography as="span" size="xs" variant="muted">
+                {from}–{to} / {data.total} giao dịch
+              </Typography>
             <Box layoutClassName="flex items-center gap-2">
               <Button
                 type="button"
@@ -165,9 +172,10 @@ const LedgerBook: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, 
                 <ChevronRight className="h-3.5 w-3.5" />
               </Button>
             </Box>
-          </Card>
-        </>
-      )}
+            </Box>
+          </>
+        )}
+      </Card>
 
       <TransactionDetailModal
         isOpen={!!selected}
