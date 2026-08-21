@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
-import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
@@ -24,7 +23,8 @@ const mkDate = (d: Date, plusDays = 0): Date =>
 /** Thứ 2 của tuần chứa d (tuần bắt đầu T2). */
 const startOfWeek = (d: Date): Date => mkDate(d, -((d.getDay() + 6) % 7));
 
-const ShiftsCalendarPage: React.FC = () => {
+/** Lịch đăng ký ca (nhúng trong trang Công & ca) — không có page chrome riêng. */
+const CalendarView: React.FC = () => {
   const today = useMemo(() => new Date(), []);
   const [view, setView] = useState<ViewMode>('month');
   const [anchor, setAnchor] = useState<Date>(() => new Date());
@@ -101,14 +101,13 @@ const ShiftsCalendarPage: React.FC = () => {
   };
 
   return (
-    <Box layoutClassName="flex h-full flex-col gap-4 p-4 sm:p-6">
-      {/* Header */}
+    <Box layoutClassName="flex h-full flex-col gap-4">
+      {/* Header: điều khiển xem lịch (tiêu đề do trang cha "Công & ca" đảm nhiệm) */}
       <Box layoutClassName="flex flex-wrap items-center justify-between gap-3">
         <Box layoutClassName="flex items-center gap-2">
-          <CalendarDays className="h-5 w-5 text-primary-500" />
-          <Heading level={1} textClassName="text-lg font-bold text-slate-900 dark:text-white">
+          <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-600 dark:text-slate-300">
             Lịch đăng ký ca
-          </Heading>
+          </Typography>
           {loading ? <Spinner size="sm" textClassName="text-primary-400" /> : null}
         </Box>
         <Box layoutClassName="flex flex-wrap items-center gap-2">
@@ -250,4 +249,4 @@ const ShiftsCalendarPage: React.FC = () => {
   );
 };
 
-export default ShiftsCalendarPage;
+export default CalendarView;

@@ -27,8 +27,8 @@ const CarriersPage = lazy(() => import("./pages/Partners/CarriersPage"));
 const UsersPage = lazy(() => import("./pages/Users/index"));
 const EmployeesPage = lazy(() => import("./pages/Employees/index"));
 const WorkConfigPage = lazy(() => import("./pages/WorkConfig/index"));
-const CalendarPage = lazy(() => import("./pages/Calendar/index"));
 const AttendancePage = lazy(() => import("./pages/Attendance/index"));
+const ShiftRegisterPage = lazy(() => import("./pages/Attendance/RegisterPage"));
 const AttendanceManagePage = lazy(() => import("./pages/Attendance/ManagePage"));
 const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
 const SystemLogsPage = lazy(() => import("./pages/System/Requests/index"));
@@ -216,14 +216,8 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      <Route
-        path="calendar"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/calendar")?.roles}>
-            <CalendarPage />
-          </RoleBasedRoute>
-        }
-      />
+      {/* Lịch đăng ký ca đã gộp vào trang Công & ca (tab Lịch) — giữ redirect cho bookmark cũ. */}
+      <Route path="calendar" element={<Navigate to="/shifts" replace />} />
       <Route
         path="shifts"
         element={
@@ -237,6 +231,14 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/attendance")?.roles}>
             <AttendancePage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="attendance/register"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/attendance/register")?.roles}>
+            <ShiftRegisterPage />
           </RoleBasedRoute>
         }
       />

@@ -25,7 +25,7 @@ import {
   Building2,
   Clock,
   UserCheck,
-  CalendarDays,
+  CalendarCheck,
   Utensils,
   ChefHat,
   PieChart,
@@ -125,13 +125,6 @@ export const routes: RouteConfig[] = [
     path: "/shipping",
     labelKey: "nav.shipping",
     icon: Truck,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  },
-  {
-    type: "page",
-    path: "/calendar",
-    labelKey: "nav.calendar",
-    icon: CalendarDays,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -245,6 +238,14 @@ export const routes: RouteConfig[] = [
     labelKey: "nav.attendance",
     icon: Clock,
     // Màn chấm công dành cho người vào/tan ca — super_admin KHÔNG cần chấm công.
+    roles: [UserRole.ADMIN, UserRole.STAFF],
+  },
+  {
+    type: "page",
+    path: "/attendance/register",
+    labelKey: "nav.shiftRegister",
+    icon: CalendarCheck,
+    // Đăng ký ca tuần sau — cùng đối tượng với chấm công (NV/quản lý), không cần super_admin.
     roles: [UserRole.ADMIN, UserRole.STAFF],
   },
   {
@@ -452,6 +453,7 @@ export const navGroups: NavGroupConfig[] = [
       "/employees",
       "/shifts",
       "/attendance",
+      "/attendance/register",
       "/attendance/manage",
     ],
   },
