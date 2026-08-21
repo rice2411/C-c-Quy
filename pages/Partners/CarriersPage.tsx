@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Truck, Bus, Plus, Trash2, Pencil, Phone, Route as RouteIcon, MapPin, X, ListChecks } from 'lucide-react';
+import { Truck, Bus, Plus, Trash2, Pencil, Phone, Route as RouteIcon, MapPin, X, ListChecks, BarChart3 } from 'lucide-react';
+import ShippingAnalyticsView from '@/pages/Shipping/ShippingAnalyticsView';
 import { useCarriers, useCarrierMutations } from '@/hooks/queries/useCarriersQuery';
 import { useOrders } from '@/hooks/useOrders';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -30,7 +31,7 @@ const CarriersPage: React.FC = () => {
   const { carriers, loading } = useCarriers();
   const { orders } = useOrders();
   const { save, remove, saving } = useCarrierMutations();
-  const [tab, setTab] = useState<CarrierType>('express');
+  const [tab, setTab] = useState<CarrierType | 'overview'>('express');
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
@@ -55,7 +56,7 @@ const CarriersPage: React.FC = () => {
     return Array.from(map.entries()).map(([route, os]) => ({ route, orders: os }));
   }, [routeView, orders]);
 
-  const openCreate = () => { setEditId(null); setForm({ ...emptyForm, type: tab }); setOpen(true); };
+  const openCreate = () => { setEditId(null); setForm({ ...emptyForm, type: tab === 'coach' ? 'coach' : 'express' }); setOpen(true); };
   const openEdit = (c: Carrier) => {
     setEditId(c.id);
     setForm({
@@ -144,16 +145,19 @@ const CarriersPage: React.FC = () => {
             <Typography as="p" size="xs" variant="muted">Đơn vị truyền thống (SPX, J&T…) và gửi xe khách (nhà xe, bến đỗ).</Typography>
           </Box>
         </Box>
+        {tab !== 'overview' ? (
         <Button type="button" onClick={openCreate} variant="primary" leftIcon={<Plus />} iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4" sizeClassName="px-3.5 py-2 text-sm" roundedClassName="rounded-lg" backgroundClassName="bg-primary-600" hoverClassName="hover:bg-primary-700" textClassName="font-medium text-white" layoutClassName="inline-flex items-center gap-1.5" disableVariantHover>
           Thêm đơn vị
         </Button>
+        ) : null}
       </Box>
 
-      {/* Tab: Chuyển phát (truyền thống) / Nhà xe (xe khách) */}
+      {/* Tab: Tổng quan (phân tích) / Chuyển phát / Nhà xe */}
       <Box layoutClassName="flex items-center gap-1 rounded-xl p-1" backgroundClassName="bg-slate-100 dark:bg-slate-800/60">
         {([
-          { key: 'express' as CarrierType, label: 'Chuyển phát', icon: <Truck className="h-4 w-4" />, count: expressList.length },
-          { key: 'coach' as CarrierType, label: 'Nhà xe', icon: <Bus className="h-4 w-4" />, count: coachList.length },
+          { key: 'overview' as const, label: 'Tổng quan', icon: <BarChart3 className="h-4 w-4" />, count: null },
+          { key: 'express' as const, label: 'Chuyển phát', icon: <Truck className="h-4 w-4" />, count: expressList.length },
+          { key: 'coach' as const, label: 'Nhà xe', icon: <Bus className="h-4 w-4" />, count: coachList.length },
         ]).map((tb) => {
           const on = tab === tb.key;
           return (
@@ -172,13 +176,15 @@ const CarriersPage: React.FC = () => {
               textClassName={on ? 'font-semibold text-slate-900 dark:text-white' : 'font-medium text-slate-500 dark:text-slate-400'}
               disableVariantHover
             >
-              {tb.label} ({tb.count})
+              {tb.label}{tb.count != null ? ` (${tb.count})` : ''}
             </Button>
           );
         })}
       </Box>
 
-      {loading ? (
+      {tab === 'overview' ? (
+        <ShippingAnalyticsView />
+      ) : loading ? (
         <Box layoutClassName="flex items-center gap-2 py-8"><Spinner /><Typography size="sm" variant="muted">Đang tải…</Typography></Box>
       ) : list.length === 0 ? (
         <Box layoutClassName="flex flex-col items-center gap-2 py-12 text-center">

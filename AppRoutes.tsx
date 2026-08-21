@@ -33,7 +33,6 @@ const AttendanceManagePage = lazy(() => import("./pages/Attendance/ManagePage"))
 const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
 const SystemLogsPage = lazy(() => import("./pages/System/Requests/index"));
 const NotificationsPage = lazy(() => import("./pages/Notifications/index"));
-const OrderSettingsTab = lazy(() => import("./pages/Settings/OrderSettingsTab"));
 const SepaySettingsTab = lazy(() => import("./pages/Settings/SepaySettingsTab"));
 const ZaloSettingsTab = lazy(() => import("./pages/Settings/ZaloSettingsTab"));
 const ScreenVisibilityTab = lazy(() => import("./pages/Settings/ScreenVisibilityTab"));
@@ -273,15 +272,9 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      <Route path="settings" element={<Navigate to="/settings/order" replace />} />
-      <Route
-        path="settings/order"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/order")?.roles}>
-            <OrderSettingsTab />
-          </RoleBasedRoute>
-        }
-      />
+      <Route path="settings" element={<Navigate to="/settings/sepay" replace />} />
+      {/* Cài đặt đơn hàng đã gỡ: nhãn phụ thu bỏ, phí ship chuyển sang /shipping (Bán hàng). */}
+      <Route path="settings/order" element={<Navigate to="/shipping" replace />} />
       <Route
         path="settings/sepay"
         element={

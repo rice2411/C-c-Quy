@@ -291,13 +291,6 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/settings/order",
-    labelKey: "nav.settingsOrder",
-    icon: ClipboardList,
-    roles: [UserRole.SUPER_ADMIN],
-  },
-  {
-    type: "page",
     path: "/settings/sepay",
     labelKey: "nav.settingsSepay",
     icon: QrCode,
@@ -502,7 +495,6 @@ export const navGroups: NavGroupConfig[] = [
     labelKey: "nav.settingsGroup",
     icon: Settings,
     childPaths: [
-      "/settings/order",
       "/settings/sepay",
       "/settings/zalo",
       "/settings/screens",
