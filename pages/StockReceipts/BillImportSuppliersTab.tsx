@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import {
   ChevronDown,
   ChevronRight,
@@ -7,6 +8,7 @@ import {
   MapPin,
   Pencil,
   Phone,
+  Pin,
   ReceiptText,
   Store,
   Tag,
@@ -21,7 +23,7 @@ import {
   supplierChannelBadgeColor,
   supplierChannelLabel,
 } from '@/types/billReceipt';
-import { mergeSuppliers } from '@/services/stockReceiptService';
+import { mergeSuppliers, setSupplierPinned } from '@/services/stockReceiptService';
 import StatsBanner from '@/components/ui/StatsBanner';
 import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/StockReceipts/dateFilter';
 import FilterToolbar from '@/components/shared/FilterToolbar';
@@ -85,6 +87,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
   const [mergeOpen, setMergeOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'amount' | 'name' | 'count'>('recent');
   const [period, setPeriod] = useState<DatePeriod>('all');
+  const [pinningId, setPinningId] = useState<string | null>(null);
   // '' = tất cả loại; 'none' = chưa phân loại; còn lại = 1 SupplierChannel.
   const [channelFilter, setChannelFilter] = useState<string>('');
 
@@ -100,11 +103,18 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
   }, [periodFiltered, channelFilter]);
 
   const sortedSuppliers = useMemo(() => {
-    const arr = [...channelFiltered];
-    if (sortBy === 'amount') arr.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
-    else if (sortBy === 'name') arr.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-    else if (sortBy === 'count') arr.sort((a, b) => (b.receiptCount || 0) - (a.receiptCount || 0));
-    return arr;
+    // NCC đã ghim LUÔN lên đầu (bất kể sort), trong mỗi nhóm mới theo tiêu chí sort.
+    // 'recent' giữ nguyên thứ tự BE (đã pinned desc, updated desc).
+    const byKey = (a: ImportedSupplierSummary, b: ImportedSupplierSummary): number => {
+      if (sortBy === 'amount') return (b.totalAmount || 0) - (a.totalAmount || 0);
+      if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '');
+      if (sortBy === 'count') return (b.receiptCount || 0) - (a.receiptCount || 0);
+      return 0;
+    };
+    return [...channelFiltered].sort((a, b) => {
+      const pin = Number(Boolean(b.pinned)) - Number(Boolean(a.pinned));
+      return pin !== 0 ? pin : byKey(a, b);
+    });
   }, [channelFiltered, sortBy]);
 
   const stats = useMemo(() => {
@@ -142,6 +152,18 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
     });
   };
   const clearSelection = () => setSelected(new Set());
+
+  const handleTogglePin = async (row: ImportedSupplierSummary) => {
+    setPinningId(row.id);
+    try {
+      await setSupplierPinned(row.id, !row.pinned);
+      await onRefresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Ghim NCC thất bại');
+    } finally {
+      setPinningId(null);
+    }
+  };
 
   const selectedItems: MergeItemDescriptor[] = filteredSuppliers
     .filter((sp) => selected.has(sp.id))
@@ -276,7 +298,9 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                     borderClassName={
                       isChecked
                         ? 'border-2 border-primary-400 dark:border-primary-600'
-                        : tier.borderClassName
+                        : row.pinned
+                          ? 'border border-amber-300 dark:border-amber-700'
+                          : tier.borderClassName
                     }
                   >
                     {/* Đầu danh bạ: checkbox + tên (to) + badge Loại + badge danh mục */}
@@ -292,6 +316,16 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                           {row.name}
                         </Typography>
                         <Box layoutClassName="flex flex-wrap items-center gap-1.5">
+                          {row.pinned ? (
+                            <Badge
+                              size="sm"
+                              borderClassName="border-transparent"
+                              backgroundClassName="bg-amber-100 dark:bg-amber-950/50"
+                              textClassName="text-amber-700 dark:text-amber-300"
+                            >
+                              <Pin className="h-3 w-3 fill-current" /> Ghim
+                            </Badge>
+                          ) : null}
                           {row.channel ? (
                             <Badge
                               size="sm"
@@ -379,6 +413,19 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
                         layoutClassName="inline-flex items-center gap-1"
                       >
                         Sửa
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        sizeClassName="px-2 py-1 text-xs"
+                        onClick={() => void handleTogglePin(row)}
+                        disabled={pinningId === row.id}
+                        leftIcon={<Pin />}
+                        iconClassName={`inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5 ${row.pinned ? '[&_svg]:fill-current' : ''}`}
+                        layoutClassName="ml-auto inline-flex items-center gap-1"
+                        textClassName={row.pinned ? 'text-amber-600 dark:text-amber-400' : ''}
+                      >
+                        {row.pinned ? 'Bỏ ghim' : 'Ghim'}
                       </Button>
                     </Box>
 

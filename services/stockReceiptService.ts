@@ -80,6 +80,11 @@ export async function updateSupplier(
   await apiClient.patch(`${BASE}/suppliers/${id}`, patch);
 }
 
+/** Ghim / bỏ ghim NCC (hay gọi ship → lên đầu danh bạ) → PATCH /stock-receipts/suppliers/:id. */
+export async function setSupplierPinned(id: string, pinned: boolean): Promise<void> {
+  await apiClient.patch(`${BASE}/suppliers/${id}`, { pinned });
+}
+
 /** Danh sách NCC đã nhập → GET /stock-receipts/suppliers. */
 export async function fetchImportedSuppliers(): Promise<ImportedSupplierSummary[]> {
   const res = await apiClient.get<ImportedSupplierSummary[]>(`${BASE}/suppliers`);
