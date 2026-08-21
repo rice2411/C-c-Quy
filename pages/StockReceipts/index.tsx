@@ -135,6 +135,7 @@ const StockReceiptsPage: React.FC = () => {
   const [uploadedImageMimeType, setUploadedImageMimeType] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
+  const savingRef = useRef(false); // chặn double-submit đồng bộ (state async không kịp)
   const [ocrText, setOcrText] = useState('');
   const [draftStructured, setDraftStructured] = useState<StockReceiptStructured | null>(null);
   const [validation, setValidation] = useState<BillValidationResult | null>(null);
@@ -368,6 +369,9 @@ const StockReceiptsPage: React.FC = () => {
   }, []);
 
   const handleSaveDraft = async () => {
+    // Chặn double-submit đồng bộ (savingDraft là state async, click nhanh 2 lần
+    // hoặc gọi lại khi request đầu chưa xong sẽ lọt → tạo phiếu trùng).
+    if (savingRef.current) return;
     const isManual = entryMode === 'manual';
     if (!draftStructured) {
       toast.error(t('billImport.missingSaveData'));
@@ -391,6 +395,7 @@ const StockReceiptsPage: React.FC = () => {
         return;
       }
     }
+    savingRef.current = true;
     setSavingDraft(true);
     try {
       const structuredForSave = buildStructuredForSave(draftStructured, isManual);
@@ -443,6 +448,7 @@ const StockReceiptsPage: React.FC = () => {
         toast.error(rawMsg);
       }
     } finally {
+      savingRef.current = false;
       setSavingDraft(false);
     }
   };

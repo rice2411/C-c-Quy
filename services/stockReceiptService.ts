@@ -44,7 +44,7 @@ export function computeAmountCheck(structured: StockReceiptStructured): {
 
 /**
  * Lưu phiếu nhập (transaction tạo receipt + lines + upsert supplier/materials).
- * → BE: POST /stock-receipts/draft (createdByUid lấy từ token, không cần gửi).
+ * → BE: POST /stock-receipts (createdByUid lấy từ token, không cần gửi).
  * Trả về id phiếu vừa tạo. BE ném DUPLICATE_BILL:<id> / TOO_MANY_LINES khi cần.
  */
 export async function saveStockReceiptDraft(input: {
@@ -60,7 +60,7 @@ export async function saveStockReceiptDraft(input: {
   source?: StockReceiptSource;
 }): Promise<string> {
   const { createdByUid: _ignore, ...payload } = input;
-  const res = await apiClient.post<{ id: string }>(`${BASE}/draft`, payload);
+  const res = await apiClient.post<{ id: string }>(BASE, payload);
   return res.data.id;
 }
 
