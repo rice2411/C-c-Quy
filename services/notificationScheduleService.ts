@@ -46,6 +46,12 @@ export const deleteSchedule = async (id: string): Promise<void> => {
   await apiClient.delete(`${PATH}/${id}`);
 };
 
+/** Gửi ngay 1 loại thông báo qua Zalo (nhóm mặc định). */
+export const sendNotificationNow = async (type: ScheduleType): Promise<{ sent: boolean }> => {
+  const res = await apiClient.post<{ sent: boolean }>(`${PATH}/send-now`, { type });
+  return res.data ?? { sent: false };
+};
+
 export const SCHEDULE_TYPE_LABEL: Record<ScheduleType, string> = {
   daily_summary: 'Tổng kết hôm nay',
   production_tomorrow: 'Sản xuất ngày mai',

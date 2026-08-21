@@ -4,8 +4,10 @@
  * Menu "Thêm" cũ (phẳng) đổi thành modal lưới công cụ để mở rộng nhiều tính năng SPX/Excel/vận đơn.
  */
 import React, { useState } from 'react';
-import { Download, LayoutGrid, PackagePlus, Plus, RefreshCw, Scale, Truck } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { BellRing, Download, LayoutGrid, PackagePlus, Plus, RefreshCw, Scale, Truck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { sendNotificationNow } from '@/services/notificationScheduleService';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
@@ -28,9 +30,29 @@ const OrderToolbarActions: React.FC<OrderToolbarActionsProps> = ({
 }) => {
   const { t } = useLanguage();
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [sendingNoti, setSendingNoti] = useState(false);
+
+  // Gửi ngay thông báo "đơn cần giao (gom theo ngày)" qua Zalo (nhóm mặc định).
+  const handleSendDeliveryZalo = async () => {
+    if (sendingNoti) return;
+    setSendingNoti(true);
+    const p = sendNotificationNow('delivery_by_day');
+    await toast.promise(p, {
+      loading: 'Đang gửi thông báo Zalo…',
+      success: (r) => (r.sent ? 'Đã gửi thông báo đơn cần giao qua Zalo.' : 'Không có đơn cần giao — chưa gửi.'),
+      error: 'Gửi thông báo thất bại.',
+    }).finally(() => setSendingNoti(false));
+  };
 
   // Nhóm công cụ cho modal — dễ bổ sung tính năng mới sau này (chỉ push thêm vào group).
   const toolGroups: OrderToolGroup[] = [
+    {
+      key: 'notify',
+      label: 'Thông báo',
+      tools: [
+        { id: 'delivery-zalo', icon: BellRing, label: 'Gửi Zalo: đơn cần giao', description: 'Gửi ngay danh sách đơn cần giao (3 ngày tới) qua Zalo.', onClick: () => void handleSendDeliveryZalo(), accentClassName: 'text-amber-500' },
+      ],
+    },
     {
       key: 'shipping',
       label: 'Vận đơn / SPX',
