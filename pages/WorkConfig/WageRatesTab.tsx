@@ -12,6 +12,7 @@ import Badge from '@/components/ui/Badge';
 import Spinner from '@/components/ui/Spinner';
 import DatePicker from '@/components/ui/DatePicker';
 import EmptyState from '@/components/ui/EmptyState';
+import BaseSlidePanel from '@/components/BaseSlidePanel';
 import {
   Table,
   TableBody,
@@ -41,6 +42,7 @@ const WageRatesTab: React.FC = () => {
   const { shifts } = useWorkShifts();
   const { addWage, updateWage, deleteWage, adding, updating } = useWageMutations();
 
+  const [panelOpen, setPanelOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [position, setPosition] = useState('');
   const [rate, setRate] = useState('');
@@ -85,7 +87,18 @@ const WageRatesTab: React.FC = () => {
     setNote('');
   };
 
-  /** Nạp 1 mức vào form để sửa. */
+  /** Mở modal thêm mức mới (reset form). */
+  const openAdd = () => {
+    resetForm();
+    setPanelOpen(true);
+  };
+
+  const closePanel = () => {
+    setPanelOpen(false);
+    resetForm();
+  };
+
+  /** Nạp 1 mức vào form + mở modal để sửa. */
   const startEdit = (w: WageRate) => {
     setEditId(w.id);
     setPosition(w.position);
@@ -93,6 +106,7 @@ const WageRatesTab: React.FC = () => {
     setDays(new Set(w.weekdays.length ? w.weekdays : [1, 2, 3, 4, 5, 6, 7]));
     setEffDate(w.effectiveDate);
     setNote(w.note ?? '');
+    setPanelOpen(true);
   };
 
   const handleSubmit = async () => {
@@ -114,7 +128,7 @@ const WageRatesTab: React.FC = () => {
         await addWage(input);
         toast.success('Đã thêm mức lương.');
       }
-      resetForm();
+      closePanel();
     } catch (err) {
       console.error(err);
       toast.error(err instanceof Error ? err.message : editId ? 'Lưu thất bại.' : 'Thêm thất bại.');
@@ -195,59 +209,15 @@ const WageRatesTab: React.FC = () => {
         </Card>
       ) : null}
 
-      {/* Form thêm mức */}
-      <Card
-        padding="md"
-        layoutClassName="p-4"
-        borderClassName="border border-slate-200 dark:border-slate-700"
-        backgroundClassName="bg-white dark:bg-slate-800"
-      >
-        <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label="Vị trí" htmlFor="w-pos">
-            <Input id="w-pos" value={position} onChange={(e) => setPosition(e.target.value)} placeholder="Thợ bánh, Bán hàng…" />
-          </Field>
-          <Field label="Mức lương / giờ (VND)" htmlFor="w-rate">
-            <Input id="w-rate" type="number" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="25000" />
-          </Field>
-          <Field label="Ngày áp dụng" htmlFor="w-date">
-            <DatePicker id="w-date" value={effDate} onChange={setEffDate} fullWidth />
-          </Field>
-          <Field label="Ghi chú" htmlFor="w-note">
-            <Input id="w-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="vd: tăng ca, cuối tuần…" />
-          </Field>
-        </Box>
-        <Box layoutClassName="mt-3 flex flex-wrap items-end justify-between gap-3">
-          <Field label="Áp dụng các thứ">
-            <Box layoutClassName="flex flex-wrap gap-1.5">
-              {WEEKDAYS.map((w) => {
-                const on = days.has(w.iso);
-                return (
-                  <Button
-                    key={w.iso}
-                    type="button"
-                    variant={on ? 'primary' : 'secondary'}
-                    size="sm"
-                    sizeClassName="h-8 w-10 px-0 text-xs"
-                    onClick={() => toggleDay(w.iso)}
-                  >
-                    {w.label}
-                  </Button>
-                );
-              })}
-            </Box>
-          </Field>
-          <Box layoutClassName="flex items-center gap-2">
-            {editId ? (
-              <Button type="button" variant="secondary" size="sm" leftIcon={<X className="h-4 w-4" />} onClick={resetForm}>
-                Huỷ
-              </Button>
-            ) : null}
-            <Button type="button" variant="primary" size="sm" leftIcon={editId ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />} disabled={adding || updating} onClick={handleSubmit}>
-              {editId ? (updating ? 'Đang lưu…' : 'Lưu thay đổi') : (adding ? 'Đang thêm…' : 'Thêm mức lương')}
-            </Button>
-          </Box>
-        </Box>
-      </Card>
+      {/* Thanh tiêu đề + nút mở modal thêm mức */}
+      <Box layoutClassName="flex flex-wrap items-center justify-between gap-2">
+        <Typography size="xs" textClassName="text-slate-400 dark:text-slate-500">
+          Mức lương/giờ theo vị trí, có lịch sử áp dụng. Mỗi lần đổi tạo 1 mốc mới.
+        </Typography>
+        <Button type="button" variant="primary" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={openAdd}>
+          Thêm mức lương
+        </Button>
+      </Box>
 
       {/* Danh sách theo vị trí */}
       {loading ? (
@@ -325,6 +295,58 @@ const WageRatesTab: React.FC = () => {
           ))}
         </Box>
       )}
+
+      {/* Modal thêm / sửa mức lương */}
+      <BaseSlidePanel
+        isOpen={panelOpen}
+        onClose={closePanel}
+        title={editId ? 'Sửa mức lương giờ' : 'Thêm mức lương giờ'}
+        maxWidth="md"
+        footer={
+          <Box layoutClassName="flex items-center justify-end gap-2 p-4">
+            <Button type="button" variant="secondary" size="sm" leftIcon={<X className="h-4 w-4" />} onClick={closePanel}>
+              Huỷ
+            </Button>
+            <Button type="button" variant="primary" size="sm" leftIcon={editId ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />} disabled={adding || updating} onClick={handleSubmit}>
+              {editId ? (updating ? 'Đang lưu…' : 'Lưu thay đổi') : (adding ? 'Đang thêm…' : 'Thêm mức lương')}
+            </Button>
+          </Box>
+        }
+      >
+        <Box layoutClassName="space-y-4 p-4 sm:p-6">
+          <Field label="Vị trí" htmlFor="w-pos">
+            <Input id="w-pos" value={position} onChange={(e) => setPosition(e.target.value)} placeholder="Thợ bánh, Bán hàng…" fullWidth />
+          </Field>
+          <Field label="Mức lương / giờ (VND)" htmlFor="w-rate">
+            <Input id="w-rate" type="number" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="25000" fullWidth />
+          </Field>
+          <Field label="Ngày áp dụng" htmlFor="w-date">
+            <DatePicker id="w-date" value={effDate} onChange={setEffDate} fullWidth />
+          </Field>
+          <Field label="Ghi chú" htmlFor="w-note">
+            <Input id="w-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder="vd: tăng ca, cuối tuần…" fullWidth />
+          </Field>
+          <Field label="Áp dụng các thứ">
+            <Box layoutClassName="flex flex-wrap gap-1.5">
+              {WEEKDAYS.map((w) => {
+                const on = days.has(w.iso);
+                return (
+                  <Button
+                    key={w.iso}
+                    type="button"
+                    variant={on ? 'primary' : 'secondary'}
+                    size="sm"
+                    sizeClassName="h-8 w-10 px-0 text-xs"
+                    onClick={() => toggleDay(w.iso)}
+                  >
+                    {w.label}
+                  </Button>
+                );
+              })}
+            </Box>
+          </Field>
+        </Box>
+      </BaseSlidePanel>
     </Box>
   );
 };
