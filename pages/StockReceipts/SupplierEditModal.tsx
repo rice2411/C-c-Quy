@@ -12,6 +12,7 @@ import Typography from '@/components/ui/Typography';
 import type { ImportedSupplierSummary } from '@/types/billReceipt';
 import { SUPPLIER_CHANNELS } from '@/types/billReceipt';
 import { useStockReceiptMutations } from '@/hooks/queries/useStockReceiptQuery';
+import { createSupplier } from '@/services/stockReceiptService';
 import { formatDateISO } from '@/utils/format/dateUtil';
 
 interface FormState {
@@ -89,9 +90,10 @@ const SupplierEditModal: React.FC<SupplierEditModalProps> = ({
   const { updateSupplierInfo } = useStockReceiptMutations();
 
   useEffect(() => {
+    if (!open) return;
     if (supplier) setForm(fromSupplier(supplier));
     else setForm(emptyForm());
-  }, [supplier]);
+  }, [supplier, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -111,7 +113,8 @@ const SupplierEditModal: React.FC<SupplierEditModalProps> = ({
     };
   }, [open]);
 
-  if (!open || !supplier) return null;
+  if (!open) return null;
+  const isCreate = !supplier;
 
   const setField = <K extends keyof FormState>(k: K, v: string) =>
     setForm((prev) => ({ ...prev, [k]: v }));
@@ -124,21 +127,24 @@ const SupplierEditModal: React.FC<SupplierEditModalProps> = ({
     }
     setSaving(true);
     try {
-      await updateSupplierInfo({
-        id: supplier.id,
-        patch: {
-          name,
-          phone: form.phone,
-          contactPerson: form.contactPerson,
-          email: form.email,
-          taxCode: form.taxCode,
-          address: form.address,
-          category: form.category,
-          channel: form.channel,
-          notes: form.notes,
-        },
-      });
-      toast.success('Đã cập nhật nhà cung cấp');
+      const payload = {
+        name,
+        phone: form.phone,
+        contactPerson: form.contactPerson,
+        email: form.email,
+        taxCode: form.taxCode,
+        address: form.address,
+        category: form.category,
+        channel: form.channel,
+        notes: form.notes,
+      };
+      if (isCreate) {
+        await createSupplier(payload);
+        toast.success('Đã thêm nhà cung cấp');
+      } else {
+        await updateSupplierInfo({ id: supplier.id, patch: payload });
+        toast.success('Đã cập nhật nhà cung cấp');
+      }
       onSaved();
       onClose();
     } catch (e) {
@@ -169,10 +175,12 @@ const SupplierEditModal: React.FC<SupplierEditModalProps> = ({
         >
           <Box>
             <Typography size="sm" layoutClassName="font-semibold">
-              Sửa nhà cung cấp
+              {isCreate ? 'Thêm nhà cung cấp' : 'Sửa nhà cung cấp'}
             </Typography>
             <Typography size="xs" variant="muted">
-              Field để trống = xoá field đó. Tên đổi sẽ tự cập nhật khóa dedupe.
+              {isCreate
+                ? 'Tạo NCC thủ công. Trùng tên NCC đã có sẽ dùng lại bản cũ.'
+                : 'Field để trống = xoá field đó. Tên đổi sẽ tự cập nhật khóa dedupe.'}
             </Typography>
           </Box>
           <Button
@@ -191,31 +199,33 @@ const SupplierEditModal: React.FC<SupplierEditModalProps> = ({
         </Box>
 
         <Box layoutClassName="space-y-4 p-4 sm:p-5">
-          {/* Read-only stats */}
-          <Box
-            layoutClassName="flex flex-wrap items-center gap-3 rounded-lg p-3 text-xs"
-            backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
-            borderClassName="border border-slate-200 dark:border-slate-700"
-          >
-            <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">
-              Lịch sử nhập:
-            </Typography>
-            <Typography size="xs" layoutClassName="font-semibold">
-              {supplier.receiptCount} phiếu
-            </Typography>
-            <Typography size="xs" textClassName="text-slate-400">·</Typography>
-            <Typography size="xs" layoutClassName="font-semibold">
-              {moneyFmt.format(supplier.totalAmount)}đ
-            </Typography>
-            {supplier.lastReceiptDate ? (
-              <>
-                <Typography size="xs" textClassName="text-slate-400">·</Typography>
-                <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">
-                  lần cuối {formatDateISO(supplier.lastReceiptDate)}
-                </Typography>
-              </>
-            ) : null}
-          </Box>
+          {/* Read-only stats (chỉ khi sửa NCC đã có) */}
+          {supplier ? (
+            <Box
+              layoutClassName="flex flex-wrap items-center gap-3 rounded-lg p-3 text-xs"
+              backgroundClassName="bg-slate-50 dark:bg-slate-800/60"
+              borderClassName="border border-slate-200 dark:border-slate-700"
+            >
+              <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">
+                Lịch sử nhập:
+              </Typography>
+              <Typography size="xs" layoutClassName="font-semibold">
+                {supplier.receiptCount} phiếu
+              </Typography>
+              <Typography size="xs" textClassName="text-slate-400">·</Typography>
+              <Typography size="xs" layoutClassName="font-semibold">
+                {moneyFmt.format(supplier.totalAmount)}đ
+              </Typography>
+              {supplier.lastReceiptDate ? (
+                <>
+                  <Typography size="xs" textClassName="text-slate-400">·</Typography>
+                  <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">
+                    lần cuối {formatDateISO(supplier.lastReceiptDate)}
+                  </Typography>
+                </>
+              ) : null}
+            </Box>
+          ) : null}
 
           <Field
             label="Tên nhà cung cấp *"

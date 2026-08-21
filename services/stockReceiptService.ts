@@ -85,6 +85,22 @@ export async function setSupplierPinned(id: string, pinned: boolean): Promise<vo
   await apiClient.patch(`${BASE}/suppliers/${id}`, { pinned });
 }
 
+/** Tạo NCC thủ công (không qua phiếu nhập) → POST /stock-receipts/suppliers. */
+export async function createSupplier(input: {
+  name: string;
+  phone?: string | null;
+  address?: string | null;
+  contactPerson?: string | null;
+  email?: string | null;
+  taxCode?: string | null;
+  category?: string | null;
+  channel?: string | null;
+  notes?: string | null;
+}): Promise<string> {
+  const res = await apiClient.post<{ id: string }>(`${BASE}/suppliers`, input);
+  return typeof res.data?.id === 'string' ? res.data.id : '';
+}
+
 /** Danh sách NCC đã nhập → GET /stock-receipts/suppliers. */
 export async function fetchImportedSuppliers(): Promise<ImportedSupplierSummary[]> {
   const res = await apiClient.get<ImportedSupplierSummary[]>(`${BASE}/suppliers`);

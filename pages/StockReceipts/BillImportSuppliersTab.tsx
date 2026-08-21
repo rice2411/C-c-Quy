@@ -9,6 +9,7 @@ import {
   Pencil,
   Phone,
   Pin,
+  Plus,
   ReceiptText,
   Store,
   Tag,
@@ -83,6 +84,7 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
   const { t } = useLanguage();
   const [expanded, setExpanded] = useState<string | null>(null);
   const [editing, setEditing] = useState<ImportedSupplierSummary | null>(null);
+  const [adding, setAdding] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mergeOpen, setMergeOpen] = useState(false);
   const [sortBy, setSortBy] = useState<'recent' | 'amount' | 'name' | 'count'>('recent');
@@ -176,6 +178,19 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
   // Nút hành động đặt trong toolbar (giống slot actions của trang Products).
   const toolbarActions = (
     <>
+      <Button
+        type="button"
+        onClick={() => setAdding(true)}
+        variant="primary"
+        leftIcon={<Plus />}
+        iconClassName="inline-flex shrink-0 [&_svg]:h-3.5 [&_svg]:w-3.5"
+        sizeClassName="px-3 py-2 text-xs"
+        roundedClassName="rounded-xl"
+        layoutClassName="inline-flex items-center gap-1.5"
+        disableVariantHover
+      >
+        Thêm NCC
+      </Button>
       {selected.size >= 2 ? (
         <Button
           type="button"
@@ -484,11 +499,15 @@ const BillImportSuppliersTab: React.FC<BillImportSuppliersTabProps> = ({
         </Box>
 
       <SupplierEditModal
-        open={editing !== null}
+        open={editing !== null || adding}
         supplier={editing}
-        onClose={() => setEditing(null)}
+        onClose={() => {
+          setEditing(null);
+          setAdding(false);
+        }}
         onSaved={() => {
           setEditing(null);
+          setAdding(false);
           void onRefresh();
         }}
       />
