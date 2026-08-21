@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
-import { RefreshCw, ArrowDownCircle, ArrowUpCircle } from 'lucide-react';
+import { RefreshCw, ArrowDownCircle, ArrowUpCircle, CircleDot, Tags, Landmark } from 'lucide-react';
 import { LedgerFilters, LedgerStatus, LEDGER_STATUS_META, EXPENSE_CATEGORIES } from '@/types';
-import Select from '@/components/ui/Select';
 import IconButton from '@/components/ui/IconButton';
-import FilterToolbar, { type ToolbarPill } from '@/components/shared/FilterToolbar';
+import FilterToolbar, { PillDropdown, type ToolbarPill, type ToolbarOption } from '@/components/shared/FilterToolbar';
 
 interface LedgerFilterBarProps {
   filters: LedgerFilters;
@@ -54,8 +53,19 @@ const LedgerFilterBar: React.FC<LedgerFilterBarProps> = ({
     },
   ];
 
-  const selectLayout = 'rounded-lg w-full sm:w-auto';
-  const selectSize = 'px-3';
+  // Options cho pill dropdown (mục đầu value '' = "Mọi …" hiển thị nhạt, không tính là filter).
+  const statusOpts: ToolbarOption[] = [
+    { value: '', label: 'Mọi trạng thái' },
+    ...statusOptions.map((s) => ({ value: s, label: LEDGER_STATUS_META[s].label })),
+  ];
+  const categoryOpts: ToolbarOption[] = [
+    { value: '', label: 'Mọi danh mục' },
+    ...EXPENSE_CATEGORIES.map((c) => ({ value: c.value, label: c.label })),
+  ];
+  const gatewayOpts: ToolbarOption[] = [
+    { value: '', label: 'Mọi ngân hàng' },
+    ...gatewayOptions.map((g) => ({ value: g, label: g })),
+  ];
 
   const hasAnyFilter = Boolean(
     filters.type || filters.status || filters.category || filters.gateway || search,
@@ -69,45 +79,28 @@ const LedgerFilterBar: React.FC<LedgerFilterBarProps> = ({
       pills={pills}
       customFilters={
         <>
-          <Select
-            size="sm"
+          <PillDropdown
+            icon={CircleDot}
             value={filters.status || ''}
-            onChange={(e) => onStatusChange((e.target.value || '') as LedgerFilters['status'])}
-            layoutClassName={selectLayout}
-            sizeClassName={selectSize}
-          >
-            <option value="">Mọi trạng thái</option>
-            {statusOptions.map((s) => (
-              <option key={s} value={s}>{LEDGER_STATUS_META[s].label}</option>
-            ))}
-          </Select>
-
-          <Select
-            size="sm"
+            options={statusOpts}
+            onChange={(v) => onStatusChange((v || '') as LedgerFilters['status'])}
+            ariaLabel="Trạng thái"
+          />
+          <PillDropdown
+            icon={Tags}
             value={filters.category || ''}
-            onChange={(e) => onCategoryChange(e.target.value)}
-            layoutClassName={selectLayout}
-            sizeClassName={selectSize}
-          >
-            <option value="">Mọi danh mục</option>
-            {EXPENSE_CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </Select>
-
+            options={categoryOpts}
+            onChange={onCategoryChange}
+            ariaLabel="Danh mục"
+          />
           {gatewayOptions.length > 0 && (
-            <Select
-              size="sm"
+            <PillDropdown
+              icon={Landmark}
               value={filters.gateway || ''}
-              onChange={(e) => onGatewayChange(e.target.value)}
-              layoutClassName={selectLayout}
-              sizeClassName={selectSize}
-            >
-              <option value="">Mọi ngân hàng</option>
-              {gatewayOptions.map((g) => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </Select>
+              options={gatewayOpts}
+              onChange={onGatewayChange}
+              ariaLabel="Ngân hàng"
+            />
           )}
         </>
       }

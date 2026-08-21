@@ -60,7 +60,7 @@ export interface FilterToolbarProps {
   stats?: React.ReactNode;
 }
 
-const PillDropdown: React.FC<{
+export const PillDropdown: React.FC<{
   icon: LucideIcon;
   value: string;
   options: ToolbarOption[];
