@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronsUpDown, FileText, GitCompareArrows, Plus, ReceiptText, TrendingUp } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronsUpDown, FileText, GitCompareArrows, PencilLine, Plus, ReceiptText, ScanLine, TrendingUp } from 'lucide-react';
 import ReceiptReconcileModal from './ReceiptReconcileModal';
 import type { SavedStockReceiptSummary } from '@/types/billReceipt';
 import Box from '@/components/ui/Box';
@@ -7,7 +7,7 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Typography from '@/components/ui/Typography';
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
-import FilterToolbar, { type ToolbarOption } from '@/components/shared/FilterToolbar';
+import FilterToolbar, { type ToolbarOption, type ToolbarPill } from '@/components/shared/FilterToolbar';
 import StatsBanner from '@/components/ui/StatsBanner';
 import { filterByPeriod, PERIOD_OPTIONS, type DatePeriod } from '@/pages/StockReceipts/dateFilter';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -88,6 +88,9 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [period, setPeriod] = useState<DatePeriod>('all');
   const [reconcileOpen, setReconcileOpen] = useState(false);
+  // Pill lọc nhanh (giống trang Đơn hàng): đối soát + nguồn tạo phiếu.
+  const [unreconciledOnly, setUnreconciledOnly] = useState(false);
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'manual' | 'ocr'>('all');
 
   // (2a) memo: lọc kỳ — ngày phiếu = receiptDate || createdAt (dùng filterByPeriod như NCC).
   // Bọc mỗi phiếu thành { row, lastReceiptDate } để tái dùng helper rồi map ngược về row gốc.
@@ -100,10 +103,21 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
     return filterByPeriod(wrapped, period).map((w) => w.row);
   }, [filteredReceipts, period]);
 
-  // (2b) memo: sort tập đã lọc kỳ theo cột đang chọn
+  // (2a') memo: lọc theo pill nhanh — đối soát + nguồn tạo phiếu.
+  // reconciled có thể undefined (BE bổ sung song song) → coi như CHƯA đối soát.
+  const pillFilteredReceipts = useMemo(() => {
+    return periodFilteredReceipts.filter((r) => {
+      if (unreconciledOnly && r.reconciled === true) return false;
+      if (sourceFilter === 'manual' && r.source !== 'manual') return false;
+      if (sourceFilter === 'ocr' && r.source === 'manual') return false;
+      return true;
+    });
+  }, [periodFilteredReceipts, unreconciledOnly, sourceFilter]);
+
+  // (2b) memo: sort tập đã lọc theo cột đang chọn
   const sortedReceipts = useMemo(() => {
     const dir = sortDir === 'asc' ? 1 : -1;
-    return [...periodFilteredReceipts].sort((a, b) => {
+    return [...pillFilteredReceipts].sort((a, b) => {
       if (sortKey === 'total') {
         return ((a.totalAmount || 0) - (b.totalAmount || 0)) * dir;
       }
@@ -112,13 +126,13 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
       }
       return (receiptSortTime(a) - receiptSortTime(b)) * dir;
     });
-  }, [periodFilteredReceipts, sortKey, sortDir]);
+  }, [pillFilteredReceipts, sortKey, sortDir]);
 
   // (2c) memo: stats của tập đã lọc (số phiếu + tổng tiền)
   const stats = useMemo(() => {
-    const totalAmount = periodFilteredReceipts.reduce((s, r) => s + (r.totalAmount || 0), 0);
-    return { count: periodFilteredReceipts.length, totalAmount };
-  }, [periodFilteredReceipts]);
+    const totalAmount = pillFilteredReceipts.reduce((s, r) => s + (r.totalAmount || 0), 0);
+    return { count: pillFilteredReceipts.length, totalAmount };
+  }, [pillFilteredReceipts]);
 
   // (3) handler
   const toggleSort = (key: SortKey) => {
@@ -133,6 +147,53 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
   const sortIcon = (key: SortKey) => {
     if (key !== sortKey) return <ChevronsUpDown className="h-3.5 w-3.5 opacity-40" />;
     return sortDir === 'asc' ? <ArrowUp className="h-3.5 w-3.5" /> : <ArrowDown className="h-3.5 w-3.5" />;
+  };
+
+  // Dropdown sắp xếp trong toolbar (đồng bộ với sort ở header cột).
+  const SORT_OPTIONS: ToolbarOption[] = [
+    { value: 'created-desc', label: 'Mới nhập' },
+    { value: 'created-asc', label: 'Cũ nhất' },
+    { value: 'date-desc', label: 'Ngày phiếu: mới → cũ' },
+    { value: 'date-asc', label: 'Ngày phiếu: cũ → mới' },
+    { value: 'total-desc', label: 'Tiền: cao → thấp' },
+    { value: 'total-asc', label: 'Tiền: thấp → cao' },
+  ];
+  const sortValue = `${sortKey}-${sortDir}`;
+  const onSortSelect = (v: string) => {
+    const [k, d] = v.split('-');
+    setSortKey(k as SortKey);
+    setSortDir(d as SortDir);
+  };
+
+  const pills: ToolbarPill[] = [
+    {
+      id: 'unreconciled',
+      label: 'Chưa đối soát',
+      active: unreconciledOnly,
+      onClick: () => setUnreconciledOnly((v) => !v),
+      icon: GitCompareArrows,
+    },
+    {
+      id: 'manual',
+      label: 'Nhập tay',
+      active: sourceFilter === 'manual',
+      onClick: () => setSourceFilter((s) => (s === 'manual' ? 'all' : 'manual')),
+      icon: PencilLine,
+    },
+    {
+      id: 'ocr',
+      label: 'Từ ảnh',
+      active: sourceFilter === 'ocr',
+      onClick: () => setSourceFilter((s) => (s === 'ocr' ? 'all' : 'ocr')),
+      icon: ScanLine,
+    },
+  ];
+
+  const clearAll = () => {
+    setPeriod('all');
+    setUnreconciledOnly(false);
+    setSourceFilter('all');
+    onReceiptSearchChange('');
   };
 
   const renderSourceBadge = (row: SavedStockReceiptSummary) => {
@@ -176,6 +237,10 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
         period={period}
         periodOptions={PERIOD_OPTIONS as ToolbarOption[]}
         onPeriodChange={(v) => setPeriod(v as DatePeriod)}
+        sortBy={sortValue}
+        sortOptions={SORT_OPTIONS}
+        onSortChange={onSortSelect}
+        pills={pills}
         actions={
           <>
             <Button
@@ -215,10 +280,7 @@ const BillImportReceiptListTab: React.FC<BillImportReceiptListTabProps> = ({
             {sortedReceipts.length} / {filteredReceipts.length} phiếu
           </Typography>
         }
-        onClearAll={() => {
-          setPeriod('all');
-          onReceiptSearchChange('');
-        }}
+        onClearAll={clearAll}
       />
 
         {sortedReceipts.length === 0 ? (
