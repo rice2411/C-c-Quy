@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Trash2, History, Calculator } from 'lucide-react';
+import { Plus, Trash2, History, Calculator, Pencil, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
@@ -39,8 +39,9 @@ import {
 const WageRatesTab: React.FC = () => {
   const { wages, loading } = useWages();
   const { shifts } = useWorkShifts();
-  const { addWage, deleteWage, adding } = useWageMutations();
+  const { addWage, updateWage, deleteWage, adding, updating } = useWageMutations();
 
+  const [editId, setEditId] = useState<string | null>(null);
   const [position, setPosition] = useState('');
   const [rate, setRate] = useState('');
   const [days, setDays] = useState<Set<number>>(new Set([1, 2, 3, 4, 5, 6, 7]));
@@ -76,6 +77,7 @@ const WageRatesTab: React.FC = () => {
     });
 
   const resetForm = () => {
+    setEditId(null);
     setPosition('');
     setRate('');
     setDays(new Set([1, 2, 3, 4, 5, 6, 7]));
@@ -83,23 +85,39 @@ const WageRatesTab: React.FC = () => {
     setNote('');
   };
 
-  const handleAdd = async () => {
+  /** Nạp 1 mức vào form để sửa. */
+  const startEdit = (w: WageRate) => {
+    setEditId(w.id);
+    setPosition(w.position);
+    setRate(String(w.hourlyRate));
+    setDays(new Set(w.weekdays.length ? w.weekdays : [1, 2, 3, 4, 5, 6, 7]));
+    setEffDate(w.effectiveDate);
+    setNote(w.note ?? '');
+  };
+
+  const handleSubmit = async () => {
     if (!position.trim()) return toast.error('Nhập vị trí.');
     if (!rate || Number(rate) <= 0) return toast.error('Nhập mức lương/giờ.');
     if (days.size === 0) return toast.error('Chọn ít nhất 1 thứ áp dụng.');
+    const input = {
+      position: position.trim(),
+      hourlyRate: Number(rate),
+      weekdays: [...days].sort((a, b) => a - b),
+      effectiveDate: effDate,
+      note: note.trim() || null,
+    };
     try {
-      await addWage({
-        position: position.trim(),
-        hourlyRate: Number(rate),
-        weekdays: [...days].sort((a, b) => a - b),
-        effectiveDate: effDate,
-        note: note.trim() || null,
-      });
+      if (editId) {
+        await updateWage(editId, input);
+        toast.success('Đã lưu mức lương.');
+      } else {
+        await addWage(input);
+        toast.success('Đã thêm mức lương.');
+      }
       resetForm();
-      toast.success('Đã thêm mức lương.');
     } catch (err) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : 'Thêm thất bại.');
+      toast.error(err instanceof Error ? err.message : editId ? 'Lưu thất bại.' : 'Thêm thất bại.');
     }
   };
 
@@ -218,9 +236,16 @@ const WageRatesTab: React.FC = () => {
               })}
             </Box>
           </Field>
-          <Button type="button" variant="primary" size="sm" leftIcon={<Plus className="h-4 w-4" />} disabled={adding} onClick={handleAdd}>
-            {adding ? 'Đang thêm…' : 'Thêm mức lương'}
-          </Button>
+          <Box layoutClassName="flex items-center gap-2">
+            {editId ? (
+              <Button type="button" variant="secondary" size="sm" leftIcon={<X className="h-4 w-4" />} onClick={resetForm}>
+                Huỷ
+              </Button>
+            ) : null}
+            <Button type="button" variant="primary" size="sm" leftIcon={editId ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />} disabled={adding || updating} onClick={handleSubmit}>
+              {editId ? (updating ? 'Đang lưu…' : 'Lưu thay đổi') : (adding ? 'Đang thêm…' : 'Thêm mức lương')}
+            </Button>
+          </Box>
         </Box>
       </Card>
 
@@ -286,6 +311,9 @@ const WageRatesTab: React.FC = () => {
                           {r.note ? ` · ${r.note}` : ''}
                         </Typography>
                       </Box>
+                      <IconButton label="Sửa" size="sm" variant="ghost" onClick={() => startEdit(r)}>
+                        <Pencil className={`h-4 w-4 ${editId === r.id ? 'text-primary-600' : 'text-slate-400'}`} />
+                      </IconButton>
                       <IconButton label="Xoá" size="sm" variant="ghost" onClick={() => handleDelete(r)}>
                         <Trash2 className="h-4 w-4 text-rose-500" />
                       </IconButton>

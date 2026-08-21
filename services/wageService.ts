@@ -28,6 +28,11 @@ export async function addWage(input: WageRateInput): Promise<WageRate> {
   return toWage(res.data);
 }
 
+export async function updateWage(id: string, input: WageRateInput): Promise<WageRate> {
+  const res = await apiClient.patch<any>(`${BASE}/${id}`, input);
+  return toWage(res.data);
+}
+
 export async function deleteWage(id: string): Promise<{ ok: boolean; reason?: string }> {
   const res = await apiClient.delete<{ ok: boolean; reason?: string }>(`${BASE}/${id}`);
   return res.data;
