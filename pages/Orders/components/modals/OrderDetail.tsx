@@ -215,11 +215,20 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
       ]
     : [{ key: 'full', label: '', amount: finalTotal, isDeposit: false }]
   ).filter((b) => b.amount > 0);
-  // QR cho card chia sẻ = luôn tổng đơn (không đổi theo toggle cọc).
+  // QR card chia sẻ theo trạng thái cọc:
+  //  • ĐÃ CỌC (paidAmt>0) → 1 QR = CÒN LẠI (finalTotal − đã trả).
+  //  • CHƯA CỌC → QR tổng (+ QR CỌC nếu đơn có mức cọc) → 2 QR.
+  const hasPaidDeposit = paidAmt > 0;
+  const shareRemaining = Math.max(0, finalTotal - paidAmt);
+  const sharePrimaryAmount = hasPaidDeposit && shareRemaining > 0 ? shareRemaining : finalTotal;
+  const sharePrimaryLabel = hasPaidDeposit && shareRemaining > 0
+    ? 'Chuyển khoản còn lại'
+    : (!hasPaidDeposit && depositAmt > 0 ? 'Chuyển khoản đủ' : 'Chuyển khoản');
+  // Nội dung CK: mã đơn (kể cả còn lại — BE đối soát theo ORD<digits>).
   const shareDescription = currentOrder.orderNumber;
-  const shareQrUrl = qrAccount ? generateQRCodeImage(currentOrder.orderNumber, finalTotal, qrAccount, false) : '';
-  // QR CỌC kèm luôn trong card chia sẻ (đỡ phải gửi ảnh QR thứ 2). Chỉ khi có cọc & chưa thu đủ.
-  const shareDepositQrUrl = (qrAccount && hasDeposit && depositAmt > 0 && collected < finalTotal)
+  const shareQrUrl = qrAccount ? generateQRCodeImage(currentOrder.orderNumber, sharePrimaryAmount, qrAccount, false) : '';
+  // QR CỌC chỉ khi CHƯA cọc & đơn có mức cọc (nội dung "C" + mã đơn).
+  const shareDepositQrUrl = (qrAccount && !hasPaidDeposit && depositAmt > 0)
     ? generateQRCodeImage(currentOrder.orderNumber, depositAmt, qrAccount, true) : '';
   const shareDepositDescription = `C${currentOrder.orderNumber}`;
 
@@ -2543,6 +2552,8 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
         }
         qrUrl={shareQrUrl}
         description={shareDescription}
+        qrAmount={sharePrimaryAmount}
+        qrLabel={sharePrimaryLabel}
         bankCode={qrAccount?.bankCode}
         accountNumber={qrAccount?.accountNumber}
         accountHolder={qrAccount?.accountHolder}

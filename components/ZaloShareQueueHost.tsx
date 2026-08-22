@@ -84,9 +84,15 @@ const ZaloShareQueueHost: React.FC = () => {
   const orderNumber = order?.orderNumber || order?.id || '';
   const depositAmt = Number(order?.depositAmount) || 0;
   const paidAmt = Number(order?.paidAmount) || 0;
-  const collected = Math.max(depositAmt, paidAmt);
-  const shareQrUrl = qrAccount ? generateQRCodeImage(orderNumber, finalTotal, qrAccount, false) : '';
-  const shareDepositQrUrl = qrAccount && depositAmt > 0 && collected < finalTotal
+  // QR chia sẻ: ĐÃ CỌC (paidAmt>0) → QR CÒN LẠI; CHƯA CỌC → QR tổng (+ QR cọc nếu có mức cọc).
+  const hasPaidDeposit = paidAmt > 0;
+  const shareRemaining = Math.max(0, finalTotal - paidAmt);
+  const sharePrimaryAmount = hasPaidDeposit && shareRemaining > 0 ? shareRemaining : finalTotal;
+  const sharePrimaryLabel = hasPaidDeposit && shareRemaining > 0
+    ? 'Chuyển khoản còn lại'
+    : (!hasPaidDeposit && depositAmt > 0 ? 'Chuyển khoản đủ' : 'Chuyển khoản');
+  const shareQrUrl = qrAccount ? generateQRCodeImage(orderNumber, sharePrimaryAmount, qrAccount, false) : '';
+  const shareDepositQrUrl = qrAccount && !hasPaidDeposit && depositAmt > 0
     ? generateQRCodeImage(orderNumber, depositAmt, qrAccount, true) : '';
 
   return (
@@ -109,6 +115,8 @@ const ZaloShareQueueHost: React.FC = () => {
         }
         qrUrl={shareQrUrl}
         description={orderNumber}
+        qrAmount={sharePrimaryAmount}
+        qrLabel={sharePrimaryLabel}
         bankCode={qrAccount?.bankCode}
         accountNumber={qrAccount?.accountNumber}
         accountHolder={qrAccount?.accountHolder}
