@@ -186,14 +186,6 @@ export const markTransactionExternal = async (
   await apiClient.patch(`/transactions/${transactionId}/external`, { isExternal });
 };
 
-/** Đánh dấu / bỏ: giao dịch tiền ra đã "kết toán" (chuyển về TK chính). */
-export const markTransactionSettled = async (
-  transactionId: string,
-  settled: boolean,
-): Promise<void> => {
-  await apiClient.patch(`/transactions/${transactionId}/settled`, { settled });
-};
-
 /** Liên kết giao dịch với 1 đơn: ghi orderNumber xuống transaction để khớp đối soát.
  *  Truyền orderNumber rỗng để gỡ liên kết. */
 export const linkTransactionOrder = async (

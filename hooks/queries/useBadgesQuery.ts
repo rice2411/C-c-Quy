@@ -5,8 +5,6 @@
  * - Query `enabled: !!currentUser` (tránh chạy trước auth → 401).
  * - Sau khi lưu invalidate `qk.badges.all`.
  * - KHÔNG nuốt lỗi: caller bắt error để toast.
- *
- * Re-export `matchCustomerBadges` (pure helper) để consumer import 1 chỗ nếu cần.
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
@@ -18,8 +16,6 @@ import type {
 import { useAuth } from '@/contexts/AuthContext';
 import { qk } from '@/hooks/queryKeys';
 import { fetchBadgesConfiguration, saveBadgesConfiguration } from '@/services/badgeService';
-
-export { matchCustomerBadges } from '@/services/badgeService';
 
 const EMPTY_BADGES: BadgesConfiguration = {
   orderBadges: [],

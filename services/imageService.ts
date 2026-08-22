@@ -15,18 +15,6 @@ export const uploadImage = async (file: File, path: string): Promise<string> => 
 };
 
 /**
- * Delete image qua BE NestJS. Nuốt lỗi (không throw) như cũ.
- * @param url - Full URL of the image to delete
- */
-export const deleteImage = async (url: string): Promise<void> => {
-  try {
-    await apiClient.post('/images/delete', { url });
-  } catch (error) {
-    console.error('Error deleting image:', error);
-  }
-};
-
-/**
  * Generate a unique path for product image
  * @param productId - Product ID (or 'new' for new products)
  * @param fileName - Original file name

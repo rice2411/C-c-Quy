@@ -1,7 +1,6 @@
 /**
  * Badge service — gọi BE NestJS (envelope `.data` đã được apiClient bóc sẵn).
  * Config lưu ở `configurations/badges` phía BE.
- * `matchCustomerBadges` là logic thuần (không chạm dữ liệu) → giữ ở client.
  */
 
 import { apiClient } from '@/services/api/client';
@@ -31,24 +30,3 @@ export const saveBadgesConfiguration = async (
   });
 };
 
-/**
- * Pure helper — tính các badge customer match dựa trên stats.
- * Stats: { orderCount, totalSpent }
- */
-export const matchCustomerBadges = (
-  stats: { orderCount: number; totalSpent: number },
-  rules: CustomerBadgeRule[],
-): CustomerBadgeRule[] => {
-  return rules.filter((r) => {
-    let value: number;
-    if (r.ruleType === 'orderCount') value = stats.orderCount;
-    else if (r.ruleType === 'totalSpent') value = stats.totalSpent;
-    else value = stats.orderCount > 0 ? stats.totalSpent / stats.orderCount : 0;
-
-    if (r.operator === '>=') return value >= r.threshold;
-    if (r.operator === '>') return value > r.threshold;
-    if (r.operator === '<') return value < r.threshold;
-    if (r.operator === '<=') return value <= r.threshold;
-    return false;
-  });
-};

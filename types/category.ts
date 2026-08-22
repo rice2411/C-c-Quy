@@ -60,21 +60,6 @@ export const buildCategoryTree = (flat: ProductCategory[]): CategoryNode[] => {
   return roots;
 };
 
-/** Trả full path: "Bánh > Bánh kem > Chocolate" */
-export const getCategoryPath = (id: string, flat: ProductCategory[]): string => {
-  const byId = new Map<string, ProductCategory>();
-  flat.forEach((c) => byId.set(c.id, c));
-  const parts: string[] = [];
-  let current = byId.get(id);
-  let safety = 20;
-  while (current && safety-- > 0) {
-    parts.unshift(current.name);
-    if (!current.parentId) break;
-    current = byId.get(current.parentId);
-  }
-  return parts.join(' > ');
-};
-
 /** Trả tất cả descendant ids (bao gồm chính nó) */
 export const getDescendantIds = (id: string, flat: ProductCategory[]): string[] => {
   const ids: string[] = [id];
