@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Percent, Banknote, Truck, Gift, Pencil, Trash2, Calendar, ShoppingBag, Ticket, RotateCcw, History, ChevronDown, ChevronUp, Repeat } from 'lucide-react';
-import { Promotion, DiscountType, discountTypeLabel } from '@/types/promotion';
+import { Pencil, Trash2, Calendar, ShoppingBag, Ticket, RotateCcw, History, ChevronDown, ChevronUp, Repeat } from 'lucide-react';
+import { Promotion, discountTypeLabel } from '@/types/promotion';
 import type { ProductCategory } from '@/types/category';
 import { formatVND } from '@/utils/format/currencyUtil';
 import Box from '@/components/ui/Box';
@@ -9,22 +9,8 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Typography from '@/components/ui/Typography';
-import { formatDateRange, categoryName, promotionState, runsCount } from '../promotionUtils';
-
-/** Icon + màu theo loại giảm (nền nhạt + chữ đậm). */
-const TYPE_META: Record<DiscountType, { Icon: React.ComponentType<{ className?: string }>; iconBg: string; iconText: string }> = {
-  PERCENT: { Icon: Percent, iconBg: 'bg-emerald-100 dark:bg-emerald-900/30', iconText: 'text-emerald-600 dark:text-emerald-400' },
-  FIXED: { Icon: Banknote, iconBg: 'bg-sky-100 dark:bg-sky-900/30', iconText: 'text-sky-600 dark:text-sky-400' },
-  FREE_SHIP: { Icon: Truck, iconBg: 'bg-amber-100 dark:bg-amber-900/30', iconText: 'text-amber-600 dark:text-amber-400' },
-  BUY_X_GET_Y: { Icon: Gift, iconBg: 'bg-violet-100 dark:bg-violet-900/30', iconText: 'text-violet-600 dark:text-violet-400' },
-};
-
-/** Badge trạng thái hiệu lực. */
-const STATE_META = {
-  running: { label: 'đang chạy', bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300' },
-  ended: { label: 'đã kết thúc', bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300' },
-  off: { label: 'tắt', bg: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-500' },
-} as const;
+import { formatDateRange, promotionState, runsCount } from '../promotionUtils';
+import { TYPE_META, STATE_META, promotionValueLabel } from '../promotionMeta';
 
 interface PromotionCardProps {
   promotion: Promotion;
@@ -43,17 +29,7 @@ const PromotionCard: React.FC<PromotionCardProps> = ({ promotion: p, categories,
   const history = p.runs ?? [];
   const [showHistory, setShowHistory] = useState(false);
 
-  const valueLabel = (): string => {
-    if (p.discountType === 'PERCENT')
-      return `Giảm ${p.discountValue ?? 0}%${p.maxDiscount ? ` (tối đa ${formatVND(p.maxDiscount)})` : ''}`;
-    if (p.discountType === 'FIXED') return `Giảm ${formatVND(p.discountValue ?? 0)}`;
-    if (p.discountType === 'FREE_SHIP') return 'Miễn phí ship';
-    if (p.discountType === 'BUY_X_GET_Y') {
-      const gn = categoryName(categories, p.groupCategoryId);
-      return `Mua ${p.buyQuantity ?? 3} tặng ${p.getQuantity ?? 1}${gn ? ` · nhóm ${gn}` : ''}`;
-    }
-    return '—';
-  };
+  const valueLabel = (): string => promotionValueLabel(p, categories);
 
   const hasLimit = p.maxUses != null && p.maxUses > 0;
   const pct = hasLimit ? Math.min(100, Math.round(((p.usedCount || 0) / (p.maxUses as number)) * 100)) : 0;

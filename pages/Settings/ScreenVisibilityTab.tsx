@@ -216,6 +216,18 @@ const ScreenVisibilityTab: React.FC = () => {
         </Button>
       </Box>
 
+      <Tabs
+        items={[
+          { id: 'screens', label: 'Màn hình' },
+          { id: 'networks', label: 'Dải mạng' },
+        ]}
+        value={tab}
+        onChange={(v) => setTab(v as TabId)}
+      />
+
+      {tab === 'networks' ? <NetworkRangesPanel /> : null}
+
+      {tab === 'screens' ? (
       <Card
         padding="none"
         borderClassName="border-slate-200 dark:border-slate-700"
@@ -310,7 +322,86 @@ const ScreenVisibilityTab: React.FC = () => {
           );
         })}
       </Card>
+      ) : null}
     </Box>
+  );
+};
+
+/** Panel quản lý dải mạng được duyệt (tab "Dải mạng"). */
+const NetworkRangesPanel: React.FC = () => {
+  const { networks, loading, upsertNetwork, deleteNetwork, saving, fetchCurrentIp } = useNetworks();
+  const [label, setLabel] = useState('');
+  const [cidr, setCidr] = useState('');
+
+  const useCurrentIp = async () => {
+    try {
+      const { suggestedCidr } = await fetchCurrentIp();
+      setCidr(suggestedCidr);
+      if (!label) setLabel('Wi-Fi quán');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Không lấy được IP.');
+    }
+  };
+  const add = async () => {
+    if (!cidr.trim()) return toast.error('Nhập IP / dải (CIDR).');
+    try {
+      await upsertNetwork({ label: label.trim() || undefined, ipCidr: cidr.trim(), active: true });
+      setLabel(''); setCidr(''); toast.success('Đã thêm dải mạng.');
+    } catch (e) { toast.error(e instanceof Error ? e.message : 'Thêm thất bại.'); }
+  };
+  const setActive = async (id: string, l: string | null, ip: string, active: boolean) => {
+    try { await upsertNetwork({ id, label: l ?? undefined, ipCidr: ip, active }); }
+    catch (e) { toast.error(e instanceof Error ? e.message : 'Cập nhật thất bại.'); }
+  };
+  const del = async (id: string) => {
+    if (!window.confirm('Xoá dải mạng này?')) return;
+    try { await deleteNetwork(id); toast.success('Đã xoá.'); }
+    catch (e) { toast.error(e instanceof Error ? e.message : 'Xoá thất bại.'); }
+  };
+
+  return (
+    <Card padding="md" layoutClassName="space-y-3 p-4" borderClassName="border border-slate-200 dark:border-slate-700">
+      <Typography as="span" size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold" textClassName="text-slate-700 dark:text-slate-200">
+        <ShieldCheck className="h-4 w-4 text-emerald-500" /> Dải mạng được duyệt
+      </Typography>
+      <Typography size="xs" variant="muted">
+        Dùng chung cho chấm công + các màn bật "yêu cầu mạng". Chưa có dải active → guard tự tắt (không khoá ai).
+      </Typography>
+
+      <Box layoutClassName="flex flex-col gap-2 sm:flex-row sm:items-end">
+        <Box layoutClassName="flex-1">
+          <Typography size="xs" variant="muted" layoutClassName="mb-1 block">Nhãn</Typography>
+          <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Wi-Fi quán" fullWidth />
+        </Box>
+        <Box layoutClassName="flex-1">
+          <Typography size="xs" variant="muted" layoutClassName="mb-1 block">IP / dải (CIDR)</Typography>
+          <Input value={cidr} onChange={(e) => setCidr(e.target.value)} placeholder="vd 118.68.0.0/16" fullWidth />
+        </Box>
+        <Button type="button" variant="secondary" size="sm" onClick={() => void useCurrentIp()}>Dùng IP hiện tại</Button>
+        <Button type="button" variant="primary" size="sm" leftIcon={<Plus className="h-4 w-4" />} disabled={saving} onClick={() => void add()}>Thêm</Button>
+      </Box>
+
+      {loading ? (
+        <Box layoutClassName="flex justify-center py-6"><Spinner size="md" textClassName="text-primary-500" /></Box>
+      ) : networks.length === 0 ? (
+        <Typography size="sm" variant="muted">Chưa có dải mạng nào.</Typography>
+      ) : (
+        <Box layoutClassName="divide-y divide-slate-100 dark:divide-slate-700/60">
+          {networks.map((n) => (
+            <Box key={n.id} layoutClassName="flex items-center gap-3 py-2.5">
+              <Box layoutClassName="min-w-0 flex-1">
+                <Typography size="sm" layoutClassName="font-medium" textClassName="text-slate-800 dark:text-slate-100">{n.label || '(không nhãn)'}</Typography>
+                <Typography size="xs" variant="muted" layoutClassName="font-mono">{n.ipCidr}</Typography>
+              </Box>
+              <Switch checked={n.active} onCheckedChange={(v) => void setActive(n.id, n.label, n.ipCidr, v)} />
+              <IconButton label="Xoá" size="sm" variant="ghost" onClick={() => void del(n.id)}>
+                <Trash2 className="h-4 w-4 text-rose-500" />
+              </IconButton>
+            </Box>
+          ))}
+        </Box>
+      )}
+    </Card>
   );
 };
 

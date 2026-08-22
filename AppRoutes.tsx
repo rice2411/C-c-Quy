@@ -38,7 +38,6 @@ const SepaySettingsTab = lazy(() => import("./pages/Settings/SepaySettingsTab"))
 const ZaloSettingsTab = lazy(() => import("./pages/Settings/ZaloSettingsTab"));
 const ScreenVisibilityTab = lazy(() => import("./pages/Settings/ScreenVisibilityTab"));
 const RolesPage = lazy(() => import("./pages/Settings/RolesPage"));
-const NetworkSettingsPage = lazy(() => import("./pages/Settings/NetworkSettingsPage"));
 const ProductSettings = lazy(() => import("./pages/Settings/ProductSettings"));
 const LoginPage = lazy(() => import("./pages/Login/index"));
 const AuthCallbackPage = lazy(() => import("./pages/AuthCallback/index"));
@@ -319,14 +318,8 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      <Route
-        path="settings/network"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/settings/network")?.roles}>
-            <NetworkSettingsPage />
-          </RoleBasedRoute>
-        }
-      />
+      {/* Mạng đã gộp vào Cài đặt → Màn hình (tab Dải mạng) — giữ redirect cho bookmark. */}
+      <Route path="settings/network" element={<Navigate to="/settings/screens" replace />} />
       <Route
         path="settings/product"
         element={

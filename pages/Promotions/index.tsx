@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Tag, Ticket } from 'lucide-react';
+import { Plus, Tag, Ticket, LayoutGrid, List, Table as TableIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Promotion } from '@/types/promotion';
@@ -11,12 +11,23 @@ import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
+import IconButton from '@/components/ui/IconButton';
 import Spinner from '@/components/ui/Spinner';
 import EmptyState from '@/components/ui/EmptyState';
 import ConfirmModal from '@/components/ConfirmModal';
 import PromotionFormPanel from './components/PromotionFormPanel';
 import PromotionCard from './components/PromotionCard';
+import PromotionGridCard from './components/PromotionGridCard';
+import PromotionTable from './components/PromotionTable';
 import ReopenModal from './components/ReopenModal';
+
+type PromotionViewMode = 'list' | 'grid' | 'table';
+
+const VIEW_OPTIONS: { id: PromotionViewMode; Icon: React.ComponentType<{ className?: string }>; title: string }[] = [
+  { id: 'list', Icon: List, title: 'Danh sách' },
+  { id: 'grid', Icon: LayoutGrid, title: 'Lưới' },
+  { id: 'table', Icon: TableIcon, title: 'Bảng' },
+];
 
 const PromotionsPage: React.FC = () => {
   const { userData } = useAuth();
@@ -32,6 +43,14 @@ const PromotionsPage: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [reopenTarget, setReopenTarget] = useState<Promotion | null>(null);
   const [reopening, setReopening] = useState(false);
+
+  const [viewMode, setViewMode] = useState<PromotionViewMode>(() => {
+    if (typeof window === 'undefined') return 'list';
+    return (localStorage.getItem('promotion-view-mode') as PromotionViewMode) || 'list';
+  });
+  useEffect(() => {
+    localStorage.setItem('promotion-view-mode', viewMode);
+  }, [viewMode]);
 
   useEffect(() => {
     if (error) toast.error('Không tải được danh sách khuyến mãi');
@@ -119,9 +138,29 @@ const PromotionsPage: React.FC = () => {
             {promotions.length}
           </Badge>
         </Box>
-        <Button variant="primary" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={openAdd}>
-          Thêm khuyến mãi
-        </Button>
+        <Box layoutClassName="flex items-center gap-2">
+          {/* Chuyển chế độ hiển thị: danh sách / lưới / bảng */}
+          <Box layoutClassName="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 dark:border-slate-600 dark:bg-slate-800">
+            {VIEW_OPTIONS.map(({ id, Icon, title }) => (
+              <IconButton
+                key={id}
+                label={title}
+                onClick={() => setViewMode(id)}
+                variant="ghost"
+                size="sm"
+                backgroundClassName={viewMode === id ? 'bg-primary-500 hover:bg-primary-600' : 'bg-transparent hover:bg-slate-100 dark:hover:bg-slate-700'}
+                textClassName={viewMode === id ? 'text-white' : 'text-slate-500'}
+                shadowClassName={viewMode === id ? 'shadow-sm' : ''}
+                roundedClassName="rounded-md"
+              >
+                <Icon className="h-3.5 w-3.5" />
+              </IconButton>
+            ))}
+          </Box>
+          <Button variant="primary" size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={openAdd}>
+            Thêm khuyến mãi
+          </Button>
+        </Box>
       </Box>
 
       {/* Danh sách */}
