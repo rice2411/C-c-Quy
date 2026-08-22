@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Save, Settings } from 'lucide-react';
+import { Save, Settings, Wifi, ShieldCheck, Trash2, Plus } from 'lucide-react';
 import { getRouteConfigKey, routes, storageTabRoutes } from '@/config/routes';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useScreenConfig } from '@/contexts/ScreenConfigContext';
 import { useRoles } from '@/hooks/queries/useRolesQuery';
+import { useNetworkGuardConfig, useNetworks } from '@/hooks/queries/useNetworkQuery';
 import { ScreenVisibilityMap, ScreenRolesMap } from '@/types';
 import { UserRole } from '@/types/user';
 import toast from 'react-hot-toast';
@@ -12,20 +13,28 @@ import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
+import Input from '@/components/ui/Input';
+import IconButton from '@/components/ui/IconButton';
 import Spinner from '@/components/ui/Spinner';
 import Switch from '@/components/ui/Switch';
+import Tabs from '@/components/ui/Tabs';
 import Typography from '@/components/ui/Typography';
 
 const sameSet = (a: string[], b: string[]): boolean =>
   a.length === b.length && a.every((x) => b.includes(x));
+
+type TabId = 'screens' | 'networks';
 
 /** Tab "Màn hình" của Cài đặt — bật/tắt hiển thị + chỉnh ROLE được truy cập mỗi màn. Route /settings/screens. */
 const ScreenVisibilityTab: React.FC = () => {
   const { t } = useLanguage();
   const { screenVisibility, screenRoles, loading, saving, saveConfig } = useScreenConfig();
   const { roles } = useRoles();
+  const { guarded, saveGuarded } = useNetworkGuardConfig();
+  const [tab, setTab] = useState<TabId>('screens');
   const [draftVisibility, setDraftVisibility] = useState<ScreenVisibilityMap>({});
   const [draftRoles, setDraftRoles] = useState<ScreenRolesMap>({});
+  const [guardDraft, setGuardDraft] = useState<Set<string>>(new Set());
 
   // Options role cho chip phân quyền màn — lấy từ danh sách vai trò ĐỘNG.
   const roleOptions = useMemo(
@@ -37,6 +46,8 @@ const ScreenVisibilityTab: React.FC = () => {
     setDraftVisibility(screenVisibility);
     setDraftRoles(screenRoles);
   }, [screenVisibility, screenRoles]);
+
+  useEffect(() => setGuardDraft(new Set(guarded)), [guarded]);
 
   // Loại trừ chính các route Cài đặt (/settings/*) + Dashboard khỏi danh sách — tránh tự khoá mình ra.
   const pageItems = useMemo(
@@ -58,17 +69,23 @@ const ScreenVisibilityTab: React.FC = () => {
   const rolesOf = (key: string, def: UserRole[]): UserRole[] =>
     (draftRoles[key] as UserRole[] | undefined) ?? def;
 
+  const guardChanged = useMemo(
+    () => !sameSet([...guardDraft], guarded),
+    [guardDraft, guarded],
+  );
+
   const hasChanged = useMemo(() => {
     const allItems = [...pageItems, ...tabItems];
-    return allItems.some((item) => {
+    const screenChanged = allItems.some((item) => {
       const key = getRouteConfigKey(item);
       const visChanged = (draftVisibility[key] !== false) !== (screenVisibility[key] !== false);
       const savedRoles = screenRoles[key] ?? item.roles;
       const rolesChanged = !sameSet(rolesOf(key, item.roles), savedRoles);
       return visChanged || rolesChanged;
     });
+    return screenChanged || guardChanged;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draftVisibility, draftRoles, pageItems, tabItems, screenVisibility, screenRoles]);
+  }, [draftVisibility, draftRoles, pageItems, tabItems, screenVisibility, screenRoles, guardChanged]);
 
   const handleToggle = (configKey: string) => {
     setDraftVisibility((prev) => ({
@@ -76,6 +93,14 @@ const ScreenVisibilityTab: React.FC = () => {
       [configKey]: prev[configKey] === false ? true : false,
     }));
   };
+
+  const toggleGuard = (path: string) =>
+    setGuardDraft((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
 
   const toggleRole = (key: string, def: UserRole[], role: UserRole) => {
     setDraftRoles((prev) => {
@@ -97,7 +122,10 @@ const ScreenVisibilityTab: React.FC = () => {
       if (!sameSet(eff, item.roles)) rolesPayload[key] = eff;
     });
     try {
-      await saveConfig(visPayload, rolesPayload);
+      await Promise.all([
+        saveConfig(visPayload, rolesPayload),
+        guardChanged ? saveGuarded([...guardDraft]) : Promise.resolve(),
+      ]);
       toast.success('Đã lưu cấu hình màn hình');
     } catch (error) {
       console.error('Failed to save screen config', error);
@@ -163,9 +191,9 @@ const ScreenVisibilityTab: React.FC = () => {
     <Box layoutClassName="mx-auto max-w-8xl space-y-6">
       <Box layoutClassName="flex items-center justify-between">
         <Box>
-          <Heading level={2} textClassName="text-xl font-semibold">Quản lý màn hình</Heading>
+          <Heading level={2} textClassName="text-xl font-semibold">Màn hình &amp; mạng</Heading>
           <Typography size="sm" variant="muted" layoutClassName="mt-1">
-            Bật/tắt hiển thị + chọn role được truy cập từng màn (thay vì cố định trong code).
+            Bật/tắt hiển thị + role + yêu cầu mạng cho từng màn; quản lý dải mạng được duyệt.
           </Typography>
         </Box>
         <Button
@@ -216,11 +244,26 @@ const ScreenVisibilityTab: React.FC = () => {
                   </Box>
                   <Typography size="xs" variant="muted" layoutClassName="mt-0.5">{page.path}</Typography>
                 </Box>
-                <Switch
-                  checked={pageEnabled}
-                  onCheckedChange={() => handleToggle(pageConfigKey)}
-                  aria-label={`Toggle ${pageConfigKey}`}
-                />
+                <Box layoutClassName="flex shrink-0 items-center gap-4">
+                  <Box layoutClassName="flex flex-col items-center gap-1">
+                    <Typography as="span" size="xs" variant="muted">Hiện</Typography>
+                    <Switch
+                      checked={pageEnabled}
+                      onCheckedChange={() => handleToggle(pageConfigKey)}
+                      aria-label={`Hiện ${pageConfigKey}`}
+                    />
+                  </Box>
+                  <Box layoutClassName="flex flex-col items-center gap-1">
+                    <Typography as="span" size="xs" layoutClassName="inline-flex items-center gap-0.5" variant="muted">
+                      <Wifi className="h-3 w-3" /> Mạng
+                    </Typography>
+                    <Switch
+                      checked={guardDraft.has(page.path)}
+                      onCheckedChange={() => toggleGuard(page.path)}
+                      aria-label={`Yêu cầu mạng ${page.path}`}
+                    />
+                  </Box>
+                </Box>
               </Box>
               {roleChips(pageConfigKey, page.roles)}
 

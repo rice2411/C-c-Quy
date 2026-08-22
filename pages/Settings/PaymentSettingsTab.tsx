@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
 import { SEPAY_BANKS, bankLabel, parseSepayQrLink, qrTemplateLabel } from '@/types/paymentConfig';
+import BaseModal from '@/components/BaseModal';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Button from '@/components/ui/Button';
@@ -15,6 +16,7 @@ import IconButton from '@/components/ui/IconButton';
 import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from '@/components/ui/Table';
 
 interface ParsedPreview {
   bankCode: string;
@@ -26,9 +28,21 @@ const PaymentSettingsTab: React.FC = () => {
   const { t } = useLanguage();
   const { accounts, loading, mutating, create, setActive, remove } = usePaymentAccounts();
 
+  const [showAddModal, setShowAddModal] = useState(false);
   const [qrLink, setQrLink] = useState('');
   const [preview, setPreview] = useState<ParsedPreview | null>(null);
   const [accountHolder, setAccountHolder] = useState('');
+
+  const resetForm = () => {
+    setQrLink('');
+    setPreview(null);
+    setAccountHolder('');
+  };
+
+  const closeModal = () => {
+    setShowAddModal(false);
+    resetForm();
+  };
 
   const handleQrLinkChange = (value: string) => {
     setQrLink(value);
@@ -71,9 +85,7 @@ const PaymentSettingsTab: React.FC = () => {
         qrTemplate: preview.qrTemplate,
       });
       toast.success(t('paymentSettings.created'));
-      setQrLink('');
-      setPreview(null);
-      setAccountHolder('');
+      closeModal();
     } catch (err: any) {
       toast.error(err?.message || t('paymentSettings.saveError'));
     }
@@ -119,100 +131,176 @@ const PaymentSettingsTab: React.FC = () => {
         </Heading>
       </Box>
 
-      {/* ============ Khu Thêm tài khoản ============ */}
+      {/* ============ Khu Danh sách tài khoản (dạng bảng) ============ */}
       <Card padding="lg">
-        <Heading level={3} textClassName="text-base font-semibold mb-3">
-          {t('paymentSettings.addTitle')}
-        </Heading>
+        <Box layoutClassName="mb-3 flex items-center justify-between gap-2">
+          <Heading level={3} textClassName="text-base font-semibold">
+            {t('paymentSettings.listTitle')}
+          </Heading>
+          <Button
+            type="button"
+            onClick={() => setShowAddModal(true)}
+            leftIcon={<Plus />}
+            iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+            sizeClassName="px-3 py-1.5"
+            backgroundClassName="bg-primary-600"
+            hoverClassName="hover:bg-primary-700"
+            textClassName="text-sm font-medium text-white"
+            roundedClassName="rounded-lg"
+            layoutClassName="inline-flex items-center gap-2"
+            stateClassName="transition-colors"
+            disableVariantHover
+            disableVariantTextColor
+          >
+            {t('paymentSettings.addButton')}
+          </Button>
+        </Box>
 
-        <Field label={t('paymentSettings.qrLink')} htmlFor="payment-qr-link">
-          <Input
-            id="payment-qr-link"
-            type="text"
-            value={qrLink}
-            onChange={(e) => handleQrLinkChange(e.target.value)}
-            placeholder={t('paymentSettings.qrLinkPlaceholder')}
+        {accounts.length === 0 ? (
+          <EmptyState
+            icon={<CreditCard className="h-6 w-6" />}
+            title={t('paymentSettings.emptyTitle')}
+            description={t('paymentSettings.emptyHint')}
           />
-          <Typography size="xs" variant="muted" layoutClassName="mt-1">
-            {t('paymentSettings.qrLinkHint')}
-          </Typography>
-        </Field>
-
-        {preview ? (
-          <Box layoutClassName="mt-4 space-y-4">
-            {/* Card preview */}
-            <Box
-              layoutClassName="space-y-2 p-4"
-              borderClassName="border border-blue-100 dark:border-blue-800"
-              backgroundClassName="bg-blue-50 dark:bg-blue-900/20"
-              roundedClassName="rounded-xl"
-            >
-              <Box
-                layoutClassName="flex items-center gap-2"
-                textClassName="font-semibold text-blue-800 dark:text-blue-300"
+        ) : (
+          <Box layoutClassName="overflow-x-auto">
+            <Table>
+              <TableHead
+                backgroundClassName="bg-slate-50 dark:bg-slate-700/60"
+                borderClassName="border-b border-slate-200 dark:border-slate-600"
               >
-                <Wallet className="h-4 w-4" />
-                <Typography as="span">{t('paymentSettings.previewTitle')}</Typography>
-              </Box>
-              <Box layoutClassName="flex items-center justify-between gap-4">
-                <Typography
-                  as="span"
-                  size="xs"
-                  layoutClassName="font-medium uppercase"
-                  textClassName="text-slate-500"
-                >
-                  {t('paymentSettings.bankCode')}
-                </Typography>
-                <Typography as="span" layoutClassName="font-bold" textClassName="text-slate-800 dark:text-slate-200">
-                  {bankLabel(preview.bankCode)}
-                </Typography>
-              </Box>
-              <Box layoutClassName="flex items-center justify-between gap-4">
-                <Typography
-                  as="span"
-                  size="xs"
-                  layoutClassName="font-medium uppercase"
-                  textClassName="text-slate-500"
-                >
-                  {t('paymentSettings.accountNumber')}
-                </Typography>
-                <Typography
-                  as="span"
-                  layoutClassName="font-mono font-bold"
-                  textClassName="text-slate-800 dark:text-slate-200"
-                >
-                  {preview.accountNumber}
-                </Typography>
-              </Box>
-              <Box layoutClassName="flex items-center justify-between gap-4">
-                <Typography
-                  as="span"
-                  size="xs"
-                  layoutClassName="font-medium uppercase"
-                  textClassName="text-slate-500"
-                >
-                  {t('paymentSettings.qrTemplate')}
-                </Typography>
-                <Typography as="span" layoutClassName="font-bold" textClassName="text-slate-800 dark:text-slate-200">
-                  {qrTemplateLabel(preview.qrTemplate)}
-                </Typography>
-              </Box>
-            </Box>
+                <TableRow textClassName="text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                  <TableHeaderCell layoutClassName="px-5 py-3.5">{t('paymentSettings.bankCode')}</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="px-5 py-3.5">{t('paymentSettings.accountNumber')}</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="px-5 py-3.5">{t('paymentSettings.accountHolder')}</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="px-5 py-3.5">{t('paymentSettings.status')}</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="px-5 py-3.5 text-right">{t('paymentSettings.actions')}</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {accounts.map((acc, idx) => (
+                  <TableRow
+                    key={acc.id}
+                    backgroundClassName={
+                      acc.isActive
+                        ? 'bg-primary-50/50 dark:bg-primary-900/10'
+                        : idx % 2 === 0
+                          ? ''
+                          : 'bg-slate-50/50 dark:bg-slate-700/20'
+                    }
+                    hoverClassName="hover:bg-primary-50/60 dark:hover:bg-primary-900/10"
+                    stateClassName="transition-colors"
+                    borderClassName="border-b border-slate-100 dark:border-slate-700/60 last:border-0"
+                  >
+                    <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
+                      <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">
+                        {bankLabel(acc.bankCode)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
+                      <Typography as="span" size="sm" layoutClassName="font-mono" textClassName="text-slate-600 dark:text-slate-300">
+                        {acc.accountNumber}
+                      </Typography>
+                    </TableCell>
+                    <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
+                      <Typography as="span" size="sm" layoutClassName="uppercase" textClassName="text-slate-500 dark:text-slate-400">
+                        {acc.accountHolder}
+                      </Typography>
+                    </TableCell>
+                    <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
+                      {acc.isActive ? (
+                        <Badge
+                          size="sm"
+                          layoutClassName="px-2 py-0.5 text-xs font-medium"
+                          borderClassName="border border-primary-300 dark:border-primary-700"
+                          backgroundClassName="bg-primary-100 dark:bg-primary-900/40"
+                          textClassName="text-primary-700 dark:text-primary-200"
+                        >
+                          {t('paymentSettings.activeBadge')}
+                        </Badge>
+                      ) : (
+                        <Typography as="span" size="xs" variant="muted">
+                          —
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5 text-right">
+                      <Box layoutClassName="inline-flex items-center gap-2">
+                        <Button
+                          type="button"
+                          onClick={() => handleSetActive(acc.id)}
+                          disabled={mutating || acc.isActive}
+                          leftIcon={acc.isActive ? <Check /> : undefined}
+                          iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
+                          sizeClassName="px-3 py-1.5"
+                          backgroundClassName={acc.isActive ? 'bg-primary-100 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
+                          borderClassName={acc.isActive ? 'border border-primary-300 dark:border-primary-700' : 'border border-slate-300 dark:border-slate-600'}
+                          hoverClassName={acc.isActive ? '' : 'hover:bg-slate-50 dark:hover:bg-slate-700'}
+                          textClassName={acc.isActive ? 'text-xs font-semibold text-primary-700 dark:text-primary-200' : 'text-xs font-semibold text-slate-600 dark:text-slate-300'}
+                          roundedClassName="rounded-lg"
+                          layoutClassName="inline-flex items-center justify-center gap-2"
+                          stateClassName="transition-colors disabled:cursor-not-allowed"
+                          variant="secondary"
+                          disableVariantHover
+                          disableVariantTextColor
+                        >
+                          {acc.isActive ? t('paymentSettings.inUse') : t('paymentSettings.useThis')}
+                        </Button>
+                        <IconButton
+                          type="button"
+                          label={t('paymentSettings.deleteAccount')}
+                          variant="secondary"
+                          disabled={mutating}
+                          backgroundClassName="bg-red-50 dark:bg-red-900/20"
+                          hoverClassName="hover:bg-red-100 dark:hover:bg-red-900/30"
+                          textClassName="text-red-600 dark:text-red-300"
+                          onClick={() => handleRemove(acc.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
+        )}
 
-            <Field label={t('paymentSettings.accountHolder')} htmlFor="payment-account-holder">
-              <Input
-                id="payment-account-holder"
-                type="text"
-                value={accountHolder}
-                onChange={(e) => setAccountHolder(e.target.value)}
-                placeholder="TON THAT ANH MINH"
-              />
-            </Field>
+        <Typography size="xs" variant="muted" layoutClassName="mt-3">
+          {t('paymentSettings.hint')}
+        </Typography>
+      </Card>
 
+      {/* ============ Modal Thêm tài khoản ============ */}
+      <BaseModal
+        isOpen={showAddModal}
+        onClose={closeModal}
+        title={t('paymentSettings.addModalTitle')}
+        size="md"
+        footer={
+          <>
+            <Button
+              type="button"
+              onClick={closeModal}
+              sizeClassName="px-4 py-2"
+              backgroundClassName="bg-white dark:bg-slate-800"
+              borderClassName="border border-slate-300 dark:border-slate-600"
+              hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+              textClassName="text-sm font-medium text-slate-700 dark:text-slate-200"
+              roundedClassName="rounded-lg"
+              layoutClassName="inline-flex items-center justify-center gap-2"
+              stateClassName="transition-colors"
+              variant="secondary"
+              disableVariantHover
+              disableVariantTextColor
+            >
+              {t('paymentSettings.cancel')}
+            </Button>
             <Button
               type="button"
               onClick={handleSave}
-              disabled={mutating}
+              disabled={mutating || !preview}
               leftIcon={mutating ? <Spinner size="sm" textClassName="text-white" borderClassName="border-white" /> : <Plus />}
               iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
               sizeClassName="px-4 py-2"
@@ -227,114 +315,97 @@ const PaymentSettingsTab: React.FC = () => {
             >
               {t('paymentSettings.saveAccount')}
             </Button>
-          </Box>
-        ) : null}
-      </Card>
+          </>
+        }
+      >
+        <Box layoutClassName="space-y-4">
+          <Field label={t('paymentSettings.qrLink')} htmlFor="payment-qr-link">
+            <Input
+              id="payment-qr-link"
+              type="text"
+              value={qrLink}
+              onChange={(e) => handleQrLinkChange(e.target.value)}
+              placeholder={t('paymentSettings.qrLinkPlaceholder')}
+            />
+            <Typography size="xs" variant="muted" layoutClassName="mt-1">
+              {t('paymentSettings.qrLinkHint')}
+            </Typography>
+          </Field>
 
-      {/* ============ Khu Danh sách tài khoản ============ */}
-      <Card padding="lg">
-        <Heading level={3} textClassName="text-base font-semibold mb-3">
-          {t('paymentSettings.listTitle')}
-        </Heading>
-
-        {accounts.length === 0 ? (
-          <EmptyState
-            icon={<CreditCard className="h-6 w-6" />}
-            title={t('paymentSettings.emptyTitle')}
-            description={t('paymentSettings.emptyHint')}
-          />
-        ) : (
-          <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {accounts.map((acc) => (
+          {preview ? (
+            <Box layoutClassName="space-y-4">
+              {/* Card preview */}
               <Box
-                key={acc.id}
-                layoutClassName="flex flex-col gap-3 p-4"
-                borderClassName={
-                  acc.isActive
-                    ? 'border-2 border-primary-400 dark:border-primary-600'
-                    : 'border border-slate-200 dark:border-slate-700'
-                }
-                backgroundClassName={acc.isActive ? 'bg-primary-50/50 dark:bg-primary-900/10' : 'bg-white dark:bg-slate-800'}
+                layoutClassName="space-y-2 p-4"
+                borderClassName="border border-blue-100 dark:border-blue-800"
+                backgroundClassName="bg-blue-50 dark:bg-blue-900/20"
                 roundedClassName="rounded-xl"
               >
-                <Box layoutClassName="flex items-start justify-between gap-2">
-                  <Box layoutClassName="min-w-0 space-y-1">
-                    <Box layoutClassName="flex flex-wrap items-center gap-2">
-                      <Typography as="span" layoutClassName="font-semibold" textClassName="text-slate-800 dark:text-slate-100">
-                        {bankLabel(acc.bankCode)}
-                      </Typography>
-                      {acc.isActive ? (
-                        <Badge
-                          size="sm"
-                          layoutClassName="px-2 py-0.5 text-xs font-medium"
-                          borderClassName="border border-primary-300 dark:border-primary-700"
-                          backgroundClassName="bg-primary-100 dark:bg-primary-900/40"
-                          textClassName="text-primary-700 dark:text-primary-200"
-                        >
-                          {t('paymentSettings.activeBadge')}
-                        </Badge>
-                      ) : null}
-                    </Box>
-                    <Typography
-                      as="p"
-                      size="sm"
-                      layoutClassName="font-mono"
-                      textClassName="text-slate-600 dark:text-slate-300"
-                    >
-                      {acc.accountNumber}
-                    </Typography>
-                    <Typography
-                      as="p"
-                      size="sm"
-                      layoutClassName="uppercase"
-                      textClassName="text-slate-500 dark:text-slate-400"
-                    >
-                      {acc.accountHolder}
-                    </Typography>
-                  </Box>
-                  <IconButton
-                    type="button"
-                    label={t('paymentSettings.deleteAccount')}
-                    variant="secondary"
-                    disabled={mutating}
-                    backgroundClassName="bg-red-50 dark:bg-red-900/20"
-                    hoverClassName="hover:bg-red-100 dark:hover:bg-red-900/30"
-                    textClassName="text-red-600 dark:text-red-300"
-                    onClick={() => handleRemove(acc.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </IconButton>
-                </Box>
-
-                <Button
-                  type="button"
-                  onClick={() => handleSetActive(acc.id)}
-                  disabled={mutating || acc.isActive}
-                  leftIcon={acc.isActive ? <Check /> : undefined}
-                  iconClassName="inline-flex shrink-0 [&_svg]:h-4 [&_svg]:w-4"
-                  sizeClassName="px-3 py-1.5"
-                  backgroundClassName={acc.isActive ? 'bg-primary-100 dark:bg-primary-900/30' : 'bg-white dark:bg-slate-800'}
-                  borderClassName={acc.isActive ? 'border border-primary-300 dark:border-primary-700' : 'border border-slate-300 dark:border-slate-600'}
-                  hoverClassName={acc.isActive ? '' : 'hover:bg-slate-50 dark:hover:bg-slate-700'}
-                  textClassName={acc.isActive ? 'text-xs font-semibold text-primary-700 dark:text-primary-200' : 'text-xs font-semibold text-slate-600 dark:text-slate-300'}
-                  roundedClassName="rounded-lg"
-                  layoutClassName="inline-flex items-center justify-center gap-2"
-                  stateClassName="transition-colors disabled:cursor-not-allowed"
-                  variant="secondary"
-                  disableVariantHover
-                  disableVariantTextColor
+                <Box
+                  layoutClassName="flex items-center gap-2"
+                  textClassName="font-semibold text-blue-800 dark:text-blue-300"
                 >
-                  {acc.isActive ? t('paymentSettings.inUse') : t('paymentSettings.useThis')}
-                </Button>
+                  <Wallet className="h-4 w-4" />
+                  <Typography as="span">{t('paymentSettings.previewTitle')}</Typography>
+                </Box>
+                <Box layoutClassName="flex items-center justify-between gap-4">
+                  <Typography
+                    as="span"
+                    size="xs"
+                    layoutClassName="font-medium uppercase"
+                    textClassName="text-slate-500"
+                  >
+                    {t('paymentSettings.bankCode')}
+                  </Typography>
+                  <Typography as="span" layoutClassName="font-bold" textClassName="text-slate-800 dark:text-slate-200">
+                    {bankLabel(preview.bankCode)}
+                  </Typography>
+                </Box>
+                <Box layoutClassName="flex items-center justify-between gap-4">
+                  <Typography
+                    as="span"
+                    size="xs"
+                    layoutClassName="font-medium uppercase"
+                    textClassName="text-slate-500"
+                  >
+                    {t('paymentSettings.accountNumber')}
+                  </Typography>
+                  <Typography
+                    as="span"
+                    layoutClassName="font-mono font-bold"
+                    textClassName="text-slate-800 dark:text-slate-200"
+                  >
+                    {preview.accountNumber}
+                  </Typography>
+                </Box>
+                <Box layoutClassName="flex items-center justify-between gap-4">
+                  <Typography
+                    as="span"
+                    size="xs"
+                    layoutClassName="font-medium uppercase"
+                    textClassName="text-slate-500"
+                  >
+                    {t('paymentSettings.qrTemplate')}
+                  </Typography>
+                  <Typography as="span" layoutClassName="font-bold" textClassName="text-slate-800 dark:text-slate-200">
+                    {qrTemplateLabel(preview.qrTemplate)}
+                  </Typography>
+                </Box>
               </Box>
-            ))}
-          </Box>
-        )}
 
-        <Typography size="xs" variant="muted" layoutClassName="mt-3">
-          {t('paymentSettings.hint')}
-        </Typography>
-      </Card>
+              <Field label={t('paymentSettings.accountHolder')} htmlFor="payment-account-holder">
+                <Input
+                  id="payment-account-holder"
+                  type="text"
+                  value={accountHolder}
+                  onChange={(e) => setAccountHolder(e.target.value)}
+                  placeholder="TON THAT ANH MINH"
+                />
+              </Field>
+            </Box>
+          ) : null}
+        </Box>
+      </BaseModal>
     </Box>
   );
 };
