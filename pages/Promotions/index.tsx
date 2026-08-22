@@ -172,6 +172,14 @@ const PromotionsPage: React.FC = () => {
             description="Tạo chương trình đầu tiên để áp giảm giá khi lên đơn."
           />
         </Card>
+      ) : viewMode === 'table' ? (
+        <PromotionTable promotions={promotions} categories={categories} onEdit={openEdit} onDelete={setDeleteTarget} onReopen={setReopenTarget} />
+      ) : viewMode === 'grid' ? (
+        <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 pb-2">
+          {promotions.map((p) => (
+            <PromotionGridCard key={p.id} promotion={p} categories={categories} onEdit={openEdit} onDelete={setDeleteTarget} onReopen={setReopenTarget} />
+          ))}
+        </Box>
       ) : (
         <Box layoutClassName="space-y-2.5">
           {promotions.map((p) => (
