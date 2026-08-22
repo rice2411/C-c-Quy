@@ -12,7 +12,10 @@ import Input from '@/components/ui/Input';
 import IconButton from '@/components/ui/IconButton';
 import Switch from '@/components/ui/Switch';
 import Spinner from '@/components/ui/Spinner';
+import Tabs from '@/components/ui/Tabs';
 import Typography from '@/components/ui/Typography';
+
+type TabId = 'networks' | 'guard';
 
 const sameSet = (a: string[], b: string[]): boolean =>
   a.length === b.length && [...a].sort().every((x, i) => x === [...b].sort()[i]);
@@ -23,6 +26,7 @@ const NetworkSettingsPage: React.FC = () => {
   const { guarded, loading: guardLoading, saveGuarded, saving: guardSaving } = useNetworkGuardConfig();
   const { networks, loading: netLoading, upsertNetwork, deleteNetwork, saving: netSaving, fetchCurrentIp } = useNetworks();
 
+  const [tab, setTab] = useState<TabId>('networks');
   const [draft, setDraft] = useState<Set<string>>(new Set());
   const [newLabel, setNewLabel] = useState('');
   const [newCidr, setNewCidr] = useState('');
@@ -106,8 +110,18 @@ const NetworkSettingsPage: React.FC = () => {
         Dải mạng được duyệt dùng chung cho chấm công + các màn bật guard. Chưa có dải nào active → guard tự tắt (không khoá ai).
       </Typography>
 
+      <Tabs
+        items={[
+          { id: 'networks', label: 'Dải mạng' },
+          { id: 'guard', label: 'Màn yêu cầu mạng' },
+        ]}
+        value={tab}
+        onChange={(v) => setTab(v as TabId)}
+      />
+
       <Box layoutClassName="min-h-0 flex-1 space-y-5 overflow-y-auto">
         {/* Danh sách dải mạng */}
+        {tab === 'networks' ? (
         <Card padding="md" layoutClassName="space-y-3 p-4" borderClassName="border border-slate-200 dark:border-slate-700">
           <Typography as="span" size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold" textClassName="text-slate-700 dark:text-slate-200">
             <ShieldCheck className="h-4 w-4 text-emerald-500" /> Dải mạng được duyệt
@@ -153,8 +167,10 @@ const NetworkSettingsPage: React.FC = () => {
             </Box>
           )}
         </Card>
+        ) : null}
 
         {/* Toggle guard theo màn */}
+        {tab === 'guard' ? (
         <Card padding="md" layoutClassName="space-y-3 p-4" borderClassName="border border-slate-200 dark:border-slate-700">
           <Box layoutClassName="flex flex-wrap items-center justify-between gap-2">
             <Typography as="span" size="sm" layoutClassName="inline-flex items-center gap-1.5 font-semibold" textClassName="text-slate-700 dark:text-slate-200">
@@ -186,6 +202,7 @@ const NetworkSettingsPage: React.FC = () => {
             </Box>
           )}
         </Card>
+        ) : null}
       </Box>
     </Box>
   );
