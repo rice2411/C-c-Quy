@@ -87,6 +87,16 @@ export const SEPAY_BANKS: { value: string; label: string }[] = [
 export const bankLabel = (code: string): string =>
   SEPAY_BANKS.find((x) => x.value === code)?.label ?? code;
 
+/** Tập mã ngân hàng có sẵn logo (file tĩnh `public/banks/<code>.png`, tải từ VietQR CDN). */
+const BANK_LOGO_CODES = new Set(SEPAY_BANKS.map((x) => x.value));
+
+/**
+ * Đường dẫn logo ngân hàng (ảnh tĩnh lưu trong `public/banks/`), phục vụ tại `/banks/<code>.png`.
+ * Trả `null` nếu mã ngân hàng chưa có logo → caller tự fallback (vd icon mặc định).
+ */
+export const bankLogo = (code: string): string | null =>
+  BANK_LOGO_CODES.has(code) ? `/banks/${code}.png` : null;
+
 /**
  * Parse link QR SePay (vd `https://qr.sepay.vn/img?acc=...&bank=...&template=...`).
  * Nhận full URL hoặc query string; an toàn (try/catch), KHÔNG throw.

@@ -3,7 +3,7 @@ import { Check, CreditCard, Plus, Trash2, Wallet } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePaymentAccounts } from '@/hooks/usePaymentAccounts';
-import { SEPAY_BANKS, bankLabel, parseSepayQrLink, qrTemplateLabel } from '@/types/paymentConfig';
+import { SEPAY_BANKS, bankLabel, bankLogo, parseSepayQrLink, qrTemplateLabel } from '@/types/paymentConfig';
 import BaseModal from '@/components/BaseModal';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
@@ -13,6 +13,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import Field from '@/components/ui/Field';
 import Heading from '@/components/ui/Heading';
 import IconButton from '@/components/ui/IconButton';
+import Image from '@/components/ui/Image';
 import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
 import Typography from '@/components/ui/Typography';
@@ -193,9 +194,25 @@ const PaymentSettingsTab: React.FC = () => {
                     borderClassName="border-b border-slate-100 dark:border-slate-700/60 last:border-0"
                   >
                     <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
-                      <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">
-                        {bankLabel(acc.bankCode)}
-                      </Typography>
+                      <Box layoutClassName="flex items-center gap-3">
+                        {bankLogo(acc.bankCode) ? (
+                          <Box
+                            layoutClassName="flex h-9 w-9 shrink-0 items-center justify-center p-1"
+                            backgroundClassName="bg-white"
+                            borderClassName="border border-slate-200 dark:border-slate-600"
+                            roundedClassName="rounded-lg"
+                          >
+                            <Image
+                              src={bankLogo(acc.bankCode) as string}
+                              alt={acc.bankCode}
+                              layoutClassName="h-full w-full object-contain"
+                            />
+                          </Box>
+                        ) : null}
+                        <Typography as="span" size="sm" layoutClassName="font-semibold" textClassName="text-slate-900 dark:text-white">
+                          {bankLabel(acc.bankCode)}
+                        </Typography>
+                      </Box>
                     </TableCell>
                     <TableCell layoutClassName="whitespace-nowrap px-5 py-3.5">
                       <Typography as="span" size="sm" layoutClassName="font-mono" textClassName="text-slate-600 dark:text-slate-300">
@@ -357,9 +374,25 @@ const PaymentSettingsTab: React.FC = () => {
                   >
                     {t('paymentSettings.bankCode')}
                   </Typography>
-                  <Typography as="span" layoutClassName="font-bold" textClassName="text-slate-800 dark:text-slate-200">
-                    {bankLabel(preview.bankCode)}
-                  </Typography>
+                  <Box layoutClassName="flex items-center gap-2">
+                    {bankLogo(preview.bankCode) ? (
+                      <Box
+                        layoutClassName="flex h-7 w-7 shrink-0 items-center justify-center p-0.5"
+                        backgroundClassName="bg-white"
+                        borderClassName="border border-slate-200"
+                        roundedClassName="rounded-md"
+                      >
+                        <Image
+                          src={bankLogo(preview.bankCode) as string}
+                          alt={preview.bankCode}
+                          layoutClassName="h-full w-full object-contain"
+                        />
+                      </Box>
+                    ) : null}
+                    <Typography as="span" layoutClassName="font-bold" textClassName="text-slate-800 dark:text-slate-200">
+                      {bankLabel(preview.bankCode)}
+                    </Typography>
+                  </Box>
                 </Box>
                 <Box layoutClassName="flex items-center justify-between gap-4">
                   <Typography
