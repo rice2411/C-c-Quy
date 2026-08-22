@@ -2,6 +2,7 @@ import { apiClient } from '@/services/api/client';
 import {
   AllowedNetwork,
   AttendanceAdjustment,
+  AttendanceDayShift,
   AttendanceHistory,
   AttendanceKind,
   AttendanceMe,
@@ -264,6 +265,22 @@ export async function clearEmployeeFace(
 
 const n0 = (v: unknown): number => (typeof v === 'number' ? v : 0);
 
+function toDayShift(s: any): AttendanceDayShift {
+  return {
+    code: (s?.code === 'ca1' || s?.code === 'ca2' || s?.code === 'ca3' ? s.code : 'ca1'),
+    name: str(s?.name) ?? '',
+    congFactor: n0(s?.congFactor),
+    registered: s?.registered === true,
+    worked: s?.worked === true,
+    valid: s?.valid === true,
+    hours: n0(s?.hours),
+    status:
+      s?.status === 'valid' || s?.status === 'missed' || s?.status === 'unregistered'
+        ? s.status
+        : 'off',
+  };
+}
+
 function toPayrollDay(d: any): PayrollDay {
   return {
     date: str(d?.date) ?? '',
@@ -275,6 +292,9 @@ function toPayrollDay(d: any): PayrollDay {
     pay: n0(d?.pay),
     registered: n0(d?.registered),
     valid: n0(d?.valid),
+    in: toIso(d?.in),
+    out: toIso(d?.out),
+    shifts: Array.isArray(d?.shifts) ? d.shifts.map(toDayShift) : [],
   };
 }
 

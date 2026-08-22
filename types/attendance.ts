@@ -99,6 +99,9 @@ export interface PayrollDay {
   pay: number; // tiền ngày = hours × rate
   registered: number; // số ca đăng ký
   valid: number; // số ca hợp lệ
+  in: string | null; // giờ chấm vào (ISO) — null nếu không chấm
+  out: string | null; // giờ chấm ra (ISO)
+  shifts: AttendanceDayShift[]; // chi tiết từng ca (đăng ký/làm/hợp lệ)
 }
 
 /** Tổng hợp công/giờ/lương của 1 NV trong kỳ. */
