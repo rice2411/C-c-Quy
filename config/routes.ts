@@ -18,6 +18,7 @@ import {
   Bell,
   Activity,
   ShieldCheck,
+  Wifi,
   Tag,
   Monitor,
   MessageSquare,
@@ -326,6 +327,13 @@ export const routes: RouteConfig[] = [
     icon: ShieldCheck,
     roles: [UserRole.SUPER_ADMIN],
   },
+  {
+    type: "page",
+    path: "/settings/network",
+    labelKey: "nav.settingsNetwork",
+    icon: Wifi,
+    roles: [UserRole.SUPER_ADMIN],
+  },
 ];
 
 export const storageTabRoutes: RouteConfig[] = [
@@ -510,6 +518,7 @@ export const navGroups: NavGroupConfig[] = [
       "/settings/zalo",
       "/settings/screens",
       "/settings/roles",
+      "/settings/network",
     ],
   },
 ];

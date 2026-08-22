@@ -19,6 +19,11 @@ export const qk = {
     nextNumber: () => ['orders', 'next-number'] as const,
     refunds: ['orders', 'refunds'] as const,
   },
+  network: {
+    status: ['network', 'status'] as const,
+    guard: ['network', 'guard'] as const,
+    ranges: ['network', 'ranges'] as const,
+  },
   customers: {
     all: ['customers'] as const,
   },
