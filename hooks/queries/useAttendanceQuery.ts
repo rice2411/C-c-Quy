@@ -6,13 +6,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { qk } from '@/hooks/queryKeys';
 import {
+  addAdjustment,
   checkAttendance,
   clearEmployeeFace,
+  deleteAdjustment,
   deleteNetwork,
+  fetchAdjustments,
   fetchHistory,
   fetchMe,
   fetchNetworks,
   fetchOverview,
+  fetchPayroll,
   registerFace,
   upsertNetwork,
 } from '@/services/attendanceService';
@@ -103,5 +107,52 @@ export const useNetworkMutations = () => {
     upsertNetwork: upsertM.mutateAsync,
     deleteNetwork: (id: string) => deleteM.mutateAsync(id),
     clearFace: (employeeId: string) => clearFaceM.mutateAsync(employeeId),
+  };
+};
+
+// ---- Bảng công & lương ----
+
+/** Tổng hợp công/giờ/lương theo kỳ (mặc định tháng hiện tại). */
+export const usePayroll = (
+  params: { from?: string; to?: string; employeeId?: string },
+  enabled: boolean,
+) => {
+  const q = useQuery({
+    queryKey: qk.attendance.payroll(params),
+    queryFn: () => fetchPayroll(params),
+    enabled,
+  });
+  return { data: q.data, loading: q.isLoading, error: q.error };
+};
+
+export const useAdjustments = (
+  params: { employeeId?: string; from?: string; to?: string },
+  enabled: boolean,
+) => {
+  const q = useQuery({
+    queryKey: qk.attendance.adjustments(params),
+    queryFn: () => fetchAdjustments(params),
+    enabled,
+  });
+  return { rows: q.data ?? [], loading: q.isLoading, error: q.error };
+};
+
+/** Thêm/xoá bổ sung công — invalidate cả payroll lẫn danh sách bổ sung. */
+export const useAdjustmentMutations = () => {
+  const queryClient = useQueryClient();
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['attendance', 'payroll'] });
+    queryClient.invalidateQueries({ queryKey: ['attendance', 'adjustments'] });
+  };
+
+  const addM = useMutation({ mutationFn: addAdjustment, onSuccess: invalidate });
+  const removeM = useMutation({
+    mutationFn: (id: string) => deleteAdjustment(id),
+    onSuccess: invalidate,
+  });
+
+  return {
+    addAdjustment: addM.mutateAsync,
+    deleteAdjustment: (id: string) => removeM.mutateAsync(id),
   };
 };

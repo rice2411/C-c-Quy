@@ -1,6 +1,7 @@
 import { apiClient } from '@/services/api/client';
 import {
   AllowedNetwork,
+  AttendanceAdjustment,
   AttendanceHistory,
   AttendanceKind,
   AttendanceMe,
@@ -8,6 +9,9 @@ import {
   AttendanceRecord,
   AttendanceDayCompute,
   MyShiftWeek,
+  PayrollDay,
+  PayrollResult,
+  PayrollRow,
 } from '@/types/attendance';
 
 const BASE = '/attendance';
@@ -253,5 +257,93 @@ export async function clearEmployeeFace(
     `${BASE}/faces/${employeeId}/clear`,
     {},
   );
+  return res.data;
+}
+
+// ---- Bảng công & lương (admin) ----
+
+const n0 = (v: unknown): number => (typeof v === 'number' ? v : 0);
+
+function toPayrollDay(d: any): PayrollDay {
+  return {
+    date: str(d?.date) ?? '',
+    cong: n0(d?.cong),
+    workHours: n0(d?.workHours),
+    adjHours: n0(d?.adjHours),
+    hours: n0(d?.hours),
+    rate: num(d?.rate),
+    pay: n0(d?.pay),
+    registered: n0(d?.registered),
+    valid: n0(d?.valid),
+  };
+}
+
+function toPayrollRow(r: any): PayrollRow {
+  return {
+    employeeId: str(r?.employeeId) ?? '',
+    name: str(r?.name) ?? '',
+    position: str(r?.position),
+    totalHours: n0(r?.totalHours),
+    workHours: n0(r?.workHours),
+    adjHours: n0(r?.adjHours),
+    totalCong: n0(r?.totalCong),
+    registeredShifts: n0(r?.registeredShifts),
+    validShifts: n0(r?.validShifts),
+    salary: n0(r?.salary),
+    days: Array.isArray(r?.days) ? r.days.map(toPayrollDay) : [],
+  };
+}
+
+/** Tổng hợp công/giờ/lương theo kỳ (mặc định tháng hiện tại nếu không truyền). */
+export async function fetchPayroll(params?: {
+  from?: string;
+  to?: string;
+  employeeId?: string;
+}): Promise<PayrollResult> {
+  const res = await apiClient.get<any>(`${BASE}/payroll`, { params });
+  const d = res.data ?? {};
+  return {
+    from: str(d?.from) ?? '',
+    to: str(d?.to) ?? '',
+    totalSalary: n0(d?.totalSalary),
+    totalHours: n0(d?.totalHours),
+    employees: Array.isArray(d?.employees) ? d.employees.map(toPayrollRow) : [],
+  };
+}
+
+function toAdjustment(a: any): AttendanceAdjustment {
+  return {
+    id: str(a?.id) ?? '',
+    employeeId: str(a?.employeeId) ?? '',
+    employeeName: str(a?.employeeName),
+    workDate: str(a?.workDate) ?? '',
+    hours: n0(a?.hours),
+    reason: str(a?.reason),
+    createdBy: str(a?.createdBy),
+    createdAt: toIso(a?.createdAt),
+  };
+}
+
+export async function fetchAdjustments(params?: {
+  employeeId?: string;
+  from?: string;
+  to?: string;
+}): Promise<AttendanceAdjustment[]> {
+  const res = await apiClient.get<any[]>(`${BASE}/adjustments`, { params });
+  return Array.isArray(res.data) ? res.data.map(toAdjustment) : [];
+}
+
+export async function addAdjustment(input: {
+  employeeId: string;
+  workDate: string;
+  hours: number;
+  reason?: string;
+}): Promise<AttendanceAdjustment> {
+  const res = await apiClient.post<any>(`${BASE}/adjustments`, input);
+  return toAdjustment(res.data);
+}
+
+export async function deleteAdjustment(id: string): Promise<{ ok: boolean }> {
+  const res = await apiClient.delete<{ ok: boolean }>(`${BASE}/adjustments/${id}`);
   return res.data;
 }

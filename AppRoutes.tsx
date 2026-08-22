@@ -31,6 +31,7 @@ const WorkConfigPage = lazy(() => import("./pages/WorkConfig/index"));
 const AttendancePage = lazy(() => import("./pages/Attendance/index"));
 const ShiftRegisterPage = lazy(() => import("./pages/Attendance/RegisterPage"));
 const AttendanceManagePage = lazy(() => import("./pages/Attendance/ManagePage"));
+const AttendancePayrollPage = lazy(() => import("./pages/AttendancePayroll/index"));
 const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
 const SystemLogsPage = lazy(() => import("./pages/System/Requests/index"));
 const NotificationsPage = lazy(() => import("./pages/Notifications/index"));
@@ -256,6 +257,14 @@ const AppRoutes: React.FC = () => (
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/attendance/manage")?.roles}>
             <AttendanceManagePage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="attendance/payroll"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/attendance/payroll")?.roles}>
+            <AttendancePayrollPage />
           </RoleBasedRoute>
         }
       />

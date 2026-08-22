@@ -71,6 +71,7 @@ export interface AttendanceDayShift {
   registered: boolean;
   worked: boolean;
   valid: boolean;
+  hours: number; // giờ hợp lệ của ca (chấm thực tế cắt trong khung ca)
   status: SpxDayShiftStatus;
 }
 
@@ -81,7 +82,59 @@ export interface AttendanceDayCompute {
   in: string | null;
   out: string | null;
   cong: number;
+  hours: number; // tổng giờ hợp lệ trong ngày
   shifts: AttendanceDayShift[];
+}
+
+// ---- Bảng công & lương (payroll) ----
+
+/** 1 ngày trong bảng lương của 1 NV. */
+export interface PayrollDay {
+  date: string; // yyyy-mm-dd
+  cong: number;
+  workHours: number; // giờ từ chấm công
+  adjHours: number; // giờ admin bổ sung (âm = trừ)
+  hours: number; // workHours + adjHours
+  rate: number | null; // mức lương/giờ áp dụng (null nếu chưa cấu hình)
+  pay: number; // tiền ngày = hours × rate
+  registered: number; // số ca đăng ký
+  valid: number; // số ca hợp lệ
+}
+
+/** Tổng hợp công/giờ/lương của 1 NV trong kỳ. */
+export interface PayrollRow {
+  employeeId: string;
+  name: string;
+  position: string | null;
+  totalHours: number;
+  workHours: number;
+  adjHours: number;
+  totalCong: number;
+  registeredShifts: number;
+  validShifts: number;
+  salary: number;
+  days: PayrollDay[];
+}
+
+/** Kết quả GET /attendance/payroll. */
+export interface PayrollResult {
+  from: string; // yyyy-mm-dd
+  to: string; // yyyy-mm-dd
+  totalSalary: number;
+  totalHours: number;
+  employees: PayrollRow[];
+}
+
+/** 1 bản ghi bổ sung công (admin thêm tay). */
+export interface AttendanceAdjustment {
+  id: string;
+  employeeId: string;
+  employeeName: string | null;
+  workDate: string; // yyyy-mm-dd
+  hours: number; // giờ bổ sung (âm = trừ)
+  reason: string | null;
+  createdBy: string | null;
+  createdAt: string | null;
 }
 
 /** Định nghĩa 1 ca (từ work_shift_list). */

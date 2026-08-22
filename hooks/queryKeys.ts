@@ -38,6 +38,8 @@ export const qk = {
     overview: ['attendance', 'overview'] as const,
     networks: ['attendance', 'networks'] as const,
     history: (params: unknown) => ['attendance', 'history', params] as const,
+    payroll: (params: unknown) => ['attendance', 'payroll', params] as const,
+    adjustments: (params: unknown) => ['attendance', 'adjustments', params] as const,
   },
   shifts: {
     defs: ['shifts', 'defs'] as const,

@@ -265,6 +265,13 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
+    path: "/attendance/payroll",
+    labelKey: "nav.attendancePayroll",
+    icon: Coins,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
     path: "/users",
     labelKey: "nav.users",
     icon: UserCog,
@@ -464,6 +471,7 @@ export const navGroups: NavGroupConfig[] = [
       "/attendance",
       "/attendance/register",
       "/attendance/manage",
+      "/attendance/payroll",
     ],
   },
   {
