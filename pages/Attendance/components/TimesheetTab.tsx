@@ -482,6 +482,8 @@ const DayRow: React.FC<{
 }> = ({ day, adjustments, onAdjust }) => {
   const td = 'px-3 py-2';
   const adjustedCodes = new Set(adjustments.map((a) => a.shiftCode).filter(Boolean));
+  // Bổ sung CHUNG (không gắn ca, vd dữ liệu cũ / bổ sung cả ngày) → coi mọi ca đăng ký là đã bù.
+  const hasGeneralAdj = adjustments.some((a) => !a.shiftCode && a.hours > 0);
   // Ca hiển thị = ca đăng ký HOẶC ca được bổ sung; xanh khi hợp lệ hoặc đã bổ sung.
   const shownShifts = day.shifts.filter((s) => s.registered || adjustedCodes.has(s.code));
   const hasAtt = !!day.in;
@@ -503,7 +505,7 @@ const DayRow: React.FC<{
         ) : (
           <Box layoutClassName="flex flex-wrap gap-1">
             {shownShifts.map((s) => {
-              const green = s.valid || adjustedCodes.has(s.code);
+              const green = s.valid || adjustedCodes.has(s.code) || (hasGeneralAdj && s.registered);
               return (
                 <Badge
                   key={s.code}
