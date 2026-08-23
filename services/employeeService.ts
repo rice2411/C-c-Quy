@@ -1,5 +1,5 @@
 import { apiClient } from '@/services/api/client';
-import { Employee, EmployeeStatus } from '@/types/employee';
+import { Employee, EmployeeStatus, EmployeeWageRate } from '@/types/employee';
 
 const BASE = '/employees';
 
@@ -13,10 +13,22 @@ function toEmployee(r: any): Employee {
     phone: typeof r?.phone === 'string' ? r.phone : null,
     startDate: typeof r?.startDate === 'string' ? r.startDate : null,
     baseSalary: typeof r?.baseSalary === 'number' ? r.baseSalary : null,
+    hourlyRate: typeof r?.hourlyRate === 'number' ? r.hourlyRate : null,
     status: r?.status === 'inactive' ? 'inactive' : 'active',
     note: typeof r?.note === 'string' ? r.note : null,
     createdAt: typeof r?.createdAt === 'string' ? r.createdAt : undefined,
     updatedAt: typeof r?.updatedAt === 'string' ? r.updatedAt : undefined,
+  };
+}
+
+function toWageRate(r: any): EmployeeWageRate {
+  return {
+    id: typeof r?.id === 'string' ? r.id : '',
+    employeeId: typeof r?.employeeId === 'string' ? r.employeeId : '',
+    hourlyRate: typeof r?.hourlyRate === 'number' ? r.hourlyRate : 0,
+    effectiveDate: typeof r?.effectiveDate === 'string' ? r.effectiveDate : '',
+    note: typeof r?.note === 'string' ? r.note : null,
+    createdAt: typeof r?.createdAt === 'string' ? r.createdAt : undefined,
   };
 }
 
@@ -51,5 +63,25 @@ export async function updateEmployee(
 
 export async function deleteEmployee(id: string): Promise<{ ok: boolean; reason?: string }> {
   const res = await apiClient.delete<{ ok: boolean; reason?: string }>(`${BASE}/${id}`);
+  return res.data;
+}
+
+// ── Mức lương/giờ theo NV (deal riêng + lịch sử) ──
+
+export async function fetchEmployeeWages(employeeId: string): Promise<EmployeeWageRate[]> {
+  const res = await apiClient.get<any[]>(`${BASE}/${employeeId}/wages`);
+  return Array.isArray(res.data) ? res.data.map(toWageRate) : [];
+}
+
+export async function addEmployeeWage(
+  employeeId: string,
+  input: { hourlyRate: number; effectiveDate: string; note?: string | null },
+): Promise<EmployeeWageRate> {
+  const res = await apiClient.post<any>(`${BASE}/${employeeId}/wages`, input);
+  return toWageRate(res.data);
+}
+
+export async function deleteEmployeeWage(wageId: string): Promise<{ ok: boolean }> {
+  const res = await apiClient.delete<{ ok: boolean }>(`${BASE}/wages/${wageId}`);
   return res.data;
 }

@@ -130,11 +130,7 @@ const PayrollTab: React.FC<Props> = ({ month, onMonthChange, onPickEmployee }) =
                       <Typography as="span" size="sm" layoutClassName="font-medium" textClassName="text-primary-600 dark:text-primary-400">{r.name}</Typography>
                     </TableCell>
                     <TableCell layoutClassName={`${th} whitespace-nowrap`}>
-                      {r.position ? (
-                        <Typography as="span" size="sm" textClassName="text-slate-600 dark:text-slate-300">{r.position}</Typography>
-                      ) : (
-                        <Badge size="sm" layoutClassName="px-2 py-0.5 text-xs" backgroundClassName="bg-amber-50 dark:bg-amber-900/20" textClassName="text-amber-600 dark:text-amber-400">chưa gán vị trí</Badge>
-                      )}
+                      <Typography as="span" size="sm" textClassName="text-slate-600 dark:text-slate-300">{r.position || '—'}</Typography>
                     </TableCell>
                     <TableCell layoutClassName={`${th} text-center whitespace-nowrap`}>
                       <Typography as="span" size="sm" layoutClassName="tabular-nums" textClassName="text-slate-600 dark:text-slate-300">{r.registeredShifts}</Typography>

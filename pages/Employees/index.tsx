@@ -33,6 +33,7 @@ import {
   TableRow,
 } from '@/components/ui/Table';
 import BaseSlidePanel from '@/components/BaseSlidePanel';
+import WageSection from './components/WageSection';
 
 interface FormState {
   name: string;
@@ -257,6 +258,7 @@ const EmployeesPage: React.FC = () => {
                   <TableHeaderCell layoutClassName="px-4 py-3">Chức vụ</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3">SĐT</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3">Ngày vào</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="px-4 py-3 text-right">Lương/giờ</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3 text-right">Lương CB</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3 text-center">Trạng thái</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3 text-right">Thao tác</TableHeaderCell>
@@ -282,6 +284,15 @@ const EmployeesPage: React.FC = () => {
                     </TableCell>
                     <TableCell layoutClassName="whitespace-nowrap px-4 py-3">
                       <Typography as="span" size="sm" textClassName="text-slate-600 dark:text-slate-300">{e.startDate || '—'}</Typography>
+                    </TableCell>
+                    <TableCell layoutClassName="whitespace-nowrap px-4 py-3 text-right">
+                      {e.hourlyRate != null ? (
+                        <Typography as="span" size="sm" layoutClassName="font-medium tabular-nums" textClassName="text-primary-600 dark:text-primary-400">
+                          {formatVNDOrDash(e.hourlyRate)}
+                        </Typography>
+                      ) : (
+                        <Badge size="sm" layoutClassName="px-2 py-0.5 text-xs" backgroundClassName="bg-amber-50 dark:bg-amber-900/20" textClassName="text-amber-600 dark:text-amber-400">chưa đặt</Badge>
+                      )}
                     </TableCell>
                     <TableCell layoutClassName="whitespace-nowrap px-4 py-3 text-right">
                       <Typography as="span" size="sm" layoutClassName="tabular-nums" textClassName="text-slate-700 dark:text-slate-200">
@@ -384,6 +395,9 @@ const EmployeesPage: React.FC = () => {
           <Field label="Ghi chú" htmlFor="emp-note">
             <Textarea id="emp-note" value={form.note} onChange={(e) => setField('note', e.target.value)} rows={3} placeholder="Ghi chú thêm…" />
           </Field>
+
+          {/* Mức lương/giờ theo NV (deal riêng) — chỉ khi đã có hồ sơ */}
+          <WageSection employeeId={editingId} />
         </Box>
       </BaseSlidePanel>
     </Box>

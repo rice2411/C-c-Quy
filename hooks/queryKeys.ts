@@ -32,6 +32,7 @@ export const qk = {
   },
   employees: {
     all: ['employees'] as const,
+    wages: (employeeId: string) => ['employees', 'wages', employeeId] as const,
   },
   attendance: {
     me: ['attendance', 'me'] as const,

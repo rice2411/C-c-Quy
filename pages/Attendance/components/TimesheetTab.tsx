@@ -158,11 +158,11 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange, employeeId, onEmp
         </Box>
       </Box>
 
-      {/* Cảnh báo chưa gán vị trí → lương = 0 */}
-      {row && !row.position && (
+      {/* Cảnh báo chưa đặt mức lương/giờ → lương = 0 */}
+      {row && row.days.some((d) => d.hours > 0 && d.rate == null) && (
         <Box layoutClassName="flex items-center gap-2 px-3 py-2" roundedClassName="rounded-lg" backgroundClassName="bg-amber-50 dark:bg-amber-900/20" borderClassName="border border-amber-200 dark:border-amber-800">
           <Typography size="xs" textClassName="text-amber-700 dark:text-amber-300">
-            Nhân viên này chưa gán <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-amber-800 dark:text-amber-200">vị trí</Typography> nên lương = 0. Vào Nhân viên đặt vị trí trùng với Mức lương giờ để tính tiền.
+            Nhân viên này chưa đặt <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-amber-800 dark:text-amber-200">mức lương/giờ</Typography> nên lương = 0. Vào <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-amber-800 dark:text-amber-200">Nhân viên</Typography> → mở NV → đặt mức lương/giờ.
           </Typography>
         </Box>
       )}

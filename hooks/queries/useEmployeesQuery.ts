@@ -10,6 +10,9 @@ import {
   addEmployee,
   updateEmployee,
   deleteEmployee,
+  fetchEmployeeWages,
+  addEmployeeWage,
+  deleteEmployeeWage,
   type EmployeeInput,
 } from '@/services/employeeService';
 import { Employee } from '@/types/employee';
@@ -44,5 +47,37 @@ export const useEmployeeMutations = () => {
     createEmployee: (input: EmployeeInput) => createM.mutateAsync(input),
     updateEmployee: (id: string, patch: Partial<EmployeeInput>) => updateM.mutateAsync({ id, patch }),
     deleteEmployee: (id: string) => deleteM.mutateAsync(id),
+  };
+};
+
+// ── Mức lương/giờ theo NV ──
+
+/** Lịch sử mức lương/giờ của 1 NV (chỉ chạy khi có employeeId). */
+export const useEmployeeWages = (employeeId: string | null) => {
+  const q = useQuery({
+    queryKey: qk.employees.wages(employeeId ?? ''),
+    queryFn: () => fetchEmployeeWages(employeeId as string),
+    enabled: !!employeeId,
+  });
+  return { wages: q.data ?? [], loading: q.isLoading, error: q.error };
+};
+
+export const useEmployeeWageMutations = () => {
+  const queryClient = useQueryClient();
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['employees'] });
+  };
+  const addM = useMutation({
+    mutationFn: ({ employeeId, hourlyRate, effectiveDate, note }: { employeeId: string; hourlyRate: number; effectiveDate: string; note?: string | null }) =>
+      addEmployeeWage(employeeId, { hourlyRate, effectiveDate, note }),
+    onSuccess: invalidate,
+  });
+  const removeM = useMutation({
+    mutationFn: (wageId: string) => deleteEmployeeWage(wageId),
+    onSuccess: invalidate,
+  });
+  return {
+    addWage: addM.mutateAsync,
+    deleteWage: (wageId: string) => removeM.mutateAsync(wageId),
   };
 };
