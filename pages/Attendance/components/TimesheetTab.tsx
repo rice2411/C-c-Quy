@@ -54,6 +54,8 @@ type AdjTarget = { employeeId: string; name: string; date: string };
 
 /** Lý do bổ sung công tạo sẵn; "Khác" → nhập tay. */
 const ADJUST_REASONS = ['Quên chấm công', 'Làm bù', 'Tăng ca', 'Đi trễ/về sớm có phép', 'Nghỉ có phép'];
+/** Số giờ bổ sung chọn nhanh; "Khác" → nhập tay (cho số lẻ / số âm để trừ). */
+const HOUR_PRESETS = ['4', '8', '12'];
 const OTHER = 'Khác';
 
 /** SỔ CÔNG & LƯƠNG: danh sách MỌI nhân viên theo tháng, bấm bung chi tiết từng ngày
@@ -62,7 +64,8 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
   // (1) state
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [adjTarget, setAdjTarget] = useState<AdjTarget | null>(null);
-  const [hours, setHours] = useState('');
+  const [hoursChoice, setHoursChoice] = useState(''); // số giờ chọn nhanh ('' | '4'|'8'|'12' | 'Khác')
+  const [hoursOther, setHoursOther] = useState(''); // nhập tay khi chọn "Khác"
   const [reasonChoice, setReasonChoice] = useState(''); // lý do chọn sẵn ('' | preset | 'Khác')
   const [reasonOther, setReasonOther] = useState(''); // nhập tay khi chọn "Khác"
   const [saving, setSaving] = useState(false);
@@ -100,20 +103,21 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
 
   const openAdjust = (employeeId: string, name: string, date: string) => {
     setAdjTarget({ employeeId, name, date });
-    setHours('');
+    setHoursChoice('');
+    setHoursOther('');
     setReasonChoice('');
     setReasonOther('');
   };
 
   const submitAdjust = async () => {
     if (!adjTarget) return;
-    const h = Number(hours);
+    const h = Number(hoursChoice === OTHER ? hoursOther : hoursChoice);
     if (!adjTarget.date) {
       toast.error('Chọn ngày bổ sung.');
       return;
     }
     if (!Number.isFinite(h) || h === 0) {
-      toast.error('Nhập số giờ bổ sung (khác 0).');
+      toast.error('Chọn hoặc nhập số giờ bổ sung (khác 0).');
       return;
     }
     const finalReason = (reasonChoice === OTHER ? reasonOther.trim() : reasonChoice) || undefined;
@@ -121,7 +125,8 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
     try {
       await addAdjustment({ employeeId: adjTarget.employeeId, workDate: adjTarget.date, hours: h, reason: finalReason });
       toast.success(`Đã bổ sung ${fmtHours(h)} cho ${adjTarget.name}.`);
-      setHours('');
+      setHoursChoice('');
+      setHoursOther('');
       setReasonChoice('');
       setReasonOther('');
     } catch (e) {
@@ -267,8 +272,14 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
             )}
 
             <Box layoutClassName="grid grid-cols-2 gap-3">
-              <Field label="Số giờ (âm = trừ)" htmlFor="ts-adj-hours">
-                <Input id="ts-adj-hours" type="number" step="0.5" value={hours} onChange={(e) => setHours(e.target.value)} placeholder="vd 4 hoặc -2" />
+              <Field label="Số giờ" htmlFor="ts-adj-hours">
+                <Select id="ts-adj-hours" value={hoursChoice} onChange={(e) => setHoursChoice(e.target.value)} fullWidth>
+                  <option value="">— Chọn giờ —</option>
+                  {HOUR_PRESETS.map((h) => (
+                    <option key={h} value={h}>{h} giờ</option>
+                  ))}
+                  <option value={OTHER}>{OTHER}…</option>
+                </Select>
               </Field>
               <Field label="Lý do" htmlFor="ts-adj-reason">
                 <Select id="ts-adj-reason" value={reasonChoice} onChange={(e) => setReasonChoice(e.target.value)} fullWidth>
@@ -280,6 +291,11 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
                 </Select>
               </Field>
             </Box>
+            {hoursChoice === OTHER && (
+              <Field label="Số giờ khác (âm = trừ)" htmlFor="ts-adj-hours-other">
+                <Input id="ts-adj-hours-other" type="number" step="0.5" value={hoursOther} onChange={(e) => setHoursOther(e.target.value)} placeholder="vd 6 hoặc -2" />
+              </Field>
+            )}
             {reasonChoice === OTHER && (
               <Field label="Lý do khác" htmlFor="ts-adj-reason-other">
                 <Input id="ts-adj-reason-other" value={reasonOther} onChange={(e) => setReasonOther(e.target.value)} placeholder="Nhập lý do…" />
