@@ -217,12 +217,18 @@ const EmployeesPage: React.FC = () => {
       </Box>
 
       {/* Search */}
-      <Input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Tìm theo tên, chức vụ, SĐT…"
-        containerClassName="max-w-sm"
-      />
+      <Card
+        padding="md"
+        borderClassName="border border-slate-200 dark:border-slate-700"
+        backgroundClassName="bg-white dark:bg-slate-800"
+      >
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Tìm theo tên, chức vụ, SĐT…"
+          containerClassName="max-w-sm"
+        />
+      </Card>
 
       {/* List */}
       {loading ? (
