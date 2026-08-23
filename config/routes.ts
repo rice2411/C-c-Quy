@@ -462,17 +462,25 @@ export const navGroups: NavGroupConfig[] = [
     ],
   },
   {
-    // Nhân sự: gom Nhân viên (lương) + Chấm công + Quản lý chấm công vào 1 nhóm.
+    // Nhân sự: Nhân viên (lương) + Chấm công + Quản lý chấm công.
     key: "hr",
     labelKey: "nav.hrGroup",
     icon: BriefcaseBusiness,
     childPaths: [
       "/employees",
-      "/shifts",
       "/attendance/manage",
       "/attendance",
-      "/attendance/register",
+    ],
+  },
+  {
+    // Ca làm: Lịch + Đăng ký ca + Cài đặt (định nghĩa ca) — nhóm riêng cùng cấp Nhân sự.
+    key: "shift",
+    labelKey: "nav.shiftGroup",
+    icon: CalendarClock,
+    childPaths: [
       "/calendar",
+      "/attendance/register",
+      "/shifts",
     ],
   },
   {
