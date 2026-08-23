@@ -125,10 +125,7 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
     try {
       await addAdjustment({ employeeId: adjTarget.employeeId, workDate: adjTarget.date, hours: h, reason: finalReason });
       toast.success(`Đã bổ sung ${fmtHours(h)} cho ${adjTarget.name}.`);
-      setHoursChoice('');
-      setHoursOther('');
-      setReasonChoice('');
-      setReasonOther('');
+      setAdjTarget(null); // bổ sung xong → tắt modal
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Bổ sung thất bại.');
     } finally {
@@ -400,7 +397,7 @@ const DayDetail: React.FC<{
             <TableHeaderCell layoutClassName={td}>Ngày</TableHeaderCell>
             <TableHeaderCell layoutClassName={td}>Đăng ký ca</TableHeaderCell>
             <TableHeaderCell layoutClassName={td}>Chấm công</TableHeaderCell>
-            <TableHeaderCell layoutClassName={`${td} text-center`}>Ca hợp lệ</TableHeaderCell>
+            <TableHeaderCell layoutClassName={`${td} text-center`}>Trạng thái</TableHeaderCell>
             <TableHeaderCell layoutClassName={`${td} text-center`}>Công</TableHeaderCell>
             <TableHeaderCell layoutClassName={`${td} text-center`}>Giờ</TableHeaderCell>
             <TableHeaderCell layoutClassName={`${td} text-right`}> </TableHeaderCell>
@@ -413,7 +410,6 @@ const DayDetail: React.FC<{
               day={d}
               adjustments={adjByKey.get(`${row.employeeId}|${d.date}`) ?? []}
               onAdjust={() => onAdjust(d.date)}
-              onRemoveAdjust={onRemoveAdjust}
             />
           ))}
         </TableBody>
@@ -423,16 +419,26 @@ const DayDetail: React.FC<{
 };
 
 // ── 1 dòng ngày: đăng ký ca + chấm công + hợp lệ + công + giờ ──
+/** Trạng thái chấm công trong ngày so với ca đăng ký. */
+const dayStatus = (day: PayrollDay): 'off' | 'full' | 'short' | 'absent' => {
+  const reg = day.registered;
+  const workedUnreg = day.shifts.filter((s) => s.worked && !s.registered).length;
+  if (reg === 0 && workedUnreg === 0 && !day.in) return 'off';
+  if (reg > 0 && day.valid === 0) return 'absent'; // đăng ký mà không đủ 1 công nào
+  if (day.valid === reg && workedUnreg === 0) return 'full'; // làm đúng & đủ ca đăng ký
+  return 'short'; // thiếu ca so với đăng ký, hoặc chấm ngoài đăng ký (không tính)
+};
+
 const DayRow: React.FC<{
   day: PayrollDay;
   adjustments: AttendanceAdjustment[];
   onAdjust: () => void;
-  onRemoveAdjust: (a: AttendanceAdjustment) => void;
-}> = ({ day, adjustments, onAdjust, onRemoveAdjust }) => {
+}> = ({ day, adjustments, onAdjust }) => {
   const td = 'px-3 py-2';
   const registered = day.shifts.filter((s) => s.registered);
   const hasAtt = !!day.in;
   const hasAdj = adjustments.length > 0 || day.adjHours !== 0;
+  const status = dayStatus(day);
 
   return (
     <TableRow borderClassName="border-b border-slate-100 dark:border-slate-700/40 last:border-0">
@@ -442,38 +448,47 @@ const DayRow: React.FC<{
           <Typography as="span" size="xs" textClassName="text-slate-400">{dowLabel(day.date)}</Typography>
         </Box>
       </TableCell>
+      {/* Đăng ký ca — badge xanh */}
       <TableCell layoutClassName={`${td} whitespace-nowrap`}>
         {registered.length === 0 ? (
           <Typography as="span" size="xs" textClassName="text-slate-300 dark:text-slate-600">—</Typography>
         ) : (
           <Box layoutClassName="flex flex-wrap gap-1">
             {registered.map((s) => (
-              <Badge key={s.code} size="sm" layoutClassName="px-1.5 py-0.5 text-[10px]" backgroundClassName={s.valid ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-slate-100 dark:bg-slate-700'} textClassName={s.valid ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500 dark:text-slate-400'}>
+              <Badge key={s.code} size="sm" layoutClassName="px-1.5 py-0.5 text-[10px]" backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20" textClassName="text-emerald-700 dark:text-emerald-300">
                 {s.name}
               </Badge>
             ))}
           </Box>
         )}
       </TableCell>
+      {/* Chấm công (giờ vào → ra) */}
       <TableCell layoutClassName={`${td} whitespace-nowrap`}>
         {hasAtt ? (
           <Typography as="span" size="xs" layoutClassName="tabular-nums" textClassName="text-slate-700 dark:text-slate-200">
             {fmtTime(day.in)} → {day.out ? fmtTime(day.out) : '…'}
           </Typography>
-        ) : registered.length > 0 ? (
-          <Typography as="span" size="xs" textClassName="text-rose-500">vắng</Typography>
         ) : (
           <Typography as="span" size="xs" textClassName="text-slate-300 dark:text-slate-600">—</Typography>
         )}
       </TableCell>
+      {/* Trạng thái: đủ / thiếu / vắng */}
       <TableCell layoutClassName={`${td} text-center whitespace-nowrap`}>
-        <Typography as="span" size="xs" layoutClassName="tabular-nums" textClassName={day.valid > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}>
-          {day.valid}/{day.registered}
-        </Typography>
+        {status === 'full' ? (
+          <Badge size="sm" layoutClassName="inline-flex px-2 py-0.5 text-[10px] font-semibold" backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20" textClassName="text-emerald-700 dark:text-emerald-300">Đủ công</Badge>
+        ) : status === 'short' ? (
+          <Badge size="sm" layoutClassName="inline-flex px-2 py-0.5 text-[10px] font-semibold" backgroundClassName="bg-amber-50 dark:bg-amber-900/20" textClassName="text-amber-600 dark:text-amber-400">Thiếu công</Badge>
+        ) : status === 'absent' ? (
+          <Badge size="sm" layoutClassName="inline-flex px-2 py-0.5 text-[10px] font-semibold" backgroundClassName="bg-rose-50 dark:bg-rose-900/20" textClassName="text-rose-600 dark:text-rose-400">Vắng</Badge>
+        ) : (
+          <Typography as="span" size="xs" textClassName="text-slate-300 dark:text-slate-600">—</Typography>
+        )}
       </TableCell>
+      {/* Công */}
       <TableCell layoutClassName={`${td} text-center whitespace-nowrap`}>
         <Typography as="span" size="xs" layoutClassName="tabular-nums" textClassName="text-slate-600 dark:text-slate-300">{day.cong}</Typography>
       </TableCell>
+      {/* Giờ (+ bổ sung) */}
       <TableCell layoutClassName={`${td} text-center whitespace-nowrap`}>
         <Box layoutClassName="inline-flex items-center gap-1">
           <Typography as="span" size="xs" layoutClassName="tabular-nums" textClassName="text-slate-700 dark:text-slate-200">{fmtHours(day.hours)}</Typography>
@@ -484,15 +499,14 @@ const DayRow: React.FC<{
           )}
         </Box>
       </TableCell>
+      {/* Bổ sung: đã bổ sung → badge + nút Chỉnh sửa */}
       <TableCell layoutClassName={`${td} text-right whitespace-nowrap`}>
-        <Box layoutClassName="inline-flex items-center gap-1">
-          {adjustments.map((a) => (
-            <IconButton key={a.id} label="Xoá bổ sung" size="sm" variant="ghost" onClick={() => onRemoveAdjust(a)}>
-              <Trash2 className="h-3 w-3 text-rose-400" />
-            </IconButton>
-          ))}
+        <Box layoutClassName="inline-flex items-center gap-1.5">
+          {hasAdj && (
+            <Badge size="sm" layoutClassName="inline-flex px-1.5 py-0.5 text-[10px]" backgroundClassName="bg-amber-50 dark:bg-amber-900/20" textClassName="text-amber-600 dark:text-amber-400">Đã bổ sung</Badge>
+          )}
           <Button type="button" variant={hasAdj ? 'secondary' : 'ghost'} size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={onAdjust}>
-            {hasAdj ? 'Sửa' : 'Bổ sung'}
+            {hasAdj ? 'Chỉnh sửa' : 'Bổ sung'}
           </Button>
         </Box>
       </TableCell>
