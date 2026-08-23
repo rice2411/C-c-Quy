@@ -6,29 +6,22 @@ import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
 import ManageTab from './components/ManageTab';
 import AdminShiftBoard from './components/AdminShiftBoard';
-import PayrollTab from './components/PayrollTab';
 import TimesheetTab from './components/TimesheetTab';
 import ShiftSettingsTab from '@/pages/WorkConfig/ShiftSettingsTab';
 import { currentMonth } from './components/payrollUtil';
 
-type Tab = 'timesheet' | 'payroll' | 'board' | 'settings';
+type Tab = 'timesheet' | 'board' | 'settings';
 
 /**
  * HUB Chấm công & Lương (admin) — gom hết vào 1 trang nhiều tab:
- *  - Sổ công: theo từng NV, xem đồng thời đăng ký ca + chấm công + công/giờ/lương, bổ sung tại chỗ.
- *  - Bảng lương: tổng mọi NV (công/giờ/lương) + xuất Excel; click NV → mở Sổ công.
+ *  - Sổ công & lương: danh sách MỌI NV theo tháng (công/giờ/lương), bung chi tiết từng ngày
+ *    (đăng ký ca + chấm công), bổ sung công tại chỗ, xuất Excel.
  *  - Xếp ca: admin đăng ký/sửa ca cho NV theo tuần.
- *  - Cài đặt & lịch sử: mạng IP, khuôn mặt, tổng quan hôm nay, lịch sử chấm công.
+ *  - Cài đặt & lịch sử: định nghĩa ca, khuôn mặt, tổng quan hôm nay, lịch sử chấm công.
  */
 const AttendanceManagePage: React.FC = () => {
   const [tab, setTab] = useState<Tab>('timesheet');
   const [month, setMonth] = useState<string>(currentMonth());
-  const [employeeId, setEmployeeId] = useState<string>('');
-
-  const pickEmployee = (id: string) => {
-    setEmployeeId(id);
-    setTab('timesheet');
-  };
 
   const tabBtn = (value: Tab, label: string, icon: React.ReactNode) => (
     <Button
@@ -60,19 +53,13 @@ const AttendanceManagePage: React.FC = () => {
       </Box>
 
       <Box layoutClassName="flex flex-wrap gap-2">
-        {tabBtn('timesheet', 'Sổ công', <BookUser />)}
-        {tabBtn('payroll', 'Bảng lương', <Coins />)}
+        {tabBtn('timesheet', 'Sổ công & lương', <BookUser />)}
         {tabBtn('board', 'Xếp ca', <CalendarRange />)}
         {tabBtn('settings', 'Cài đặt & lịch sử', <Settings2 />)}
       </Box>
 
       <Box layoutClassName="flex-1 overflow-y-auto">
-        {tab === 'timesheet' && (
-          <TimesheetTab month={month} onMonthChange={setMonth} employeeId={employeeId} onEmployeeChange={setEmployeeId} />
-        )}
-        {tab === 'payroll' && (
-          <PayrollTab month={month} onMonthChange={setMonth} onPickEmployee={pickEmployee} />
-        )}
+        {tab === 'timesheet' && <TimesheetTab month={month} onMonthChange={setMonth} />}
         {tab === 'board' && <AdminShiftBoard />}
         {tab === 'settings' && (
           <Box layoutClassName="flex flex-col gap-6">
