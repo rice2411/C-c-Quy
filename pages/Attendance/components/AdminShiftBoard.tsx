@@ -5,6 +5,7 @@ import { useEmployees } from '@/hooks/queries/useEmployeesQuery';
 import { fetchShifts, fetchShiftAssignments, setDayAssignments } from '@/services/shiftService';
 import { WorkShift } from '@/types/shift';
 import Box from '@/components/ui/Box';
+import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Typography from '@/components/ui/Typography';
 import Spinner from '@/components/ui/Spinner';
@@ -101,9 +102,17 @@ const AdminShiftBoard: React.FC = () => {
   const busy = loading || empLoading;
 
   return (
-    <Box layoutClassName="space-y-4">
-      {/* Điều hướng tuần */}
-      <Box layoutClassName="flex items-center justify-between gap-2">
+    <Card
+      padding="none"
+      layoutClassName="overflow-hidden"
+      borderClassName="border border-slate-200 dark:border-slate-700"
+      backgroundClassName="bg-white dark:bg-slate-800"
+    >
+      {/* Toolbar: điều hướng tuần */}
+      <Box
+        layoutClassName="flex items-center justify-between gap-2 px-4 py-3"
+        borderClassName="border-b border-slate-100 dark:border-slate-700"
+      >
         <Button
           type="button"
           onClick={() => setWeekStart((w) => addDays(w, -7))}
@@ -141,6 +150,7 @@ const AdminShiftBoard: React.FC = () => {
         </Button>
       </Box>
 
+      <Box layoutClassName="flex flex-col gap-3 p-4">
       <Typography as="p" size="xs" variant="muted">
         Admin tick/bỏ ca đăng ký cho từng NV (sửa được cả ngày quá khứ). NV tự đăng ký ngày tương lai ở trang chấm công.
       </Typography>
@@ -224,7 +234,8 @@ const AdminShiftBoard: React.FC = () => {
           </Box>
         </Box>
       )}
-    </Box>
+      </Box>
+    </Card>
   );
 };
 
