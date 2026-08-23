@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
-import { MapPin, Plus, ScanFace, Trash2, Wifi } from 'lucide-react';
+import { ScanFace } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/user';
 import FaceEnrollModal from '@/pages/Attendance/components/FaceEnrollModal';
@@ -30,9 +30,7 @@ import {
   useAttendanceHistory,
   useAttendanceOverview,
   useNetworkMutations,
-  useNetworks,
 } from '@/hooks/queries/useAttendanceQuery';
-import { fetchCurrentIp } from '@/services/attendanceService';
 import { kindLabel, shiftLabel, type AttendanceRecord } from '@/types/attendance';
 
 const fmtDateTime = (iso?: string | null): string =>
@@ -43,13 +41,9 @@ const fmtTime = (iso?: string | null): string =>
 const ManageTab: React.FC = () => {
   const { userData } = useAuth();
   const isSuperAdmin = userData?.role === UserRole.SUPER_ADMIN;
-  const { networks, loading: netLoading } = useNetworks(true);
   const { rows: overview, loading: ovLoading } = useAttendanceOverview(true);
-  const { upsertNetwork, deleteNetwork, clearFace } = useNetworkMutations();
+  const { clearFace } = useNetworkMutations();
 
-  const [label, setLabel] = useState('');
-  const [ipCidr, setIpCidr] = useState('');
-  const [savingNet, setSavingNet] = useState(false);
   // Modal đăng ký khuôn mặt cho 1 NV (chỉ super_admin).
   const [enroll, setEnroll] = useState<{ employeeId: string; name: string } | null>(null);
 
@@ -66,44 +60,6 @@ const ManageTab: React.FC = () => {
   );
   const { data: history, loading: hisLoading } = useAttendanceHistory(historyParams, true);
 
-  const useCurrentIp = async () => {
-    try {
-      const { ip, suggestedCidr } = await fetchCurrentIp();
-      setIpCidr(suggestedCidr || ip);
-      toast.success(`IP: ${ip} → dùng dải ${suggestedCidr || ip}`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Không lấy được IP.');
-    }
-  };
-
-  const addNetwork = async () => {
-    if (!ipCidr.trim()) {
-      toast.error('Nhập IP hoặc dải IP (vd 113.161.10.20 hoặc 1.2.3.0/24).');
-      return;
-    }
-    setSavingNet(true);
-    try {
-      await upsertNetwork({ label: label.trim() || null, ipCidr: ipCidr.trim(), active: true });
-      toast.success('Đã thêm mạng cho phép.');
-      setLabel('');
-      setIpCidr('');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Thêm thất bại.');
-    } finally {
-      setSavingNet(false);
-    }
-  };
-
-  const removeNetwork = async (id: string) => {
-    if (!window.confirm('Xoá dải mạng này?')) return;
-    try {
-      await deleteNetwork(id);
-      toast.success('Đã xoá.');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Xoá thất bại.');
-    }
-  };
-
   const removeFace = async (employeeId: string, name: string) => {
     if (!window.confirm(`Xoá dữ liệu khuôn mặt của "${name}"? Nhân viên sẽ phải đăng ký lại.`)) return;
     try {
@@ -116,77 +72,6 @@ const ManageTab: React.FC = () => {
 
   return (
     <Box layoutClassName="flex flex-col gap-6">
-      {/* ------- Mạng quán ------- */}
-      <Card
-        padding="lg"
-        borderClassName="border border-slate-200 dark:border-slate-700"
-        backgroundClassName="bg-white dark:bg-slate-800"
-      >
-        <Box layoutClassName="mb-4 flex items-center gap-2">
-          <Wifi className="h-5 w-5 text-primary-500" />
-          <Heading level={2} textClassName="text-base font-bold text-slate-900 dark:text-white">
-            Mạng quán được phép chấm công
-          </Heading>
-        </Box>
-        <Typography size="xs" layoutClassName="mb-3" textClassName="text-slate-500 dark:text-slate-400">
-          Chỉ chấm công được khi thiết bị dùng IP nằm trong danh sách này. Mở wifi quán rồi bấm
-          "IP hiện tại" — với IPv6 hệ thống tự lấy DẢI /48 (khối nhà mạng cấp, bắt mọi địa chỉ IPv6
-          của quán dù đổi liên tục), IPv4 lấy /32. Nên thêm CẢ IPv6 lẫn IPv4. Router restart đổi dải thì bấm lấy lại.
-        </Typography>
-        <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-          <Field label="Nhãn" htmlFor="net-label">
-            <Input id="net-label" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Wifi quán" />
-          </Field>
-          <Field label="IP / dải IP" htmlFor="net-ip">
-            <Input id="net-ip" value={ipCidr} onChange={(e) => setIpCidr(e.target.value)} placeholder="113.161.10.20 hoặc 1.2.3.0/24" />
-          </Field>
-          <Box layoutClassName="flex gap-2">
-            <Button type="button" variant="secondary" size="sm" leftIcon={<MapPin className="h-4 w-4" />} onClick={useCurrentIp}>
-              IP hiện tại
-            </Button>
-            <Button type="button" variant="primary" size="sm" disabled={savingNet} leftIcon={<Plus className="h-4 w-4" />} onClick={addNetwork}>
-              Thêm
-            </Button>
-          </Box>
-        </Box>
-
-        <Box layoutClassName="mt-4">
-          {netLoading ? (
-            <Spinner size="sm" textClassName="text-primary-500" />
-          ) : networks.length === 0 ? (
-            <Typography size="sm" textClassName="text-amber-600 dark:text-amber-400">
-              Chưa có mạng nào — nhân viên sẽ KHÔNG chấm công được cho tới khi thêm IP quán.
-            </Typography>
-          ) : (
-            <Box layoutClassName="flex flex-col gap-2">
-              {networks.map((n) => (
-                <Box
-                  key={n.id}
-                  layoutClassName="flex items-center justify-between gap-2 px-3 py-2"
-                  roundedClassName="rounded-lg"
-                  backgroundClassName="bg-slate-50 dark:bg-slate-700/40"
-                >
-                  <Box layoutClassName="flex items-center gap-2">
-                    <Typography as="span" size="sm" layoutClassName="font-mono font-semibold" textClassName="text-slate-800 dark:text-slate-100">
-                      {n.ipCidr}
-                    </Typography>
-                    {n.label && (
-                      <Typography as="span" size="xs" textClassName="text-slate-500 dark:text-slate-400">
-                        ({n.label})
-                      </Typography>
-                    )}
-                    {!n.active && <Badge size="sm" layoutClassName="px-2 py-0.5 text-xs" backgroundClassName="bg-slate-200 dark:bg-slate-600" textClassName="text-slate-500">tắt</Badge>}
-                  </Box>
-                  <IconButton label="Xoá" size="sm" variant="ghost" onClick={() => removeNetwork(n.id)}>
-                    <Trash2 className="h-4 w-4 text-rose-500" />
-                  </IconButton>
-                </Box>
-              ))}
-            </Box>
-          )}
-        </Box>
-      </Card>
-
       {/* ------- Tổng quan nhân viên ------- */}
       <Card
         padding="none"
