@@ -36,6 +36,7 @@ import {
   Armchair,
   Factory,
   CalendarClock,
+  CalendarRange,
   SlidersHorizontal,
   Cake,
   ClipboardList,
@@ -239,6 +240,13 @@ export const routes: RouteConfig[] = [
     path: "/shifts",
     labelKey: "nav.shifts",
     icon: SlidersHorizontal,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/shifts/assign",
+    labelKey: "nav.shiftAssign",
+    icon: CalendarRange,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -468,19 +476,20 @@ export const navGroups: NavGroupConfig[] = [
     icon: BriefcaseBusiness,
     childPaths: [
       "/employees",
-      "/attendance/manage",
       "/attendance",
+      "/attendance/manage",
     ],
   },
   {
-    // Ca làm: Lịch + Đăng ký ca + Cài đặt (định nghĩa ca) — nhóm riêng cùng cấp Nhân sự.
+    // Ca làm = KẾ HOẠCH ca: Cài đặt ca + Xếp ca (admin) + Đăng ký ca (NV) + Lịch.
     key: "shift",
     labelKey: "nav.shiftGroup",
     icon: CalendarClock,
     childPaths: [
-      "/calendar",
-      "/attendance/register",
       "/shifts",
+      "/shifts/assign",
+      "/attendance/register",
+      "/calendar",
     ],
   },
   {

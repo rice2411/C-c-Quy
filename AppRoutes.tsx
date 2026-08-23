@@ -29,6 +29,7 @@ const UsersPage = lazy(() => import("./pages/Users/index"));
 const EmployeesPage = lazy(() => import("./pages/Employees/index"));
 const CalendarPage = lazy(() => import("./pages/Calendar/CalendarPage"));
 const ShiftsPage = lazy(() => import("./pages/Shifts/index"));
+const ShiftAssignPage = lazy(() => import("./pages/Shifts/AssignPage"));
 const AttendancePage = lazy(() => import("./pages/Attendance/index"));
 const ShiftRegisterPage = lazy(() => import("./pages/Attendance/RegisterPage"));
 const AttendanceManagePage = lazy(() => import("./pages/Attendance/ManagePage"));
@@ -235,12 +236,20 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      {/* Ca làm (định nghĩa ca) — trang riêng, cùng cấp trong Nhân sự. */}
+      {/* Nhóm Ca làm: Cài đặt ca + Xếp ca (Lịch, Đăng ký ca ở route riêng). */}
       <Route
         path="shifts"
         element={
           <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/shifts")?.roles}>
             <ShiftsPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="shifts/assign"
+        element={
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/shifts/assign")?.roles}>
+            <ShiftAssignPage />
           </RoleBasedRoute>
         }
       />

@@ -1,23 +1,21 @@
 import React, { useState } from 'react';
-import { Coins, BookUser, CalendarRange, Settings2 } from 'lucide-react';
+import { Coins, BookUser, Settings2 } from 'lucide-react';
 import Box from '@/components/ui/Box';
 import PageContainer from '@/components/ui/PageContainer';
 import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
 import ManageTab from './components/ManageTab';
-import AdminShiftBoard from './components/AdminShiftBoard';
 import TimesheetTab from './components/TimesheetTab';
 import { currentMonth } from './components/payrollUtil';
 
-type Tab = 'timesheet' | 'board' | 'settings';
+type Tab = 'timesheet' | 'settings';
 
 /**
- * HUB Chấm công & Lương (admin) — gom hết vào 1 trang nhiều tab:
+ * HUB Chấm công & Lương (admin) — 2 tab:
  *  - Sổ công & lương: danh sách MỌI NV theo tháng (công/giờ/lương), bung chi tiết từng ngày
  *    (đăng ký ca + chấm công), bổ sung công tại chỗ, xuất Excel.
- *  - Xếp ca: admin đăng ký/sửa ca cho NV theo tuần.
  *  - Tổng quan & lịch sử: khuôn mặt, tổng quan hôm nay, lịch sử chấm công.
- *  (Định nghĩa ca tách thành trang riêng /shifts "Ca làm".)
+ *  (Định nghĩa ca + Xếp ca thuộc nhóm "Ca làm", trang riêng.)
  */
 const AttendanceManagePage: React.FC = () => {
   const [tab, setTab] = useState<Tab>('timesheet');
@@ -54,13 +52,11 @@ const AttendanceManagePage: React.FC = () => {
 
       <Box layoutClassName="flex flex-wrap gap-2">
         {tabBtn('timesheet', 'Sổ công & lương', <BookUser />)}
-        {tabBtn('board', 'Xếp ca', <CalendarRange />)}
         {tabBtn('settings', 'Tổng quan & lịch sử', <Settings2 />)}
       </Box>
 
       <Box layoutClassName="flex-1 overflow-y-auto">
         {tab === 'timesheet' && <TimesheetTab month={month} onMonthChange={setMonth} />}
-        {tab === 'board' && <AdminShiftBoard />}
         {tab === 'settings' && <ManageTab />}
       </Box>
     </PageContainer>
