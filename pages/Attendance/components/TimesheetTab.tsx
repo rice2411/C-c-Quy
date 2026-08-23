@@ -102,6 +102,12 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
   }, [adjustments]);
 
   const modalAdjs = adjTarget ? adjByKey.get(`${adjTarget.employeeId}|${adjTarget.date}`) ?? [] : [];
+  // Ca cho phép bổ sung = ca ĐÃ ĐĂNG KÝ của ngày đang chọn (nếu ngày chưa đăng ký ca nào thì cho chọn cả 3).
+  const modalDay = adjTarget
+    ? payroll?.employees?.find((e) => e.employeeId === adjTarget.employeeId)?.days.find((d) => d.date === adjTarget.date)
+    : undefined;
+  const registeredCodes = modalDay?.shifts.filter((s) => s.registered).map((s) => s.code) ?? [];
+  const chipShifts = registeredCodes.length ? SHIFTS.filter((s) => registeredCodes.includes(s.value)) : SHIFTS;
 
   // (3) handlers
   const toggle = (id: string) =>
@@ -298,7 +304,7 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
             {/* Chọn ca cần bổ sung (hoặc Tất cả) — mỗi ca +số giờ của ca đó */}
             <Field label="Bổ sung ca" htmlFor="ts-adj-shifts">
               <Box layoutClassName="flex flex-wrap items-center gap-2">
-                {SHIFTS.map((s) => {
+                {chipShifts.map((s) => {
                   const on = selectedShifts.has(s.value);
                   return (
                     <Button
@@ -324,7 +330,7 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
                   size="sm"
                   variant="ghost"
                   sizeClassName="px-2 py-1 text-xs"
-                  onClick={() => setSelectedShifts(new Set(SHIFTS.map((s) => s.value)))}
+                  onClick={() => setSelectedShifts(new Set(chipShifts.map((s) => s.value)))}
                 >
                   Tất cả
                 </Button>
