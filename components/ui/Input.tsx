@@ -50,10 +50,18 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       shadowClassName,
       stateClassName,
       textClassName,
+      onWheel,
       ...props
     },
     ref
   ) => {
+    // input type="number" bị đổi giá trị khi lăn chuột lúc đang focus → blur để chặn.
+    const handleWheel = (e: React.WheelEvent<HTMLInputElement>) => {
+      if (props.type === 'number') {
+        e.currentTarget.blur();
+      }
+      onWheel?.(e);
+    };
     const classes = twMerge(
       [
         // `min-w-0 box-border` cần thiết để input không tràn ra ngoài container
@@ -92,7 +100,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {leftIcon}
           </div>
         ) : null}
-        <input ref={ref} className={classes} {...props} />
+        <input ref={ref} className={classes} onWheel={handleWheel} {...props} />
         {rightIcon ? (
           <div
             className={twMerge(
