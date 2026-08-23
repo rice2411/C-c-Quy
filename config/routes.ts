@@ -37,7 +37,6 @@ import {
   Factory,
   CalendarClock,
   CalendarRange,
-  ScanFace,
   SlidersHorizontal,
   Cake,
   ClipboardList,
@@ -282,13 +281,6 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/attendance/faces",
-    labelKey: "nav.faces",
-    icon: ScanFace,
-    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-  },
-  {
-    type: "page",
     path: "/users",
     labelKey: "nav.users",
     icon: UserCog,
@@ -486,7 +478,6 @@ export const navGroups: NavGroupConfig[] = [
       "/employees",
       "/attendance",
       "/attendance/manage",
-      "/attendance/faces",
     ],
   },
   {

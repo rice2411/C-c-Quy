@@ -33,7 +33,6 @@ const ShiftAssignPage = lazy(() => import("./pages/Shifts/AssignPage"));
 const AttendancePage = lazy(() => import("./pages/Attendance/index"));
 const ShiftRegisterPage = lazy(() => import("./pages/Attendance/RegisterPage"));
 const AttendanceManagePage = lazy(() => import("./pages/Attendance/ManagePage"));
-const FacePage = lazy(() => import("./pages/Attendance/FacePage"));
 const SystemTrafficPage = lazy(() => import("./pages/System/Traffic/index"));
 const SystemLogsPage = lazy(() => import("./pages/System/Requests/index"));
 const NotificationsPage = lazy(() => import("./pages/Notifications/index"));
@@ -278,14 +277,8 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      <Route
-        path="attendance/faces"
-        element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/attendance/faces")?.roles}>
-            <FacePage />
-          </RoleBasedRoute>
-        }
-      />
+      {/* Khuôn mặt đã gộp vào trang Nhân viên → redirect link cũ */}
+      <Route path="attendance/faces" element={<Navigate to="/employees" replace />} />
       <Route path="attendance/payroll" element={<Navigate to="/attendance/manage" replace />} />
       <Route
         path="system/traffic"

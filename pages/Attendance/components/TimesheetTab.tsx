@@ -448,14 +448,20 @@ const DayRow: React.FC<{
           <Typography as="span" size="xs" textClassName="text-slate-400">{dowLabel(day.date)}</Typography>
         </Box>
       </TableCell>
-      {/* Đăng ký ca — badge xanh */}
+      {/* Đăng ký ca — ca ĐỦ GIỜ (hợp lệ) mới badge xanh, còn lại xám */}
       <TableCell layoutClassName={`${td} whitespace-nowrap`}>
         {registered.length === 0 ? (
           <Typography as="span" size="xs" textClassName="text-slate-300 dark:text-slate-600">—</Typography>
         ) : (
           <Box layoutClassName="flex flex-wrap gap-1">
             {registered.map((s) => (
-              <Badge key={s.code} size="sm" layoutClassName="px-1.5 py-0.5 text-[10px]" backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20" textClassName="text-emerald-700 dark:text-emerald-300">
+              <Badge
+                key={s.code}
+                size="sm"
+                layoutClassName="px-1.5 py-0.5 text-[10px]"
+                backgroundClassName={s.valid ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-slate-100 dark:bg-slate-700'}
+                textClassName={s.valid ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-400 dark:text-slate-500'}
+              >
                 {s.name}
               </Badge>
             ))}

@@ -1,8 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { Pencil, Plus, Trash2, Users } from 'lucide-react';
+import { Pencil, Plus, ScanFace, Trash2, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useEmployees, useEmployeeMutations } from '@/hooks/queries/useEmployeesQuery';
 import { useUsers } from '@/hooks/queries/useUsersQuery';
+import { useAttendanceOverview, useNetworkMutations } from '@/hooks/queries/useAttendanceQuery';
+import { useAuth } from '@/contexts/AuthContext';
+import { UserRole } from '@/types/user';
+import FaceEnrollModal from '@/pages/Attendance/components/FaceEnrollModal';
 import {
   Employee,
   EMPLOYEE_STATUSES,
@@ -58,16 +62,33 @@ const EMPTY_FORM: FormState = {
   note: '',
 };
 
+type PanelTab = 'info' | 'face';
+
 const EmployeesPage: React.FC = () => {
   const { employees, loading, error } = useEmployees();
   const { createEmployee, updateEmployee, deleteEmployee } = useEmployeeMutations();
   const { users } = useUsers();
+  const { userData } = useAuth();
+  const isSuperAdmin = userData?.role === UserRole.SUPER_ADMIN;
+  // Tổng quan chấm công chỉ để lấy số mẫu khuôn mặt theo NV (gộp phần "Khuôn mặt" vào đây).
+  const { rows: faceOverview } = useAttendanceOverview(true);
+  const { clearFace } = useNetworkMutations();
 
   const [search, setSearch] = useState('');
   const [panelOpen, setPanelOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [panelTab, setPanelTab] = useState<PanelTab>('info');
+  // NV đang mở modal đăng ký khuôn mặt (từ list hoặc tab Khuôn mặt).
+  const [enroll, setEnroll] = useState<{ employeeId: string; name: string } | null>(null);
+
+  // Map employeeId -> số mẫu khuôn mặt đã đăng ký.
+  const faceCountByEmployee = useMemo(() => {
+    const m = new Map<string, number>();
+    faceOverview.forEach((r) => m.set(r.employeeId, r.faceCount));
+    return m;
+  }, [faceOverview]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -111,11 +132,13 @@ const EmployeesPage: React.FC = () => {
   const openCreate = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setPanelTab('info');
     setPanelOpen(true);
   };
 
-  const openEdit = (e: Employee) => {
+  const openEdit = (e: Employee, tab: PanelTab = 'info') => {
     setEditingId(e.id);
+    setPanelTab(tab);
     setForm({
       name: e.name ?? '',
       email: e.email ?? '',
@@ -184,16 +207,40 @@ const EmployeesPage: React.FC = () => {
     }
   };
 
-  const panelFooter = (
-    <Box layoutClassName="flex justify-end gap-3">
-      <Button type="button" variant="secondary" size="sm" disabled={saving} onClick={() => setPanelOpen(false)}>
-        Huỷ
-      </Button>
-      <Button type="button" variant="primary" size="sm" disabled={saving} onClick={handleSave}>
-        {saving ? 'Đang lưu…' : editingId ? 'Cập nhật' : 'Thêm nhân viên'}
-      </Button>
-    </Box>
+  const handleClearFace = async (employeeId: string, name: string) => {
+    if (!window.confirm(`Xoá dữ liệu khuôn mặt của "${name}"? Nhân viên sẽ phải đăng ký lại.`)) return;
+    try {
+      const r = await clearFace(employeeId);
+      toast.success(`Đã xoá ${r.deleted} mẫu khuôn mặt.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Xoá thất bại.');
+    }
+  };
+
+  // NV đang mở trong panel (để render tab Khuôn mặt).
+  const editingEmployee = useMemo(
+    () => (editingId ? employees.find((e) => e.id === editingId) ?? null : null),
+    [employees, editingId],
   );
+  const editingFaceCount = editingId ? faceCountByEmployee.get(editingId) ?? 0 : 0;
+
+  const panelFooter =
+    panelTab === 'info' ? (
+      <Box layoutClassName="flex justify-end gap-3">
+        <Button type="button" variant="secondary" size="sm" disabled={saving} onClick={() => setPanelOpen(false)}>
+          Huỷ
+        </Button>
+        <Button type="button" variant="primary" size="sm" disabled={saving} onClick={handleSave}>
+          {saving ? 'Đang lưu…' : editingId ? 'Cập nhật' : 'Thêm nhân viên'}
+        </Button>
+      </Box>
+    ) : (
+      <Box layoutClassName="flex justify-end gap-3">
+        <Button type="button" variant="secondary" size="sm" onClick={() => setPanelOpen(false)}>
+          Đóng
+        </Button>
+      </Box>
+    );
 
   return (
     <PageContainer>
@@ -263,6 +310,7 @@ const EmployeesPage: React.FC = () => {
                   <TableHeaderCell layoutClassName="px-4 py-3 text-right">Lương/giờ</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3 text-right">Lương CB</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3 text-center">Trạng thái</TableHeaderCell>
+                  <TableHeaderCell layoutClassName="px-4 py-3 text-center">Khuôn mặt</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3 text-right">Thao tác</TableHeaderCell>
                 </TableRow>
               </TableHead>
@@ -311,8 +359,33 @@ const EmployeesPage: React.FC = () => {
                         {employeeStatusLabel(e.status)}
                       </Badge>
                     </TableCell>
+                    <TableCell layoutClassName="whitespace-nowrap px-4 py-3 text-center">
+                      {(() => {
+                        const fc = faceCountByEmployee.get(e.id) ?? 0;
+                        return (
+                          <Badge
+                            size="sm"
+                            layoutClassName="inline-flex px-2 py-0.5 text-xs font-semibold"
+                            backgroundClassName={fc > 0 ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-slate-100 dark:bg-slate-700'}
+                            textClassName={fc > 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-400'}
+                          >
+                            {fc > 0 ? `${fc} mẫu` : 'chưa có'}
+                          </Badge>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell layoutClassName="whitespace-nowrap px-4 py-3 text-right">
                       <Box layoutClassName="inline-flex items-center gap-1">
+                        {isSuperAdmin && (
+                          <IconButton
+                            label="Đăng ký khuôn mặt"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setEnroll({ employeeId: e.id, name: e.name })}
+                          >
+                            <ScanFace className="h-4 w-4 text-primary-500" />
+                          </IconButton>
+                        )}
                         <IconButton label="Sửa" size="sm" variant="ghost" onClick={() => openEdit(e)}>
                           <Pencil className="h-4 w-4" />
                         </IconButton>
@@ -338,7 +411,62 @@ const EmployeesPage: React.FC = () => {
         maxWidth="md"
         footer={panelFooter}
       >
-        <Box layoutClassName="space-y-4 p-4 sm:p-6">
+        {/* Tab bar — chỉ hồ sơ đã lưu mới có tab Khuôn mặt (cần employeeId). */}
+        {editingId ? (
+          <Box
+            layoutClassName="flex items-center gap-1 px-4 sm:px-6"
+            borderClassName="border-b border-slate-100 dark:border-slate-700"
+            backgroundClassName="bg-white dark:bg-slate-800"
+          >
+            <Button
+              type="button"
+              onClick={() => setPanelTab('info')}
+              variant="ghost"
+              disableVariantHover
+              disableVariantTextColor
+              borderClassName={panelTab === 'info' ? 'border-b-2 border-primary-600' : 'border-b-2 border-transparent'}
+              textClassName={
+                panelTab === 'info'
+                  ? 'text-sm font-medium text-primary-600 dark:text-primary-400'
+                  : 'text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              }
+              layoutClassName="shrink-0 whitespace-nowrap rounded-none py-3.5 shadow-none"
+              stateClassName="transition-colors"
+            >
+              Thông tin
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setPanelTab('face')}
+              variant="ghost"
+              disableVariantHover
+              disableVariantTextColor
+              borderClassName={panelTab === 'face' ? 'border-b-2 border-primary-600' : 'border-b-2 border-transparent'}
+              textClassName={
+                panelTab === 'face'
+                  ? 'text-sm font-medium text-primary-600 dark:text-primary-400'
+                  : 'text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              }
+              layoutClassName="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-none py-3.5 shadow-none"
+              stateClassName="transition-colors"
+              leftIcon={<ScanFace className="h-4 w-4" />}
+            >
+              Khuôn mặt
+              {editingFaceCount > 0 ? (
+                <Box
+                  layoutClassName="ml-1 inline-flex h-5 min-w-[20px] items-center justify-center px-1.5"
+                  roundedClassName="rounded-full"
+                  backgroundClassName="bg-emerald-100 dark:bg-emerald-900/40"
+                  textClassName="text-[10px] font-bold text-emerald-700 dark:text-emerald-300"
+                >
+                  {editingFaceCount}
+                </Box>
+              ) : null}
+            </Button>
+          </Box>
+        ) : null}
+
+        <Box layoutClassName={panelTab === 'info' ? 'space-y-4 p-4 sm:p-6' : 'hidden'}>
           <Field label="Họ tên" required htmlFor="emp-name">
             <Input id="emp-name" value={form.name} onChange={(e) => setField('name', e.target.value)} placeholder="Nguyễn Văn A" />
           </Field>
@@ -402,7 +530,78 @@ const EmployeesPage: React.FC = () => {
           {/* Mức lương/giờ theo NV (deal riêng) — chỉ khi đã có hồ sơ */}
           <WageSection employeeId={editingId} />
         </Box>
+
+        {/* Tab Khuôn mặt — quản lý mẫu Face ID cho NV đang mở */}
+        {editingId && panelTab === 'face' ? (
+          <Box layoutClassName="space-y-4 p-4 sm:p-6">
+            <Box
+              layoutClassName="flex items-center justify-between gap-3 p-4"
+              roundedClassName="rounded-xl"
+              borderClassName="border border-slate-100 dark:border-slate-700"
+              backgroundClassName="bg-white dark:bg-slate-800"
+            >
+              <Box layoutClassName="flex items-center gap-3">
+                <Box
+                  layoutClassName="flex h-10 w-10 items-center justify-center"
+                  roundedClassName="rounded-full"
+                  backgroundClassName={editingFaceCount > 0 ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-slate-100 dark:bg-slate-700'}
+                >
+                  <ScanFace className={editingFaceCount > 0 ? 'h-5 w-5 text-emerald-500' : 'h-5 w-5 text-slate-400'} />
+                </Box>
+                <Box layoutClassName="space-y-0.5">
+                  <Typography size="sm" layoutClassName="font-semibold" textClassName="text-slate-800 dark:text-slate-100">
+                    {editingFaceCount > 0 ? `Đã đăng ký ${editingFaceCount} mẫu` : 'Chưa đăng ký khuôn mặt'}
+                  </Typography>
+                  <Typography size="xs" textClassName="text-slate-400 dark:text-slate-500">
+                    Face ID dùng để nhân viên tự chấm công.
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+
+            <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">
+              Đăng ký khuôn mặt để nhân viên chấm công bằng Face ID. Mỗi NV nên chụp vài góc mặt (thẳng, trái, phải).
+            </Typography>
+
+            {isSuperAdmin ? (
+              <Box layoutClassName="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  leftIcon={<ScanFace className="h-4 w-4" />}
+                  onClick={() => editingEmployee && setEnroll({ employeeId: editingEmployee.id, name: editingEmployee.name })}
+                >
+                  {editingFaceCount > 0 ? 'Đăng ký lại' : 'Đăng ký khuôn mặt'}
+                </Button>
+                {editingFaceCount > 0 && editingEmployee ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    leftIcon={<Trash2 className="h-4 w-4 text-rose-500" />}
+                    onClick={() => handleClearFace(editingEmployee.id, editingEmployee.name)}
+                  >
+                    Xoá dữ liệu khuôn mặt
+                  </Button>
+                ) : null}
+              </Box>
+            ) : (
+              <Typography size="xs" variant="muted">
+                Chỉ super admin mới đăng ký / xoá khuôn mặt.
+              </Typography>
+            )}
+          </Box>
+        ) : null}
       </BaseSlidePanel>
+
+      {/* Modal đăng ký khuôn mặt (dùng chung cho nút ở list + tab Khuôn mặt) */}
+      <FaceEnrollModal
+        isOpen={!!enroll}
+        onClose={() => setEnroll(null)}
+        employee={enroll}
+        onDone={() => setEnroll(null)}
+      />
     </PageContainer>
   );
 };
