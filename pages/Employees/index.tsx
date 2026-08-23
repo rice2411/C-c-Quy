@@ -11,6 +11,7 @@ import {
 } from '@/types/employee';
 import { formatVNDOrDash } from '@/utils/format/currencyUtil';
 import Box from '@/components/ui/Box';
+import PageContainer from '@/components/ui/PageContainer';
 import Card from '@/components/ui/Card';
 import Heading from '@/components/ui/Heading';
 import Typography from '@/components/ui/Typography';
@@ -195,7 +196,7 @@ const EmployeesPage: React.FC = () => {
   );
 
   return (
-    <Box layoutClassName="flex h-full flex-col gap-4 p-4 sm:p-6">
+    <PageContainer>
       {/* Header */}
       <Box layoutClassName="flex flex-wrap items-center justify-between gap-3">
         <Box layoutClassName="flex items-center gap-2">
@@ -402,7 +403,7 @@ const EmployeesPage: React.FC = () => {
           <WageSection employeeId={editingId} />
         </Box>
       </BaseSlidePanel>
-    </Box>
+    </PageContainer>
   );
 };
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Coins, BookUser, CalendarRange, Settings2 } from 'lucide-react';
 import Box from '@/components/ui/Box';
+import PageContainer from '@/components/ui/PageContainer';
 import Button from '@/components/ui/Button';
 import Heading from '@/components/ui/Heading';
 import ManageTab from './components/ManageTab';
@@ -50,7 +51,7 @@ const AttendanceManagePage: React.FC = () => {
   );
 
   return (
-    <Box layoutClassName="flex h-full flex-col gap-4 p-4 sm:p-6">
+    <PageContainer>
       <Box layoutClassName="flex items-center gap-2">
         <Coins className="h-5 w-5 text-primary-500" />
         <Heading level={1} textClassName="text-lg font-bold text-slate-900 dark:text-white">
@@ -80,7 +81,7 @@ const AttendanceManagePage: React.FC = () => {
           </Box>
         )}
       </Box>
-    </Box>
+    </PageContainer>
   );
 };
 

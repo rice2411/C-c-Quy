@@ -226,7 +226,7 @@ const RecipesPage: React.FC = () => {
   }
 
   return (
-    <Box layoutClassName="flex h-full flex-col gap-4 p-4">
+    <Box layoutClassName="flex h-full flex-col gap-4">
       {/* Header */}
       <Box layoutClassName="flex flex-wrap items-center justify-between gap-3">
         <Box layoutClassName="flex items-center gap-2">
