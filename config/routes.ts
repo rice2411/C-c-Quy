@@ -36,6 +36,7 @@ import {
   Armchair,
   Factory,
   CalendarClock,
+  SlidersHorizontal,
   Cake,
   ClipboardList,
   Handshake,
@@ -231,6 +232,13 @@ export const routes: RouteConfig[] = [
     path: "/employees",
     labelKey: "nav.employees",
     icon: IdCard,
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
+  },
+  {
+    type: "page",
+    path: "/shifts",
+    labelKey: "nav.shifts",
+    icon: SlidersHorizontal,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
@@ -460,6 +468,7 @@ export const navGroups: NavGroupConfig[] = [
     icon: BriefcaseBusiness,
     childPaths: [
       "/employees",
+      "/shifts",
       "/attendance/manage",
       "/attendance",
       "/attendance/register",
