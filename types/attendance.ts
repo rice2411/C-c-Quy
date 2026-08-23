@@ -135,6 +135,7 @@ export interface AttendanceAdjustment {
   employeeName: string | null;
   workDate: string; // yyyy-mm-dd
   hours: number; // giờ bổ sung (âm = trừ)
+  shiftCode: AttendanceShift | null; // ca được bổ sung (null = giờ chung)
   reason: string | null;
   createdBy: string | null;
   createdAt: string | null;

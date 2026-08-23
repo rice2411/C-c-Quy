@@ -33,7 +33,8 @@ import {
   useAdjustments,
   usePayroll,
 } from '@/hooks/queries/useAttendanceQuery';
-import type { AttendanceAdjustment, PayrollDay, PayrollRow } from '@/types/attendance';
+import { SHIFTS, shiftLabel } from '@/types/attendance';
+import type { AttendanceAdjustment, AttendanceShift, PayrollDay, PayrollRow } from '@/types/attendance';
 import {
   currentMonth,
   dowLabel,
@@ -54,9 +55,20 @@ type AdjTarget = { employeeId: string; name: string; date: string };
 
 /** Lý do bổ sung công tạo sẵn; "Khác" → nhập tay. */
 const ADJUST_REASONS = ['Quên chấm công', 'Làm bù', 'Tăng ca', 'Đi trễ/về sớm có phép', 'Nghỉ có phép'];
-/** Số giờ bổ sung chọn nhanh; "Khác" → nhập tay (cho số lẻ / số âm để trừ). */
-const HOUR_PRESETS = ['4', '8', '12'];
 const OTHER = 'Khác';
+
+/** Số giờ của 1 ca (từ khung giờ trong SHIFTS, vd '08:00–12:00' → 4). */
+const caHours = (code: string): number => {
+  const t = SHIFTS.find((s) => s.value === code)?.time ?? '';
+  const [a, b] = t.split(/[–-]/).map((x) => x.trim());
+  if (!a || !b) return 0;
+  const toMin = (s: string) => {
+    const [h, m] = s.split(':').map(Number);
+    return h * 60 + (m || 0);
+  };
+  const mins = toMin(b) - toMin(a);
+  return mins > 0 ? Math.round((mins / 60) * 100) / 100 : 0;
+};
 
 /** SỔ CÔNG & LƯƠNG: danh sách MỌI nhân viên theo tháng, bấm bung chi tiết từng ngày
  *  (đăng ký ca + chấm công + công/giờ), bổ sung công tại chỗ, xuất Excel. */
@@ -64,8 +76,7 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
   // (1) state
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [adjTarget, setAdjTarget] = useState<AdjTarget | null>(null);
-  const [hoursChoice, setHoursChoice] = useState(''); // số giờ chọn nhanh ('' | '4'|'8'|'12' | 'Khác')
-  const [hoursOther, setHoursOther] = useState(''); // nhập tay khi chọn "Khác"
+  const [selectedShifts, setSelectedShifts] = useState<Set<AttendanceShift>>(new Set()); // ca cần bổ sung
   const [reasonChoice, setReasonChoice] = useState(''); // lý do chọn sẵn ('' | preset | 'Khác')
   const [reasonOther, setReasonOther] = useState(''); // nhập tay khi chọn "Khác"
   const [saving, setSaving] = useState(false);
@@ -103,28 +114,39 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
 
   const openAdjust = (employeeId: string, name: string, date: string) => {
     setAdjTarget({ employeeId, name, date });
-    setHoursChoice('');
-    setHoursOther('');
+    setSelectedShifts(new Set());
     setReasonChoice('');
     setReasonOther('');
   };
 
+  const toggleShift = (code: AttendanceShift) =>
+    setSelectedShifts((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+
   const submitAdjust = async () => {
     if (!adjTarget) return;
-    const h = Number(hoursChoice === OTHER ? hoursOther : hoursChoice);
     if (!adjTarget.date) {
       toast.error('Chọn ngày bổ sung.');
       return;
     }
-    if (!Number.isFinite(h) || h === 0) {
-      toast.error('Chọn hoặc nhập số giờ bổ sung (khác 0).');
+    // Bỏ qua ca đã bổ sung sẵn trong ngày (tránh trùng).
+    const existing = new Set(modalAdjs.map((a) => a.shiftCode).filter(Boolean));
+    const toAdd = [...selectedShifts].filter((c) => !existing.has(c));
+    if (toAdd.length === 0) {
+      toast.error('Chọn ca cần bổ sung.');
       return;
     }
     const finalReason = (reasonChoice === OTHER ? reasonOther.trim() : reasonChoice) || undefined;
     setSaving(true);
     try {
-      await addAdjustment({ employeeId: adjTarget.employeeId, workDate: adjTarget.date, hours: h, reason: finalReason });
-      toast.success(`Đã bổ sung ${fmtHours(h)} cho ${adjTarget.name}.`);
+      for (const code of toAdd) {
+        await addAdjustment({ employeeId: adjTarget.employeeId, workDate: adjTarget.date, hours: caHours(code), shiftCode: code, reason: finalReason });
+      }
+      toast.success(`Đã bổ sung ${toAdd.length} ca cho ${adjTarget.name}.`);
       setAdjTarget(null); // bổ sung xong → tắt modal
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Bổ sung thất bại.');
@@ -255,6 +277,11 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
                 {modalAdjs.map((a) => (
                   <Box key={a.id} layoutClassName="flex items-center justify-between gap-2 px-3 py-1.5" roundedClassName="rounded-lg" backgroundClassName="bg-slate-50 dark:bg-slate-700/40">
                     <Box layoutClassName="flex items-center gap-2">
+                      {a.shiftCode && (
+                        <Badge size="sm" layoutClassName="px-1.5 py-0.5 text-[10px]" backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20" textClassName="text-emerald-700 dark:text-emerald-300">
+                          {shiftLabel(a.shiftCode)}
+                        </Badge>
+                      )}
                       <Badge size="sm" layoutClassName="px-1.5 py-0.5 text-[10px]" backgroundClassName="bg-amber-50 dark:bg-amber-900/20" textClassName="text-amber-600 dark:text-amber-400">
                         {a.hours > 0 ? '+' : ''}{fmtHours(a.hours)}
                       </Badge>
@@ -268,31 +295,50 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
               </Box>
             )}
 
-            <Box layoutClassName="grid grid-cols-2 gap-3">
-              <Field label="Số giờ" htmlFor="ts-adj-hours">
-                <Select id="ts-adj-hours" value={hoursChoice} onChange={(e) => setHoursChoice(e.target.value)} fullWidth>
-                  <option value="">— Chọn giờ —</option>
-                  {HOUR_PRESETS.map((h) => (
-                    <option key={h} value={h}>{h} giờ</option>
-                  ))}
-                  <option value={OTHER}>{OTHER}…</option>
-                </Select>
-              </Field>
-              <Field label="Lý do" htmlFor="ts-adj-reason">
-                <Select id="ts-adj-reason" value={reasonChoice} onChange={(e) => setReasonChoice(e.target.value)} fullWidth>
-                  <option value="">— Chọn lý do —</option>
-                  {ADJUST_REASONS.map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                  <option value={OTHER}>{OTHER}…</option>
-                </Select>
-              </Field>
-            </Box>
-            {hoursChoice === OTHER && (
-              <Field label="Số giờ khác (âm = trừ)" htmlFor="ts-adj-hours-other">
-                <Input id="ts-adj-hours-other" type="number" step="0.5" value={hoursOther} onChange={(e) => setHoursOther(e.target.value)} placeholder="vd 6 hoặc -2" />
-              </Field>
-            )}
+            {/* Chọn ca cần bổ sung (hoặc Tất cả) — mỗi ca +số giờ của ca đó */}
+            <Field label="Bổ sung ca" htmlFor="ts-adj-shifts">
+              <Box layoutClassName="flex flex-wrap items-center gap-2">
+                {SHIFTS.map((s) => {
+                  const on = selectedShifts.has(s.value);
+                  return (
+                    <Button
+                      key={s.value}
+                      type="button"
+                      size="sm"
+                      variant={on ? 'primary' : 'secondary'}
+                      onClick={() => toggleShift(s.value)}
+                      roundedClassName="rounded-full"
+                      sizeClassName="px-3 py-1 text-xs"
+                      borderClassName={on ? 'border border-primary-600' : 'border border-slate-200 dark:border-slate-600'}
+                      backgroundClassName={on ? 'bg-primary-600' : 'bg-white dark:bg-slate-800'}
+                      textClassName={on ? 'font-medium text-white' : 'text-slate-700 dark:text-slate-200'}
+                      disableVariantHover
+                      disableVariantTextColor
+                    >
+                      {s.label} ({fmtHours(caHours(s.value))})
+                    </Button>
+                  );
+                })}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  sizeClassName="px-2 py-1 text-xs"
+                  onClick={() => setSelectedShifts(new Set(SHIFTS.map((s) => s.value)))}
+                >
+                  Tất cả
+                </Button>
+              </Box>
+            </Field>
+            <Field label="Lý do" htmlFor="ts-adj-reason">
+              <Select id="ts-adj-reason" value={reasonChoice} onChange={(e) => setReasonChoice(e.target.value)} fullWidth>
+                <option value="">— Chọn lý do —</option>
+                {ADJUST_REASONS.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+                <option value={OTHER}>{OTHER}…</option>
+              </Select>
+            </Field>
             {reasonChoice === OTHER && (
               <Field label="Lý do khác" htmlFor="ts-adj-reason-other">
                 <Input id="ts-adj-reason-other" value={reasonOther} onChange={(e) => setReasonOther(e.target.value)} placeholder="Nhập lý do…" />
@@ -435,7 +481,9 @@ const DayRow: React.FC<{
   onAdjust: () => void;
 }> = ({ day, adjustments, onAdjust }) => {
   const td = 'px-3 py-2';
-  const registered = day.shifts.filter((s) => s.registered);
+  const adjustedCodes = new Set(adjustments.map((a) => a.shiftCode).filter(Boolean));
+  // Ca hiển thị = ca đăng ký HOẶC ca được bổ sung; xanh khi hợp lệ hoặc đã bổ sung.
+  const shownShifts = day.shifts.filter((s) => s.registered || adjustedCodes.has(s.code));
   const hasAtt = !!day.in;
   const hasAdj = adjustments.length > 0 || day.adjHours !== 0;
   const status = dayStatus(day);
@@ -448,23 +496,26 @@ const DayRow: React.FC<{
           <Typography as="span" size="xs" textClassName="text-slate-400">{dowLabel(day.date)}</Typography>
         </Box>
       </TableCell>
-      {/* Đăng ký ca — ca ĐỦ GIỜ (hợp lệ) mới badge xanh, còn lại xám */}
+      {/* Đăng ký ca — ca đủ giờ (hợp lệ) HOẶC đã bổ sung → xanh, còn lại xám */}
       <TableCell layoutClassName={`${td} whitespace-nowrap`}>
-        {registered.length === 0 ? (
+        {shownShifts.length === 0 ? (
           <Typography as="span" size="xs" textClassName="text-slate-300 dark:text-slate-600">—</Typography>
         ) : (
           <Box layoutClassName="flex flex-wrap gap-1">
-            {registered.map((s) => (
-              <Badge
-                key={s.code}
-                size="sm"
-                layoutClassName="px-1.5 py-0.5 text-[10px]"
-                backgroundClassName={s.valid ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-slate-100 dark:bg-slate-700'}
-                textClassName={s.valid ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-400 dark:text-slate-500'}
-              >
-                {s.name}
-              </Badge>
-            ))}
+            {shownShifts.map((s) => {
+              const green = s.valid || adjustedCodes.has(s.code);
+              return (
+                <Badge
+                  key={s.code}
+                  size="sm"
+                  layoutClassName="px-1.5 py-0.5 text-[10px]"
+                  backgroundClassName={green ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-slate-100 dark:bg-slate-700'}
+                  textClassName={green ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-400 dark:text-slate-500'}
+                >
+                  {s.name}
+                </Badge>
+              );
+            })}
           </Box>
         )}
       </TableCell>

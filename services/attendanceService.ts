@@ -338,6 +338,7 @@ function toAdjustment(a: any): AttendanceAdjustment {
     employeeName: str(a?.employeeName),
     workDate: str(a?.workDate) ?? '',
     hours: n0(a?.hours),
+    shiftCode: a?.shiftCode === 'ca1' || a?.shiftCode === 'ca2' || a?.shiftCode === 'ca3' ? a.shiftCode : null,
     reason: str(a?.reason),
     createdBy: str(a?.createdBy),
     createdAt: toIso(a?.createdAt),
@@ -357,6 +358,7 @@ export async function addAdjustment(input: {
   employeeId: string;
   workDate: string;
   hours: number;
+  shiftCode?: string;
   reason?: string;
 }): Promise<AttendanceAdjustment> {
   const res = await apiClient.post<any>(`${BASE}/adjustments`, input);
