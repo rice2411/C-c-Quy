@@ -14,6 +14,7 @@ import Typography from '@/components/ui/Typography';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import Field from '@/components/ui/Field';
 import Badge from '@/components/ui/Badge';
 import Spinner from '@/components/ui/Spinner';
@@ -51,6 +52,10 @@ interface Props {
 
 type AdjTarget = { employeeId: string; name: string; date: string };
 
+/** Lý do bổ sung công tạo sẵn; "Khác" → nhập tay. */
+const ADJUST_REASONS = ['Quên chấm công', 'Làm bù', 'Tăng ca', 'Đi trễ/về sớm có phép', 'Nghỉ có phép'];
+const OTHER = 'Khác';
+
 /** SỔ CÔNG & LƯƠNG: danh sách MỌI nhân viên theo tháng, bấm bung chi tiết từng ngày
  *  (đăng ký ca + chấm công + công/giờ), bổ sung công tại chỗ, xuất Excel. */
 const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
@@ -58,7 +63,8 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [adjTarget, setAdjTarget] = useState<AdjTarget | null>(null);
   const [hours, setHours] = useState('');
-  const [reason, setReason] = useState('');
+  const [reasonChoice, setReasonChoice] = useState(''); // lý do chọn sẵn ('' | preset | 'Khác')
+  const [reasonOther, setReasonOther] = useState(''); // nhập tay khi chọn "Khác"
   const [saving, setSaving] = useState(false);
 
   // (2) data
@@ -95,7 +101,8 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
   const openAdjust = (employeeId: string, name: string, date: string) => {
     setAdjTarget({ employeeId, name, date });
     setHours('');
-    setReason('');
+    setReasonChoice('');
+    setReasonOther('');
   };
 
   const submitAdjust = async () => {
@@ -109,12 +116,14 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
       toast.error('Nhập số giờ bổ sung (khác 0).');
       return;
     }
+    const finalReason = (reasonChoice === OTHER ? reasonOther.trim() : reasonChoice) || undefined;
     setSaving(true);
     try {
-      await addAdjustment({ employeeId: adjTarget.employeeId, workDate: adjTarget.date, hours: h, reason: reason.trim() || undefined });
+      await addAdjustment({ employeeId: adjTarget.employeeId, workDate: adjTarget.date, hours: h, reason: finalReason });
       toast.success(`Đã bổ sung ${fmtHours(h)} cho ${adjTarget.name}.`);
       setHours('');
-      setReason('');
+      setReasonChoice('');
+      setReasonOther('');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Bổ sung thất bại.');
     } finally {
@@ -262,9 +271,20 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
                 <Input id="ts-adj-hours" type="number" step="0.5" value={hours} onChange={(e) => setHours(e.target.value)} placeholder="vd 4 hoặc -2" />
               </Field>
               <Field label="Lý do" htmlFor="ts-adj-reason">
-                <Input id="ts-adj-reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Quên chấm, làm bù…" />
+                <Select id="ts-adj-reason" value={reasonChoice} onChange={(e) => setReasonChoice(e.target.value)} fullWidth>
+                  <option value="">— Chọn lý do —</option>
+                  {ADJUST_REASONS.map((r) => (
+                    <option key={r} value={r}>{r}</option>
+                  ))}
+                  <option value={OTHER}>{OTHER}…</option>
+                </Select>
               </Field>
             </Box>
+            {reasonChoice === OTHER && (
+              <Field label="Lý do khác" htmlFor="ts-adj-reason-other">
+                <Input id="ts-adj-reason-other" value={reasonOther} onChange={(e) => setReasonOther(e.target.value)} placeholder="Nhập lý do…" />
+              </Field>
+            )}
             <Box layoutClassName="flex justify-end gap-2">
               <Button type="button" variant="secondary" size="sm" onClick={() => setAdjTarget(null)}>Đóng</Button>
               <Button type="button" variant="primary" size="sm" disabled={saving} leftIcon={<Plus className="h-4 w-4" />} onClick={submitAdjust}>Thêm</Button>
