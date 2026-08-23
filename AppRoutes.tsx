@@ -27,7 +27,7 @@ const SuppliersPage = lazy(() => import("./pages/Suppliers/index"));
 const CarriersPage = lazy(() => import("./pages/Partners/CarriersPage"));
 const UsersPage = lazy(() => import("./pages/Users/index"));
 const EmployeesPage = lazy(() => import("./pages/Employees/index"));
-const WorkConfigPage = lazy(() => import("./pages/WorkConfig/index"));
+const CalendarPage = lazy(() => import("./pages/Calendar/CalendarPage"));
 const AttendancePage = lazy(() => import("./pages/Attendance/index"));
 const ShiftRegisterPage = lazy(() => import("./pages/Attendance/RegisterPage"));
 const AttendanceManagePage = lazy(() => import("./pages/Attendance/ManagePage"));
@@ -225,16 +225,17 @@ const AppRoutes: React.FC = () => (
           </RoleBasedRoute>
         }
       />
-      {/* Lịch đăng ký ca đã gộp vào trang Công & ca (tab Lịch) — giữ redirect cho bookmark cũ. */}
-      <Route path="calendar" element={<Navigate to="/shifts" replace />} />
+      {/* Lịch giờ là trang riêng; "định nghĩa ca" đã chuyển vào hub Chấm công & lương. */}
       <Route
-        path="shifts"
+        path="calendar"
         element={
-          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/shifts")?.roles}>
-            <WorkConfigPage />
+          <RoleBasedRoute requiredRole={routes.find((r) => r.path === "/calendar")?.roles}>
+            <CalendarPage />
           </RoleBasedRoute>
         }
       />
+      {/* Trang "Công & ca" cũ đã bỏ — redirect cho bookmark cũ. */}
+      <Route path="shifts" element={<Navigate to="/attendance/manage" replace />} />
       <Route
         path="attendance"
         element={

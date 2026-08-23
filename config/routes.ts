@@ -235,8 +235,8 @@ export const routes: RouteConfig[] = [
   },
   {
     type: "page",
-    path: "/shifts",
-    labelKey: "nav.shifts",
+    path: "/calendar",
+    labelKey: "nav.calendar",
     icon: CalendarClock,
     roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
@@ -460,10 +460,10 @@ export const navGroups: NavGroupConfig[] = [
     icon: BriefcaseBusiness,
     childPaths: [
       "/employees",
-      "/shifts",
+      "/attendance/manage",
       "/attendance",
       "/attendance/register",
-      "/attendance/manage",
+      "/calendar",
     ],
   },
   {

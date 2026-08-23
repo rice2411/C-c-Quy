@@ -7,6 +7,7 @@ import ManageTab from './components/ManageTab';
 import AdminShiftBoard from './components/AdminShiftBoard';
 import PayrollTab from './components/PayrollTab';
 import TimesheetTab from './components/TimesheetTab';
+import ShiftSettingsTab from '@/pages/WorkConfig/ShiftSettingsTab';
 import { currentMonth } from './components/payrollUtil';
 
 type Tab = 'timesheet' | 'payroll' | 'board' | 'settings';
@@ -72,7 +73,12 @@ const AttendanceManagePage: React.FC = () => {
           <PayrollTab month={month} onMonthChange={setMonth} onPickEmployee={pickEmployee} />
         )}
         {tab === 'board' && <AdminShiftBoard />}
-        {tab === 'settings' && <ManageTab />}
+        {tab === 'settings' && (
+          <Box layoutClassName="flex flex-col gap-6">
+            <ShiftSettingsTab />
+            <ManageTab />
+          </Box>
+        )}
       </Box>
     </Box>
   );
