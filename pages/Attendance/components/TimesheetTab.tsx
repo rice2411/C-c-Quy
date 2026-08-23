@@ -478,9 +478,11 @@ const DayRow: React.FC<{
           <Typography as="span" size="xs" textClassName="text-slate-300 dark:text-slate-600">—</Typography>
         )}
       </TableCell>
-      {/* Trạng thái: đủ / thiếu / vắng */}
+      {/* Trạng thái: đã bổ sung > đủ / thiếu / vắng */}
       <TableCell layoutClassName={`${td} text-center whitespace-nowrap`}>
-        {status === 'full' ? (
+        {hasAdj ? (
+          <Badge size="sm" layoutClassName="inline-flex px-2 py-0.5 text-[10px] font-semibold" backgroundClassName="bg-sky-50 dark:bg-sky-900/20" textClassName="text-sky-700 dark:text-sky-300">Đã bổ sung</Badge>
+        ) : status === 'full' ? (
           <Badge size="sm" layoutClassName="inline-flex px-2 py-0.5 text-[10px] font-semibold" backgroundClassName="bg-emerald-50 dark:bg-emerald-900/20" textClassName="text-emerald-700 dark:text-emerald-300">Đủ công</Badge>
         ) : status === 'short' ? (
           <Badge size="sm" layoutClassName="inline-flex px-2 py-0.5 text-[10px] font-semibold" backgroundClassName="bg-amber-50 dark:bg-amber-900/20" textClassName="text-amber-600 dark:text-amber-400">Thiếu công</Badge>
@@ -505,16 +507,11 @@ const DayRow: React.FC<{
           )}
         </Box>
       </TableCell>
-      {/* Bổ sung: đã bổ sung → badge + nút Chỉnh sửa */}
+      {/* Bổ sung → nút Chỉnh sửa khi đã có bổ sung */}
       <TableCell layoutClassName={`${td} text-right whitespace-nowrap`}>
-        <Box layoutClassName="inline-flex items-center gap-1.5">
-          {hasAdj && (
-            <Badge size="sm" layoutClassName="inline-flex px-1.5 py-0.5 text-[10px]" backgroundClassName="bg-amber-50 dark:bg-amber-900/20" textClassName="text-amber-600 dark:text-amber-400">Đã bổ sung</Badge>
-          )}
-          <Button type="button" variant={hasAdj ? 'secondary' : 'ghost'} size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={onAdjust}>
-            {hasAdj ? 'Chỉnh sửa' : 'Bổ sung'}
-          </Button>
-        </Box>
+        <Button type="button" variant={hasAdj ? 'secondary' : 'ghost'} size="sm" leftIcon={<Plus className="h-3.5 w-3.5" />} onClick={onAdjust}>
+          {hasAdj ? 'Chỉnh sửa' : 'Bổ sung'}
+        </Button>
       </TableCell>
     </TableRow>
   );
