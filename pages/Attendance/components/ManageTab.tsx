@@ -1,9 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import toast from 'react-hot-toast';
-import { ScanFace } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { UserRole } from '@/types/user';
-import FaceEnrollModal from '@/pages/Attendance/components/FaceEnrollModal';
 import BaseModal from '@/components/BaseModal';
 import Box from '@/components/ui/Box';
 import Image from '@/components/ui/Image';
@@ -29,7 +24,6 @@ import {
 import {
   useAttendanceHistory,
   useAttendanceOverview,
-  useNetworkMutations,
 } from '@/hooks/queries/useAttendanceQuery';
 import { kindLabel, shiftLabel, type AttendanceRecord } from '@/types/attendance';
 
@@ -39,13 +33,7 @@ const fmtTime = (iso?: string | null): string =>
   iso ? new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '—';
 
 const ManageTab: React.FC = () => {
-  const { userData } = useAuth();
-  const isSuperAdmin = userData?.role === UserRole.SUPER_ADMIN;
   const { rows: overview, loading: ovLoading } = useAttendanceOverview(true);
-  const { clearFace } = useNetworkMutations();
-
-  // Modal đăng ký khuôn mặt cho 1 NV (chỉ super_admin).
-  const [enroll, setEnroll] = useState<{ employeeId: string; name: string } | null>(null);
 
   const [empFilter, setEmpFilter] = useState('');
   const [from, setFrom] = useState('');
@@ -59,16 +47,6 @@ const ManageTab: React.FC = () => {
     [empFilter, from, to],
   );
   const { data: history, loading: hisLoading } = useAttendanceHistory(historyParams, true);
-
-  const removeFace = async (employeeId: string, name: string) => {
-    if (!window.confirm(`Xoá dữ liệu khuôn mặt của "${name}"? Nhân viên sẽ phải đăng ký lại.`)) return;
-    try {
-      const r = await clearFace(employeeId);
-      toast.success(`Đã xoá ${r.deleted} mẫu khuôn mặt.`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Xoá thất bại.');
-    }
-  };
 
   return (
     <Box layoutClassName="flex flex-col gap-6">
@@ -95,10 +73,8 @@ const ManageTab: React.FC = () => {
                 <TableRow textClassName="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   <TableHeaderCell layoutClassName="px-4 py-3">Tên</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3">Email đăng nhập</TableHeaderCell>
-                  <TableHeaderCell layoutClassName="px-4 py-3 text-center">Khuôn mặt</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3 text-center">Vào</TableHeaderCell>
                   <TableHeaderCell layoutClassName="px-4 py-3 text-center">Ra</TableHeaderCell>
-                  <TableHeaderCell layoutClassName="px-4 py-3 text-right">Thao tác</TableHeaderCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -115,40 +91,10 @@ const ManageTab: React.FC = () => {
                       )}
                     </TableCell>
                     <TableCell layoutClassName="whitespace-nowrap px-4 py-3 text-center">
-                      <Badge
-                        size="sm"
-                        layoutClassName="inline-flex px-2 py-0.5 text-xs font-semibold"
-                        backgroundClassName={r.faceCount > 0 ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-slate-100 dark:bg-slate-700'}
-                        textClassName={r.faceCount > 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-400'}
-                      >
-                        {r.faceCount > 0 ? `${r.faceCount} mẫu` : 'chưa có'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell layoutClassName="whitespace-nowrap px-4 py-3 text-center">
                       <Typography as="span" size="sm" textClassName="text-emerald-600 dark:text-emerald-400">{fmtTime(r.todayIn)}</Typography>
                     </TableCell>
                     <TableCell layoutClassName="whitespace-nowrap px-4 py-3 text-center">
                       <Typography as="span" size="sm" textClassName="text-rose-600 dark:text-rose-400">{fmtTime(r.todayOut)}</Typography>
-                    </TableCell>
-                    <TableCell layoutClassName="whitespace-nowrap px-4 py-3 text-right">
-                      <Box layoutClassName="inline-flex items-center gap-1">
-                        {isSuperAdmin && (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            leftIcon={<ScanFace className="h-3.5 w-3.5" />}
-                            onClick={() => setEnroll({ employeeId: r.employeeId, name: r.name })}
-                          >
-                            {r.faceCount > 0 ? 'Đăng ký lại' : 'Đăng ký mặt'}
-                          </Button>
-                        )}
-                        {r.faceCount > 0 && (
-                          <Button type="button" variant="ghost" size="sm" onClick={() => removeFace(r.employeeId, r.name)}>
-                            Xoá
-                          </Button>
-                        )}
-                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -259,13 +205,6 @@ const ManageTab: React.FC = () => {
           )}
         </Box>
       </Card>
-
-      <FaceEnrollModal
-        isOpen={!!enroll}
-        onClose={() => setEnroll(null)}
-        employee={enroll}
-        onDone={() => setEnroll(null)}
-      />
 
       {/* ------- Chi tiết 1 bản ghi chấm công (ảnh + thông tin) ------- */}
       <BaseModal
