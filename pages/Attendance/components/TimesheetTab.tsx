@@ -246,6 +246,7 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange }) => {
                   <TableHeaderCell layoutClassName={th}>Vị trí</TableHeaderCell>
                   <TableHeaderCell layoutClassName={`${th} text-center`}>Ca ĐK</TableHeaderCell>
                   <TableHeaderCell layoutClassName={`${th} text-center`}>Ca hợp lệ</TableHeaderCell>
+                  <TableHeaderCell layoutClassName={`${th} text-center`}>Thiếu ca</TableHeaderCell>
                   <TableHeaderCell layoutClassName={`${th} text-center`}>Công</TableHeaderCell>
                   <TableHeaderCell layoutClassName={`${th} text-center`}>Giờ</TableHeaderCell>
                   <TableHeaderCell layoutClassName={`${th} text-right`}>Lương</TableHeaderCell>
@@ -372,6 +373,13 @@ const EmpRow: React.FC<{
 }> = ({ row, open, onToggle, adjByKey, onAdjust, onRemoveAdjust }) => {
   const td = 'px-4 py-3';
   const missingRate = row.days.some((d) => d.hours > 0 && d.rate == null);
+  // Thiếu ca = ca đăng ký nhưng CHƯA làm và CHƯA bổ sung (còn cần xử lý).
+  const missedShifts = row.days.reduce((n, d) => {
+    const adjs = adjByKey.get(`${row.employeeId}|${d.date}`) ?? [];
+    const adjCodes = new Set(adjs.map((a) => a.shiftCode).filter(Boolean));
+    const generalAdj = adjs.some((a) => !a.shiftCode && a.hours > 0);
+    return n + d.shifts.filter((s) => s.registered && !s.valid && !adjCodes.has(s.code) && !generalAdj).length;
+  }, 0);
   return (
     <>
       <TableRow
@@ -395,6 +403,13 @@ const EmpRow: React.FC<{
         </TableCell>
         <TableCell layoutClassName={`${td} text-center whitespace-nowrap`}>
           <Typography as="span" size="sm" layoutClassName="tabular-nums" textClassName="text-emerald-600 dark:text-emerald-400">{row.validShifts}</Typography>
+        </TableCell>
+        <TableCell layoutClassName={`${td} text-center whitespace-nowrap`}>
+          {missedShifts > 0 ? (
+            <Badge size="sm" layoutClassName="inline-flex px-2 py-0.5 text-[10px] font-semibold" backgroundClassName="bg-rose-50 dark:bg-rose-900/20" textClassName="text-rose-600 dark:text-rose-400">{missedShifts}</Badge>
+          ) : (
+            <Typography as="span" size="sm" layoutClassName="tabular-nums" textClassName="text-slate-300 dark:text-slate-600">0</Typography>
+          )}
         </TableCell>
         <TableCell layoutClassName={`${td} text-center whitespace-nowrap`}>
           <Typography as="span" size="sm" layoutClassName="tabular-nums" textClassName="text-slate-700 dark:text-slate-200">{row.totalCong}</Typography>
@@ -421,7 +436,7 @@ const EmpRow: React.FC<{
 
       {open && (
         <TableRow backgroundClassName="bg-slate-50/60 dark:bg-slate-900/30">
-          <TableCell layoutClassName="px-4 py-3" colSpan={7}>
+          <TableCell layoutClassName="px-4 py-3" colSpan={8}>
             <DayDetail row={row} adjByKey={adjByKey} onAdjust={onAdjust} onRemoveAdjust={onRemoveAdjust} />
           </TableCell>
         </TableRow>
