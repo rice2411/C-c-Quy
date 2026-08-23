@@ -217,40 +217,41 @@ const EmployeesPage: React.FC = () => {
         </Button>
       </Box>
 
-      {/* Search */}
+      {/* Toolbar + danh sách trong 1 container (giống Orders) */}
       <Card
-        padding="md"
+        padding="none"
+        layoutClassName="flex min-h-0 flex-1 flex-col overflow-hidden"
         borderClassName="border border-slate-200 dark:border-slate-700"
         backgroundClassName="bg-white dark:bg-slate-800"
       >
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Tìm theo tên, chức vụ, SĐT…"
-          containerClassName="max-w-sm"
-        />
-      </Card>
-
-      {/* List */}
-      {loading ? (
-        <Box layoutClassName="flex flex-1 items-center justify-center py-16">
-          <Spinner size="lg" textClassName="text-primary-500" />
-        </Box>
-      ) : error ? (
-        <Typography size="sm" variant="danger">Không tải được danh sách nhân viên.</Typography>
-      ) : filtered.length === 0 ? (
-        <EmptyState
-          icon={<Users className="h-6 w-6" />}
-          title={search ? 'Không tìm thấy nhân viên phù hợp.' : 'Chưa có nhân viên nào. Bấm "Thêm nhân viên".'}
-        />
-      ) : (
-        <Card
-          padding="none"
-          layoutClassName="flex-1 overflow-hidden"
-          borderClassName="border border-slate-200 dark:border-slate-700"
-          backgroundClassName="bg-white dark:bg-slate-800"
+        <Box
+          layoutClassName="flex flex-wrap items-center gap-3 px-4 py-3"
+          borderClassName="border-b border-slate-100 dark:border-slate-700"
         >
-          <Box layoutClassName="overflow-x-auto">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Tìm theo tên, chức vụ, SĐT…"
+            containerClassName="max-w-sm"
+          />
+        </Box>
+
+        <Box layoutClassName="min-h-0 flex-1 overflow-auto">
+          {loading ? (
+            <Box layoutClassName="flex items-center justify-center py-16">
+              <Spinner size="lg" textClassName="text-primary-500" />
+            </Box>
+          ) : error ? (
+            <Box layoutClassName="p-4">
+              <Typography size="sm" variant="danger">Không tải được danh sách nhân viên.</Typography>
+            </Box>
+          ) : filtered.length === 0 ? (
+            <EmptyState
+              icon={<Users className="h-6 w-6" />}
+              title={search ? 'Không tìm thấy nhân viên phù hợp.' : 'Chưa có nhân viên nào. Bấm "Thêm nhân viên".'}
+            />
+          ) : (
+            <Box layoutClassName="overflow-x-auto">
             <Table>
               <TableHead backgroundClassName="bg-slate-50 dark:bg-slate-700/60">
                 <TableRow textClassName="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -323,9 +324,10 @@ const EmployeesPage: React.FC = () => {
                 ))}
               </TableBody>
             </Table>
-          </Box>
-        </Card>
-      )}
+            </Box>
+          )}
+        </Box>
+      </Card>
 
       {/* Form panel */}
       <BaseSlidePanel

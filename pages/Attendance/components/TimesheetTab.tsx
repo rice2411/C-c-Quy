@@ -124,51 +124,54 @@ const TimesheetTab: React.FC<Props> = ({ month, onMonthChange, employeeId, onEmp
   // (5) render
   return (
     <Box layoutClassName="flex flex-col gap-4">
-      {/* Thanh chọn NV + tháng + tổng */}
-      <Box layoutClassName="flex flex-wrap items-end gap-3">
-        <Field label="Nhân viên" htmlFor="ts-emp">
-          <Select id="ts-emp" value={employeeId} onChange={(e) => onEmployeeChange(e.target.value)} sizeClassName="min-w-48">
-            {overview.length === 0 && <option value="">— chưa có nhân viên —</option>}
-            {overview.map((o) => (
-              <option key={o.employeeId} value={o.employeeId}>{o.name}</option>
-            ))}
-          </Select>
-        </Field>
-        <Box layoutClassName="flex items-center gap-1">
-          <IconButton label="Tháng trước" size="sm" variant="ghost" onClick={() => onMonthChange(shiftMonth(month, -1))}>
-            <ChevronLeft className="h-4 w-4" />
-          </IconButton>
-          <Input type="month" value={month} onChange={(e) => onMonthChange(e.target.value || currentMonth())} sizeClassName="w-40" />
-          <IconButton label="Tháng sau" size="sm" variant="ghost" onClick={() => onMonthChange(shiftMonth(month, 1))}>
-            <ChevronRight className="h-4 w-4" />
-          </IconButton>
-        </Box>
-        <Box layoutClassName="ml-auto flex items-center gap-4">
-          <Box layoutClassName="text-right">
-            <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">Tổng giờ</Typography>
-            <Typography size="lg" layoutClassName="font-bold tabular-nums" textClassName="text-slate-900 dark:text-white">{fmtHours(row?.totalHours ?? 0)}</Typography>
-          </Box>
-          <Box layoutClassName="text-right">
-            <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">Lương kỳ</Typography>
-            <Typography size="lg" layoutClassName="font-bold tabular-nums" textClassName="text-primary-600 dark:text-primary-400">{vnd(row?.salary ?? 0)}</Typography>
-          </Box>
-          <Button type="button" variant="secondary" size="sm" leftIcon={<CalendarPlus className="h-4 w-4" />} onClick={() => openAdjust(range.from)} disabled={!employeeId}>
-            Bổ sung công
-          </Button>
-        </Box>
-      </Box>
-
-      {/* Cảnh báo chưa đặt mức lương/giờ → lương = 0 */}
-      {row && row.days.some((d) => d.hours > 0 && d.rate == null) && (
-        <Box layoutClassName="flex items-center gap-2 px-3 py-2" roundedClassName="rounded-lg" backgroundClassName="bg-amber-50 dark:bg-amber-900/20" borderClassName="border border-amber-200 dark:border-amber-800">
-          <Typography size="xs" textClassName="text-amber-700 dark:text-amber-300">
-            Nhân viên này chưa đặt <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-amber-800 dark:text-amber-200">mức lương/giờ</Typography> nên lương = 0. Vào <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-amber-800 dark:text-amber-200">Nhân viên</Typography> → mở NV → đặt mức lương/giờ.
-          </Typography>
-        </Box>
-      )}
-
-      {/* Sổ công theo ngày */}
+      {/* Toolbar + sổ công trong 1 container (giống Orders) */}
       <Card padding="none" layoutClassName="overflow-hidden" borderClassName="border border-slate-200 dark:border-slate-700" backgroundClassName="bg-white dark:bg-slate-800">
+        {/* Toolbar: chọn NV + tháng + tổng + bổ sung */}
+        <Box
+          layoutClassName="flex flex-wrap items-end gap-3 px-4 py-3"
+          borderClassName="border-b border-slate-100 dark:border-slate-700"
+        >
+          <Field label="Nhân viên" htmlFor="ts-emp">
+            <Select id="ts-emp" value={employeeId} onChange={(e) => onEmployeeChange(e.target.value)} sizeClassName="min-w-48">
+              {overview.length === 0 && <option value="">— chưa có nhân viên —</option>}
+              {overview.map((o) => (
+                <option key={o.employeeId} value={o.employeeId}>{o.name}</option>
+              ))}
+            </Select>
+          </Field>
+          <Box layoutClassName="flex items-center gap-1">
+            <IconButton label="Tháng trước" size="sm" variant="ghost" onClick={() => onMonthChange(shiftMonth(month, -1))}>
+              <ChevronLeft className="h-4 w-4" />
+            </IconButton>
+            <Input type="month" value={month} onChange={(e) => onMonthChange(e.target.value || currentMonth())} sizeClassName="w-40" />
+            <IconButton label="Tháng sau" size="sm" variant="ghost" onClick={() => onMonthChange(shiftMonth(month, 1))}>
+              <ChevronRight className="h-4 w-4" />
+            </IconButton>
+          </Box>
+          <Box layoutClassName="ml-auto flex items-center gap-4">
+            <Box layoutClassName="text-right">
+              <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">Tổng giờ</Typography>
+              <Typography size="lg" layoutClassName="font-bold tabular-nums" textClassName="text-slate-900 dark:text-white">{fmtHours(row?.totalHours ?? 0)}</Typography>
+            </Box>
+            <Box layoutClassName="text-right">
+              <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">Lương kỳ</Typography>
+              <Typography size="lg" layoutClassName="font-bold tabular-nums" textClassName="text-primary-600 dark:text-primary-400">{vnd(row?.salary ?? 0)}</Typography>
+            </Box>
+            <Button type="button" variant="secondary" size="sm" leftIcon={<CalendarPlus className="h-4 w-4" />} onClick={() => openAdjust(range.from)} disabled={!employeeId}>
+              Bổ sung công
+            </Button>
+          </Box>
+        </Box>
+
+        {/* Cảnh báo chưa đặt mức lương/giờ → lương = 0 */}
+        {row && row.days.some((d) => d.hours > 0 && d.rate == null) && (
+          <Box layoutClassName="flex items-center gap-2 px-4 py-2" backgroundClassName="bg-amber-50 dark:bg-amber-900/20" borderClassName="border-b border-amber-200 dark:border-amber-800">
+            <Typography size="xs" textClassName="text-amber-700 dark:text-amber-300">
+              Nhân viên này chưa đặt <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-amber-800 dark:text-amber-200">mức lương/giờ</Typography> nên lương = 0. Vào <Typography as="span" size="xs" layoutClassName="font-semibold" textClassName="text-amber-800 dark:text-amber-200">Nhân viên</Typography> → mở NV → đặt mức lương/giờ.
+            </Typography>
+          </Box>
+        )}
+
         <Box layoutClassName="overflow-x-auto">
           {loading ? (
             <Box layoutClassName="p-6"><Spinner size="sm" textClassName="text-primary-500" /></Box>

@@ -67,21 +67,6 @@ const PayrollTab: React.FC<Props> = ({ month, onMonthChange, onPickEmployee }) =
 
   return (
     <Box layoutClassName="flex flex-col gap-4">
-      <Box layoutClassName="flex flex-wrap items-center gap-3">
-        <Box layoutClassName="mr-auto flex items-center gap-1">
-          <IconButton label="Tháng trước" size="sm" variant="ghost" onClick={() => onMonthChange(shiftMonth(month, -1))}>
-            <ChevronLeft className="h-4 w-4" />
-          </IconButton>
-          <Input type="month" value={month} onChange={(e) => onMonthChange(e.target.value || currentMonth())} sizeClassName="w-40" />
-          <IconButton label="Tháng sau" size="sm" variant="ghost" onClick={() => onMonthChange(shiftMonth(month, 1))}>
-            <ChevronRight className="h-4 w-4" />
-          </IconButton>
-        </Box>
-        <Button type="button" variant="secondary" size="sm" leftIcon={<Download className="h-4 w-4" />} onClick={exportExcel}>
-          Xuất Excel
-        </Button>
-      </Box>
-
       <Box layoutClassName="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Card padding="lg" borderClassName="border border-slate-200 dark:border-slate-700" backgroundClassName="bg-white dark:bg-slate-800">
           <Typography size="xs" textClassName="text-slate-500 dark:text-slate-400">Tổng lương kỳ</Typography>
@@ -97,7 +82,25 @@ const PayrollTab: React.FC<Props> = ({ month, onMonthChange, onPickEmployee }) =
         </Card>
       </Box>
 
+      {/* Toolbar + bảng trong 1 container (giống Orders) */}
       <Card padding="none" layoutClassName="overflow-hidden" borderClassName="border border-slate-200 dark:border-slate-700" backgroundClassName="bg-white dark:bg-slate-800">
+        <Box
+          layoutClassName="flex flex-wrap items-center gap-3 px-4 py-3"
+          borderClassName="border-b border-slate-100 dark:border-slate-700"
+        >
+          <Box layoutClassName="mr-auto flex items-center gap-1">
+            <IconButton label="Tháng trước" size="sm" variant="ghost" onClick={() => onMonthChange(shiftMonth(month, -1))}>
+              <ChevronLeft className="h-4 w-4" />
+            </IconButton>
+            <Input type="month" value={month} onChange={(e) => onMonthChange(e.target.value || currentMonth())} sizeClassName="w-40" />
+            <IconButton label="Tháng sau" size="sm" variant="ghost" onClick={() => onMonthChange(shiftMonth(month, 1))}>
+              <ChevronRight className="h-4 w-4" />
+            </IconButton>
+          </Box>
+          <Button type="button" variant="secondary" size="sm" leftIcon={<Download className="h-4 w-4" />} onClick={exportExcel}>
+            Xuất Excel
+          </Button>
+        </Box>
         <Box layoutClassName="overflow-x-auto">
           {loading ? (
             <Box layoutClassName="p-6"><Spinner size="sm" textClassName="text-primary-500" /></Box>
