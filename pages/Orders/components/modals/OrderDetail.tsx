@@ -1104,6 +1104,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                    <Box layoutClassName="h-2 w-2 shrink-0" roundedClassName="rounded-full" style={{ backgroundColor: color }} />
                                    <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-slate-700 dark:text-slate-200">{fl}</Typography>
                                  </Box>
+                                 {item.packagingOption ? (
+                                   <Box layoutClassName="mt-1 inline-flex items-center gap-1 px-2 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-amber-50 dark:bg-amber-900/30" borderClassName="border border-amber-200 dark:border-amber-800">
+                                     <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-amber-700 dark:text-amber-300">📦 {item.packagingOption}</Typography>
+                                   </Box>
+                                 ) : null}
                                </Box>
                                <Box layoutClassName="text-right">
                                  <Typography as="p" size="sm" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{formatVND(lineTotal)}</Typography>
@@ -1140,6 +1145,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                      })}
                                    </Box>
                                  ) : null}
+                                 {item.packagingOption ? (
+                                   <Box layoutClassName="mt-1 inline-flex items-center gap-1 px-2 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-amber-50 dark:bg-amber-900/30" borderClassName="border border-amber-200 dark:border-amber-800">
+                                     <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-amber-700 dark:text-amber-300">📦 {item.packagingOption}</Typography>
+                                   </Box>
+                                 ) : null}
                                </Box>
                                <Box layoutClassName="text-right">
                                  <Typography as="p" size="sm" layoutClassName="font-medium" textClassName="text-slate-900 dark:text-white">{formatVND(price)}</Typography>
@@ -1168,6 +1178,11 @@ const OrderDetail: React.FC<OrderDetailProps> = ({
                                      </Box>
                                    );
                                  })}
+                               </Box>
+                             ) : null}
+                             {item.packagingOption ? (
+                               <Box layoutClassName="mt-1 inline-flex items-center gap-1 px-2 py-0.5" roundedClassName="rounded-full" backgroundClassName="bg-amber-50 dark:bg-amber-900/30" borderClassName="border border-amber-200 dark:border-amber-800">
+                                 <Typography as="span" size="xs" layoutClassName="font-medium" textClassName="text-amber-700 dark:text-amber-300">📦 {item.packagingOption}</Typography>
                                </Box>
                              ) : null}
                            </Box>
