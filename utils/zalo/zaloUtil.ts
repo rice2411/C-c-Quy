@@ -42,6 +42,7 @@ const itemLines = (it: any): string[] => {
     });
     const total = flavorsDetail(it?.flavors);
     if (total) out.push(`Tổng vị: ${total}`);
+    if (it?.packagingOption) out.push(`Đóng gói: ${it.packagingOption}`);
     return out;
   }
 
@@ -55,6 +56,7 @@ const itemLines = (it: any): string[] => {
   }
   const fl = flavorsDetail(it?.flavors);
   if (fl) out.push(`Chi tiết (${fl})`);
+  if (it?.packagingOption) out.push(`Đóng gói: ${it.packagingOption}`);
   return out;
 };
 

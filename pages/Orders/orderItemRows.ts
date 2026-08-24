@@ -50,7 +50,7 @@ export const buildOrderItemRows = (items: OrderItem[], products: Product[]): Ord
     const flavors = it.flavors ?? [];
     const flavorLine = groupFlavors(flavors).map((g) => (g.qty > 1 ? `${g.name} ×${g.qty}` : g.name)).join(', ');
     // Option gói (Hộp / Gói) → 1 chip meta, hiện ở cả order list + card chia sẻ.
-    const packMeta = it.packagingOption ? [it.packagingOption] : [];
+    const packMeta = it.packagingOption ? [`Đóng gói: ${it.packagingOption}`] : [];
 
     // 1) Tính giá theo vị → mỗi vị 1 hàng (ảnh vị). Mix thì KHÔNG tách (bếp tự phối).
     if (product && productUsesFlavorPricing(product) && flavors.length > 0 && !isMixFlavors(flavors)) {
