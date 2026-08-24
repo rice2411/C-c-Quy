@@ -31,6 +31,7 @@ const isFreeShip = (order: Order) => {
 import { formatVND } from '@/utils/format/currencyUtil';
 import { getDepositInfo } from '@/utils/order/orderUtils';
 import { buildDeliveryBadge } from '@/utils/order/deliveryDateBadge';
+import { packagingBadgeStyle } from '@/utils/order/packagingBadge';
 import Badge from '@/components/ui/Badge';
 import Box from '@/components/ui/Box';
 import Card from '@/components/ui/Card';
@@ -228,17 +229,22 @@ const OrderListDesktop: React.FC<OrderListDesktopProps> = ({
                       <Box layoutClassName="mb-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                         <Package className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                         <span className="font-medium">{itemCountLabel}</span>
-                        {order.items?.find((i) => i.packagingOption)?.packagingOption ? (
-                          <Badge
-                            size="sm"
-                            layoutClassName="px-2 py-0.5 text-[11px] font-semibold"
-                            borderClassName="border-transparent"
-                            backgroundClassName="bg-primary-100 dark:bg-primary-900/40"
-                            textClassName="text-primary-700 dark:text-primary-300"
-                          >
-                            📦 {order.items.find((i) => i.packagingOption)?.packagingOption}
-                          </Badge>
-                        ) : null}
+                        {(() => {
+                          const pack = order.items?.find((i) => i.packagingOption)?.packagingOption;
+                          if (!pack) return null;
+                          const ps = packagingBadgeStyle(pack);
+                          return (
+                            <Badge
+                              size="sm"
+                              layoutClassName="px-2 py-0.5 text-[11px] font-semibold"
+                              borderClassName="border-transparent"
+                              backgroundClassName={ps.backgroundClassName}
+                              textClassName={ps.textClassName}
+                            >
+                              {ps.icon} {pack}
+                            </Badge>
+                          );
+                        })()}
                       </Box>
                       {order.deliveryType === DeliveryType.SHIP_PROVINCE || order.trackingNumber ? (
                         <Box layoutClassName="mb-1 flex flex-wrap items-center gap-1.5 text-xs">
