@@ -22,7 +22,7 @@ import {
   type RecipeUpsertPayload,
 } from '@/services/recipeService';
 
-type FormLine = { key: string; source: string; qty: string; unit: string };
+type FormLine = { key: string; source: string; qty: string; unit: string; note: string };
 type RecipeForm = {
   id?: number;
   name: string;
@@ -36,6 +36,8 @@ type RecipeForm = {
   packagingCost: string;
   wastePct: string;
   marginPct: string;
+  note: string; // ghi chú công thức (thời gian nướng…)
+  productId: string | null; // giữ liên kết SP khi sửa (recipe_upsert ghi đè nếu thiếu)
   lines: FormLine[];
 };
 
@@ -43,7 +45,7 @@ const LABOR_PRESET: Record<string, number> = { easy: 800, medium: 1500, hard: 25
 const EMPTY_FORM: RecipeForm = {
   name: '', kind: 'product', category: 'drink', yieldQty: '1', yieldUnit: 'ly',
   laborTier: 'easy', laborCost: '800', overheadCost: '500', packagingCost: '1800',
-  wastePct: '5', marginPct: '0.4', lines: [],
+  wastePct: '5', marginPct: '0.4', note: '', productId: null, lines: [],
 };
 
 let lineSeq = 0;
@@ -107,12 +109,13 @@ const RecipesPage: React.FC = () => {
       laborTier: r.laborTier ?? 'easy', laborCost: String(r.labor),
       overheadCost: String(r.overhead), packagingCost: String(r.packaging),
       wastePct: String(Math.round(r.wastePct * 100)), marginPct: String(r.marginPct),
-      lines: r.lines.map((l) => ({ key: newLineKey(), source: srcKey(l), qty: String(l.qty), unit: l.unit })),
+      note: r.note ?? '', productId: r.productId ?? null,
+      lines: r.lines.map((l) => ({ key: newLineKey(), source: srcKey(l), qty: String(l.qty), unit: l.unit, note: l.note ?? '' })),
     });
     setFormOpen(true);
   };
 
-  const addLine = () => setForm((f) => ({ ...f, lines: [...f.lines, { key: newLineKey(), source: '', qty: '', unit: 'g' }] }));
+  const addLine = () => setForm((f) => ({ ...f, lines: [...f.lines, { key: newLineKey(), source: '', qty: '', unit: 'g', note: '' }] }));
   const removeLine = (key: string) => setForm((f) => ({ ...f, lines: f.lines.filter((l) => l.key !== key) }));
   const setLine = (key: string, patch: Partial<FormLine>) =>
     setForm((f) => ({ ...f, lines: f.lines.map((l) => (l.key === key ? { ...l, ...patch } : l)) }));
@@ -142,6 +145,7 @@ const RecipesPage: React.FC = () => {
           qty: Number(l.qty),
           unit: l.unit || 'g',
           sortOrder: i + 1,
+          note: l.note.trim() || null,
         };
       });
     const payload: RecipeUpsertPayload = {
@@ -157,6 +161,8 @@ const RecipesPage: React.FC = () => {
       packagingCost: Number(form.packagingCost) || 0,
       wastePct: (Number(form.wastePct) || 0) / 100,
       marginPct: Number(form.marginPct) || 0,
+      note: form.note.trim() || null,
+      productId: form.productId,
       lines,
     };
     setBusy(true);
@@ -201,14 +207,36 @@ const RecipesPage: React.FC = () => {
         )}
       </Box>
       <Typography size="xs" variant="muted">Mẻ {r.yieldQty} {r.yieldUnit} · giá thành {formatVND(r.totalCost)}{r.kind === 'product' ? ` · lãi ${formatVND(r.profit)} (${marginLabel(r.marginPct)})` : ''}</Typography>
-      <Box layoutClassName="flex flex-col gap-0.5 pt-1.5" borderClassName="border-t border-slate-100 dark:border-slate-700/60">
-        {r.lines.map((l, i) => (
-          <Box key={l.id ?? i} layoutClassName="flex items-center justify-between gap-2">
-            <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-300">{l.kind === 'recipe' ? '🥣 ' : '• '}{l.name} · {l.qty}{l.unit}</Typography>
-            <Typography as="span" size="xs" variant="muted" layoutClassName="tabular-nums">{formatVND(l.lineCost ?? 0)}</Typography>
-          </Box>
-        ))}
+      <Box layoutClassName="flex flex-col gap-1 pt-1.5" borderClassName="border-t border-slate-100 dark:border-slate-700/60">
+        {(() => {
+          // Gom dòng theo "phần" (note). Dòng cùng phần đứng liền nhau (theo sort_order); note rỗng → không tiêu đề.
+          const groups: { note: string | null; items: typeof r.lines }[] = [];
+          r.lines.forEach((l) => {
+            const key = l.note && l.note.trim() ? l.note.trim() : null;
+            const last = groups[groups.length - 1];
+            if (last && last.note === key) last.items.push(l);
+            else groups.push({ note: key, items: [l] });
+          });
+          return groups.map((g, gi) => (
+            <Box key={gi} layoutClassName="flex flex-col gap-0.5">
+              {g.note ? (
+                <Typography as="span" size="xs" layoutClassName="mt-0.5 font-semibold uppercase tracking-wide" textClassName="text-slate-400 dark:text-slate-500">{g.note}</Typography>
+              ) : null}
+              {g.items.map((l, i) => (
+                <Box key={l.id ?? `${gi}-${i}`} layoutClassName="flex items-center justify-between gap-2">
+                  <Typography as="span" size="xs" textClassName="text-slate-600 dark:text-slate-300">{l.kind === 'recipe' ? '🥣 ' : '• '}{l.name} · {l.qty}{l.unit}</Typography>
+                  <Typography as="span" size="xs" variant="muted" layoutClassName="tabular-nums">{formatVND(l.lineCost ?? 0)}</Typography>
+                </Box>
+              ))}
+            </Box>
+          ));
+        })()}
       </Box>
+      {r.note ? (
+        <Box layoutClassName="pt-1" borderClassName="border-t border-slate-100 dark:border-slate-700/60">
+          <Typography size="xs" textClassName="text-amber-600 dark:text-amber-400">🔥 {r.note}</Typography>
+        </Box>
+      ) : null}
       {r.kind === 'product' ? (
         <Box layoutClassName="pt-1" borderClassName="border-t border-slate-100 dark:border-slate-700/60">
           <Typography size="xs" variant="muted">NVL {formatVND(r.nvl)} · công {formatVND(r.labor)} · vh {formatVND(r.overhead)} · bao bì {formatVND(r.packaging)} · hao hụt {formatVND(r.waste)}</Typography>
@@ -416,6 +444,12 @@ const RecipesPage: React.FC = () => {
             </Box>
           ) : null}
 
+          {/* Ghi chú công thức (thời gian nướng…) */}
+          <Box layoutClassName="flex flex-col gap-1">
+            <Typography size="xs" variant="muted">Ghi chú (nướng, lưu ý…)</Typography>
+            <Input value={form.note} placeholder="VD: Nướng 160–165°C · 40 phút" onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} fullWidth />
+          </Box>
+
           {/* Dòng công thức */}
           <Box layoutClassName="flex flex-col gap-2">
             <Box layoutClassName="flex items-center justify-between">
@@ -428,11 +462,14 @@ const RecipesPage: React.FC = () => {
               <Box layoutClassName="flex flex-col gap-2">
                 {form.lines.map((l) => (
                   <Box key={l.key} layoutClassName="grid grid-cols-12 items-center gap-2">
-                    <Box layoutClassName="col-span-7">
+                    <Box layoutClassName="col-span-5">
                       <Select value={l.source} onChange={(e) => setLine(l.key, { source: e.target.value, unit: sourceUnit(e.target.value) })} sizeClassName="px-2 py-1.5 text-xs">
                         <option value="">— chọn —</option>
                         {lineSources.map((s) => (<option key={s.key} value={s.key}>{s.label}</option>))}
                       </Select>
+                    </Box>
+                    <Box layoutClassName="col-span-2">
+                      <Input value={l.note} placeholder="Phần" onChange={(e) => setLine(l.key, { note: e.target.value })} fullWidth />
                     </Box>
                     <Box layoutClassName="col-span-2">
                       <Input type="number" min={0} value={l.qty} placeholder="SL" onChange={(e) => setLine(l.key, { qty: e.target.value })} fullWidth />

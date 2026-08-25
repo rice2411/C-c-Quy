@@ -79,6 +79,7 @@ export interface RecipeUpsertPayload {
     qty: number;
     unit: string;
     sortOrder?: number;
+    note?: string | null; // nhãn phần (Vỏ bánh/Nhân…) — giữ khi sửa
   }>;
 }
 
