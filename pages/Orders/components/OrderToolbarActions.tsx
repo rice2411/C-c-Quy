@@ -13,6 +13,7 @@ import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Typography from '@/components/ui/Typography';
 import OrderToolsModal, { type OrderToolGroup } from './OrderToolsModal';
+import DeliveryNotifyModal from './DeliveryNotifyModal';
 
 interface OrderToolbarActionsProps {
   onRefresh: () => void;
@@ -30,18 +31,22 @@ const OrderToolbarActions: React.FC<OrderToolbarActionsProps> = ({
 }) => {
   const { t } = useLanguage();
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [notifyOpen, setNotifyOpen] = useState(false);
   const [sendingNoti, setSendingNoti] = useState(false);
 
-  // Gửi ngay thông báo "đơn cần giao (gom theo ngày)" qua Zalo (nhóm mặc định).
-  const handleSendDeliveryZalo = async () => {
+  // Gửi ngay thông báo "đơn cần giao (gom theo ngày)" qua Zalo — theo ngày + số ngày user chọn.
+  const handleSendDeliveryZalo = async (fromDate: string, days: number) => {
     if (sendingNoti) return;
     setSendingNoti(true);
-    const p = sendNotificationNow('delivery_by_day');
+    const p = sendNotificationNow('delivery_by_day', { fromDate, days });
     await toast.promise(p, {
       loading: 'Đang gửi thông báo Zalo…',
       success: (r) => (r.sent ? 'Đã gửi thông báo đơn cần giao qua Zalo.' : 'Không có đơn cần giao — chưa gửi.'),
       error: 'Gửi thông báo thất bại.',
-    }).finally(() => setSendingNoti(false));
+    }).finally(() => {
+      setSendingNoti(false);
+      setNotifyOpen(false);
+    });
   };
 
   // Nhóm công cụ cho modal — dễ bổ sung tính năng mới sau này (chỉ push thêm vào group).
@@ -50,7 +55,7 @@ const OrderToolbarActions: React.FC<OrderToolbarActionsProps> = ({
       key: 'notify',
       label: 'Thông báo',
       tools: [
-        { id: 'delivery-zalo', icon: BellRing, label: 'Gửi Zalo: đơn cần giao', description: 'Gửi ngay danh sách đơn cần giao (3 ngày tới) qua Zalo.', onClick: () => void handleSendDeliveryZalo(), accentClassName: 'text-amber-500' },
+        { id: 'delivery-zalo', icon: BellRing, label: 'Gửi Zalo: đơn cần giao', description: 'Chọn ngày giao + số ngày rồi gửi danh sách đơn cần giao qua Zalo.', onClick: () => setNotifyOpen(true), accentClassName: 'text-amber-500' },
       ],
     },
     {
@@ -109,6 +114,13 @@ const OrderToolbarActions: React.FC<OrderToolbarActionsProps> = ({
       </Button>
 
       <OrderToolsModal open={toolsOpen} onClose={() => setToolsOpen(false)} groups={toolGroups} />
+
+      <DeliveryNotifyModal
+        open={notifyOpen}
+        onClose={() => setNotifyOpen(false)}
+        onSend={(fromDate, days) => void handleSendDeliveryZalo(fromDate, days)}
+        sending={sendingNoti}
+      />
 
       <Button
         type="button"

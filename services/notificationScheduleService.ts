@@ -46,9 +46,18 @@ export const deleteSchedule = async (id: string): Promise<void> => {
   await apiClient.delete(`${PATH}/${id}`);
 };
 
+/** Tuỳ chọn khi gửi ngay (chỉ dùng cho delivery_by_day): ngày bắt đầu + số ngày gom. */
+export interface SendNowOptions {
+  fromDate?: string; // YYYY-MM-DD
+  days?: number; // 1..14
+}
+
 /** Gửi ngay 1 loại thông báo qua Zalo (nhóm mặc định). */
-export const sendNotificationNow = async (type: ScheduleType): Promise<{ sent: boolean }> => {
-  const res = await apiClient.post<{ sent: boolean }>(`${PATH}/send-now`, { type });
+export const sendNotificationNow = async (
+  type: ScheduleType,
+  opts?: SendNowOptions,
+): Promise<{ sent: boolean }> => {
+  const res = await apiClient.post<{ sent: boolean }>(`${PATH}/send-now`, { type, ...opts });
   return res.data ?? { sent: false };
 };
 
