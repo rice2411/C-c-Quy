@@ -216,18 +216,8 @@ const Layout: React.FC = () => {
             );
           })}
 
-          <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-700">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-            >
-              <LogOut className="w-5 h-5 mr-3" />
-              {t('nav.signOut')}
-            </button>
-          </div>
-
           {/* Phiên bản web */}
-          <div className="pt-3">
+          <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-700">
             <p className="text-center text-[11px] font-mono text-slate-400 dark:text-slate-500">v{__BUILD_ID__}</p>
           </div>
         </nav>
@@ -322,7 +312,7 @@ const Layout: React.FC = () => {
                    <button
                      type="button"
                      aria-label={currentUser?.displayName || 'Tài khoản'}
-                     className="flex shrink-0 items-center gap-1.5 rounded-full p-0.5 pr-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                     className="flex shrink-0 items-center rounded-full p-0.5 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                    >
                      <span className="w-8 h-8 rounded-full bg-primary-100 dark:bg-slate-700 overflow-hidden border border-slate-300 dark:border-slate-600 flex items-center justify-center">
                        {currentUser?.photoURL ? (
@@ -333,7 +323,6 @@ const Layout: React.FC = () => {
                          </span>
                        )}
                      </span>
-                     <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500 hidden sm:block" />
                    </button>
                  }
                >
