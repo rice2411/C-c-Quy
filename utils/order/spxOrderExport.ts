@@ -8,10 +8,15 @@ export type SpxAddressMode = 'new' | 'old';
 /**
  * Sheet "địa chỉ mới" (2 cấp) của SPX nhận tên tỉnh KHÔNG có tiền tố hành chính:
  * "Hà Nội" (không "Thành phố Hà Nội"), "Lạng Sơn" (không "Tỉnh Lạng Sơn").
+ * NGOẠI LỆ DUY NHẤT trong danh mục mới: TP.HCM ghi là "TP. Hồ Chí Minh" (còn giữ "TP.").
  * Chỉ áp dụng lúc GHI file — danh mục nội bộ (SPX_PROVINCES) vẫn giữ tên đầy đủ để matching.
  */
-export const stripSpxProvincePrefix = (s: string): string =>
-  (s || '').replace(/^(Thành phố|Tỉnh)\s+/i, '').trim();
+export const stripSpxProvincePrefix = (s: string): string => {
+  const stripped = (s || '').replace(/^(Thành phố|Tỉnh)\s+/i, '').trim();
+  // "Thành phố Hồ Chí Minh" / "Hồ Chí Minh" → "TP. Hồ Chí Minh" (khớp State_list(2) template mới)
+  if (/^h[ồô]\s*ch[íi]\s*minh$/i.test(stripped)) return 'TP. Hồ Chí Minh';
+  return stripped;
+};
 
 /**
  * Địa chỉ đã giải sẵn cho 1 đơn (hệ CŨ, giải ở BE): `state` = Tỉnh ("TP. HỒ CHÍ MINH"),
