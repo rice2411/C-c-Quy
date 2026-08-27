@@ -417,3 +417,105 @@ export const removeTxReceiptAllocation = async (
   const res = await apiClient.delete<unknown>(`/transactions/receipt-allocations/${allocId}`);
   return mapTxReceiptAllocSummary(res.data);
 };
+
+/* ───────── Đối soát tay: ứng viên đơn (tiền vào) + thanh toán ship (tiền ra) ───────── */
+
+/** 1 đơn ứng viên để khớp 1 GD tiền vào (BE tính điều kiện chặt: tổng/còn thiếu/cọc, ~10 ngày). */
+export interface InCandidateOrder {
+  orderId: string;
+  orderNumber: string | null;
+  customer: string | null;
+  total: number | null;
+  paid: number;
+  remaining: number;
+  deposit: number;
+  status: string | null;
+  paymentStatus: string | null;
+  createdAt: string | null;
+  match: 'total' | 'remaining' | 'deposit' | null;
+}
+
+/** Ứng viên đơn cho 1 GD tiền vào. Type-guard từng field (untrusted). */
+export const fetchInCandidateOrders = async (transactionId: string): Promise<InCandidateOrder[]> => {
+  const res = await apiClient.get<unknown>(`/transactions/${transactionId}/in-candidate-orders`);
+  const arr = Array.isArray(res.data) ? res.data : [];
+  const num = (v: unknown): number => (typeof v === 'number' ? v : Number(v) || 0);
+  return arr.map((r) => {
+    const o = (r ?? {}) as Record<string, unknown>;
+    const m = o.match;
+    return {
+      orderId: typeof o.orderId === 'string' ? o.orderId : '',
+      orderNumber: typeof o.orderNumber === 'string' ? o.orderNumber : null,
+      customer: typeof o.customer === 'string' ? o.customer : null,
+      total: o.total == null ? null : num(o.total),
+      paid: num(o.paid),
+      remaining: num(o.remaining),
+      deposit: num(o.deposit),
+      status: typeof o.status === 'string' ? o.status : null,
+      paymentStatus: typeof o.paymentStatus === 'string' ? o.paymentStatus : null,
+      createdAt: typeof o.createdAt === 'string' ? o.createdAt : null,
+      match: m === 'total' || m === 'remaining' || m === 'deposit' ? m : null,
+    };
+  });
+};
+
+/** Thanh toán ship đang gắn với 1 GD tiền ra (đơn hoặc nhà xe). */
+export interface ShippingPayment {
+  id: string;
+  amount: number;
+  note: string | null;
+  orderId: string | null;
+  orderNumber: string | null;
+  customer: string | null;
+  carrierId: string | null;
+  carrierName: string | null;
+}
+export interface ShippingPaymentSummary {
+  transactionId: string;
+  txAmount: number;
+  payment: ShippingPayment | null;
+}
+
+const mapShipping = (data: unknown): ShippingPaymentSummary => {
+  const o = (data ?? {}) as Record<string, unknown>;
+  const p = o.payment as Record<string, unknown> | null | undefined;
+  const num = (v: unknown): number => (typeof v === 'number' ? v : Number(v) || 0);
+  const str = (v: unknown): string | null => (typeof v === 'string' && v !== '' ? v : null);
+  return {
+    transactionId: typeof o.transactionId === 'string' ? o.transactionId : '',
+    txAmount: num(o.txAmount),
+    payment: p
+      ? {
+          id: typeof p.id === 'string' ? p.id : '',
+          amount: num(p.amount),
+          note: str(p.note),
+          orderId: str(p.orderId),
+          orderNumber: str(p.orderNumber),
+          customer: str(p.customer),
+          carrierId: str(p.carrierId),
+          carrierName: str(p.carrierName),
+        }
+      : null,
+  };
+};
+
+/** Link ship hiện tại của 1 GD tiền ra. */
+export const fetchTxShipping = async (transactionId: string): Promise<ShippingPaymentSummary> => {
+  const res = await apiClient.get<unknown>(`/transactions/${transactionId}/shipping`);
+  return mapShipping(res.data);
+};
+
+/** Gắn ship (đơn / nhà xe) cho 1 GD tiền ra → trả link mới. */
+export const setTxShipping = async (
+  transactionId: string,
+  input: { orderId?: string; carrierId?: string; amount?: number; note?: string },
+): Promise<ShippingPaymentSummary> => {
+  const res = await apiClient.post<unknown>(`/transactions/${transactionId}/shipping`, input);
+  return mapShipping(res.data);
+};
+
+/** Gỡ ship khỏi 1 GD tiền ra. */
+export const removeTxShipping = async (transactionId: string): Promise<{ unlinked: number }> => {
+  const res = await apiClient.delete<{ unlinked?: number }>(`/transactions/${transactionId}/shipping`);
+  return { unlinked: Number(res.data?.unlinked) || 0 };
+};

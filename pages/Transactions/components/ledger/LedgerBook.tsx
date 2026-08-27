@@ -13,6 +13,7 @@ import LedgerFilterBar from './LedgerFilterBar';
 import LedgerDesktopTable from './LedgerDesktopTable';
 import LedgerMobileList from './LedgerMobileList';
 import TransactionDetailModal from '../TransactionDetailModal';
+import LedgerReconcileModal from './LedgerReconcileModal';
 
 const PAGE_SIZE = 50;
 
@@ -37,6 +38,7 @@ const LedgerBook: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, 
   const [gateway, setGateway] = useState('');
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<LedgerTransaction | null>(null);
+  const [reconcileOpen, setReconcileOpen] = useState(false);
 
   // Debounce ô tìm kiếm (350ms) → tránh gọi API mỗi ký tự.
   useEffect(() => {
@@ -102,6 +104,7 @@ const LedgerBook: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, 
             onCategoryChange={setCategory}
             onGatewayChange={setGateway}
             onRefresh={handleRefresh}
+            onReconcile={() => setReconcileOpen(true)}
           />
         </Box>
 
@@ -182,6 +185,14 @@ const LedgerBook: React.FC<{ fromDate: string; toDate: string }> = ({ fromDate, 
         onClose={() => setSelected(null)}
         transaction={selected}
         formatDate={formatDate}
+        onChanged={refetch}
+      />
+
+      <LedgerReconcileModal
+        isOpen={reconcileOpen}
+        onClose={() => setReconcileOpen(false)}
+        fromDate={fromDate}
+        toDate={toDate}
         onChanged={refetch}
       />
     </Box>

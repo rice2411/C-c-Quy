@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { RefreshCw, ArrowDownCircle, ArrowUpCircle, CircleDot, Tags, Landmark } from 'lucide-react';
+import { RefreshCw, ArrowDownCircle, ArrowUpCircle, CircleDot, Tags, Landmark, Scale } from 'lucide-react';
 import { LedgerFilters, LedgerStatus, LEDGER_STATUS_META, EXPENSE_CATEGORIES } from '@/types';
 import IconButton from '@/components/ui/IconButton';
+import Button from '@/components/ui/Button';
 import FilterToolbar, { PillDropdown, type ToolbarPill, type ToolbarOption } from '@/components/shared/FilterToolbar';
 
 interface LedgerFilterBarProps {
@@ -15,10 +16,12 @@ interface LedgerFilterBarProps {
   onCategoryChange: (v: string) => void;
   onGatewayChange: (v: string) => void;
   onRefresh: () => void;
+  /** Mở modal đối soát gộp (nút "Đối soát"). */
+  onReconcile: () => void;
 }
 
 const IN_STATUSES: LedgerStatus[] = ['matched', 'shopee', 'external', 'unmatched'];
-const OUT_STATUSES: LedgerStatus[] = ['refund', 'settled', 'expense', 'stock', 'excluded', 'unmatched'];
+const OUT_STATUSES: LedgerStatus[] = ['refund', 'shipping', 'settled', 'expense', 'stock', 'excluded', 'unmatched'];
 
 /**
  * Toolbar lọc sổ giao dịch — dùng chung FilterToolbar (chuẩn như trang Đơn hàng):
@@ -26,7 +29,7 @@ const OUT_STATUSES: LedgerStatus[] = ['refund', 'settled', 'expense', 'stock', '
  */
 const LedgerFilterBar: React.FC<LedgerFilterBarProps> = ({
   filters, search, gatewayOptions, isFetching,
-  onSearchChange, onTypeChange, onStatusChange, onCategoryChange, onGatewayChange, onRefresh,
+  onSearchChange, onTypeChange, onStatusChange, onCategoryChange, onGatewayChange, onRefresh, onReconcile,
 }) => {
   // Trạng thái khả dụng theo loại đang chọn (thu ≠ chi).
   const statusOptions = useMemo<LedgerStatus[]>(() => {
@@ -105,21 +108,39 @@ const LedgerFilterBar: React.FC<LedgerFilterBarProps> = ({
         </>
       }
       actions={
-        <IconButton
-          type="button"
-          label="Làm mới"
-          onClick={onRefresh}
-          disabled={isFetching}
-          variant="secondary"
-          layoutClassName="rounded-lg p-2.5"
-          backgroundClassName="bg-white dark:bg-slate-800"
-          borderClassName="border border-slate-200 dark:border-slate-700"
-          textClassName="text-slate-600 dark:text-slate-400"
-          hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
-          stateClassName="transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-        </IconButton>
+        <>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={onReconcile}
+            leftIcon={<Scale className="h-4 w-4" />}
+            layoutClassName="inline-flex items-center gap-1.5"
+            roundedClassName="rounded-lg"
+            sizeClassName="px-3 py-2 text-sm"
+            backgroundClassName="bg-primary-600"
+            hoverClassName="hover:bg-primary-700"
+            textClassName="font-medium text-white"
+            disableVariantHover
+          >
+            Đối soát
+          </Button>
+          <IconButton
+            type="button"
+            label="Làm mới"
+            onClick={onRefresh}
+            disabled={isFetching}
+            variant="secondary"
+            layoutClassName="rounded-lg p-2.5"
+            backgroundClassName="bg-white dark:bg-slate-800"
+            borderClassName="border border-slate-200 dark:border-slate-700"
+            textClassName="text-slate-600 dark:text-slate-400"
+            hoverClassName="hover:bg-slate-50 dark:hover:bg-slate-700"
+            stateClassName="transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+          </IconButton>
+        </>
       }
       showClearAll={hasAnyFilter}
       onClearAll={() => {

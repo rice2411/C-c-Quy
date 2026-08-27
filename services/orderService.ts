@@ -247,6 +247,30 @@ export const patchOrderFields = async (
 
 /* ───────────────── Đối soát phiếu hoàn ↔ giao dịch SePay (#186) ───────────────── */
 
+/** Hạng mục hoàn tiền (khớp order_refunds.category ở BE). */
+export type RefundCategory = 'overcollected_cod' | 'ship_refund' | 'cancel' | 'reduce_qty' | 'other';
+
+/** Nhãn hạng mục hoàn tiền cho dropdown. */
+export const REFUND_CATEGORIES: { value: RefundCategory; label: string }[] = [
+  { value: 'overcollected_cod', label: 'Thu COD dư' },
+  { value: 'ship_refund', label: 'Hoàn phí ship' },
+  { value: 'cancel', label: 'Huỷ đơn' },
+  { value: 'reduce_qty', label: 'Giảm số lượng' },
+  { value: 'other', label: 'Khác' },
+];
+
+/**
+ * Tạo phiếu hoàn TAY cho 1 đơn, gắn luôn 1 giao dịch tiền ra (đối soát hoàn tiền từ Sổ).
+ * BE trả Order đầy đủ. transactionId → BE gắn + đánh dấu reconciled (method 'sepay').
+ */
+export const createOrderRefund = async (
+  orderId: string,
+  input: { amount: number; category?: RefundCategory; reason?: string; transactionId?: string },
+): Promise<Order> => {
+  const res = await apiClient.post(`/orders/${orderId}/refunds`, input);
+  return res.data as Order;
+};
+
 /**
  * Gắn 1 giao dịch SePay tiền ra cho 1 phiếu hoàn.
  * BE trả về Order ĐẦY ĐỦ (đã refresh refunds) → caller set lại state đơn.
